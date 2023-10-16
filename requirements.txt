@@ -1,0 +1,5 @@
+dash
+pandas
+pandas-stubs
+requests
+types-requests
