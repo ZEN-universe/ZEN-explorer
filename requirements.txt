@@ -3,3 +3,5 @@ pandas
 pandas-stubs
 requests
 types-requests
+natsort
+dash-bootstrap-components

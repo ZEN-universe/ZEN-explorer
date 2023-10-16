@@ -3,81 +3,167 @@ import plotly.express as px
 import requests
 from io import StringIO
 import csv
+from natsort import natsorted
 import pandas as pd
+import dash_bootstrap_components as dbc
+from typing import Optional
 
 
 solutions = requests.get("http://0.0.0.0:8000/solutions/list").json()
 solution_names = [solution["name"] for solution in solutions]
-solution_names.sort()
+solution_names = natsorted(solution_names)
 components = [
     "capacity",
     "flow_conversion_input",
-    "flow_conversion_output"
+    "flow_conversion_output",
+    "flow_import",
+    "flow_export",
+    "cost_carrier",
+    "capacity_addition",
+    "carbon_emissions_carrier",
 ]
 
-tech_types = ["", "conversion", "storage_power", "storage_energy"]
-carriers = ["", "electricity"]
-app = Dash(__name__)
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-app.layout = html.Div(
+filters = dbc.Card(
     [
-        html.H1("Solution name"),
-        dcc.Dropdown(solution_names, "1_base_case", id="dropdown-selection"),
-        html.H1("Component"),
-        dcc.Dropdown(components, components[0], id="component-selection"),
-        html.H1("Technology"),
-        dcc.Dropdown(tech_types, "", id="technology-selection"),
-        html.H1("Carrier"),
-        dcc.Dropdown(carriers, "", id="carrier-selection"),
-        html.H1("Result"),
-        dcc.Graph(id="graph-content"),
+        html.Div(
+            [
+                dbc.Label(
+                    "Component",
+                ),
+                dcc.Dropdown(
+                    components, components[0], id="component-selection", clearable=False
+                ),
+            ]
+        ),
+        html.Div(
+            [
+                dbc.Label("Scenario"),
+                dcc.Dropdown([], id="scenario-selection", clearable=False),
+            ],
+            className="mt-3",
+        ),
+        html.Div(
+            [
+                dbc.Label("Technology"),
+                dcc.Dropdown([], id="technology-selection"),
+            ],
+            className="mt-3",
+        ),
+        html.Div(
+            [dbc.Label("Carrier"), dcc.Dropdown([], id="carrier-selection")],
+            className="mt-3",
+        ),
+        html.Div(
+            [
+                dbc.Label("Node"),
+                dcc.Dropdown([], id="node-selection"),
+            ],
+            className="mt-3",
+        ),
+    ],
+    body=True,
+)
+
+app.layout = dbc.Container(
+    [
+        html.H1("ZEN Explorer", className="mt-5"),
+        html.Div(
+            [
+                dbc.Label("Select the solution"),
+                dcc.Dropdown(
+                    solution_names,
+                    "1_base_case",
+                    id="solution-selection",
+                    clearable=False,
+                ),
+            ]
+        ),
+        html.Hr(),
+        dbc.Row(
+            [
+                dbc.Col(filters, md=3),
+                dbc.Col(dcc.Graph(id="graph-content"), md=9),
+            ]
+        ),
     ]
 )
 
 
 @callback(
+    [
+        Output("scenario-selection", "options"),
+        Output("technology-selection", "options"),
+        Output("carrier-selection", "options"),
+        Output("node-selection", "options"),
+        Output("scenario-selection", "disabled"),
+    ],
+    Input("solution-selection", "value"),
+)
+def update_scenarios(solution):
+    index = [i["name"] for i in solutions].index(solution)
+    current_scenario = solutions[index]
+    scenarios = list(current_scenario["scenarios"])
+    # technologies = list(current_scenario["technologies"])
+    technologies = ["conversion", "transport", "storage"]
+    carriers = list(current_scenario["carriers"])
+    nodes = list(current_scenario["nodes"])
+    return scenarios, technologies, carriers, nodes, scenarios == [""]
+
+
+@callback(
     Output("graph-content", "figure"),
     [
-        Input("dropdown-selection", "value"),
+        Input("solution-selection", "value"),
         Input("component-selection", "value"),
         Input("technology-selection", "value"),
         Input("carrier-selection", "value"),
+        Input("scenario-selection", "value"),
+        Input("node-selection", "value"),
     ],
 )
-def update_graph(value: str, component: str, technology: str, carrier: str):
-    request = {"component": component, "node_edit": "all", "yearly": True}
-
-    if technology != "":
-        request["tech_type"] = technology
-
-    if carrier != "":
-        request["reference_carrier"] = carrier
+def update_graph(
+    value: str,
+    component: str,
+    technology: Optional[str],
+    carrier: Optional[str],
+    scenario: Optional[str],
+    node: Optional[str],
+):
+    request = {
+        "component": component,
+        "node_edit": node if node is not None else "all",
+        "yearly": True,
+        "scenario": scenario,
+        "tech_type": technology,
+        "reference_carrier": carrier,
+    }
 
     res = requests.post(
         f"http://0.0.0.0:8000/solutions/{value}/df", json=request
     ).json()
-    print(res)
+
     f = StringIO(res)
     reader = csv.reader(f, delimiter=",")
     rows: list[list] = [row for row in reader]
-
+    print(rows)
     full_df = pd.DataFrame(rows[1:], columns=rows[0])
 
-    possible_colors = ["technology"]
+    possible_colors = ["technology", "carrier"]
     possible_shapes = ["location", "node"]
 
-    color = set(full_df.columns).intersection(set(possible_colors)).pop()
-    shape = set(full_df.columns).intersection(set(possible_shapes)).pop()
+    color_list = list(set(full_df.columns).intersection(set(possible_colors)))
+    shape_list = list(set(full_df.columns).intersection(set(possible_shapes)))
+    kwargs = {}
 
-    fig = px.bar(
-        full_df,
-        x="year",
-        y="value",
-        title=value,
-        color=color,
-        pattern_shape=shape,
-        orientation="v",
-    )
+    if len(color_list) > 0:
+        kwargs["color"] = color_list[0]
+
+    if len(shape_list) > 0:
+        kwargs["pattern_shape"] = shape_list[0]
+
+    fig = px.bar(full_df, x="year", y="value", orientation="v", **kwargs)
 
     fig.update_xaxes(type="category")
     fig.update_yaxes(type="linear")
