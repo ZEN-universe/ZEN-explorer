@@ -6,7 +6,7 @@ import csv
 from natsort import natsorted
 import pandas as pd
 import dash_bootstrap_components as dbc  # type: ignore
-from typing import Optional
+from typing import Optional, Any
 
 
 solutions = requests.get("http://0.0.0.0:8000/solutions/list").json()
@@ -100,7 +100,7 @@ app.layout = dbc.Container(
         Output("scenario-selection", "disabled"),
     ],
     Input("solution-selection", "value"),
-)
+)  # type: ignore
 def update_scenarios(solution):
     index = [i["name"] for i in solutions].index(solution)
     current_scenario = solutions[index]
@@ -122,7 +122,7 @@ def update_scenarios(solution):
         Input("scenario-selection", "value"),
         Input("node-selection", "value"),
     ],
-)
+)  # type: ignore
 def update_graph(
     value: str,
     component: str,
@@ -146,7 +146,7 @@ def update_graph(
 
     f = StringIO(res)
     reader = csv.reader(f, delimiter=",")
-    rows: list[list] = [row for row in reader]
+    rows: list[list[Any]] = [row for row in reader]
     full_df = pd.DataFrame(rows[1:], columns=rows[0])
 
     possible_colors = ["technology", "carrier"]
