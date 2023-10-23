@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, callback, Output, Input  # type: ignore
+from dash import html, dcc, callback, Output, Input  # type: ignore
 import plotly.express as px  # type: ignore
 import requests
 from io import StringIO
@@ -8,12 +8,12 @@ import pandas as pd
 import dash_bootstrap_components as dbc  # type: ignore
 from typing import Optional, Any
 from time import perf_counter
+import dash  # type: ignore
+from dash.exceptions import PreventUpdate  # type: ignore
 
+server_url = "http://localhost:8000/"
 
-server_url = "http://0.0.0.0:8000/"
-solutions = requests.get(server_url + "solutions/list").json()
-solution_names = [solution["name"] for solution in solutions]
-solution_names = natsorted(solution_names)
+dash.register_page(__name__, path="/transition")
 
 
 def get_empty_plot(message: str) -> dict[Any, Any]:
@@ -33,8 +33,6 @@ def get_empty_plot(message: str) -> dict[Any, Any]:
         }
     }
 
-
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 filters = dbc.Card(
     [
@@ -61,15 +59,15 @@ filters = dbc.Card(
     body=True,
 )
 
-app.layout = dbc.Container(
+layout = dbc.Container(
     [
-        html.H1("ZEN Explorer", className="mt-5"),
+        html.H1("The Transition Pathway", className="mt-5"),
+        html.Div(id="loader"),
         html.Div(
             [
                 dbc.Label("Select the solution"),
                 dcc.Dropdown(
-                    solution_names,
-                    "1_base_case",
+                    [],
                     id="solution-selection",
                     clearable=False,
                 ),
@@ -91,7 +89,8 @@ app.layout = dbc.Container(
                             "Component",
                         ),
                         dcc.Dropdown(
-                            [],
+                            ["cost_carrier"],
+                            "cost_carrier",
                             id="component-selection",
                             clearable=False,
                             disabled=True,
@@ -108,6 +107,7 @@ app.layout = dbc.Container(
                 dbc.Col(dcc.Graph(id="graph-content"), md=9),
             ]
         ),
+        dcc.Store(id="solution-list"),
         dcc.Store(id="available-components"),
         dcc.Store(id="component-details"),
     ]
@@ -115,18 +115,34 @@ app.layout = dbc.Container(
 
 
 @callback(
+    [Output("solution-list", "data"), Output("solution-selection", "options")],
+    Input("loader", "children"),
+)  # type: ignore
+def test(a):
+    server_url = "http://0.0.0.0:8000/"
+    solutions = requests.get(server_url + "solutions/list").json()
+    solution_names = [solution["name"] for solution in solutions]
+    solution_names = natsorted(solution_names)
+    return solutions, solution_names
+
+
+@callback(
     [
         Output("scenario-selection", "options"),
         Output("scenario-selection", "disabled"),
         Output("component-selection", "value"),
+        Output("scenario-selection", "value"),
     ],
-    Input("solution-selection", "value"),
+    [Input("solution-list", "data"), Input("solution-selection", "value")],
 )  # type: ignore
-def activate_solution(solution: str):
+def activate_solution(solutions: dict[Any, Any], solution: str):
+    if solution is None:
+        raise PreventUpdate
+
     index = [i["name"] for i in solutions].index(solution)
-    current_scenario = solutions[index]
-    scenarios = list(current_scenario["scenarios"])
-    return scenarios, len(scenarios) == 1, None
+    current_soultion = solutions[index]
+    scenarios = natsorted(list(current_soultion["scenarios"]))
+    return scenarios, len(scenarios) == 1, None, scenarios[0]
 
 
 @callback(
@@ -134,6 +150,9 @@ def activate_solution(solution: str):
     [Input("solution-selection", "value"), Input("scenario-selection", "value")],
 )  # type: ignore
 def activate_components(solution_name: str, scenario_name: Optional[str]):
+    if solution_name is None:
+        raise PreventUpdate
+
     if scenario_name is None:
         scenario_name = "scenario_"
 
@@ -157,14 +176,23 @@ def update_components_options(available_components):
 
 
 @callback(
-    Output("component-details", "data"),
+    [
+        Output("component-details", "data"),
+        Output("technology-selection", "value"),
+        Output("carrier-selection", "value"),
+        Output("node-selection", "value"),
+    ],
     [Input("component-selection", "value"), Input("available-components", "data")],
 )  # type: ignore
 def update_active_component(component: str, available_components: dict[Any, Any]):
+    if available_components is None:
+        raise PreventUpdate
+
     component_names = [i["component_name"] for i in available_components]
     if component not in component_names:
-        return {}
-    return available_components[component_names.index(component)]
+        return {}, None, None, None
+    outputs = [available_components[component_names.index(component)]] + 3 * [None]
+    return tuple(outputs)
 
 
 @callback(
@@ -179,7 +207,13 @@ def update_active_component(component: str, available_components: dict[Any, Any]
     Input("component-details", "data"),
 )  # type: ignore
 def update_options(component_detail: dict[Any, Any]):
-    option_tuples = [("technology", []), ("carrier", []), ("node", [])]
+    option_tuples: list[tuple[str, list[str]]] = [
+        ("technology", []),
+        ("carrier", []),
+        ("node", []),
+    ]
+    if component_detail is None:
+        return 3 * [[]] + 3 * [True]
     if "levels" not in component_detail:
         return [[]] * len(option_tuples) + [True] * len(option_tuples)
 
@@ -230,50 +264,55 @@ def update_graph(
     for i in level_tuples:
         if i[1] is not None:
             index_sets.append(
-                {"behaviour": "series", "index_title": i[0], "indices": [i[1]]}
+                {"behaviour": "sum", "index_title": i[0], "indices": [i[1]]}
             )
 
     request = {
+        "aggregate_years": True,
         "scenario": scenario,
         "solution_name": solution,
         "component": component,
         "data_request": {"default": "series", "index_sets": index_sets},
     }
-    print(request)
+
     start = perf_counter()
+
     try:
-        res = requests.post(
-            f"http://0.0.0.0:8000/solutions/get_data", json=request
-        ).json()
+        result = requests.post("http://0.0.0.0:8000/solutions/get_data", json=request)
 
     except Exception:
         return get_empty_plot("Cannot process request")
 
     duration = perf_counter() - start
 
+    if result.status_code == 413:
+        return get_empty_plot("Too many data points. Consider adding some filter.")
+
+    res = result.json()
     f = StringIO(res)
     reader = csv.reader(f, delimiter=",")
     rows: list[list[Any]] = [row for row in reader]
-    print(len(rows), len(rows[1]), len(rows) * len(rows[1]))
 
     if len(rows) <= 1:
         return get_empty_plot("No data to plot.")
 
     full_df = pd.DataFrame(rows[1:], columns=rows[0])
 
-    possible_colors = ["technology", "carrier"]
-    possible_shapes = ["location", "node"]
+    possible_levels: list[str] = [
+        i for i in ["technology", "node", "carrier"] if i in full_df.columns
+    ]
 
-    color_list = list(set(full_df.columns).intersection(set(possible_colors)))
-    shape_list = list(set(full_df.columns).intersection(set(possible_shapes)))
+    possible_plot_dimensions: list[str] = ["color", "pattern_shape"]
+
+    kwargs: dict[str, str] = {}
+
+    for k, keyword in enumerate(possible_plot_dimensions):
+        try:
+            kwargs[keyword] = possible_levels[k]
+        except IndexError:
+            break
+
     time_name = "year" if "year" in full_df.columns else "time_step"
-    kwargs = {}
-
-    if len(color_list) > 0:
-        kwargs["color"] = color_list[0]
-
-    if len(shape_list) > 0:
-        kwargs["pattern_shape"] = shape_list[0]
 
     fig = px.bar(full_df, x=time_name, y="value", orientation="v", **kwargs)
 
@@ -281,7 +320,7 @@ def update_graph(
     fig.update_yaxes(type="linear")
 
     fig.add_annotation(
-        text=f"Server response time: {duration:.4f}s",
+        text=f"rt: {1000*duration:.1f}ms, n_values: {len(rows)-1}",
         xref="paper",
         yref="paper",
         x=0.999,
@@ -289,7 +328,3 @@ def update_graph(
         showarrow=False,
     )
     return fig
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
