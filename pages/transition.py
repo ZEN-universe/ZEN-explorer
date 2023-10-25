@@ -10,8 +10,10 @@ from typing import Optional, Any
 from time import perf_counter
 import dash  # type: ignore
 from dash.exceptions import PreventUpdate  # type: ignore
+from config import config
 
-server_url = "http://localhost:8000/"
+
+server_url = config.TEMPLE_URL
 
 dash.register_page(__name__, path="/transition")
 
@@ -119,7 +121,6 @@ layout = dbc.Container(
     Input("loader", "children"),
 )  # type: ignore
 def test(a):
-    server_url = "http://0.0.0.0:8000/"
     solutions = requests.get(server_url + "solutions/list").json()
     solution_names = [solution["name"] for solution in solutions]
     solution_names = natsorted(solution_names)
@@ -278,7 +279,7 @@ def update_graph(
     start = perf_counter()
 
     try:
-        result = requests.post("http://0.0.0.0:8000/solutions/get_data", json=request)
+        result = requests.post(f"{server_url}solutions/get_data", json=request)
 
     except Exception:
         return get_empty_plot("Cannot process request")

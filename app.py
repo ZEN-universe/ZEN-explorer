@@ -4,6 +4,8 @@ import dash_bootstrap_components as dbc  # type: ignore
 
 app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
+server = app.server
+
 children = [
     dbc.NavLink(dcc.Link(f"{page['name']}", href=page["relative_path"]))
     for page in dash.page_registry.values()

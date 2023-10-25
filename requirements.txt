@@ -5,3 +5,4 @@ requests
 types-requests
 natsort
 dash-bootstrap-components
+python-dotenv
