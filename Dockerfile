@@ -9,4 +9,4 @@ RUN pip install gunicorn
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8050", "app:server"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8050", "app:server", "--workers", "4", "--preload"]
