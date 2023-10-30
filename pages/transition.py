@@ -106,7 +106,13 @@ layout = dbc.Container(
         dbc.Row(
             [
                 dbc.Col(filters, md=3),
-                dbc.Col(dcc.Graph(id="graph-content"), md=9),
+                dbc.Col(
+                    dcc.Loading(
+                        id="loading-1",
+                        type="default",
+                        children=dcc.Graph(id="graph-content"),
+                    )
+                ),
             ]
         ),
         dcc.Store(id="solution-list"),

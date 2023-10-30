@@ -16,6 +16,7 @@ children = [
     dbc.NavLink(dcc.Link(f"{page['name']}", href=page["relative_path"]))
     for page in dash.page_registry.values()
 ]
+
 navbar = dbc.NavbarSimple(
     children=[
         dbc.NavItem(dbc.NavLink(f"{page['name']}", href=page["relative_path"]))
@@ -23,7 +24,7 @@ navbar = dbc.NavbarSimple(
     ],
     id="nav",
     brand="Zen Explorer",
-    brand_href="/",
+    brand_href=config.BASE_URL,
     color="primary",
     dark=True,
 )
