@@ -1,8 +1,14 @@
 import dash  # type: ignore
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc  # type: ignore
+from config import config
 
-app = Dash(__name__, use_pages=True, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(
+    __name__,
+    use_pages=True,
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    url_base_pathname=config.BASE_URL,
+)
 
 server = app.server
 
