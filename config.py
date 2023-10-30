@@ -1,6 +1,5 @@
 import os
 from dotenv import load_dotenv
-from typing import Optional
 
 load_dotenv()
 
@@ -8,7 +7,7 @@ load_dotenv()
 class Config:
     def __init__(self) -> None:
         self.TEMPLE_URL: str = os.getenv("TEMPLE_URL")  # type: ignore
-        self.BASE_URL: Optional[str] = os.getenv("BASE_URL")  # type: ignore
+        self.BASE_URL: str = os.getenv("BASE_URL")  # type: ignore
         if self.BASE_URL is None:
             self.BASE_URL = "/"
         self.check()
