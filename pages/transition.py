@@ -2,7 +2,6 @@ from dash import html, dcc, callback, Output, Input  # type: ignore
 import plotly.express as px  # type: ignore
 import requests
 from io import StringIO
-import csv
 from natsort import natsorted
 import pandas as pd
 import dash_bootstrap_components as dbc  # type: ignore
@@ -297,13 +296,10 @@ def update_graph(
 
     res = result.json()
     f = StringIO(res)
-    reader = csv.reader(f, delimiter=",")
-    rows: list[list[Any]] = [row for row in reader]
+    full_df = pd.read_csv(f, header=0)
 
-    if len(rows) <= 1:
+    if len(full_df) <= 1:
         return get_empty_plot("No data to plot.")
-
-    full_df = pd.DataFrame(rows[1:], columns=rows[0])
 
     possible_levels: list[str] = [
         i for i in ["technology", "node", "carrier"] if i in full_df.columns
@@ -327,7 +323,7 @@ def update_graph(
     fig.update_yaxes(type="linear")
 
     fig.add_annotation(
-        text=f"rt: {1000*duration:.1f}ms, n_values: {len(rows)-1}",
+        text=f"rt: {1000*duration:.1f}ms, n_values: {len(full_df)-1}",
         xref="paper",
         yref="paper",
         x=0.999,
