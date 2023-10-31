@@ -315,7 +315,7 @@ def update_graph(
         except IndexError:
             break
 
-    time_name = "year" if "year" in full_df.columns else "time_step"
+    time_name = "year"
 
     fig = px.bar(full_df, x=time_name, y="value", orientation="v", **kwargs)
 
