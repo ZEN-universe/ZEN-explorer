@@ -285,7 +285,6 @@ def update_graph(
 
     try:
         result = requests.post(f"{server_url}solutions/get_data", json=request)
-
     except Exception:
         return get_empty_plot("Cannot process request")
 
@@ -295,6 +294,7 @@ def update_graph(
         return get_empty_plot("Too many data points. Consider adding some filter.")
 
     res = result.json()
+
     f = StringIO(res)
     full_df = pd.read_csv(f, header=0)
 
@@ -315,11 +315,11 @@ def update_graph(
         except IndexError:
             break
 
-    time_name = "year"
+    time_name = "time_step"
 
     fig = px.bar(full_df, x=time_name, y="value", orientation="v", **kwargs)
 
-    fig.update_xaxes(type="category")
+    fig.update_xaxes(type="category", title="Year")
     fig.update_yaxes(type="linear")
 
     fig.add_annotation(
