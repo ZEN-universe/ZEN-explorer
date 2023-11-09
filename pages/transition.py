@@ -79,7 +79,7 @@ layout = dbc.Container(
                 ),
                 html.Div(
                     [
-                        dbc.Label("Node"),
+                        dbc.Label("Location"),
                         dcc.Dropdown([], id="node-selection"),
                     ],
                     className="mt-3",
