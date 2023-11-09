@@ -14,6 +14,9 @@ from config import config
 
 server_url = config.TEMPLE_URL
 
+sum_over_nodes_str = "Sum over all nodes"
+time_name = "time_step"
+
 dash.register_page(__name__, path="/transition")
 
 
@@ -35,31 +38,6 @@ def get_empty_plot(message: str) -> dict[Any, Any]:
     }
 
 
-filters = dbc.Card(
-    [
-        html.Div(
-            [
-                dbc.Label("Technology"),
-                dcc.Dropdown([], id="technology-selection"),
-            ],
-            className="mt-3",
-        ),
-        html.Div(
-            [dbc.Label("Carrier"), dcc.Dropdown([], id="carrier-selection")],
-            className="mt-3",
-        ),
-        html.Div(
-            [
-                dbc.Label("Node"),
-                dcc.Dropdown([], id="node-selection"),
-            ],
-            className="mt-3",
-        ),
-        html.Div(id="time", className="mt-3"),
-    ],
-    body=True,
-)
-
 layout = dbc.Container(
     [
         html.H1("The Transition Pathway", className="mt-5"),
@@ -78,7 +56,7 @@ layout = dbc.Container(
                         dcc.Dropdown(
                             [],
                             id="scenario-selection",
-                            value="scenario_",
+                            value="",
                             clearable=False,
                         ),
                     ],
@@ -99,12 +77,18 @@ layout = dbc.Container(
                     ],
                     className="mt-3",
                 ),
+                html.Div(
+                    [
+                        dbc.Label("Node"),
+                        dcc.Dropdown([], id="node-selection"),
+                    ],
+                    className="mt-3",
+                ),
             ]
         ),
         html.Hr(),
         dbc.Row(
             [
-                dbc.Col(filters, md=3),
                 dbc.Col(
                     dcc.Loading(
                         id="loading-1",
@@ -148,6 +132,9 @@ def activate_solution(solutions: dict[Any, Any], solution: str):
     index = [i["name"] for i in solutions].index(solution)
     current_soultion = solutions[index]
     scenarios = natsorted(list(current_soultion["scenarios"]))
+    has_scenarios = len(scenarios) > 1
+    scenarios = [""] if not has_scenarios else scenarios
+
     return scenarios, len(scenarios) == 1, None, scenarios[0]
 
 
@@ -159,12 +146,10 @@ def activate_components(solution_name: str, scenario_name: Optional[str]):
     if solution_name is None:
         raise PreventUpdate
 
-    if scenario_name is None:
-        scenario_name = "scenario_"
+    if scenario_name in [None, ""]:
+        scenario_name = "null"
 
-    data = requests.get(
-        server_url + f"solutions/{solution_name}/{scenario_name}/components"
-    )
+    data = requests.get(server_url + f"solutions/{solution_name}/components")
 
     return data.json()
 
@@ -182,12 +167,7 @@ def update_components_options(available_components):
 
 
 @callback(
-    [
-        Output("component-details", "data"),
-        Output("technology-selection", "value"),
-        Output("carrier-selection", "value"),
-        Output("node-selection", "value"),
-    ],
+    [Output("node-selection", "value"), Output("node-selection", "options")],
     [Input("component-selection", "value"), Input("available-components", "data")],
 )  # type: ignore
 def update_active_component(component: str, available_components: dict[Any, Any]):
@@ -195,44 +175,18 @@ def update_active_component(component: str, available_components: dict[Any, Any]
         raise PreventUpdate
 
     component_names = [i["component_name"] for i in available_components]
+
     if component not in component_names:
-        return {}, None, None, None
-    outputs = [available_components[component_names.index(component)]] + 3 * [None]
-    return tuple(outputs)
+        return "", []
 
+    current_component = available_components[component_names.index(component)]
 
-@callback(
-    [
-        Output("technology-selection", "options"),
-        Output("carrier-selection", "options"),
-        Output("node-selection", "options"),
-        Output("technology-selection", "disabled"),
-        Output("carrier-selection", "disabled"),
-        Output("node-selection", "disabled"),
-    ],
-    Input("component-details", "data"),
-)  # type: ignore
-def update_options(component_detail: dict[Any, Any]):
-    option_tuples: list[tuple[str, list[str]]] = [
-        ("technology", []),
-        ("carrier", []),
-        ("node", []),
-    ]
-    if component_detail is None:
-        return 3 * [[]] + 3 * [True]
-    if "levels" not in component_detail:
-        return [[]] * len(option_tuples) + [True] * len(option_tuples)
+    nodes = [i for i in current_component["levels"] if i["title"] == "node"][0]
 
-    level_titles = [i["title"] for i in component_detail["levels"]]
-
-    for option_tuple in option_tuples:
-        if option_tuple[0] in level_titles:
-            index = level_titles.index(option_tuple[0])
-            for i in component_detail["levels"][index]["names"]:
-                option_tuple[1].append(i)
-
-    ans = [i[1] for i in option_tuples] + [len(i[1]) == 0 for i in option_tuples]
-    return tuple(ans)
+    return (
+        sum_over_nodes_str,
+        [sum_over_nodes_str] + nodes["names"],
+    )
 
 
 @callback(
@@ -240,8 +194,6 @@ def update_options(component_detail: dict[Any, Any]):
     [
         Input("solution-selection", "value"),
         Input("component-selection", "value"),
-        Input("technology-selection", "value"),
-        Input("carrier-selection", "value"),
         Input("scenario-selection", "value"),
         Input("node-selection", "value"),
     ],
@@ -249,10 +201,8 @@ def update_options(component_detail: dict[Any, Any]):
 def update_graph(
     solution: Optional[str],
     component: Optional[str],
-    technology: Optional[str],
-    carrier: Optional[str],
     scenario: Optional[str],
-    node: Optional[str],
+    node: str,
 ):
     if solution is None:
         return get_empty_plot("Select a solution")
@@ -263,28 +213,13 @@ def update_graph(
     if component is None:
         return get_empty_plot("Select a Component")
 
-    index_sets = []
-
-    level_tuples = [("technology", technology), ("carrier", carrier), ("node", node)]
-
-    for i in level_tuples:
-        if i[1] is not None:
-            index_sets.append(
-                {"behaviour": "sum", "index_title": i[0], "indices": [i[1]]}
-            )
-
-    request = {
-        "aggregate_years": True,
-        "scenario": scenario,
-        "solution_name": solution,
-        "component": component,
-        "data_request": {"default": "series", "index_sets": index_sets},
-    }
-
     start = perf_counter()
 
     try:
-        result = requests.post(f"{server_url}solutions/get_data", json=request)
+        url = f"{server_url}solutions/get_total/{solution}/{component}"
+        if scenario != "":
+            url += f"/?scenario={scenario}"
+        result = requests.get(url)
     except Exception:
         return get_empty_plot("Cannot process request")
 
@@ -296,30 +231,28 @@ def update_graph(
     res = result.json()
 
     f = StringIO(res)
-    full_df = pd.read_csv(f, header=0)
+
+    full_df = pd.read_csv(f, header=0, index_col=None)
 
     if len(full_df) <= 1:
         return get_empty_plot("No data to plot.")
 
-    possible_levels: list[str] = [
-        i for i in ["technology", "node", "carrier"] if i in full_df.columns
-    ]
-
     possible_plot_dimensions: list[str] = ["color", "pattern_shape"]
+
+    final_df = summarize_df_by_node(full_df, node)
+
+    possible_columns = [i for i in final_df.columns if i not in [time_name, "value"]]
 
     kwargs: dict[str, str] = {}
 
     for k, keyword in enumerate(possible_plot_dimensions):
         try:
-            kwargs[keyword] = possible_levels[k]
+            kwargs[keyword] = possible_columns[k]
         except IndexError:
             break
 
-    time_name = "time_step"
-
-    fig = px.bar(full_df, x=time_name, y="value", orientation="v", **kwargs)
-
-    fig.update_xaxes(type="category", title="Year")
+    fig = px.bar(final_df, x=time_name, y="value", orientation="v", **kwargs)
+    fig.update_xaxes(type="linear", title="Year")
     fig.update_yaxes(type="linear")
 
     fig.add_annotation(
@@ -331,3 +264,37 @@ def update_graph(
         showarrow=False,
     )
     return fig
+
+
+def summarize_df_by_node(df: pd.DataFrame, node: str) -> pd.DataFrame:
+    location_names = ["location", "node"]
+    index_names: list[str] = []
+    timestep_names = []
+
+    for j in df.columns:
+        try:
+            timestep_names.append(int(j))
+        except ValueError:
+            index_names.append(j)
+
+    # full_df = full_df.reset_index().set_index(index_names).drop("index", axis=1)
+
+    melted_df = pd.melt(df, id_vars=index_names, var_name=time_name)
+
+    if node == sum_over_nodes_str:
+        non_location_index = [i for i in index_names if i not in location_names] + [
+            time_name
+        ]
+
+        melted_df = (
+            melted_df.groupby(non_location_index)["value"]
+            .sum()
+            .to_frame()
+            .reset_index()
+        )
+    else:
+        current_location_name = [i for i in melted_df.columns if i in location_names]
+        locations = (melted_df[current_location_name] == node).squeeze()
+        melted_df = melted_df.loc[locations]
+
+    return melted_df

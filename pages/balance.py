@@ -175,7 +175,7 @@ def activate_components(solution_name: str, scenario_name: Optional[str]):
         scenario_name = "scenario_"
 
     data = requests.get(
-        server_url + f"solutions/{solution_name}/{scenario_name}/components"
+        server_url + f"solutions/{solution_name}/components"
     )
 
     return data.json()
