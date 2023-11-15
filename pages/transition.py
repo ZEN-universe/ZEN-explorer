@@ -16,6 +16,7 @@ server_url = config.TEMPLE_URL
 
 sum_over_nodes_str = "Sum over all nodes"
 time_name = "time_step"
+location_names = ["location", "node"]
 
 dash.register_page(__name__, path="/transition")
 
@@ -167,7 +168,11 @@ def update_components_options(available_components):
 
 
 @callback(
-    [Output("node-selection", "value"), Output("node-selection", "options")],
+    [
+        Output("node-selection", "value"),
+        Output("node-selection", "options"),
+        Output("node-selection", "disabled"),
+    ],
     [Input("component-selection", "value"), Input("available-components", "data")],
 )  # type: ignore
 def update_active_component(component: str, available_components: dict[Any, Any]):
@@ -177,15 +182,18 @@ def update_active_component(component: str, available_components: dict[Any, Any]
     component_names = [i["component_name"] for i in available_components]
 
     if component not in component_names:
-        return "", []
+        return "", [], True
 
     current_component = available_components[component_names.index(component)]
-
-    nodes = [i for i in current_component["levels"] if i["title"] == "node"][0]
-
+    nodes_level = [i for i in current_component["levels"] if i["title"] == "node"]
+    node = nodes_level[0] if len(nodes_level) > 0 else None
+    node_names = node["names"] if node is not None else []
+    node_value = sum_over_nodes_str if node is not None else ""
+    node_options = [sum_over_nodes_str] + node_names if node is not None else []
     return (
-        sum_over_nodes_str,
-        [sum_over_nodes_str] + nodes["names"],
+        node_value,
+        node_options,
+        len(nodes_level) == 0,
     )
 
 
@@ -196,6 +204,7 @@ def update_active_component(component: str, available_components: dict[Any, Any]
         Input("component-selection", "value"),
         Input("scenario-selection", "value"),
         Input("node-selection", "value"),
+        Input("available-components", "data"),
     ],
 )  # type: ignore
 def update_graph(
@@ -203,6 +212,7 @@ def update_graph(
     component: Optional[str],
     scenario: Optional[str],
     node: str,
+    components: list[dict[str, Any]],
 ):
     if solution is None:
         return get_empty_plot("Select a solution")
@@ -231,15 +241,25 @@ def update_graph(
     res = result.json()
 
     f = StringIO(res)
-
     full_df = pd.read_csv(f, header=0, index_col=None)
 
     if len(full_df) <= 1:
         return get_empty_plot("No data to plot.")
 
+    active_component = [i for i in components if i["component_name"] == component][0]
+
     possible_plot_dimensions: list[str] = ["color", "pattern_shape"]
 
-    final_df = summarize_df_by_node(full_df, node)
+    has_nodes = (
+        len([i for i in active_component["levels"] if i["title"] in location_names]) > 0
+    )
+
+    if has_nodes:
+        final_df = summarize_df_by_node(full_df, node)
+    else:
+        final_df = full_df.rename(
+            columns={"year": time_name, full_df.columns[-1]: "value"}
+        )
 
     possible_columns = [i for i in final_df.columns if i not in [time_name, "value"]]
 
@@ -267,7 +287,6 @@ def update_graph(
 
 
 def summarize_df_by_node(df: pd.DataFrame, node: str) -> pd.DataFrame:
-    location_names = ["location", "node"]
     index_names: list[str] = []
     timestep_names = []
 
