@@ -1,4 +1,5 @@
 from dash import html, dcc, callback, Output, Input  # type: ignore
+import plotly.express as px  # type: ignore
 import requests
 from io import StringIO
 from natsort import natsorted
@@ -241,31 +242,39 @@ def update_graph(
         return get_empty_plot("No data to plot.")
     full_df = pd.melt(full_df, id_vars=["variable", "technology"], var_name="time_step")
 
-    non_demand_df = full_df[full_df["variable"] != "demand"]
+    non_demand_df = full_df[(full_df["variable"] != "demand")]
+    demand_df = full_df[full_df["variable"] == "demand"]
+    positive_df = non_demand_df[non_demand_df["value"] >= 0]
+    negative_df = non_demand_df[non_demand_df["value"] < 0]
+
+    line_dataframes = [positive_df, negative_df]
 
     fig = go.Figure()
     fig.update_yaxes(type="linear")
-    for variable in non_demand_df["variable"].unique():
-        for technology in non_demand_df["technology"].unique():
-            current_df = non_demand_df.loc[
-                (non_demand_df["technology"] == technology)
-                & (non_demand_df["variable"] == variable)
-            ]
-            fig.add_trace(
-                go.Scatter(
-                    x=current_df["time_step"], y=current_df["value"], fill="tozeroy",
-                    name=f"{technology}: {variable}"
+    for df in line_dataframes:
+        for variable in df["variable"].unique():
+            for technology in df["technology"].unique():
+                current_df = df.loc[
+                    (df["technology"] == technology) & (df["variable"] == variable)
+                ]
+                fig.add_trace(
+                    go.Scatter(
+                        x=current_df["time_step"],
+                        y=current_df["value"],
+                        fill="tozeroy",
+                        name=f"{technology}: {variable}",
+                    )
                 )
-            )
 
-    demand_df = full_df[full_df["variable"] == "demand"]
-    trace1 = go.Scatter(
+    demand_trace = go.Scatter(
         x=demand_df["time_step"],
         y=demand_df["value"],
         name="demand",
         marker=dict(color="black"),
     )
-    fig.add_trace(trace1)
+
+    fig.add_trace(demand_trace)
+
     n_timesteps_per_year = current_solution["total_hours_per_year"]
     tickvals = [i for i in range(len(full_df) - 1) if i % n_timesteps_per_year == 0]
 
@@ -279,6 +288,7 @@ def update_graph(
         range=[0, n_timesteps_per_year],
         rangeslider=dict(visible=True, thickness=0.1),
     )
+    fig.update_yaxes(type="linear", fixedrange=True)
 
     fig.add_annotation(
         text=f"rt: {1000*duration:.1f}ms, n_values: {len(full_df)-1}",
