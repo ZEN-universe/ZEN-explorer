@@ -247,11 +247,10 @@ def update_graph(
     positive_df = non_demand_df[non_demand_df["value"] >= 0]
     negative_df = non_demand_df[non_demand_df["value"] < 0]
 
-    line_dataframes = [positive_df, negative_df]
-
+    line_dataframes = {"negative": negative_df, "positive": positive_df}
     fig = go.Figure()
     fig.update_yaxes(type="linear")
-    for df in line_dataframes:
+    for stackgroup, df in line_dataframes.items():
         for variable in df["variable"].unique():
             for technology in df["technology"].unique():
                 current_df = df.loc[
@@ -263,6 +262,7 @@ def update_graph(
                         y=current_df["value"],
                         fill="tozeroy",
                         name=f"{technology}: {variable}",
+                        stackgroup=stackgroup
                     )
                 )
 
