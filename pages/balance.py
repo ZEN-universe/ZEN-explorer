@@ -1,5 +1,4 @@
 from dash import html, dcc, callback, Output, Input  # type: ignore
-import plotly.express as px  # type: ignore
 import requests
 from io import StringIO
 from natsort import natsorted
@@ -221,7 +220,7 @@ def update_graph(
 
     start = perf_counter()
     try:
-        url = f"{server_url}solutions/get_energy_balance/{solution}/{node}/{carrier}/?year={year}"
+        url = f"{server_url}solutions/get_energy_balance/{solution}/{node}/{carrier}/?year={year}"  # noqa
         if scenario is not None:
             url += f"scenario={scenario}"
         result = requests.get(url)
@@ -243,9 +242,22 @@ def update_graph(
     full_df = pd.melt(full_df, id_vars=["variable", "technology"], var_name="time_step")
 
     non_demand_df = full_df[full_df["variable"] != "demand"]
-    fig = px.area(
-        non_demand_df, x="time_step", y="value", orientation="v", color="technology"
-    )
+
+    fig = go.Figure()
+    fig.update_yaxes(type="linear")
+    for variable in non_demand_df["variable"].unique():
+        for technology in non_demand_df["technology"].unique():
+            current_df = non_demand_df.loc[
+                (non_demand_df["technology"] == technology)
+                & (non_demand_df["variable"] == variable)
+            ]
+            fig.add_trace(
+                go.Scatter(
+                    x=current_df["time_step"], y=current_df["value"], fill="tozeroy",
+                    name=f"{technology}: {variable}"
+                )
+            )
+
     demand_df = full_df[full_df["variable"] == "demand"]
     trace1 = go.Scatter(
         x=demand_df["time_step"],
@@ -267,7 +279,6 @@ def update_graph(
         range=[0, n_timesteps_per_year],
         rangeslider=dict(visible=True, thickness=0.1),
     )
-    fig.update_yaxes(type="linear", fixedrange=True)
 
     fig.add_annotation(
         text=f"rt: {1000*duration:.1f}ms, n_values: {len(full_df)-1}",
