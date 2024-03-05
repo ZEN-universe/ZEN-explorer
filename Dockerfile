@@ -1,6 +1,6 @@
 FROM node:19 as build
 
-ENV NODE_ENV=production 
+ENV NODE_ENV=development 
 
 WORKDIR /app
 
@@ -10,6 +10,7 @@ RUN npm install
 COPY . ./
 RUN npm run build
 
+ENV NODE_ENV=production
 
 FROM node:19-alpine3.16
 
