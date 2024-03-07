@@ -1,1 +1,5 @@
-<a href="/transition">Transition</a>
+<script lang="ts">
+    import { base } from "$app/paths";
+</script>
+
+<a href="{base}/transition">Transition</a>

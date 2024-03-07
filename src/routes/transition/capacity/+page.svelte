@@ -1,10 +1,11 @@
 <script lang="ts">
-	import SolutionFilter from '../../../components/SolutionFilter.svelte';
-	import ComponentBarChart from './ComponentBarChart.svelte';
-	import type { ActivatedSolution } from '$lib/types';
+	import SolutionFilter from "../../../components/SolutionFilter.svelte";
+	import ComponentBarChart from "./ComponentBarChart.svelte";
+	import type { ActivatedSolution } from "$lib/types";
+	import { base } from "$app/paths";
 
 	let data: Papa.ParseResult<any>;
-	let technology_types: string[] = ['conversion', 'storage', 'transport'];
+	let technology_types: string[] = ["conversion", "storage", "transport"];
 	let carriers: string[] = [];
 	let selected_carrier: string | null = null;
 	let nodes: string[] = [];
@@ -25,7 +26,9 @@
 		selected_technology = null;
 		selected_node = null;
 	}
-	function activate_solution(solution_object: CustomEvent<ActivatedSolution | null>) {
+	function activate_solution(
+		solution_object: CustomEvent<ActivatedSolution | null>,
+	) {
 		selected_solution = solution_object.detail;
 		selected_technology_type = null;
 
@@ -35,8 +38,12 @@
 
 		carriers = selected_solution.detail.system.set_carriers;
 		nodes = selected_solution.detail.system.set_nodes;
-		let years_index = [...Array(selected_solution.detail.system.optimized_years).keys()];
-		years = years_index.map((i) => i + selected_solution!.detail.system.reference_year);
+		let years_index = [
+			...Array(selected_solution.detail.system.optimized_years).keys(),
+		];
+		years = years_index.map(
+			(i) => i + selected_solution!.detail.system.reference_year,
+		);
 	}
 
 	function update_technologies() {
@@ -52,19 +59,25 @@
 		}
 
 		switch (selected_technology_type) {
-			case 'conversion':
-				technologies = selected_solution!.detail.system.set_conversion_technologies;
+			case "conversion":
+				technologies =
+					selected_solution!.detail.system
+						.set_conversion_technologies;
 				break;
-			case 'storage':
-				technologies = selected_solution!.detail.system.set_storage_technologies;
+			case "storage":
+				technologies =
+					selected_solution!.detail.system.set_storage_technologies;
 				break;
-			case 'transport':
-				technologies = selected_solution!.detail.system.set_transport_technologies;
+			case "transport":
+				technologies =
+					selected_solution!.detail.system.set_transport_technologies;
 				break;
 		}
 
 		technologies = technologies.filter(
-			(technology) => selected_solution?.detail.reference_carrier[technology] == selected_carrier
+			(technology) =>
+				selected_solution?.detail.reference_carrier[technology] ==
+				selected_carrier,
 		);
 
 		if (technologies.length == 1) {
@@ -75,14 +88,17 @@
 
 <h1>The Transition Pathway</h1>
 <h2>Capacity</h2>
-<a href="/">Home</a>
+<a href="{base}/">Home</a>
 <SolutionFilter on:solution_selected={activate_solution} />
 
 {#if selected_solution != null}
 	<div class="row">
 		<div class="col">
 			<h3>Technology Type</h3>
-			<select bind:value={selected_technology_type} on:change={() => update_technologies()}>
+			<select
+				bind:value={selected_technology_type}
+				on:change={() => update_technologies()}
+			>
 				{#each technology_types as technology_type}
 					<option value={technology_type}>
 						{technology_type}
@@ -95,7 +111,10 @@
 		<div class="row">
 			<div class="col">
 				<h3>Carrier</h3>
-				<select bind:value={selected_carrier} on:change={() => update_technologies()}>
+				<select
+					bind:value={selected_carrier}
+					on:change={() => update_technologies()}
+				>
 					{#each carriers as carrier}
 						<option value={carrier}>
 							{carrier}
@@ -121,7 +140,10 @@
 		<div class="row">
 			<div class="col">
 				<h3>Node</h3>
-				<select bind:value={selected_node} on:change={() => console.log(selected_node, 'selected')}>
+				<select
+					bind:value={selected_node}
+					on:change={() => console.log(selected_node, "selected")}
+				>
 					{#each nodes as node}
 						<option value={node}>
 							{node}
@@ -133,7 +155,10 @@
 		<div class="row">
 			<div class="col">
 				<h3>Year</h3>
-				<select bind:value={selected_year} on:change={() => console.log(selected_year, 'selected')}>
+				<select
+					bind:value={selected_year}
+					on:change={() => console.log(selected_year, "selected")}
+				>
 					{#each years as year}
 						<option value={year}>
 							{year}
@@ -145,7 +170,10 @@
 	{:else if selected_technology_type != null && selected_carrier != null}
 		<div class="row">
 			<div class="col">
-				<h4>No technologies for the selected technology type and carrier.</h4>
+				<h4>
+					No technologies for the selected technology type and
+					carrier.
+				</h4>
 			</div>
 		</div>
 	{/if}

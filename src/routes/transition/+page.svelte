@@ -1,3 +1,7 @@
+<script lang="ts">
+    import { base } from "$app/paths";
+</script>
+
 <h1>The Transition Pathway</h1>
-<a href="/">Home</a>
-<a href="/transition/capacity">Capacity</a>
+<a href="{base}/">Home</a>
+<a href="{base}/transition/capacity">Capacity</a>
