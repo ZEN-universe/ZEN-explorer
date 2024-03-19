@@ -5,35 +5,37 @@
 	import { base } from "$app/paths";
 
 	let data: Papa.ParseResult<any>;
-	let technology_types: string[] = ["conversion", "storage", "transport"];
-	let variables: string[] = ["capacity", "capacity_addition"];
 	let carriers: string[] = [];
-	let selected_carrier: string | null = null;
 	let nodes: string[] = [];
 	let years: number[] = [];
-	let technologies: string[] = [];
+	let variables: { [key: string]: string[] | null } = {
+		conversion: ["input", "output"],
+		storage: ["charge", "discharge"],
+		transport: null,
+		import_export: ["import", "export"],
+	};
 
 	let selected_solution: ActivatedSolution | null = null;
-	let selected_technology_type: string | null = null;
 	let selected_node: string | null = null;
 	let selected_year: string | null = null;
-	let selected_technology: string | null = null;
 	let selected_variable: string | null = null;
+	let selected_subvariable: string = "";
+	let selected_carrier: string | null = null;
+	let technologies: string[] = [];
+	let selected_technology: string | null = null;
 
 	function reset_form() {
 		selected_solution = null;
-		selected_technology_type = null;
 		selected_node = null;
 		selected_year = null;
-		selected_technology = null;
 		selected_node = null;
-		selected_variable = null;
+		selected_carrier = null;
 	}
+
 	function activate_solution(
 		solution_object: CustomEvent<ActivatedSolution | null>,
 	) {
 		selected_solution = solution_object.detail;
-		selected_technology_type = null;
 
 		if (selected_solution == null) {
 			return;
@@ -52,31 +54,7 @@
 	function update_technologies() {
 		selected_node = null;
 		selected_year = null;
-		technologies = [];
-		if (selected_carrier === null) {
-			return;
-		}
-
-		if (selected_technology_type === null) {
-			return;
-		}
-
-		switch (selected_technology_type) {
-			case "conversion":
-				technologies =
-					selected_solution!.detail.system
-						.set_conversion_technologies;
-				break;
-			case "storage":
-				technologies =
-					selected_solution!.detail.system.set_storage_technologies;
-				break;
-			case "transport":
-				technologies =
-					selected_solution!.detail.system.set_transport_technologies;
-				break;
-		}
-
+		technologies = selected_solution?.detail.system.set_technologies ?? [];
 		technologies = technologies.filter(
 			(technology) =>
 				selected_solution?.detail.reference_carrier[technology] ==
@@ -89,7 +67,7 @@
 	}
 </script>
 
-<h2>Capacity</h2>
+<h2>Production</h2>
 <SolutionFilter on:solution_selected={activate_solution} />
 
 {#if selected_solution != null}
@@ -97,62 +75,42 @@
 		<div class="col">
 			<h3>Variable</h3>
 			<select bind:value={selected_variable}>
-				{#each variables as variable}
+				{#each Object.entries(variables) as [variable, subvalues]}
 					<option value={variable}>
 						{variable}
 					</option>
 				{/each}
 			</select>
+			{#if selected_variable != null && variables[selected_variable] != null}
+				<div class="form-check">
+					<input
+						class="form-check-input"
+						type="radio"
+						name="variableRadios"
+						id="specificationRadio1"
+						value="selected_subvariable"
+						checked
+					/>
+					<label class="form-check-label" for="specificationRadio1">
+						{variables[selected_variable][0]}
+					</label>
+				</div>
+				<div class="form-check">
+					<input
+						class="form-check-input"
+						type="radio"
+						name="variableRadios"
+						id="specificationRadio1"
+						value="option2"
+					/>
+					<label class="form-check-label" for="exampleRadios2">
+						{variables[selected_variable][1]}
+					</label>
+				</div>
+			{/if}
 		</div>
 	</div>
 	{#if selected_variable != null}
-		<div class="row">
-			<div class="col">
-				<h3>Technology Type</h3>
-				<select
-					bind:value={selected_technology_type}
-					on:change={() => update_technologies()}
-				>
-					{#each technology_types as technology_type}
-						<option value={technology_type}>
-							{technology_type}
-						</option>
-					{/each}
-				</select>
-				{#if selected_technology_type == "storage"}
-					<div class="form-check">
-						<input
-							class="form-check-input"
-							type="radio"
-							name="storageRadios"
-							id="storageSpecificationRadio1"
-							value="energy"
-							checked
-						/>
-						<label
-							class="form-check-label"
-							for="storageSpecificationRadio1"
-						>
-							Energy
-						</label>
-					</div>
-					<div class="form-check">
-						<input
-							class="form-check-input"
-							type="radio"
-							name="storageRadios"
-							id="storageSpecificationRadio1"
-							value="option2"
-						/>
-						<label class="form-check-label" for="exampleRadios2">
-							Power
-						</label>
-					</div>
-				{/if}
-			</div>
-		</div>
-	{/if}
-	{#if selected_technology_type != null}
 		<div class="row">
 			<div class="col">
 				<h3>Carrier</h3>
@@ -232,16 +190,7 @@
 					</div>
 				{/each}
 			</div>
-		</div>
-	{:else if selected_technology_type != null && selected_carrier != null}
-		<div class="row">
-			<div class="col">
-				<h4>
-					No technologies for the selected technology type and
-					carrier.
-				</h4>
-			</div>
-		</div>
+		</div> 
 	{/if}
 {/if}
 

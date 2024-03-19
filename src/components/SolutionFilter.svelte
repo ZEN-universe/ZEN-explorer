@@ -6,7 +6,8 @@
 		ActivatedSolution,
 		ScenarioDetail,
 	} from "$lib/types";
-	import { PUBLIC_TEMPLE_URL } from "$env/static/public";
+	import { get_solutions, get_solution_detail } from "$lib/temple";
+
 	import { onMount, tick, createEventDispatcher } from "svelte";
 
 	const dispatch = createEventDispatcher<{
@@ -22,39 +23,12 @@
 
 	onMount(async function () {
 		console.log("Updating solution");
-		solution_list = await (
-			await fetch(PUBLIC_TEMPLE_URL + "/solutions/list")
-		).json();
+		solution_list = await get_solutions();
 	});
 
-	async function update_components() {
-		if (!active_solution) {
-			return;
-		}
-
-		components = await (
-			await fetch(
-				PUBLIC_TEMPLE_URL + `solutions/${active_solution}/components`,
-			)
-		).json();
-
-		components = components.filter((c) =>
-			["capacity", "capacity_addition"].includes(c.component_name),
-		);
-
-		await tick();
-
-		active_component = "";
-	}
-
 	async function update_solution_details() {
-		const response = await fetch(
-			PUBLIC_TEMPLE_URL + `solutions/get_detail/${active_solution}`,
-		);
-		solution_detail = await response.json();
+		solution_detail = await get_solution_detail(active_solution);
 		active_scenario = "";
-		active_component = "";
-
 		dispatch("solution_selected", null);
 	}
 
@@ -67,7 +41,6 @@
 		let activated_solution: ActivatedSolution = {
 			solution_name: active_solution,
 			scenario_name: active_scenario,
-			component_name: active_component,
 			detail: active_scenario_detail,
 		};
 
@@ -97,27 +70,11 @@
 			<h3>Scenario</h3>
 			<select
 				bind:value={active_scenario}
-				on:change={() => update_components()}
+				on:change={() => dispatch_solution()}
 			>
 				{#each Object.keys(solution_detail.scenarios) as scenario}
 					<option value={scenario}>
 						{scenario}
-					</option>
-				{/each}
-			</select>
-		</div>
-	</div>
-
-	<div class="row">
-		<div class="col">
-			<h3>Variable</h3>
-			<select
-				bind:value={active_component}
-				on:change={() => dispatch_solution()}
-			>
-				{#each components as component}
-					<option value={component.component_name}>
-						{component.component_name}
 					</option>
 				{/each}
 			</select>

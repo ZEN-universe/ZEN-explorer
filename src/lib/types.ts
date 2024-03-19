@@ -66,6 +66,5 @@ export interface SolutionDetail {
 export interface ActivatedSolution {
     solution_name: string;
     scenario_name: string;
-    component_name: string,
     detail: ScenarioDetail;
 }
