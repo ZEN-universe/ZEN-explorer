@@ -195,7 +195,7 @@
 			</div>
 		</div>
 	{/if}
-	{#if selected_variable != null}
+	{#if selected_variable != null && selected_carrier != null && (selected_variable == "import_export" || technologies.length > 0)}
 		<div class="row">
 			<div class="col">
 				<h3>Node</h3>
