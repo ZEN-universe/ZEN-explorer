@@ -20,7 +20,6 @@
 	let selected_node: string | null = null;
 	let selected_year: string | null = null;
 	let selected_variable: string | null = null;
-	let selected_subvariable: string = "";
 	let selected_carrier: string | null = null;
 	let technologies: string[] = [];
 	let selected_technology: string | null = null;
@@ -56,6 +55,27 @@
 		selected_node = null;
 		selected_year = null;
 		technologies = selected_solution?.detail.system.set_technologies ?? [];
+		switch (selected_variable) {
+			case "conversion":
+				technologies =
+					selected_solution!.detail.system
+						.set_conversion_technologies;
+				break;
+			case "storage":
+				technologies =
+					selected_solution!.detail.system.set_storage_technologies;
+				break;
+			case "transport":
+				technologies =
+					selected_solution!.detail.system.set_transport_technologies;
+				break;
+			case "import_export":
+				technologies =
+					selected_solution!.detail.system
+						.set_bidirectional_transport_technologies;
+				break;
+		}
+
 		technologies = technologies.filter(
 			(technology) =>
 				selected_solution?.detail.reference_carrier[technology] ==
@@ -75,7 +95,10 @@
 	<div class="row">
 		<div class="col">
 			<h3>Variable</h3>
-			<select bind:value={selected_variable}>
+			<select
+				bind:value={selected_variable}
+				on:change={update_technologies}
+			>
 				{#each Object.entries(variables) as [variable, subvalues]}
 					<option value={variable}>
 						{variable}
@@ -129,13 +152,15 @@
 			</div>
 		</div>
 	{/if}
-	{#if technologies.length > 0}
+	{#if technologies.length > 0 && selected_variable != "import_export"}
 		<div class="row">
 			<div class="col">
 				<h3>Technology</h3>
 				<AllCheckbox bind:elements={technologies}></AllCheckbox>
 			</div>
 		</div>
+	{/if}
+	{#if selected_variable != null}
 		<div class="row">
 			<div class="col">
 				<h3>Node</h3>
