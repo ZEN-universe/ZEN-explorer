@@ -3,7 +3,6 @@
 	import ComponentBarChart from "./ComponentBarChart.svelte";
 	import type { ActivatedSolution } from "$lib/types";
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
-	import { base } from "$app/paths";
 
 	let data: Papa.ParseResult<any>;
 	let carriers: string[] = [];

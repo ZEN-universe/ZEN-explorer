@@ -3,7 +3,6 @@
 	import ComponentBarChart from "./ComponentBarChart.svelte";
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import type { ActivatedSolution } from "$lib/types";
-	import { base } from "$app/paths";
 
 	let data: Papa.ParseResult<any>;
 	let carriers: string[] = [];
@@ -23,6 +22,7 @@
 	let selected_carrier: string | null = null;
 	let technologies: string[] = [];
 	let selected_technology: string | null = null;
+	let selected_subvariable: string | null = null;
 
 	function reset_form() {
 		selected_solution = null;
@@ -30,6 +30,7 @@
 		selected_year = null;
 		selected_node = null;
 		selected_carrier = null;
+		selected_variable = null;
 	}
 
 	function activate_solution(
@@ -41,7 +42,6 @@
 			return;
 		}
 
-		carriers = selected_solution.detail.system.set_carriers;
 		nodes = selected_solution.detail.system.set_nodes;
 		let years_index = [
 			...Array(selected_solution.detail.system.optimized_years).keys(),
@@ -49,9 +49,31 @@
 		years = years_index.map(
 			(i) => i + selected_solution!.detail.system.reference_year,
 		);
+		update_carriers();
 	}
 
-	function update_technologies() {
+	function update_carriers() {
+		if (selected_solution == null) {
+			carriers = [];
+		}
+		if (selected_variable == "import_export") {
+			if (selected_subvariable == "import") {
+				carriers = selected_solution!.detail.carriers_import;
+			} else {
+				carriers = selected_solution!.detail.carriers_export;
+			}
+		} else {
+			carriers = selected_solution!.detail.system.set_carriers;
+		}
+
+		console.log(selected_solution);
+	}
+
+	function updated_variable() {
+		if (selected_variable == null) {
+			return;
+		}
+
 		selected_node = null;
 		selected_year = null;
 		technologies = selected_solution?.detail.system.set_technologies ?? [];
@@ -85,6 +107,11 @@
 		if (technologies.length == 1) {
 			selected_technology = technologies[0];
 		}
+
+		if (variables[selected_variable] != null) {
+			selected_subvariable = variables[selected_variable]![0];
+		}
+		update_carriers();
 	}
 </script>
 
@@ -95,10 +122,7 @@
 	<div class="row">
 		<div class="col">
 			<h3>Variable</h3>
-			<select
-				bind:value={selected_variable}
-				on:change={update_technologies}
-			>
+			<select bind:value={selected_variable} on:change={updated_variable}>
 				{#each Object.entries(variables) as [variable, subvalues]}
 					<option value={variable}>
 						{variable}
@@ -112,7 +136,12 @@
 						type="radio"
 						name="variableRadios"
 						id="specificationRadio1"
-						value="selected_subvariable"
+						value={variables[selected_variable][0]}
+						on:change={() => {
+							selected_subvariable =
+								variables[selected_variable][0];
+							update_carriers();
+						}}
 						checked
 					/>
 					<label class="form-check-label" for="specificationRadio1">
@@ -125,7 +154,12 @@
 						type="radio"
 						name="variableRadios"
 						id="specificationRadio1"
-						value="option2"
+						value={variables[selected_variable][1]}
+						on:change={() => {
+							selected_subvariable =
+								variables[selected_variable][1];
+							update_carriers();
+						}}
 					/>
 					<label class="form-check-label" for="exampleRadios2">
 						<!-- @ts-ignore -->
@@ -135,13 +169,14 @@
 			{/if}
 		</div>
 	</div>
+
 	{#if selected_variable != null}
 		<div class="row">
 			<div class="col">
 				<h3>Carrier</h3>
 				<select
 					bind:value={selected_carrier}
-					on:change={() => update_technologies()}
+					on:change={() => updated_variable()}
 				>
 					{#each carriers as carrier}
 						<option value={carrier}>
