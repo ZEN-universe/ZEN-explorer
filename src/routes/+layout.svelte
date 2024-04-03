@@ -5,6 +5,8 @@
     let transition_urls = {
         Capacity: base + "/transition/capacity",
         Production: base + "/transition/production",
+        Emissions: base + "/transition/emissions",
+        Costs: base + "/transition/costs"
     };
 </script>
 

@@ -1,26 +1,21 @@
 <script lang="ts">
 	import SolutionFilter from "../../../components/SolutionFilter.svelte";
 	import ComponentBarChart from "./ComponentBarChart.svelte";
-	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import type { ActivatedSolution } from "$lib/types";
+	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import { base } from "$app/paths";
 
 	let data: Papa.ParseResult<any>;
 	let carriers: string[] = [];
 	let nodes: string[] = [];
 	let years: number[] = [];
-	let variables: { [key: string]: string[] | null } = {
-		conversion: ["input", "output"],
-		storage: ["charge", "discharge"],
-		transport: null,
-		import_export: ["import", "export"],
-	};
+	let variables: string[] = ["Annual", "Cumulative"];
 
 	let selected_solution: ActivatedSolution | null = null;
 	let selected_node: string | null = null;
 	let selected_year: string | null = null;
 	let selected_variable: string | null = null;
-	let selected_subvariable: string = "";
+	let subdivision: boolean = false;
 	let selected_carrier: string | null = null;
 	let technologies: string[] = [];
 	let selected_technology: string | null = null;
@@ -43,6 +38,7 @@
 		}
 
 		carriers = selected_solution.detail.system.set_carriers;
+		technologies = selected_solution?.detail.system.set_technologies ?? [];
 		nodes = selected_solution.detail.system.set_nodes;
 		let years_index = [
 			...Array(selected_solution.detail.system.optimized_years).keys(),
@@ -51,91 +47,58 @@
 			(i) => i + selected_solution!.detail.system.reference_year,
 		);
 	}
-
-	function update_technologies() {
-		selected_node = null;
-		selected_year = null;
-		technologies = selected_solution?.detail.system.set_technologies ?? [];
-		technologies = technologies.filter(
-			(technology) =>
-				selected_solution?.detail.reference_carrier[technology] ==
-				selected_carrier,
-		);
-
-		if (technologies.length == 1) {
-			selected_technology = technologies[0];
-		}
-	}
 </script>
 
-<h2>Production</h2>
+<h2>Emissions</h2>
 <SolutionFilter on:solution_selected={activate_solution} />
 
 {#if selected_solution != null}
 	<div class="row">
 		<div class="col">
-			<h3>Variable</h3>
-			<select bind:value={selected_variable}>
-				{#each Object.entries(variables) as [variable, subvalues]}
-					<option value={variable}>
-						{variable}
-					</option>
-				{/each}
-			</select>
-			{#if variables && selected_variable && variables[selected_variable] != null}
-				<div class="form-check">
-					<input
-						class="form-check-input"
-						type="radio"
-						name="variableRadios"
-						id="specificationRadio1"
-						value="selected_subvariable"
-						checked
-					/>
-					<label class="form-check-label" for="specificationRadio1">
-						{variables[selected_variable][0]}
-					</label>
-				</div>
-				<div class="form-check">
-					<input
-						class="form-check-input"
-						type="radio"
-						name="variableRadios"
-						id="specificationRadio1"
-						value="option2"
-					/>
-					<label class="form-check-label" for="exampleRadios2">
-						<!-- @ts-ignore -->
-						{variables[selected_variable][1]}
-					</label>
-				</div>
-			{/if}
+			<h3>Subdivision</h3>
+			<input
+				type="checkbox"
+				class="btn-check"
+				id="btn-check-outlined"
+				autocomplete="off"
+				bind:checked={subdivision}
+				on:change={() => {
+					selected_variable = null;
+				}}
+			/>
+			<label class="btn btn-outline-primary" for="btn-check-outlined"
+				>{subdivision ? "on" : "off"}</label
+			><br />
 		</div>
 	</div>
-	{#if selected_variable != null}
+	{#if !subdivision}
 		<div class="row">
 			<div class="col">
-				<h3>Carrier</h3>
-				<select
-					bind:value={selected_carrier}
-					on:change={() => update_technologies()}
-				>
-					{#each carriers as carrier}
-						<option value={carrier}>
-							{carrier}
+				<h3>Variable</h3>
+				<select bind:value={selected_variable}>
+					{#each variables as variable}
+						<option value={variable}>
+							{variable}
 						</option>
 					{/each}
 				</select>
 			</div>
 		</div>
-	{/if}
-	{#if technologies.length > 0}
+	{:else}
+		<div class="row">
+			<div class="col">
+				<h3>Carrier</h3>
+				<AllCheckbox bind:elements={carriers}></AllCheckbox>
+			</div>
+		</div>
 		<div class="row">
 			<div class="col">
 				<h3>Technology</h3>
 				<AllCheckbox bind:elements={technologies}></AllCheckbox>
 			</div>
 		</div>
+	{/if}
+	{#if subdivision || selected_variable != null}
 		<div class="row">
 			<div class="col">
 				<h3>Node</h3>

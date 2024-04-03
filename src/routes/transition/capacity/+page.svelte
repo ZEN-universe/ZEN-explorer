@@ -1,8 +1,8 @@
 <script lang="ts">
 	import SolutionFilter from "../../../components/SolutionFilter.svelte";
 	import ComponentBarChart from "./ComponentBarChart.svelte";
+	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import type { ActivatedSolution } from "$lib/types";
-	import { base } from "$app/paths";
 
 	let data: Papa.ParseResult<any>;
 	let technology_types: string[] = ["conversion", "storage", "transport"];
@@ -173,64 +173,19 @@
 		<div class="row">
 			<div class="col">
 				<h3>Technology</h3>
-				{#each technologies as technology}
-					<div class="form-check">
-						<input
-							class="form-check-input"
-							type="checkbox"
-							value=""
-							id={technology + "_checkbox"}
-						/>
-						<label
-							class="form-check-label"
-							for={technology + "_checkbox"}
-						>
-							{technology}
-						</label>
-					</div>
-				{/each}
+				<AllCheckbox bind:elements={technologies}></AllCheckbox>
 			</div>
 		</div>
 		<div class="row">
 			<div class="col">
 				<h3>Node</h3>
-				{#each nodes as node}
-					<div class="form-check">
-						<input
-							class="form-check-input"
-							type="checkbox"
-							value=""
-							id={node + "_checkbox"}
-						/>
-						<label
-							class="form-check-label"
-							for={node + "_checkbox"}
-						>
-							{node}
-						</label>
-					</div>
-				{/each}
+				<AllCheckbox bind:elements={nodes}></AllCheckbox>
 			</div>
 		</div>
 		<div class="row">
 			<div class="col">
 				<h3>Year</h3>
-				{#each years as year}
-					<div class="form-check">
-						<input
-							class="form-check-input"
-							type="checkbox"
-							value=""
-							id={year + "_checkbox"}
-						/>
-						<label
-							class="form-check-label"
-							for={year + "_checkbox"}
-						>
-							{year}
-						</label>
-					</div>
-				{/each}
+				<AllCheckbox bind:elements={years}></AllCheckbox>
 			</div>
 		</div>
 	{:else if selected_technology_type != null && selected_carrier != null}
