@@ -70,3 +70,21 @@ export interface ActivatedSolution {
     scenario_name: string;
     detail: ScenarioDetail;
 }
+
+export interface Row {
+    [key: string]: any;
+}
+
+export interface DatasetSelectors {
+    [key: string]: string[]
+}
+
+export interface Dataset {
+    label: string
+    data: YearValue;
+}
+
+
+export interface YearValue {
+    [key: string]: number;
+}

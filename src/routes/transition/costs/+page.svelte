@@ -1,7 +1,6 @@
 <script lang="ts">
 	import SolutionFilter from "../../../components/SolutionFilter.svelte";
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
-	import ComponentBarChart from "./ComponentBarChart.svelte";
 	import type { ActivatedSolution } from "$lib/types";
 
 	let data: Papa.ParseResult<any>;
@@ -119,5 +118,3 @@
 		</div>
 	</div>
 {/if}
-
-<ComponentBarChart bind:component_data={data} on:change={reset_form} />

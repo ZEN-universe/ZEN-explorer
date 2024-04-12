@@ -1,6 +1,5 @@
 <script lang="ts">
 	import SolutionFilter from "../../../components/SolutionFilter.svelte";
-	import ComponentBarChart from "./ComponentBarChart.svelte";
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import type { ActivatedSolution } from "$lib/types";
 
@@ -107,7 +106,7 @@
 		if (technologies.length == 1) {
 			selected_technology = technologies[0];
 		}
-
+		console.log(selected_solution)
 		if (variables[selected_variable] != null) {
 			selected_subvariable = variables[selected_variable]![0];
 		}
@@ -210,5 +209,3 @@
 		</div>
 	{/if}
 {/if}
-
-<ComponentBarChart bind:component_data={data} on:change={reset_form} />

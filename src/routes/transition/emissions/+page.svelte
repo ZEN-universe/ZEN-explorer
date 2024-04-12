@@ -1,6 +1,5 @@
 <script lang="ts">
 	import SolutionFilter from "../../../components/SolutionFilter.svelte";
-	import ComponentBarChart from "./ComponentBarChart.svelte";
 	import type { ActivatedSolution } from "$lib/types";
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 
@@ -112,5 +111,3 @@
 		</div>
 	{/if}
 {/if}
-
-<ComponentBarChart bind:component_data={data} on:change={reset_form} />

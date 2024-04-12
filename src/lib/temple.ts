@@ -1,10 +1,10 @@
 import { PUBLIC_TEMPLE_URL } from "$env/static/public";
+import Papa from 'papaparse';
 import type {
     Solution,
     Component,
-    SolutionDetail,
-    ActivatedSolution,
-    ScenarioDetail,
+    Row,
+    SolutionDetail
 } from "$lib/types";
 
 export async function get_solutions(): Promise<Solution[]> {
@@ -34,4 +34,13 @@ export async function get_solution_detail(
     ).json();
 
     return solution_detail
+}
+
+export async function get_component_data(solution_name: string, component_name: string, scenario_name: string): Promise<Papa.ParseResult<Row>> {
+    let component_data = await (
+        await fetch(
+            PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`,
+        )
+    ).json();
+    return Papa.parse(component_data, { delimiter: ",", header: true, newline: "\n" })
 }

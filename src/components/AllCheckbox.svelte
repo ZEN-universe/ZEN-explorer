@@ -1,7 +1,11 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
+    import { onMount } from "svelte";
     export let elements: any[];
+    export let selected_elements: any[];
 
-    let selected_elements: string[] = [];
+    const dispatch = createEventDispatcher();
+
     let all_select: boolean = false;
     // Values that are passed in as props
     // are immediately available
@@ -12,17 +16,20 @@
         } else {
             selected_elements = [];
         }
+
+        update_all_checkbox();
     }
     function update_all_checkbox() {
-        if (selected_elements.length == elements.length) {
-            all_select = true;
-        } else {
-            all_select = false;
-        }
+        all_select = selected_elements.length == elements.length;
+        dispatch("selection-changed", selected_elements);
     }
+
+    onMount(() => {
+        update_all_checkbox();
+    });
 </script>
 
-<div class="form-check">
+<div class="form-check form-check-inline">
     <input
         class="form-check-input"
         type="checkbox"
@@ -33,7 +40,7 @@
     <label class="form-check-label" for="all_checkbox"> Select all </label>
 </div>
 {#each elements as element, i}
-    <div class="form-check">
+    <div class="form-check form-check-inline">
         <input
             class="form-check-input"
             type="checkbox"

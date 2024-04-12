@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type {
 		Solution,
-		Component,
 		SolutionDetail,
 		ActivatedSolution,
 		ScenarioDetail,
@@ -14,22 +13,24 @@
 		solution_selected: ActivatedSolution | null;
 	}>();
 	let solution_list: Array<Solution> = [];
-	let components: Array<Component> = [];
 	let active_solution: string;
-	let active_component: string = "";
 	let active_scenario: string;
 	let solution_detail: SolutionDetail | null = null;
 	let active_scenario_detail: ScenarioDetail | null = null;
 
 	onMount(async function () {
-		console.log("Updating solution");
 		solution_list = await get_solutions();
 	});
 
 	async function update_solution_details() {
 		solution_detail = await get_solution_detail(active_solution);
-		active_scenario = "";
-		dispatch("solution_selected", null);
+		if (Object.keys(solution_detail.scenarios).length == 1) {
+			active_scenario = Object.keys(solution_detail.scenarios)[0];
+			dispatch_solution();
+		} else {
+			active_scenario = "";
+			dispatch("solution_selected", null);
+		}
 	}
 
 	async function dispatch_solution() {
@@ -64,7 +65,7 @@
 	</div>
 </div>
 
-{#if solution_detail != null}
+{#if solution_detail != null && Object.keys(solution_detail.scenarios).length > 1}
 	<div class="row">
 		<div class="col">
 			<h3>Scenario</h3>
