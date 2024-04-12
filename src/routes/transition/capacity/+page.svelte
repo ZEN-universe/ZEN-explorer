@@ -263,6 +263,10 @@
 									<Radio
 										bind:options={storage_type_options}
 										bind:selected_option={selected_storage_type}
+										on:selection-changed={() => {
+											update_technologies();
+											update_data();
+										}}
 									></Radio>
 								{/if}
 							{/if}
