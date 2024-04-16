@@ -2,6 +2,8 @@
 	import SolutionFilter from "../../../components/SolutionFilter.svelte";
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import type { ActivatedSolution } from "$lib/types";
+	import { filter_and_aggregate_data } from "$lib/utils";
+	import Radio from "../../../components/Radio.svelte";
 
 	let data: Papa.ParseResult<any>;
 	let carriers: string[] = [];
@@ -13,6 +15,8 @@
 		transport: null,
 		import_export: ["import", "export"],
 	};
+	let aggregation_options = ["technology", "node"];
+	let filtered_data: any[] | null = null;
 
 	let selected_solution: ActivatedSolution | null = null;
 	let selected_node: string | null = null;
@@ -20,8 +24,19 @@
 	let selected_variable: string | null = null;
 	let selected_carrier: string | null = null;
 	let technologies: string[] = [];
-	let selected_technology: string | null = null;
+	let selected_technologies: string[] = [];
+	let selected_nodes: string[] = [];
 	let selected_subvariable: string | null = null;
+	let selected_years: number[] = [];
+	let normalisation_options = ["not_normalized", "normalized"];
+	let selected_normalisation: string = "not_normalized";
+
+
+	interface StringList {
+		[key: string]: string[];
+	}
+
+	let selected_aggregation = "technology";
 
 	function reset_form() {
 		selected_solution = null;
@@ -36,7 +51,7 @@
 		solution_object: CustomEvent<ActivatedSolution | null>,
 	) {
 		selected_solution = solution_object.detail;
-
+		console.log(selected_solution);
 		if (selected_solution == null) {
 			return;
 		}
@@ -64,8 +79,63 @@
 		} else {
 			carriers = selected_solution!.detail.system.set_carriers;
 		}
+	}
 
-		console.log(selected_solution);
+	function update_technologies() {
+		console.log(selected_variable, selected_carrier);
+		if (selected_variable == null) {
+			return;
+		}
+		if (selected_carrier == null) {
+			return;
+		}
+
+		technologies = selected_solution?.detail.system.set_technologies ?? [];
+		switch (selected_variable) {
+			case "conversion":
+				technologies = [];
+				let relevant_carriers =
+					selected_solution!.detail.carriers_input;
+				if (selected_subvariable == "output") {
+					relevant_carriers =
+						selected_solution!.detail.carriers_output;
+				}
+				for (const technology in relevant_carriers) {
+					console.log();
+					if (
+						relevant_carriers[technology].includes(selected_carrier)
+					) {
+						technologies.push(technology);
+					}
+				}
+				break;
+			case "storage":
+				technologies = technologies.filter(
+					(technology) =>
+						selected_solution?.detail.reference_carrier[
+							technology
+						] == selected_carrier,
+				);
+
+				break;
+			case "transport":
+				technologies = technologies.filter(
+					(technology) =>
+						selected_solution?.detail.reference_carrier[
+							technology
+						] == selected_carrier,
+				);
+
+				break;
+			case "import_export":
+				technologies = [];
+				break;
+		}
+
+		if (technologies.length == 1) {
+			selected_technologies = [technologies[0]];
+		}
+		console.log("Selected", technologies);
 	}
 
 	function updated_variable() {
@@ -75,137 +145,264 @@
 
 		selected_node = null;
 		selected_year = null;
-		technologies = selected_solution?.detail.system.set_technologies ?? [];
-		switch (selected_variable) {
-			case "conversion":
-				technologies =
-					selected_solution!.detail.system
-						.set_conversion_technologies;
-				break;
-			case "storage":
-				technologies =
-					selected_solution!.detail.system.set_storage_technologies;
-				break;
-			case "transport":
-				technologies =
-					selected_solution!.detail.system.set_transport_technologies;
-				break;
-			case "import_export":
-				technologies =
-					selected_solution!.detail.system
-						.set_bidirectional_transport_technologies;
-				break;
-		}
 
-		technologies = technologies.filter(
-			(technology) =>
-				selected_solution?.detail.reference_carrier[technology] ==
-				selected_carrier,
-		);
-
-		if (technologies.length == 1) {
-			selected_technology = technologies[0];
-		}
-		console.log(selected_solution)
 		if (variables[selected_variable] != null) {
 			selected_subvariable = variables[selected_variable]![0];
 		}
+
 		update_carriers();
+		update_technologies();
+	}
+
+	function update_data() {
+		if (selected_aggregation == "technology") {
+			selected_nodes = nodes;
+		} else {
+			selected_technologies = technologies;
+		}
+
+		if (
+			selected_nodes.length == 0 ||
+			selected_years.length == 0 ||
+			selected_technologies.length == 0 ||
+			data === null
+		) {
+			filtered_data = null;
+			return;
+		}
+
+		let dataset_selector: StringList = {};
+		let datasets_aggregates: StringList = {};
+
+		if (selected_aggregation == "technology") {
+			dataset_selector["location"] = selected_nodes;
+			datasets_aggregates["technology"] = selected_technologies;
+		} else {
+			dataset_selector["technology"] = selected_technologies;
+			datasets_aggregates["location"] = selected_nodes;
+		}
+
+		let excluded_years = years
+			.filter((year) => !selected_years.includes(year))
+			.map(
+				(year) =>
+					year - selected_solution!.detail.system.reference_year,
+			);
+
+		filtered_data = filter_and_aggregate_data(
+			data.data,
+			dataset_selector,
+			datasets_aggregates,
+			excluded_years,
+			selected_normalisation == "normalized",
+			selected_solution!.detail.system.reference_year,
+		);
 	}
 </script>
 
-<h2>Production</h2>
-<SolutionFilter on:solution_selected={activate_solution} />
+<div class="row">
+	<div class="col">
+		<h2>Production</h2>
+	</div>
+</div>
+<div class="row">
+	<div class="col position-relative">
+		<div class="filters" style="position: absolute; width: 100%;">
+			<div class="accordion" id="accordionExample">
+				<div class="accordion-item solution-selection">
+					<h2 class="accordion-header">
+						<button
+							class="accordion-button"
+							type="button"
+							data-bs-toggle="collapse"
+							data-bs-target="#collapseOne"
+							aria-expanded="true"
+							aria-controls="collapseOne"
+						>
+							Solution Selection
+						</button>
+					</h2>
+					<div
+						id="collapseOne"
+						class="accordion-collapse collapse show"
+						data-bs-parent="#accordionExample"
+					>
+						<div class="accordion-body">
+							<SolutionFilter
+								on:solution_selected={activate_solution}
+							/>
+						</div>
+					</div>
+				</div>
+				<div class="accordion-item">
+					<h2 class="accordion-header">
+						<button
+							class="accordion-button collapsed"
+							type="button"
+							data-bs-toggle="collapse"
+							data-bs-target="#collapseTwo"
+							aria-expanded="false"
+							aria-controls="collapseTwo"
+						>
+							Variable Selection
+						</button>
+					</h2>
+					<div
+						id="collapseTwo"
+						class="accordion-collapse collapse"
+						data-bs-parent="#accordionExample"
+					>
+						<div class="accordion-body">
+							<select
+								bind:value={selected_variable}
+								on:change={updated_variable}
+							>
+								{#each Object.entries(variables) as [variable, subvalues]}
+									<option value={variable}>
+										{variable}
+									</option>
+								{/each}
+							</select>
+							{#if variables && selected_variable && variables[selected_variable] != null}
+								<div class="form-check">
+									<input
+										class="form-check-input"
+										type="radio"
+										name="variableRadios"
+										id="specificationRadio1"
+										value={variables[selected_variable][0]}
+										on:change={() => {
+											selected_subvariable =
+												variables[selected_variable][0];
+											update_technologies();
+										}}
+										checked
+									/>
+									<label
+										class="form-check-label"
+										for="specificationRadio1"
+									>
+										{variables[selected_variable][0]}
+									</label>
+								</div>
+								<div class="form-check">
+									<input
+										class="form-check-input"
+										type="radio"
+										name="variableRadios"
+										id="specificationRadio1"
+										value={variables[selected_variable][1]}
+										on:change={() => {
+											selected_subvariable =
+												variables[selected_variable][1];
+											update_technologies();
+										}}
+									/>
+									<label
+										class="form-check-label"
+										for="exampleRadios2"
+									>
+										<!-- @ts-ignore -->
+										{variables[selected_variable][1]}
+									</label>
+								</div>
+							{/if}
+							{#if selected_variable != null}
+								<div class="row">
+									<div class="col">
+										<h3>Carrier</h3>
+										<select
+											bind:value={selected_carrier}
+											on:change={() =>
+												update_technologies()}
+										>
+											{#each carriers as carrier}
+												<option value={carrier}>
+													{carrier}
+												</option>
+											{/each}
+										</select>
+									</div>
+								</div>
+							{/if}
+						</div>
+					</div>
+				</div>
+				<div class="accordion-item">
+					<h2 class="accordion-header">
+						<button
+							class="accordion-button collapsed"
+							type="button"
+							data-bs-toggle="collapse"
+							data-bs-target="#collapseThree"
+							aria-expanded="false"
+							aria-controls="collapseThree"
+						>
+							Data Selection
+						</button>
+					</h2>
+					<div
+						id="collapseThree"
+						class="accordion-collapse collapse"
+						data-bs-parent="#accordionExample"
+					>
+						<div class="accordion-body">
+							{#if technologies.length > 0}
+								<div class="row">
+									<div class="col-6">
+										<h3>Aggregation</h3>
+										<Radio
+											bind:options={aggregation_options}
+											bind:selected_option={selected_aggregation}
+											on:selection-changed={(e) => {
+												update_data();
+											}}
+										></Radio>
+									</div>
+									<div class="col-6">
+										<h3>Normalisation</h3>
+										<Radio
+											bind:options={normalisation_options}
+											bind:selected_option={selected_normalisation}
+											on:selection-changed={(e) => {
+												update_data();
+											}}
+										></Radio>
+									</div>
+								</div>
+								{#if selected_aggregation == "technology"}
+									<h3>Technology</h3>
+									<AllCheckbox
+										on:selection-changed={() => {
+											update_data();
+										}}
+										bind:selected_elements={selected_technologies}
+										bind:elements={technologies}
+									></AllCheckbox>
+								{:else}
+									<h3>Node</h3>
+									<AllCheckbox
+										on:selection-changed={(e) => {
+											update_data();
+										}}
+										bind:selected_elements={selected_nodes}
+										bind:elements={nodes}
+									></AllCheckbox>
+								{/if}
 
-{#if selected_solution != null}
-	<div class="row">
-		<div class="col">
-			<h3>Variable</h3>
-			<select bind:value={selected_variable} on:change={updated_variable}>
-				{#each Object.entries(variables) as [variable, subvalues]}
-					<option value={variable}>
-						{variable}
-					</option>
-				{/each}
-			</select>
-			{#if variables && selected_variable && variables[selected_variable] != null}
-				<div class="form-check">
-					<input
-						class="form-check-input"
-						type="radio"
-						name="variableRadios"
-						id="specificationRadio1"
-						value={variables[selected_variable][0]}
-						on:change={() => {
-							selected_subvariable =
-								variables[selected_variable][0];
-							update_carriers();
-						}}
-						checked
-					/>
-					<label class="form-check-label" for="specificationRadio1">
-						{variables[selected_variable][0]}
-					</label>
+								<h3>Year</h3>
+								<AllCheckbox
+									on:selection-changed={(e) => {
+										update_data();
+									}}
+									bind:selected_elements={selected_years}
+									bind:elements={years}
+								></AllCheckbox>
+							{/if}
+						</div>
+					</div>
 				</div>
-				<div class="form-check">
-					<input
-						class="form-check-input"
-						type="radio"
-						name="variableRadios"
-						id="specificationRadio1"
-						value={variables[selected_variable][1]}
-						on:change={() => {
-							selected_subvariable =
-								variables[selected_variable][1];
-							update_carriers();
-						}}
-					/>
-					<label class="form-check-label" for="exampleRadios2">
-						<!-- @ts-ignore -->
-						{variables[selected_variable][1]}
-					</label>
-				</div>
-			{/if}
+			</div>
 		</div>
 	</div>
-
-	{#if selected_variable != null}
-		<div class="row">
-			<div class="col">
-				<h3>Carrier</h3>
-				<select
-					bind:value={selected_carrier}
-					on:change={() => updated_variable()}
-				>
-					{#each carriers as carrier}
-						<option value={carrier}>
-							{carrier}
-						</option>
-					{/each}
-				</select>
-			</div>
-		</div>
-	{/if}
-	{#if technologies.length > 0 && selected_variable != "import_export"}
-		<div class="row">
-			<div class="col">
-				<h3>Technology</h3>
-				<AllCheckbox bind:elements={technologies}></AllCheckbox>
-			</div>
-		</div>
-	{/if}
-	{#if selected_variable != null && selected_carrier != null && (selected_variable == "import_export" || technologies.length > 0)}
-		<div class="row">
-			<div class="col">
-				<h3>Node</h3>
-				<AllCheckbox bind:elements={nodes}></AllCheckbox>
-			</div>
-		</div>
-		<div class="row">
-			<div class="col">
-				<h3>Year</h3>
-				<AllCheckbox bind:elements={years}></AllCheckbox>
-			</div>
-		</div>
-	{/if}
-{/if}
+</div>

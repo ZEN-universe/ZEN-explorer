@@ -16,7 +16,7 @@
 
 	let technology_types: string[] = ["conversion", "storage", "transport"];
 	let data: Papa.ParseResult<Row> | null = null;
-	let filtered_data: ChartDataset[] | null = null;
+	let filtered_data: any[] | null = null;
 	let variables: string[] = ["capacity", "capacity_addition"];
 	let carriers: string[] = [];
 	let nodes: string[] = [];
@@ -373,7 +373,7 @@
 	</div>
 </div>
 
-{#if filtered_data != null}
+{#if filtered_data != null && selected_solution != null}
 	<div class="row">
 		<div class="col" style="margin-top: 200px;">
 			<BarPlot
