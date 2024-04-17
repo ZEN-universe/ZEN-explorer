@@ -3,8 +3,9 @@ import Papa from 'papaparse';
 import type {
     Solution,
     Component,
-    Row,
-    SolutionDetail
+    ComponentTotal,
+    SolutionDetail,
+    Row
 } from "$lib/types";
 
 export async function get_solutions(): Promise<Solution[]> {
@@ -36,19 +37,25 @@ export async function get_solution_detail(
     return solution_detail
 }
 
-export async function get_component_total(solution_name: string, component_name: string, scenario_name: string, start_year: number = 0, step_year: number = 1): Promise<Papa.ParseResult<Row>> {
+export async function get_component_total(solution_name: string, component_name: string, scenario_name: string, start_year: number = 0, step_year: number = 1): Promise<ComponentTotal> {
     let component_data = await (
         await fetch(
             PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`,
         )
     ).json();
-
+    
     function transform_year(h: string): string {
         if (!isNaN(Number(h))) {
             return String(Number(h) * step_year + start_year)
         }
         return h
     }
+    let data: Papa.ParseResult<Row> = Papa.parse(component_data.data_csv, { delimiter: ",", header: true, newline: "\n", transformHeader: transform_year })
 
-    return Papa.parse(component_data, { delimiter: ",", header: true, newline: "\n", transformHeader: transform_year })
+    const ans: ComponentTotal = {
+        unit: component_data.unit,
+        data: data
+    }
+
+    return ans
 }

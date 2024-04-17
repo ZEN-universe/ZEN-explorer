@@ -19,6 +19,7 @@
 	};
 	let aggregation_options = ["technology", "node"];
 	let filtered_data: any[] | null = null;
+	let unit: string = "";
 
 	let selected_solution: ActivatedSolution | null = null;
 	let selected_node: string | null = null;
@@ -77,7 +78,8 @@
 			variable_name,
 			selected_solution!.scenario_name,
 		).then((fetched) => {
-			data = fetched;
+			data = fetched.data;
+			unit = fetched.unit;
 		});
 	}
 

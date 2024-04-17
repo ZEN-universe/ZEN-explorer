@@ -24,6 +24,7 @@
 	let aggregation_options = ["technology", "node"];
 	let normalisation_options = ["not_normalized", "normalized"];
 	let storage_type_options = ["energy", "power"];
+	let unit: string = "";
 
 	let selected_variable: string | null = null;
 	let selected_carrier: string | null = null;
@@ -35,7 +36,7 @@
 	let selected_nodes: string[] = [];
 	let selected_normalisation: string = "not_normalized";
 	let solution_loading: boolean = false;
-	let config;
+	let config: any;
 
 	function reset_form() {
 		selected_technology_type = null;
@@ -66,7 +67,13 @@
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
 		).then((fetched) => {
-			data = fetched;
+			data = fetched.data;
+
+			unit = fetched.unit;
+
+			if (unit == null) {
+				unit = "";
+			}
 		});
 	}
 
@@ -166,14 +173,14 @@
 						stacked: true,
 						title: {
 							display: true,
-							text: selected_variable,
+							text: selected_variable + " [" + unit + "]",
 						},
 					},
 				},
 				plugins: {
 					title: {
 						display: true,
-						text: selected_variable,
+						text: selected_carrier,
 					},
 				},
 			},
