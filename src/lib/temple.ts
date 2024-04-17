@@ -36,11 +36,19 @@ export async function get_solution_detail(
     return solution_detail
 }
 
-export async function get_component_data(solution_name: string, component_name: string, scenario_name: string): Promise<Papa.ParseResult<Row>> {
+export async function get_component_total(solution_name: string, component_name: string, scenario_name: string, start_year: number = 0, step_year: number = 1): Promise<Papa.ParseResult<Row>> {
     let component_data = await (
         await fetch(
             PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`,
         )
     ).json();
-    return Papa.parse(component_data, { delimiter: ",", header: true, newline: "\n" })
+
+    function transform_year(h: string): string {
+        if (!isNaN(Number(h))) {
+            return String(Number(h) * step_year + start_year)
+        }
+        return h
+    }
+
+    return Papa.parse(component_data, { delimiter: ",", header: true, newline: "\n", transformHeader: transform_year })
 }

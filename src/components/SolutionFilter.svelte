@@ -17,6 +17,10 @@
 	let active_scenario: string;
 	let solution_detail: SolutionDetail | null = null;
 	let active_scenario_detail: ScenarioDetail | null = null;
+	export let carriers: string[];
+	export let nodes: string[];
+	export let years: number[];
+	export let selected_solution: ActivatedSolution | null;
 
 	onMount(async function () {
 		solution_list = await get_solutions();
@@ -44,6 +48,23 @@
 			scenario_name: active_scenario,
 			detail: active_scenario_detail,
 		};
+
+		selected_solution = activated_solution;
+
+		if (selected_solution == null) {
+			return;
+		}
+
+		carriers = selected_solution.detail.system.set_carriers;
+		nodes = selected_solution.detail.system.set_nodes;
+		let years_index = [
+			...Array(selected_solution.detail.system.optimized_years).keys(),
+		];
+		years = years_index.map(
+			(i) =>
+				i * selected_solution!.detail.system.interval_between_years +
+				selected_solution!.detail.system.reference_year,
+		);
 
 		dispatch("solution_selected", activated_solution);
 	}

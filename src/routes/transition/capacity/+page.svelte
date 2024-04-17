@@ -4,11 +4,9 @@
 	import Radio from "../../../components/Radio.svelte";
 	import BarPlot from "../../../components/plots/BarPlot.svelte";
 	import type { ActivatedSolution, Row } from "$lib/types";
-	import { get_component_data } from "$lib/temple";
+	import { get_component_total } from "$lib/temple";
 	import { filter_and_aggregate_data } from "$lib/utils";
 	import { tick } from "svelte";
-
-	import type ChartDataset from "chart.js/auto";
 
 	interface StringList {
 		[key: string]: string[];
@@ -22,11 +20,11 @@
 	let nodes: string[] = [];
 	let years: number[] = [];
 	let technologies: string[] = [];
+	let selected_solution: ActivatedSolution | null = null;
 	let aggregation_options = ["technology", "node"];
 	let normalisation_options = ["not_normalized", "normalized"];
 	let storage_type_options = ["energy", "power"];
 
-	let selected_solution: ActivatedSolution | null = null;
 	let selected_variable: string | null = null;
 	let selected_carrier: string | null = null;
 	let selected_storage_type = "energy";
@@ -51,6 +49,7 @@
 		selected_technologies = [];
 		selected_years = [];
 	}
+
 	async function fetch_data() {
 		await tick();
 
@@ -58,34 +57,15 @@
 			return;
 		}
 
-		get_component_data(
+		get_component_total(
 			selected_solution!.solution_name,
 			selected_variable,
 			selected_solution!.scenario_name,
+			selected_solution!.detail.system.reference_year,
+			selected_solution!.detail.system.interval_between_years,
 		).then((fetched) => {
 			data = fetched;
 		});
-	}
-
-	function activate_solution(
-		solution_object: CustomEvent<ActivatedSolution | null>,
-	) {
-		selected_solution = solution_object.detail;
-		reset_form();
-		update_data();
-
-		if (selected_solution == null) {
-			return;
-		}
-
-		carriers = selected_solution.detail.system.set_carriers;
-		nodes = selected_solution.detail.system.set_nodes;
-		let years_index = [
-			...Array(selected_solution.detail.system.optimized_years).keys(),
-		];
-		years = years_index.map(
-			(i) => i + selected_solution!.detail.system.reference_year,
-		);
 	}
 
 	function update_technologies() {
@@ -155,12 +135,9 @@
 			datasets_aggregates["capacity_type"] = storage_type_options;
 		}
 
-		let excluded_years = years
-			.filter((year) => !selected_years.includes(year))
-			.map(
-				(year) =>
-					year - selected_solution!.detail.system.reference_year,
-			);
+		let excluded_years = years.filter(
+			(year) => !selected_years.includes(year),
+		);
 
 		filtered_data = filter_and_aggregate_data(
 			data.data,
@@ -168,7 +145,6 @@
 			datasets_aggregates,
 			excluded_years,
 			selected_normalisation == "normalized",
-			selected_solution!.detail.system.reference_year,
 		);
 	}
 </script>
@@ -202,7 +178,14 @@
 					>
 						<div class="accordion-body">
 							<SolutionFilter
-								on:solution_selected={activate_solution}
+								on:solution_selected={() => {
+									reset_form();
+									update_data();
+								}}
+								bind:carriers
+								bind:nodes
+								bind:years
+								bind:selected_solution
 							/>
 						</div>
 					</div>

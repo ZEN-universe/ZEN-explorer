@@ -4,6 +4,8 @@
 	import type { ActivatedSolution } from "$lib/types";
 	import { filter_and_aggregate_data } from "$lib/utils";
 	import Radio from "../../../components/Radio.svelte";
+	import { get_component_total } from "$lib/temple";
+	import { tick } from "svelte";
 
 	let data: Papa.ParseResult<any>;
 	let carriers: string[] = [];
@@ -31,7 +33,6 @@
 	let normalisation_options = ["not_normalized", "normalized"];
 	let selected_normalisation: string = "not_normalized";
 
-
 	interface StringList {
 		[key: string]: string[];
 	}
@@ -47,23 +48,37 @@
 		selected_variable = null;
 	}
 
-	function activate_solution(
-		solution_object: CustomEvent<ActivatedSolution | null>,
-	) {
-		selected_solution = solution_object.detail;
-		console.log(selected_solution);
-		if (selected_solution == null) {
+	function get_variable_name() {
+		switch (selected_variable) {
+			case "conversion":
+				return "flow_conversion_" + selected_subvariable;
+			case "storage":
+				return "flow_storage_" + selected_subvariable;
+			case "transport":
+				return "flow_transport";
+			case "import_export":
+				return "flow_" + selected_subvariable;
+			default:
+				return null;
+		}
+	}
+
+	async function fetch_data() {
+		await tick();
+
+		let variable_name = get_variable_name();
+
+		if (variable_name === null) {
 			return;
 		}
 
-		nodes = selected_solution.detail.system.set_nodes;
-		let years_index = [
-			...Array(selected_solution.detail.system.optimized_years).keys(),
-		];
-		years = years_index.map(
-			(i) => i + selected_solution!.detail.system.reference_year,
-		);
-		update_carriers();
+		get_component_total(
+			selected_solution!.solution_name,
+			variable_name,
+			selected_solution!.scenario_name,
+		).then((fetched) => {
+			data = fetched;
+		});
 	}
 
 	function update_carriers() {
@@ -135,7 +150,8 @@
 		if (technologies.length == 1) {
 			selected_technologies = [technologies[0]];
 		}
-		console.log("Selected", technologies);
+
+		fetch_data();
 	}
 
 	function updated_variable() {
@@ -182,12 +198,9 @@
 			datasets_aggregates["location"] = selected_nodes;
 		}
 
-		let excluded_years = years
-			.filter((year) => !selected_years.includes(year))
-			.map(
-				(year) =>
-					year - selected_solution!.detail.system.reference_year,
-			);
+		let excluded_years = years.filter(
+			(year) => !selected_years.includes(year),
+		);
 
 		filtered_data = filter_and_aggregate_data(
 			data.data,
@@ -195,7 +208,6 @@
 			datasets_aggregates,
 			excluded_years,
 			selected_normalisation == "normalized",
-			selected_solution!.detail.system.reference_year,
 		);
 	}
 </script>
@@ -229,7 +241,11 @@
 					>
 						<div class="accordion-body">
 							<SolutionFilter
-								on:solution_selected={activate_solution}
+								on:solution_selected={update_carriers}
+								bind:carriers
+								bind:nodes
+								bind:years
+								bind:selected_solution
 							/>
 						</div>
 					</div>
