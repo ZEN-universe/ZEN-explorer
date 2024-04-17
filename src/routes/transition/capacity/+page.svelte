@@ -35,6 +35,7 @@
 	let selected_nodes: string[] = [];
 	let selected_normalisation: string = "not_normalized";
 	let solution_loading: boolean = false;
+	let config;
 
 	function reset_form() {
 		selected_technology_type = null;
@@ -147,6 +148,36 @@
 			excluded_years,
 			selected_normalisation == "normalized",
 		);
+
+		config = {
+			type: "bar",
+			data: { datasets: filtered_data },
+			options: {
+				responsive: true,
+				scales: {
+					x: {
+						stacked: true,
+						title: {
+							display: true,
+							text: "Year",
+						},
+					},
+					y: {
+						stacked: true,
+						title: {
+							display: true,
+							text: selected_variable,
+						},
+					},
+				},
+				plugins: {
+					title: {
+						display: true,
+						text: selected_variable,
+					},
+				},
+			},
+		};
 	}
 </script>
 
@@ -363,7 +394,7 @@
 	<div class="col" style="margin-top: 200px;">
 		{#if filtered_data != null && selected_solution != null}
 			<BarPlot
-				bind:datasets={filtered_data}
+				bind:config
 				bind:year_offset={selected_solution.detail.system
 					.reference_year}
 			></BarPlot>
