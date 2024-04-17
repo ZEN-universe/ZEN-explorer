@@ -34,6 +34,7 @@
 	let selected_years: number[] = [];
 	let selected_nodes: string[] = [];
 	let selected_normalisation: string = "not_normalized";
+	let solution_loading: boolean = false;
 
 	function reset_form() {
 		selected_technology_type = null;
@@ -186,184 +187,192 @@
 								bind:nodes
 								bind:years
 								bind:selected_solution
+								bind:loading={solution_loading}
 							/>
 						</div>
 					</div>
 				</div>
-				<div class="accordion-item variable-selection">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button collapsed"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseTwo"
-							aria-expanded="false"
-							aria-controls="collapseTwo"
-						>
-							Variable Selection
-						</button>
-					</h2>
-					<div
-						id="collapseTwo"
-						class="accordion-collapse collapse"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							<h3>Variable</h3>
-							<select
-								on:change={() => {
-									fetch_data();
-									selected_technology_type = null;
-									selected_carrier = null;
-									reset_data_selection();
-									update_data();
-								}}
-								bind:value={selected_variable}
+				{#if !solution_loading}
+					<div class="accordion-item variable-selection">
+						<h2 class="accordion-header">
+							<button
+								class="accordion-button collapsed"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#collapseTwo"
+								aria-expanded="false"
+								aria-controls="collapseTwo"
 							>
-								{#each variables as variable}
-									<option value={variable}>
-										{variable}
-									</option>
-								{/each}
-							</select>
-
-							{#if selected_variable != null}
-								<h3>Technology Type</h3>
+								Variable Selection
+							</button>
+						</h2>
+						<div
+							id="collapseTwo"
+							class="accordion-collapse collapse"
+							data-bs-parent="#accordionExample"
+						>
+							<div class="accordion-body">
+								<h3>Variable</h3>
 								<select
-									bind:value={selected_technology_type}
 									on:change={() => {
-										update_technologies();
+										fetch_data();
+										selected_technology_type = null;
+										selected_carrier = null;
+										reset_data_selection();
 										update_data();
 									}}
+									bind:value={selected_variable}
 								>
-									{#each technology_types as technology_type}
-										<option value={technology_type}>
-											{technology_type}
+									{#each variables as variable}
+										<option value={variable}>
+											{variable}
 										</option>
 									{/each}
 								</select>
-								{#if selected_technology_type == "storage"}
-									<Radio
-										bind:options={storage_type_options}
-										bind:selected_option={selected_storage_type}
-										on:selection-changed={() => {
+
+								{#if selected_variable != null}
+									<h3>Technology Type</h3>
+									<select
+										bind:value={selected_technology_type}
+										on:change={() => {
 											update_technologies();
 											update_data();
 										}}
-									></Radio>
+									>
+										{#each technology_types as technology_type}
+											<option value={technology_type}>
+												{technology_type}
+											</option>
+										{/each}
+									</select>
+									{#if selected_technology_type == "storage"}
+										<Radio
+											bind:options={storage_type_options}
+											bind:selected_option={selected_storage_type}
+											on:selection-changed={() => {
+												update_technologies();
+												update_data();
+											}}
+										></Radio>
+									{/if}
 								{/if}
-							{/if}
-							{#if selected_technology_type != null}
-								<h3>Carrier</h3>
-								<select
-									bind:value={selected_carrier}
-									on:change={() => {
-										update_technologies();
-										update_data();
-									}}
-								>
-									{#each carriers as carrier}
-										<option value={carrier}>
-											{carrier}
-										</option>
-									{/each}
-								</select>
-							{/if}
-						</div>
-					</div>
-				</div>
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button collapsed"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseThree"
-							aria-expanded="false"
-							aria-controls="collapseThree"
-						>
-							Data Selection
-						</button>
-					</h2>
-					<div
-						id="collapseThree"
-						class="accordion-collapse collapse"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							{#if technologies.length > 0}
-								<div class="row">
-									<div class="col-6">
-										<h3>Aggregation</h3>
-										<Radio
-											bind:options={aggregation_options}
-											bind:selected_option={selected_aggregation}
-											on:selection-changed={(e) => {
-												update_data();
-											}}
-										></Radio>
-									</div>
-									<div class="col-6">
-										<h3>Normalisation</h3>
-										<Radio
-											bind:options={normalisation_options}
-											bind:selected_option={selected_normalisation}
-											on:selection-changed={(e) => {
-												update_data();
-											}}
-										></Radio>
-									</div>
-								</div>
-								{#if selected_aggregation == "technology"}
-									<h3>Technology</h3>
-									<AllCheckbox
-										on:selection-changed={() => {
+								{#if selected_technology_type != null}
+									<h3>Carrier</h3>
+									<select
+										bind:value={selected_carrier}
+										on:change={() => {
+											update_technologies();
 											update_data();
 										}}
-										bind:selected_elements={selected_technologies}
-										bind:elements={technologies}
-									></AllCheckbox>
-								{:else}
-									<h3>Node</h3>
+									>
+										{#each carriers as carrier}
+											<option value={carrier}>
+												{carrier}
+											</option>
+										{/each}
+									</select>
+								{/if}
+							</div>
+						</div>
+					</div>
+					<div class="accordion-item">
+						<h2 class="accordion-header">
+							<button
+								class="accordion-button collapsed"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#collapseThree"
+								aria-expanded="false"
+								aria-controls="collapseThree"
+							>
+								Data Selection
+							</button>
+						</h2>
+						<div
+							id="collapseThree"
+							class="accordion-collapse collapse"
+							data-bs-parent="#accordionExample"
+						>
+							<div class="accordion-body">
+								{#if technologies.length > 0}
+									<div class="row">
+										<div class="col-6">
+											<h3>Aggregation</h3>
+											<Radio
+												bind:options={aggregation_options}
+												bind:selected_option={selected_aggregation}
+												on:selection-changed={(e) => {
+													update_data();
+												}}
+											></Radio>
+										</div>
+										<div class="col-6">
+											<h3>Normalisation</h3>
+											<Radio
+												bind:options={normalisation_options}
+												bind:selected_option={selected_normalisation}
+												on:selection-changed={(e) => {
+													update_data();
+												}}
+											></Radio>
+										</div>
+									</div>
+									{#if selected_aggregation == "technology"}
+										<h3>Technology</h3>
+										<AllCheckbox
+											on:selection-changed={() => {
+												update_data();
+											}}
+											bind:selected_elements={selected_technologies}
+											bind:elements={technologies}
+										></AllCheckbox>
+									{:else}
+										<h3>Node</h3>
+										<AllCheckbox
+											on:selection-changed={(e) => {
+												update_data();
+											}}
+											bind:selected_elements={selected_nodes}
+											bind:elements={nodes}
+										></AllCheckbox>
+									{/if}
+
+									<h3>Year</h3>
 									<AllCheckbox
 										on:selection-changed={(e) => {
 											update_data();
 										}}
-										bind:selected_elements={selected_nodes}
-										bind:elements={nodes}
+										bind:selected_elements={selected_years}
+										bind:elements={years}
 									></AllCheckbox>
+								{:else if selected_technology_type != null && selected_carrier != null}
+									<h4>
+										No technologies for the selected
+										technology type and carrier.
+									</h4>
 								{/if}
-
-								<h3>Year</h3>
-								<AllCheckbox
-									on:selection-changed={(e) => {
-										update_data();
-									}}
-									bind:selected_elements={selected_years}
-									bind:elements={years}
-								></AllCheckbox>
-							{:else if selected_technology_type != null && selected_carrier != null}
-								<h4>
-									No technologies for the selected technology
-									type and carrier.
-								</h4>
-							{/if}
+							</div>
 						</div>
 					</div>
-				</div>
+				{/if}
 			</div>
 		</div>
 	</div>
 </div>
-
-{#if filtered_data != null && selected_solution != null}
-	<div class="row">
-		<div class="col" style="margin-top: 200px;">
+<div class="row">
+	<div class="col" style="margin-top: 200px;">
+		{#if filtered_data != null && selected_solution != null}
 			<BarPlot
 				bind:datasets={filtered_data}
 				bind:year_offset={selected_solution.detail.system
 					.reference_year}
 			></BarPlot>
-		</div>
+		{:else if solution_loading}
+			<div class="text-center">
+				<div class="spinner-border center" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+			</div>
+		{/if}
 	</div>
-{/if}
+</div>

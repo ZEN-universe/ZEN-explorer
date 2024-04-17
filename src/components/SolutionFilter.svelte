@@ -21,12 +21,14 @@
 	export let nodes: string[];
 	export let years: number[];
 	export let selected_solution: ActivatedSolution | null;
+	export let loading: boolean = false;
 
 	onMount(async function () {
 		solution_list = await get_solutions();
 	});
 
 	async function update_solution_details() {
+		loading = true;
 		solution_detail = await get_solution_detail(active_solution);
 		if (Object.keys(solution_detail.scenarios).length == 1) {
 			active_scenario = Object.keys(solution_detail.scenarios)[0];
@@ -35,6 +37,7 @@
 			active_scenario = "";
 			dispatch("solution_selected", null);
 		}
+		loading = false;
 	}
 
 	async function dispatch_solution() {
