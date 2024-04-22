@@ -217,15 +217,15 @@
 					>
 						<div class="accordion-body">
 							<SolutionFilter
-								on:solution_selected={() => {
-									reset_form();
-									update_data();
-								}}
 								bind:carriers
 								bind:nodes
 								bind:years
 								bind:selected_solution
 								bind:loading={solution_loading}
+								on:solution_selected={() => {
+									reset_form();
+									update_data();
+								}}
 							/>
 						</div>
 					</div>
@@ -252,14 +252,14 @@
 							<div class="accordion-body">
 								<h3>Variable</h3>
 								<select
-									on:change={() => {
+									bind:value={selected_variable}
+									on:change={(e) => {
 										fetch_data();
 										selected_technology_type = null;
 										selected_carrier = null;
 										reset_data_selection();
 										update_data();
 									}}
-									bind:value={selected_variable}
 								>
 									{#each variables as variable}
 										<option value={variable}>
@@ -358,30 +358,30 @@
 									{#if selected_aggregation == "technology"}
 										<h3>Technology</h3>
 										<AllCheckbox
+											bind:selected_elements={selected_technologies}
+											bind:elements={technologies}
 											on:selection-changed={() => {
 												update_data();
 											}}
-											bind:selected_elements={selected_technologies}
-											bind:elements={technologies}
 										></AllCheckbox>
 									{:else}
 										<h3>Node</h3>
 										<AllCheckbox
+											bind:selected_elements={selected_nodes}
+											bind:elements={nodes}
 											on:selection-changed={(e) => {
 												update_data();
 											}}
-											bind:selected_elements={selected_nodes}
-											bind:elements={nodes}
 										></AllCheckbox>
 									{/if}
 
 									<h3>Year</h3>
 									<AllCheckbox
+										bind:selected_elements={selected_years}
+										bind:elements={years}
 										on:selection-changed={(e) => {
 											update_data();
 										}}
-										bind:selected_elements={selected_years}
-										bind:elements={years}
 									></AllCheckbox>
 								{:else if selected_technology_type != null && selected_carrier != null}
 									<h4>
