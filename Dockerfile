@@ -1,12 +1,23 @@
-FROM python:3.9.18-slim-bullseye
+FROM node:19 as build
 
-WORKDIR /work
+ENV NODE_ENV=development 
 
-COPY . .
+WORKDIR /app
 
-RUN pip install -r requirements.txt
-RUN pip install gunicorn
+COPY package.json ./
 
-EXPOSE 8000
+RUN npm install
+COPY . ./
+RUN npm run build
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8050", "app:server", "--workers", "4", "--preload"]
+ENV NODE_ENV=production
+
+FROM node:19-alpine3.16
+
+WORKDIR /app
+COPY --from=build /app .
+
+
+ENV HOST=0.0.0.0
+EXPOSE 8050
+CMD ["npm","run", "preview","--", "--host", "0.0.0.0", "--port", "8050"]
