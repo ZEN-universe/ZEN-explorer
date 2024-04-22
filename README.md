@@ -18,4 +18,4 @@ In order to start the development mode, you can start the local server with `npm
 This will start a server running on `http://localhost:5173/explorer` which you can open in your browser.
 
 ## Deployment
-The simplest way to start the frontend in production mode is by using the provided Dockefile. Simply install Docker (https://docs.docker.com/get-docker/), build the image with `docker build .` and run it with `docker run -e TEMPLE_URL=<your temple url> -p 8050:8050`. 
+The simplest way to start the frontend in production mode is by using the provided Dockefile. Simply install Docker (https://docs.docker.com/get-docker/), build the image with `docker build . -t explorer` and run it with `docker run -p 8050:8050 explorer`. 
