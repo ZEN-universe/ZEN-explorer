@@ -17,14 +17,15 @@
 	let filtered_data: any[] | null = null;
 	let variables: string[] = ["capacity", "capacity_addition"];
 	let carriers: string[] = [];
-	let nodes: string[] = [];
+	let locations: string[] = [];
 	let years: number[] = [];
 	let technologies: string[] = [];
 	let selected_solution: ActivatedSolution | null = null;
 	let aggregation_options = ["technology", "node"];
 	let normalisation_options = ["not_normalized", "normalized"];
 	let storage_type_options = ["energy", "power"];
-	let unit: string = "";
+	let unit: Papa.ParseResult<Row> | null = null;
+	let current_unit: string = "";
 
 	let selected_variable: string | null = null;
 	let selected_carrier: string | null = null;
@@ -33,11 +34,33 @@
 	let selected_technology_type: string | null = null;
 	let selected_technologies: string[] = [];
 	let selected_years: number[] = [];
-	let selected_nodes: string[] = [];
+	let selected_locations: string[] = [];
 	let selected_normalisation: string = "not_normalized";
 	let solution_loading: boolean = false;
-	let config: any;
-
+	let datasets: any[] = [];
+	let config = {
+		type: "bar",
+		data: { datasets: datasets },
+		options: {
+			responsive: true,
+			scales: {
+				x: {
+					stacked: true,
+					title: {
+						display: true,
+						text: "Year",
+					},
+				},
+				y: {
+					stacked: true,
+					title: {
+						display: true,
+						text: selected_variable + " [" + current_unit + "]",
+					},
+				},
+			},
+		},
+	};
 	function reset_form() {
 		selected_technology_type = null;
 		selected_variable = null;
@@ -48,7 +71,7 @@
 
 	function reset_data_selection() {
 		selected_normalisation = "not_normalized";
-		selected_nodes = [];
+		selected_locations = [];
 		selected_technologies = [];
 		selected_years = [];
 	}
@@ -68,20 +91,12 @@
 			selected_solution!.detail.system.interval_between_years,
 		).then((fetched) => {
 			data = fetched.data;
-
 			unit = fetched.unit;
-
-			if (unit == null) {
-				unit = "";
-			}
 		});
 	}
 
 	function update_technologies() {
 		technologies = [];
-		if (selected_carrier === null) {
-			return;
-		}
 
 		if (selected_technology_type === null) {
 			return;
@@ -103,22 +118,54 @@
 				break;
 		}
 
+		locations = [];
+		carriers = [];
+
+		data!.data.forEach((element) => {
+			let current_technology = element.technology;
+			let current_carrier =
+				selected_solution!.detail.reference_carrier[current_technology];
+
+			if (
+				technologies.includes(element.technology) &&
+				!locations.includes(element.location)
+			) {
+				locations.push(element.location);
+			}
+
+			if (
+				!carriers.includes(current_carrier) &&
+				technologies.includes(element.technology)
+			) {
+				carriers.push(current_carrier);
+			}
+		});
+
 		technologies = technologies.filter(
 			(technology) =>
 				selected_solution?.detail.reference_carrier[technology] ==
 				selected_carrier,
 		);
+
+		if (unit && technologies.length > 0) {
+			let current_units = unit.data.filter((r) =>
+				technologies.includes(r.set_technologies),
+			);
+			if (current_units.length > 0) {
+				current_unit = current_units[0][0];
+			}
+		}
 	}
 
 	function update_data() {
 		if (selected_aggregation == "technology") {
-			selected_nodes = nodes;
+			selected_locations = locations;
 		} else {
 			selected_technologies = technologies;
 		}
 
 		if (
-			selected_nodes.length == 0 ||
+			selected_locations.length == 0 ||
 			selected_years.length == 0 ||
 			selected_technologies.length == 0 ||
 			data === null
@@ -131,11 +178,11 @@
 		let datasets_aggregates: StringList = {};
 
 		if (selected_aggregation == "technology") {
-			dataset_selector["location"] = selected_nodes;
+			dataset_selector["location"] = selected_locations;
 			datasets_aggregates["technology"] = selected_technologies;
 		} else {
 			dataset_selector["technology"] = selected_technologies;
-			datasets_aggregates["location"] = selected_nodes;
+			datasets_aggregates["location"] = selected_locations;
 		}
 
 		if (selected_technology_type == "storage") {
@@ -156,35 +203,9 @@
 			selected_normalisation == "normalized",
 		);
 
-		config = {
-			type: "bar",
-			data: { datasets: filtered_data },
-			options: {
-				responsive: true,
-				scales: {
-					x: {
-						stacked: true,
-						title: {
-							display: true,
-							text: "Year",
-						},
-					},
-					y: {
-						stacked: true,
-						title: {
-							display: true,
-							text: selected_variable + " [" + unit + "]",
-						},
-					},
-				},
-				plugins: {
-					title: {
-						display: true,
-						text: selected_carrier,
-					},
-				},
-			},
-		};
+		config.data = { datasets: filtered_data };
+		config.options.scales.y.title.text =
+			selected_variable + " [" + current_unit + "]";
 	}
 </script>
 
@@ -217,8 +238,6 @@
 					>
 						<div class="accordion-body">
 							<SolutionFilter
-								bind:carriers
-								bind:nodes
 								bind:years
 								bind:selected_solution
 								bind:loading={solution_loading}
@@ -367,8 +386,8 @@
 									{:else}
 										<h3>Node</h3>
 										<AllCheckbox
-											bind:selected_elements={selected_nodes}
-											bind:elements={nodes}
+											bind:selected_elements={selected_locations}
+											bind:elements={locations}
 											on:selection-changed={(e) => {
 												update_data();
 											}}
@@ -398,7 +417,7 @@
 	</div>
 </div>
 <div class="row">
-	<div class="col" style="margin-top: 200px;">
+	<div class="col" style="margin-top: 400px;">
 		{#if filtered_data != null && selected_solution != null}
 			<BarPlot
 				bind:config

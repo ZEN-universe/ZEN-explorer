@@ -12,14 +12,15 @@
 	const dispatch = createEventDispatcher<{
 		solution_selected: ActivatedSolution | null;
 	}>();
+	
 	let solution_list: Array<Solution> = [];
 	let active_solution: string;
 	let active_scenario: string;
 	let solution_detail: SolutionDetail | null = null;
 	let active_scenario_detail: ScenarioDetail | null = null;
-	export let carriers: string[];
-	export let nodes: string[];
-	export let years: number[];
+	export let carriers: string[] = [];
+	export let nodes: string[] = [];
+	export let years: number[] = [];
 	export let selected_solution: ActivatedSolution | null;
 	export let loading: boolean = false;
 

@@ -15,16 +15,6 @@ export async function get_solutions(): Promise<Solution[]> {
     return solution_list
 }
 
-export async function get_components(solution: string): Promise<Component[]> {
-    let components = await (
-        await fetch(
-            PUBLIC_TEMPLE_URL + `solutions/${solution}/components`,
-        )
-    ).json();
-
-    return components
-}
-
 export async function get_solution_detail(
     solution: string
 ): Promise<SolutionDetail> {
@@ -43,7 +33,7 @@ export async function get_component_total(solution_name: string, component_name:
             PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`,
         )
     ).json();
-    
+
     function transform_year(h: string): string {
         if (!isNaN(Number(h))) {
             return String(Number(h) * step_year + start_year)
@@ -52,8 +42,14 @@ export async function get_component_total(solution_name: string, component_name:
     }
     let data: Papa.ParseResult<Row> = Papa.parse(component_data.data_csv, { delimiter: ",", header: true, newline: "\n", transformHeader: transform_year })
 
+    let unit: Papa.ParseResult<Row> | null = null
+
+    if (component_data.unit) {
+        unit = Papa.parse(component_data.unit, { delimiter: ",", header: true, newline: "\n" })
+    }
+
     const ans: ComponentTotal = {
-        unit: component_data.unit,
+        unit: unit,
         data: data
     }
 
