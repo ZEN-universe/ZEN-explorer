@@ -292,6 +292,7 @@
 									<select
 										bind:value={selected_technology_type}
 										on:change={() => {
+											reset_data_selection();
 											update_technologies();
 											update_data();
 										}}

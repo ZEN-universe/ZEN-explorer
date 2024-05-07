@@ -27,6 +27,8 @@
     onMount(() => {
         update_all_checkbox();
     });
+
+    $: update_all();
 </script>
 
 <div class="form-check form-check-inline">
