@@ -28,7 +28,9 @@
         update_all_checkbox();
     });
 
-    $: update_all();
+    $: () => {
+        update_all_checkbox();
+    };
 </script>
 
 <div class="form-check form-check-inline">

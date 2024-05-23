@@ -38,6 +38,7 @@
 	let selected_normalisation: string = "not_normalized";
 	let solution_loading: boolean = false;
 	let datasets: any[] = [];
+
 	let config = {
 		type: "bar",
 		data: { datasets: datasets },
@@ -61,6 +62,7 @@
 			},
 		},
 	};
+
 	function reset_form() {
 		selected_technology_type = null;
 		selected_variable = null;
@@ -69,7 +71,7 @@
 		reset_data_selection();
 	}
 
-	function reset_data_selection() {
+	async function reset_data_selection() {
 		selected_normalisation = "not_normalized";
 		selected_locations = [];
 		selected_technologies = [];

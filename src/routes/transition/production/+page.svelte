@@ -3,6 +3,8 @@
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import type { ActivatedSolution } from "$lib/types";
 	import { filter_and_aggregate_data } from "$lib/utils";
+	import BarPlot from "../../../components/plots/BarPlot.svelte";
+
 	import Radio from "../../../components/Radio.svelte";
 	import { get_component_total } from "$lib/temple";
 	import { tick } from "svelte";
@@ -19,11 +21,9 @@
 	};
 	let aggregation_options = ["technology", "node"];
 	let filtered_data: any[] | null = null;
-	let unit: string = "";
-
+	let unit: Papa.ParseResult<any> | null = null;
+	let current_unit: string = "";
 	let selected_solution: ActivatedSolution | null = null;
-	let selected_node: string | null = null;
-	let selected_year: string | null = null;
 	let selected_variable: string | null = null;
 	let selected_carrier: string | null = null;
 	let technologies: string[] = [];
@@ -33,6 +33,7 @@
 	let selected_years: number[] = [];
 	let normalisation_options = ["not_normalized", "normalized"];
 	let selected_normalisation: string = "not_normalized";
+	let solution_loading: boolean = false;
 
 	interface StringList {
 		[key: string]: string[];
@@ -40,13 +41,34 @@
 
 	let selected_aggregation = "technology";
 
-	function reset_form() {
-		selected_solution = null;
-		selected_node = null;
-		selected_year = null;
-		selected_node = null;
-		selected_carrier = null;
-		selected_variable = null;
+	let config = {
+		type: "bar",
+		data: { datasets: [] },
+		options: {
+			responsive: true,
+			scales: {
+				x: {
+					stacked: true,
+					title: {
+						display: true,
+						text: "Year",
+					},
+				},
+				y: {
+					stacked: true,
+					title: {
+						display: true,
+						text: selected_variable + " [" + current_unit + "]",
+					},
+				},
+			},
+		},
+	};
+
+	function reset_data_selection() {
+		selected_years = [];
+		selected_nodes = [];
+		selected_technologies = [];
 	}
 
 	function get_variable_name() {
@@ -77,6 +99,8 @@
 			selected_solution!.solution_name,
 			variable_name,
 			selected_solution!.scenario_name,
+			selected_solution!.detail.system.reference_year,
+			selected_solution!.detail.system.interval_between_years,
 		).then((fetched) => {
 			data = fetched.data;
 			unit = fetched.unit;
@@ -84,22 +108,52 @@
 	}
 
 	function update_carriers() {
+		filtered_data = null;
+		selected_carrier = "";
+
 		if (selected_solution == null) {
 			carriers = [];
+			return;
 		}
-		if (selected_variable == "import_export") {
-			if (selected_subvariable == "import") {
-				carriers = selected_solution!.detail.carriers_import;
-			} else {
-				carriers = selected_solution!.detail.carriers_export;
-			}
-		} else {
-			carriers = selected_solution!.detail.system.set_carriers;
+
+		switch (selected_variable) {
+			case "import_export":
+				if (selected_subvariable == "import") {
+					carriers = selected_solution!.detail.carriers_import;
+				} else {
+					carriers = selected_solution!.detail.carriers_export;
+				}
+				break;
+			case "conversion":
+				let relevant_carriers =
+					selected_solution!.detail.carriers_output;
+				if (selected_subvariable == "input") {
+					relevant_carriers =
+						selected_solution!.detail.carriers_input;
+				}
+				carriers = [];
+
+				for (const i in relevant_carriers) {
+					carriers = [
+						...new Set([...carriers, ...relevant_carriers[i]]),
+					];
+				}
+
+				break;
+			default:
+				carriers = selected_solution!.detail.system.set_carriers;
 		}
+
+		if (carriers.length == 1) {
+			selected_carrier = carriers[0];
+		}
+
+		reset_data_selection();
 	}
 
 	function update_technologies() {
-		console.log(selected_variable, selected_carrier);
+		filtered_data = null;
+
 		if (selected_variable == null) {
 			return;
 		}
@@ -108,6 +162,7 @@
 		}
 
 		technologies = selected_solution?.detail.system.set_technologies ?? [];
+
 		switch (selected_variable) {
 			case "conversion":
 				technologies = [];
@@ -118,7 +173,6 @@
 						selected_solution!.detail.carriers_output;
 				}
 				for (const technology in relevant_carriers) {
-					console.log();
 					if (
 						relevant_carriers[technology].includes(selected_carrier)
 					) {
@@ -149,25 +203,35 @@
 				break;
 		}
 
+		if (unit && technologies.length > 0) {
+			let current_units = unit.data.filter((r) =>
+				technologies.includes(
+					r["set_" + selected_variable + "_technologies"],
+				),
+			);
+			if (current_units.length > 0) {
+				current_unit = current_units[0][0];
+			}
+		}
+
 		if (technologies.length == 1) {
 			selected_technologies = [technologies[0]];
 		}
 
-		fetch_data();
+		reset_data_selection();
 	}
 
 	function updated_variable() {
+		filtered_data = null;
+
 		if (selected_variable == null) {
 			return;
 		}
 
-		selected_node = null;
-		selected_year = null;
-
 		if (variables[selected_variable] != null) {
 			selected_subvariable = variables[selected_variable]![0];
 		}
-
+		fetch_data();
 		update_carriers();
 		update_technologies();
 	}
@@ -193,11 +257,11 @@
 		let datasets_aggregates: StringList = {};
 
 		if (selected_aggregation == "technology") {
-			dataset_selector["location"] = selected_nodes;
+			dataset_selector["node"] = selected_nodes;
 			datasets_aggregates["technology"] = selected_technologies;
 		} else {
 			dataset_selector["technology"] = selected_technologies;
-			datasets_aggregates["location"] = selected_nodes;
+			datasets_aggregates["node"] = selected_nodes;
 		}
 
 		let excluded_years = years.filter(
@@ -211,6 +275,11 @@
 			excluded_years,
 			selected_normalisation == "normalized",
 		);
+
+		config.data = { datasets: filtered_data };
+
+		config.options.scales.y.title.text =
+			selected_variable + " [" + current_unit + "]";
 	}
 </script>
 
@@ -248,6 +317,7 @@
 								bind:nodes
 								bind:years
 								bind:selected_solution
+								bind:loading={solution_loading}
 							/>
 						</div>
 					</div>
@@ -282,48 +352,14 @@
 								{/each}
 							</select>
 							{#if variables && selected_variable && variables[selected_variable] != null}
-								<div class="form-check">
-									<input
-										class="form-check-input"
-										type="radio"
-										name="variableRadios"
-										id="specificationRadio1"
-										value={variables[selected_variable][0]}
-										on:change={() => {
-											selected_subvariable =
-												variables[selected_variable][0];
-											update_technologies();
-										}}
-										checked
-									/>
-									<label
-										class="form-check-label"
-										for="specificationRadio1"
-									>
-										{variables[selected_variable][0]}
-									</label>
-								</div>
-								<div class="form-check">
-									<input
-										class="form-check-input"
-										type="radio"
-										name="variableRadios"
-										id="specificationRadio1"
-										value={variables[selected_variable][1]}
-										on:change={() => {
-											selected_subvariable =
-												variables[selected_variable][1];
-											update_technologies();
-										}}
-									/>
-									<label
-										class="form-check-label"
-										for="exampleRadios2"
-									>
-										<!-- @ts-ignore -->
-										{variables[selected_variable][1]}
-									</label>
-								</div>
+								<Radio
+									bind:options={variables[selected_variable]}
+									bind:selected_option={selected_subvariable}
+									on:selection-changed={(e) => {
+										update_carriers();
+										update_technologies();
+									}}
+								></Radio>
 							{/if}
 							{#if selected_variable != null}
 								<div class="row">
@@ -422,5 +458,26 @@
 				</div>
 			</div>
 		</div>
+	</div>
+</div>
+<div class="row">
+	<div class="col" style="margin-top: 400px;">
+		{#if filtered_data != null && selected_solution != null}
+			{#if filtered_data.length == 0}
+				<div class="text-center">No data with this selection.</div>
+			{:else}
+				<BarPlot
+					bind:config
+					bind:year_offset={selected_solution.detail.system
+						.reference_year}
+				></BarPlot>
+			{/if}
+		{:else if solution_loading}
+			<div class="text-center">
+				<div class="spinner-border center" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>
