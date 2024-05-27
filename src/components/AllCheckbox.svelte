@@ -5,6 +5,7 @@
     export let selected_elements: any[];
 
     const dispatch = createEventDispatcher();
+    let id = "";
 
     let all_select: boolean = false;
     // Values that are passed in as props
@@ -25,6 +26,7 @@
     }
 
     onMount(() => {
+        id = Math.random().toString(16).slice(2);
         update_all_checkbox();
     });
 
@@ -39,9 +41,11 @@
         type="checkbox"
         bind:checked={all_select}
         on:change={update_all}
-        id="all_checkbox"
+        id={"all_checkbox" + id}
     />
-    <label class="form-check-label" for="all_checkbox"> Select all </label>
+    <label class="form-check-label" for={"all_checkbox" + id}>
+        Select all
+    </label>
 </div>
 {#each elements as element, i}
     <div class="form-check form-check-inline">

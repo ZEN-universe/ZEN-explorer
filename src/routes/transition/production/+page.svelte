@@ -34,6 +34,7 @@
 	let normalisation_options = ["not_normalized", "normalized"];
 	let selected_normalisation: string = "not_normalized";
 	let solution_loading: boolean = false;
+	let fetching = false;
 
 	interface StringList {
 		[key: string]: string[];
@@ -87,10 +88,10 @@
 	}
 
 	async function fetch_data() {
+		fetching = true;
 		await tick();
 
 		let variable_name = get_variable_name();
-
 		if (variable_name === null) {
 			return;
 		}
@@ -102,6 +103,7 @@
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
 		).then((fetched) => {
+			fetching = false;
 			data = fetched.data;
 			unit = fetched.unit;
 		});
@@ -247,7 +249,7 @@
 			selected_nodes.length == 0 ||
 			selected_years.length == 0 ||
 			selected_technologies.length == 0 ||
-			data === null
+			!data
 		) {
 			filtered_data = null;
 			return;
@@ -382,80 +384,82 @@
 						</div>
 					</div>
 				</div>
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button collapsed"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseThree"
-							aria-expanded="false"
-							aria-controls="collapseThree"
+				{#if !fetching && selected_carrier}
+					<div class="accordion-item">
+						<h2 class="accordion-header">
+							<button
+								class="accordion-button collapsed"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#collapseThree"
+								aria-expanded="false"
+								aria-controls="collapseThree"
+							>
+								Data Selection
+							</button>
+						</h2>
+						<div
+							id="collapseThree"
+							class="accordion-collapse collapse"
+							data-bs-parent="#accordionExample"
 						>
-							Data Selection
-						</button>
-					</h2>
-					<div
-						id="collapseThree"
-						class="accordion-collapse collapse"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							{#if technologies.length > 0}
-								<div class="row">
-									<div class="col-6">
-										<h3>Aggregation</h3>
-										<Radio
-											bind:options={aggregation_options}
-											bind:selected_option={selected_aggregation}
+							<div class="accordion-body">
+								{#if technologies.length > 0}
+									<div class="row">
+										<div class="col-6">
+											<h3>Aggregation</h3>
+											<Radio
+												bind:options={aggregation_options}
+												bind:selected_option={selected_aggregation}
+												on:selection-changed={(e) => {
+													update_data();
+												}}
+											></Radio>
+										</div>
+										<div class="col-6">
+											<h3>Normalisation</h3>
+											<Radio
+												bind:options={normalisation_options}
+												bind:selected_option={selected_normalisation}
+												on:selection-changed={(e) => {
+													update_data();
+												}}
+											></Radio>
+										</div>
+									</div>
+									{#if selected_aggregation == "technology"}
+										<h3>Technology</h3>
+										<AllCheckbox
+											on:selection-changed={() => {
+												update_data();
+											}}
+											bind:selected_elements={selected_technologies}
+											bind:elements={technologies}
+										></AllCheckbox>
+									{:else}
+										<h3>Node</h3>
+										<AllCheckbox
 											on:selection-changed={(e) => {
 												update_data();
 											}}
-										></Radio>
-									</div>
-									<div class="col-6">
-										<h3>Normalisation</h3>
-										<Radio
-											bind:options={normalisation_options}
-											bind:selected_option={selected_normalisation}
-											on:selection-changed={(e) => {
-												update_data();
-											}}
-										></Radio>
-									</div>
-								</div>
-								{#if selected_aggregation == "technology"}
-									<h3>Technology</h3>
-									<AllCheckbox
-										on:selection-changed={() => {
-											update_data();
-										}}
-										bind:selected_elements={selected_technologies}
-										bind:elements={technologies}
-									></AllCheckbox>
-								{:else}
-									<h3>Node</h3>
+											bind:selected_elements={selected_nodes}
+											bind:elements={nodes}
+										></AllCheckbox>
+									{/if}
+
+									<h3>Year</h3>
 									<AllCheckbox
 										on:selection-changed={(e) => {
 											update_data();
 										}}
-										bind:selected_elements={selected_nodes}
-										bind:elements={nodes}
+										bind:selected_elements={selected_years}
+										bind:elements={years}
 									></AllCheckbox>
 								{/if}
-
-								<h3>Year</h3>
-								<AllCheckbox
-									on:selection-changed={(e) => {
-										update_data();
-									}}
-									bind:selected_elements={selected_years}
-									bind:elements={years}
-								></AllCheckbox>
-							{/if}
+							</div>
 						</div>
 					</div>
-				</div>
+				{/if}
 			</div>
 		</div>
 	</div>
@@ -472,7 +476,7 @@
 						.reference_year}
 				></BarPlot>
 			{/if}
-		{:else if solution_loading}
+		{:else if solution_loading || fetching}
 			<div class="text-center">
 				<div class="spinner-border center" role="status">
 					<span class="visually-hidden">Loading...</span>
