@@ -34,14 +34,35 @@ export async function get_component_total(solution_name: string, component_name:
         )
     ).json();
 
+    let first_line = component_data.data_csv.slice(0, component_data.data_csv.indexOf("\n"));
+    let headers = first_line.split(",")
+
+    if (headers.length == 2) {
+        let lines = component_data.data_csv.split("\n")
+        let years = ""
+        let data = ""
+
+        for (const line of lines.slice(1, lines.length)) {
+            if (line == "") {
+                continue
+            }
+
+            let line_split = line.split(",")
+            years += line_split[0] + ","
+            data += line_split[1] + ","
+        }
+
+        component_data.data_csv = years.substring(0, years.length - 1) + "\n" + data.substring(0, data.length - 1)
+    }
+
     function transform_year(h: string): string {
         if (!isNaN(Number(h))) {
             return String(Number(h) * step_year + start_year)
         }
         return h
     }
-    let data: Papa.ParseResult<Row> = Papa.parse(component_data.data_csv, { delimiter: ",", header: true, newline: "\n", transformHeader: transform_year })
 
+    let data: Papa.ParseResult<Row> = Papa.parse(component_data.data_csv, { delimiter: ",", header: true, newline: "\n", transformHeader: transform_year })
     let unit: Papa.ParseResult<Row> | null = null
 
     if (component_data.unit) {
