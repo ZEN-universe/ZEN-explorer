@@ -38,6 +38,7 @@
 	let selected_normalisation: string = "not_normalized";
 	let solution_loading: boolean = false;
 	let datasets: any[] = [];
+	let fetching: boolean = false;
 
 	let config = {
 		type: "bar",
@@ -72,13 +73,16 @@
 	}
 
 	async function reset_data_selection() {
+		await tick();
 		selected_normalisation = "not_normalized";
-		selected_locations = [];
-		selected_technologies = [];
-		selected_years = [];
+		selected_locations = locations;
+		selected_technologies = technologies;
+		selected_years = years;
+		selected_aggregation = "node";
 	}
 
 	async function fetch_data() {
+		fetching = true;
 		await tick();
 
 		if (selected_variable === null) {
@@ -94,6 +98,7 @@
 		).then((fetched) => {
 			data = fetched.data;
 			unit = fetched.unit;
+			fetching = false;
 		});
 	}
 
@@ -157,6 +162,8 @@
 				current_unit = current_units[0][0];
 			}
 		}
+
+		selected_technologies = technologies;
 	}
 
 	function update_data() {

@@ -9,6 +9,7 @@
 	import BarPlot from "../../../components/plots/BarPlot.svelte";
 
 	let data: Papa.ParseResult<any>;
+	let limit_data: Papa.ParseResult<any> | null;
 	let carriers: string[] = [];
 	let nodes: string[] = [];
 	let years: number[] = [];
@@ -96,6 +97,19 @@
 			return;
 		}
 
+		if (variable_name == "carbon_emissions_annual") {
+			let res = await get_component_total(
+				selected_solution!.solution_name,
+				"carbon_emissions_annual_limit",
+				selected_solution!.scenario_name,
+				selected_solution!.detail.system.reference_year,
+				selected_solution!.detail.system.interval_between_years,
+			);
+			limit_data = res.data;
+		} else {
+			limit_data = null;
+		}
+
 		get_component_total(
 			selected_solution!.solution_name,
 			variable_name,
@@ -119,7 +133,6 @@
 			aggregation_options = [current_location, selected_grouping];
 
 			for (const d of data.data) {
-				console.log(d);
 				if (d.technology) {
 					set_technologies.add(d.technology);
 				}
@@ -183,6 +196,23 @@
 			excluded_years,
 			selected_normalisation == "normalized",
 		);
+
+		if (filtered_data.length == 1) {
+			filtered_data[0].label = get_variable_name();
+		}
+
+		if (limit_data) {
+			let filtered_limit_data = filter_and_aggregate_data(
+				limit_data.data,
+				dataset_selector,
+				datasets_aggregates,
+				excluded_years,
+				selected_normalisation == "normalized",
+			);
+			filtered_limit_data[0].label = "Annual Emissions Limit";
+			filtered_limit_data[0].type = "line";
+			filtered_data = filtered_data.concat(filtered_limit_data);
+		}
 
 		config.data = { datasets: filtered_data };
 

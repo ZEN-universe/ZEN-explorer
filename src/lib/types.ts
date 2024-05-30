@@ -84,6 +84,7 @@ export interface DatasetSelectors {
 export interface Dataset {
     label: string
     data: YearValue;
+    type: string;
 }
 
 

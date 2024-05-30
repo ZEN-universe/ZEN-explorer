@@ -67,9 +67,9 @@
 	};
 
 	function reset_data_selection() {
-		selected_years = [];
-		selected_nodes = [];
-		selected_technologies = [];
+		selected_years = years;
+		selected_nodes = nodes;
+		selected_technologies = technologies;
 	}
 
 	function get_variable_name() {
