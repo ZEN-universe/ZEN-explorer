@@ -108,6 +108,7 @@
 
 			let set_technologies = new Set<string>();
 			let set_locations = new Set<string>();
+			let set_carriers = new Set<string>();
 
 			if (data.meta.fields?.includes("location")) {
 				current_location = "location";
@@ -118,16 +119,25 @@
 			aggregation_options = [current_location, selected_grouping];
 
 			for (const d of data.data) {
+				console.log(d);
 				if (d.technology) {
 					set_technologies.add(d.technology);
 				}
 				if (d[current_location]) {
 					set_locations.add(d[current_location]);
 				}
+				if (d.carrier) {
+					set_carriers.add(d.carrier);
+				}
 			}
 
 			technologies = [...set_technologies];
 			locations = [...set_locations];
+			carriers = [...set_carriers];
+			selected_carriers = carriers;
+			selected_technologies = technologies;
+			selected_locations = locations;
+			selected_aggregation = current_location;
 
 			fetching = false;
 			update_data();
@@ -182,6 +192,7 @@
 
 	function solution_changed() {
 		reset_subsection();
+		selected_years = years;
 	}
 </script>
 
