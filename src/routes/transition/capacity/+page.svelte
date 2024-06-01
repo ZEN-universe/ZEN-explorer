@@ -64,25 +64,18 @@
 		},
 	};
 
-	function reset_form() {
-		selected_technology_type = null;
-		selected_variable = null;
-		selected_technology_type = null;
-		selected_carrier = null;
-		reset_data_selection();
-	}
-
 	async function reset_data_selection() {
-		await tick();
 		selected_normalisation = "not_normalized";
 		selected_locations = locations;
 		selected_technologies = technologies;
 		selected_years = years;
 		selected_aggregation = "node";
+		await tick();
 	}
 
 	async function fetch_data() {
 		fetching = true;
+		data = null;
 		await tick();
 
 		if (selected_variable === null) {
@@ -102,31 +95,59 @@
 		});
 	}
 
-	function update_technologies() {
-		technologies = [];
+	function solution_changed() {
+		data = null;
+		selected_variable = null;
+		filtered_data = null;
+		selected_technology_type = null;
+		selected_carrier = null;
+	}
 
-		if (selected_technology_type === null) {
+	function variable_changed() {
+		fetch_data();
+	}
+
+	function technology_type_changed() {
+		update_carriers();
+		selected_carrier = null;
+		reset_data_selection();
+	}
+
+	function carrier_changed() {
+		update_technologies();
+		update_locations();
+		reset_data_selection();
+		update_data();
+	}
+
+	function update_carriers() {
+		carriers = [];
+		selected_carrier = null;
+
+		if (data === null || selected_technology_type === null) {
 			return;
 		}
 
-		switch (selected_technology_type) {
-			case "conversion":
-				technologies =
-					selected_solution!.detail.system
-						.set_conversion_technologies;
-				break;
-			case "storage":
-				technologies =
-					selected_solution!.detail.system.set_storage_technologies;
-				break;
-			case "transport":
-				technologies =
-					selected_solution!.detail.system.set_transport_technologies;
-				break;
-		}
+		let all_technologies: string[] = get_technologies_by_type(
+			selected_technology_type,
+		);
 
+		data!.data.forEach((element) => {
+			let current_technology = element.technology;
+			let current_carrier =
+				selected_solution!.detail.reference_carrier[current_technology];
+
+			if (
+				!carriers.includes(current_carrier) &&
+				all_technologies.includes(element.technology)
+			) {
+				carriers.push(current_carrier);
+			}
+		});
+	}
+
+	function update_locations() {
 		locations = [];
-		carriers = [];
 
 		data!.data.forEach((element) => {
 			let current_technology = element.technology;
@@ -148,10 +169,37 @@
 			}
 		});
 
-		technologies = technologies.filter(
-			(technology) =>
-				selected_solution?.detail.reference_carrier[technology] ==
-				selected_carrier,
+		selected_locations = locations;
+	}
+
+	function get_technologies_by_type(tech_type: string) {
+		let ans: string[] = [];
+
+		switch (selected_technology_type) {
+			case "conversion":
+				ans =
+					selected_solution!.detail.system
+						.set_conversion_technologies;
+				break;
+			case "storage":
+				ans = selected_solution!.detail.system.set_storage_technologies;
+				break;
+			case "transport":
+				ans =
+					selected_solution!.detail.system.set_transport_technologies;
+				break;
+		}
+
+		return ans;
+	}
+
+	function update_technologies() {
+		if (selected_technology_type === null) {
+			return;
+		}
+
+		let all_technologies = get_technologies_by_type(
+			selected_technology_type,
 		);
 
 		if (unit && technologies.length > 0) {
@@ -162,7 +210,11 @@
 				current_unit = current_units[0][0];
 			}
 		}
-
+		technologies = all_technologies.filter(
+			(technology) =>
+				selected_solution?.detail.reference_carrier[technology] ==
+				selected_carrier,
+		);
 		selected_technologies = technologies;
 	}
 
@@ -174,6 +226,7 @@
 		}
 
 		if (
+			selected_variable == null ||
 			selected_locations.length == 0 ||
 			selected_years.length == 0 ||
 			selected_technologies.length == 0 ||
@@ -251,8 +304,7 @@
 								bind:selected_solution
 								bind:loading={solution_loading}
 								on:solution_selected={() => {
-									reset_form();
-									update_data();
+									solution_changed();
 								}}
 							/>
 						</div>
@@ -282,11 +334,7 @@
 								<select
 									bind:value={selected_variable}
 									on:change={(e) => {
-										fetch_data();
-										selected_technology_type = null;
-										selected_carrier = null;
-										reset_data_selection();
-										update_data();
+										variable_changed();
 									}}
 								>
 									{#each variables as variable}
@@ -301,9 +349,7 @@
 									<select
 										bind:value={selected_technology_type}
 										on:change={() => {
-											reset_data_selection();
-											update_technologies();
-											update_data();
+											technology_type_changed();
 										}}
 									>
 										{#each technology_types as technology_type}
@@ -317,8 +363,7 @@
 											bind:options={storage_type_options}
 											bind:selected_option={selected_storage_type}
 											on:selection-changed={() => {
-												update_technologies();
-												update_data();
+												technology_type_changed();
 											}}
 										></Radio>
 									{/if}
@@ -328,8 +373,7 @@
 									<select
 										bind:value={selected_carrier}
 										on:change={() => {
-											update_technologies();
-											update_data();
+											carrier_changed();
 										}}
 									>
 										{#each carriers as carrier}
@@ -342,99 +386,117 @@
 							</div>
 						</div>
 					</div>
-					<div class="accordion-item">
-						<h2 class="accordion-header">
-							<button
-								class="accordion-button collapsed"
-								type="button"
-								data-bs-toggle="collapse"
-								data-bs-target="#collapseThree"
-								aria-expanded="false"
-								aria-controls="collapseThree"
+					{#if data && selected_technology_type && selected_carrier}
+						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button
+									class="accordion-button collapsed"
+									type="button"
+									data-bs-toggle="collapse"
+									data-bs-target="#collapseThree"
+									aria-expanded="false"
+									aria-controls="collapseThree"
+								>
+									Data Selection
+								</button>
+							</h2>
+							<div
+								id="collapseThree"
+								class="accordion-collapse collapse"
+								data-bs-parent="#accordionExample"
 							>
-								Data Selection
-							</button>
-						</h2>
-						<div
-							id="collapseThree"
-							class="accordion-collapse collapse"
-							data-bs-parent="#accordionExample"
-						>
-							<div class="accordion-body">
-								{#if technologies.length > 0}
-									<div class="row">
-										<div class="col-6">
-											<h3>Aggregation</h3>
-											<Radio
-												bind:options={aggregation_options}
-												bind:selected_option={selected_aggregation}
-												on:selection-changed={(e) => {
-													update_data();
-												}}
-											></Radio>
-										</div>
-										<div class="col-6">
-											<h3>Normalisation</h3>
-											<Radio
-												bind:options={normalisation_options}
-												bind:selected_option={selected_normalisation}
-												on:selection-changed={(e) => {
-													update_data();
-												}}
-											></Radio>
-										</div>
-									</div>
-									{#if selected_aggregation == "technology"}
-										<h3>Technology</h3>
-										<AllCheckbox
-											bind:selected_elements={selected_technologies}
-											bind:elements={technologies}
-											on:selection-changed={() => {
-												update_data();
-											}}
-										></AllCheckbox>
-									{:else}
-										<h3>Node</h3>
-										<AllCheckbox
-											bind:selected_elements={selected_locations}
-											bind:elements={locations}
-											on:selection-changed={(e) => {
-												update_data();
-											}}
-										></AllCheckbox>
-									{/if}
+								<div class="accordion-body">
+									{#if technologies.length > 0}
+										<div class="row">
+											<div class="col-6">
+												<h3>Aggregation</h3>
+												<Radio
+													bind:options={aggregation_options}
+													bind:selected_option={selected_aggregation}
+													on:selection-changed={(
+														e,
+													) => {
+														console.log(
+															"Aggregation changed",
+														);
+														update_data();
+													}}
+												></Radio>
+											</div>
+											<div class="col-6">
+												<h3>Normalisation</h3>
+												<Radio
+													bind:options={normalisation_options}
+													bind:selected_option={selected_normalisation}
+													on:selection-changed={(
+														e,
+													) => {
+														console.log(
+															"Normalisation changed",
+														);
 
-									<h3>Year</h3>
-									<AllCheckbox
-										bind:selected_elements={selected_years}
-										bind:elements={years}
-										on:selection-changed={(e) => {
-											update_data();
-										}}
-									></AllCheckbox>
-								{:else if selected_technology_type != null && selected_carrier != null}
-									<h4>
-										No technologies for the selected
-										technology type and carrier.
-									</h4>
-								{/if}
+														update_data();
+													}}
+												></Radio>
+											</div>
+										</div>
+										{#if selected_aggregation == "technology"}
+											<h3>Technology</h3>
+											<AllCheckbox
+												bind:selected_elements={selected_technologies}
+												bind:elements={technologies}
+												on:selection-changed={() => {
+													console.log(
+														"Technology changed",
+													);
+													update_data();
+												}}
+											></AllCheckbox>
+										{:else}
+											<h3>Node</h3>
+											<AllCheckbox
+												bind:selected_elements={selected_locations}
+												bind:elements={locations}
+												on:selection-changed={(e) => {
+													console.log("Node changed");
+													update_data();
+												}}
+											></AllCheckbox>
+										{/if}
+
+										<h3>Year</h3>
+										<AllCheckbox
+											bind:selected_elements={selected_years}
+											bind:elements={years}
+											on:selection-changed={(e) => {
+												console.log("Year changed");
+												update_data();
+											}}
+										></AllCheckbox>
+									{:else if selected_technology_type != null && selected_carrier != null}
+										<h4>
+											No technologies for the selected
+											technology type and carrier.
+										</h4>
+									{/if}
+								</div>
 							</div>
 						</div>
-					</div>
+					{/if}
 				{/if}
 			</div>
 		</div>
 	</div>
 </div>
-<div class="row">
-	<div class="col" style="margin-top: 400px;">
+<div class="col" style="margin-top: 400px;">
+	<div class="row">
 		{#if filtered_data != null && selected_solution != null}
 			<BarPlot
 				bind:config
 				bind:year_offset={selected_solution.detail.system
 					.reference_year}
 			></BarPlot>
-		{:else if solution_loading}
+		{:else if solution_loading || fetching}
 			<div class="text-center">
 				<div class="spinner-border center" role="status">
 					<span class="visually-hidden">Loading...</span>
