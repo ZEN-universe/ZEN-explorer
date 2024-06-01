@@ -16,7 +16,8 @@ export function filter_and_aggregate_data(
     dataset_aggregations: DatasetSelectors,
     years_exclude: any[] = [],
     normalise: boolean = false,
-    plot_type: string = "bar"
+    plot_type: string | null = null,
+    label_suffix: string = ""
 ): Dataset[] {
     let years_keys = Object.keys(data[0]).filter((k) => (!isNaN(Number(k)) && !years_exclude.includes(Number(k))));
     let dataset_keys = Object.keys(dataset_filters)
@@ -50,7 +51,7 @@ export function filter_and_aggregate_data(
             row_dataset_keys.push(row[key]);
         }
 
-        let dataset_label = row_dataset_keys.join("_");
+        let dataset_label = row_dataset_keys.join("_") + label_suffix;
 
         if (!(dataset_label in datasets)) {
             datasets[dataset_label] = Object.fromEntries(

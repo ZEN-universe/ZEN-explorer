@@ -35,30 +35,32 @@
     };
 </script>
 
-<div class="form-check form-check-inline">
-    <input
-        class="form-check-input"
-        type="checkbox"
-        bind:checked={all_select}
-        on:change={update_all}
-        id={"all_checkbox" + id}
-    />
-    <label class="form-check-label" for={"all_checkbox" + id}>
-        Select all
-    </label>
-</div>
-{#each elements as element, i}
+<form>
     <div class="form-check form-check-inline">
         <input
             class="form-check-input"
             type="checkbox"
-            value={element}
-            bind:group={selected_elements}
-            id={element + "_checkbox"}
-            on:change={update_all_checkbox}
+            bind:checked={all_select}
+            on:change={update_all}
+            id={"all_checkbox" + id}
         />
-        <label class="form-check-label" for={element + "_checkbox"}>
-            {element}
+        <label class="form-check-label" for={"all_checkbox" + id}>
+            Select all
         </label>
     </div>
-{/each}
+    {#each elements as element, i}
+        <div class="form-check form-check-inline">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                value={element}
+                bind:group={selected_elements}
+                id={element + "_checkbox" + id}
+                on:change={update_all_checkbox}
+            />
+            <label class="form-check-label" for={element + "_checkbox"}>
+                {element}
+            </label>
+        </div>
+    {/each}
+</form>
