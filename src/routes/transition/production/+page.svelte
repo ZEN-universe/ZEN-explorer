@@ -151,6 +151,7 @@
 		}
 
 		reset_data_selection();
+		update_data();
 	}
 
 	function update_technologies() {
@@ -345,7 +346,10 @@
 						<div class="accordion-body">
 							<select
 								bind:value={selected_variable}
-								on:change={updated_variable}
+								on:change={() => {
+									updated_variable();
+									update_technologies();
+								}}
 							>
 								{#each Object.entries(variables) as [variable, subvalues]}
 									<option value={variable}>
@@ -369,8 +373,10 @@
 										<h3>Carrier</h3>
 										<select
 											bind:value={selected_carrier}
-											on:change={() =>
-												update_technologies()}
+											on:change={() => {
+												update_technologies();
+												update_data();
+											}}
 										>
 											{#each carriers as carrier}
 												<option value={carrier}>
@@ -384,7 +390,7 @@
 						</div>
 					</div>
 				</div>
-				{#if !fetching && selected_carrier}
+				{#if !fetching && selected_carrier && technologies.length > 0}
 					<div class="accordion-item">
 						<h2 class="accordion-header">
 							<button
@@ -404,58 +410,56 @@
 							data-bs-parent="#accordionExample"
 						>
 							<div class="accordion-body">
-								{#if technologies.length > 0}
-									<div class="row">
-										<div class="col-6">
-											<h3>Aggregation</h3>
-											<Radio
-												bind:options={aggregation_options}
-												bind:selected_option={selected_aggregation}
-												on:selection-changed={(e) => {
-													update_data();
-												}}
-											></Radio>
-										</div>
-										<div class="col-6">
-											<h3>Normalisation</h3>
-											<Radio
-												bind:options={normalisation_options}
-												bind:selected_option={selected_normalisation}
-												on:selection-changed={(e) => {
-													update_data();
-												}}
-											></Radio>
-										</div>
-									</div>
-									{#if selected_aggregation == "technology"}
-										<h3>Technology</h3>
-										<AllCheckbox
-											on:selection-changed={() => {
-												update_data();
-											}}
-											bind:selected_elements={selected_technologies}
-											bind:elements={technologies}
-										></AllCheckbox>
-									{:else}
-										<h3>Node</h3>
-										<AllCheckbox
+								<div class="row">
+									<div class="col-6">
+										<h3>Aggregation</h3>
+										<Radio
+											bind:options={aggregation_options}
+											bind:selected_option={selected_aggregation}
 											on:selection-changed={(e) => {
 												update_data();
 											}}
-											bind:selected_elements={selected_nodes}
-											bind:elements={nodes}
-										></AllCheckbox>
-									{/if}
-
-									<h3>Year</h3>
+										></Radio>
+									</div>
+									<div class="col-6">
+										<h3>Normalisation</h3>
+										<Radio
+											bind:options={normalisation_options}
+											bind:selected_option={selected_normalisation}
+											on:selection-changed={(e) => {
+												update_data();
+											}}
+										></Radio>
+									</div>
+								</div>
+								{#if selected_aggregation == "technology"}
+									<h3>Technology</h3>
+									<AllCheckbox
+										on:selection-changed={() => {
+											update_data();
+										}}
+										bind:selected_elements={selected_technologies}
+										bind:elements={technologies}
+									></AllCheckbox>
+								{:else}
+									<h3>Node</h3>
 									<AllCheckbox
 										on:selection-changed={(e) => {
 											update_data();
 										}}
-										bind:selected_elements={selected_years}
-										bind:elements={years}
+										bind:selected_elements={selected_nodes}
+										bind:elements={nodes}
 									></AllCheckbox>
 								{/if}
+
+								<h3>Year</h3>
+								<AllCheckbox
+									on:selection-changed={(e) => {
+										update_data();
+									}}
+									bind:selected_elements={selected_years}
+									bind:elements={years}
+								></AllCheckbox>
 							</div>
 						</div>
 					</div>

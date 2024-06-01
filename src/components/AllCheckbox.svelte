@@ -22,7 +22,6 @@
     }
     function update_all_checkbox() {
         all_select = selected_elements.length == elements.length;
-
         dispatch("selection-changed", selected_elements);
     }
 
@@ -42,7 +41,7 @@
             class="form-check-input"
             type="checkbox"
             bind:checked={all_select}
-            on:click={update_all}
+            on:change={update_all}
             id={"all_checkbox" + id}
         />
         <label class="form-check-label" for={"all_checkbox" + id}>
@@ -57,7 +56,7 @@
                 value={element}
                 bind:group={selected_elements}
                 id={element + "_checkbox" + id}
-                on:click={update_all_checkbox}
+                on:change={update_all_checkbox}
             />
             <label class="form-check-label" for={element + "_checkbox"}>
                 {element}
