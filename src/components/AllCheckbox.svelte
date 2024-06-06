@@ -3,6 +3,7 @@
     import { onMount } from "svelte";
     export let elements: any[];
     export let selected_elements: any[];
+    export let enabled: boolean = true;
 
     const dispatch = createEventDispatcher();
     let id = "";
@@ -43,6 +44,7 @@
             bind:checked={all_select}
             on:change={update_all}
             id={"all_checkbox" + id}
+            disabled={!enabled}
         />
         <label class="form-check-label" for={"all_checkbox" + id}>
             Select all
@@ -57,6 +59,7 @@
                 bind:group={selected_elements}
                 id={element + "_checkbox" + id}
                 on:change={update_all_checkbox}
+                disabled={!enabled}
             />
             <label class="form-check-label" for={element + "_checkbox"}>
                 {element}

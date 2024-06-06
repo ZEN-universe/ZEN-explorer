@@ -155,7 +155,7 @@
 	}
 
 	function update_technologies() {
-		filtered_data = null;
+		filtered_data = [];
 
 		if (selected_variable == null) {
 			return;
@@ -225,7 +225,7 @@
 	}
 
 	function updated_variable() {
-		filtered_data = null;
+		filtered_data = [];
 
 		if (selected_variable == null) {
 			return;
@@ -245,14 +245,14 @@
 		} else {
 			selected_technologies = technologies;
 		}
-
+		console.log(nodes, technologies, data);
 		if (
 			selected_nodes.length == 0 ||
 			selected_years.length == 0 ||
 			selected_technologies.length == 0 ||
 			!data
 		) {
-			filtered_data = null;
+			filtered_data = [];
 			return;
 		}
 
@@ -280,7 +280,7 @@
 		);
 
 		config.data = { datasets: filtered_data };
-
+		console.log(filtered_data);
 		config.options.scales.y.title.text =
 			selected_variable + " [" + current_unit + "]";
 	}
@@ -321,75 +321,85 @@
 								bind:years
 								bind:selected_solution
 								bind:loading={solution_loading}
+								enabled={!solution_loading && !fetching}
 							/>
 						</div>
 					</div>
 				</div>
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button collapsed"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseTwo"
-							aria-expanded="false"
-							aria-controls="collapseTwo"
-						>
-							Variable Selection
-						</button>
-					</h2>
-					<div
-						id="collapseTwo"
-						class="accordion-collapse collapse"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							<select
-								bind:value={selected_variable}
-								on:change={() => {
-									updated_variable();
-									update_technologies();
-								}}
+
+				{#if !solution_loading && selected_solution}
+					<div class="accordion-item">
+						<h2 class="accordion-header">
+							<button
+								class="accordion-button collapsed"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#collapseTwo"
+								aria-expanded="false"
+								aria-controls="collapseTwo"
 							>
-								{#each Object.entries(variables) as [variable, subvalues]}
-									<option value={variable}>
-										{variable}
-									</option>
-								{/each}
-							</select>
-							{#if variables && selected_variable && variables[selected_variable] != null}
-								<Radio
-									bind:options={variables[selected_variable]}
-									bind:selected_option={selected_subvariable}
-									on:selection-changed={(e) => {
-										update_carriers();
+								Variable Selection
+							</button>
+						</h2>
+						<div
+							id="collapseTwo"
+							class="accordion-collapse collapse"
+							data-bs-parent="#accordionExample"
+						>
+							<div class="accordion-body">
+								<select
+									bind:value={selected_variable}
+									disabled={solution_loading || fetching}
+									on:change={() => {
+										updated_variable();
 										update_technologies();
 									}}
-								></Radio>
-							{/if}
-							{#if selected_variable != null}
-								<div class="row">
-									<div class="col">
-										<h3>Carrier</h3>
-										<select
-											bind:value={selected_carrier}
-											on:change={() => {
-												update_technologies();
-												update_data();
-											}}
-										>
-											{#each carriers as carrier}
-												<option value={carrier}>
-													{carrier}
-												</option>
-											{/each}
-										</select>
+								>
+									{#each Object.entries(variables) as [variable, subvalues]}
+										<option value={variable}>
+											{variable}
+										</option>
+									{/each}
+								</select>
+								{#if variables && selected_variable && variables[selected_variable] != null}
+									<Radio
+										bind:options={variables[
+											selected_variable
+										]}
+										bind:selected_option={selected_subvariable}
+										on:selection-changed={(e) => {
+											update_carriers();
+											update_technologies();
+										}}
+										enabled={!solution_loading && !fetching}
+									></Radio>
+								{/if}
+								{#if selected_variable != null}
+									<div class="row">
+										<div class="col">
+											<h3>Carrier</h3>
+											<select
+												bind:value={selected_carrier}
+												on:change={() => {
+													update_technologies();
+													update_data();
+												}}
+												disabled={solution_loading ||
+													fetching}
+											>
+												{#each carriers as carrier}
+													<option value={carrier}>
+														{carrier}
+													</option>
+												{/each}
+											</select>
+										</div>
 									</div>
-								</div>
-							{/if}
+								{/if}
+							</div>
 						</div>
 					</div>
-				</div>
+				{/if}
 				{#if !fetching && selected_carrier && technologies.length > 0}
 					<div class="accordion-item">
 						<h2 class="accordion-header">
@@ -419,6 +429,8 @@
 											on:selection-changed={(e) => {
 												update_data();
 											}}
+											enabled={!solution_loading &&
+												!fetching}
 										></Radio>
 									</div>
 									<div class="col-6">
@@ -429,6 +441,8 @@
 											on:selection-changed={(e) => {
 												update_data();
 											}}
+											enabled={!solution_loading &&
+												!fetching}
 										></Radio>
 									</div>
 								</div>
@@ -440,6 +454,7 @@
 										}}
 										bind:selected_elements={selected_technologies}
 										bind:elements={technologies}
+										enabled={!solution_loading && !fetching}
 									></AllCheckbox>
 								{:else}
 									<h3>Node</h3>
@@ -449,6 +464,7 @@
 										}}
 										bind:selected_elements={selected_nodes}
 										bind:elements={nodes}
+										enabled={!solution_loading && !fetching}
 									></AllCheckbox>
 								{/if}
 
@@ -459,6 +475,7 @@
 									}}
 									bind:selected_elements={selected_years}
 									bind:elements={years}
+									enabled={!solution_loading && !fetching}
 								></AllCheckbox>
 							</div>
 						</div>
@@ -470,22 +487,26 @@
 </div>
 <div class="row">
 	<div class="col" style="margin-top: 400px;">
-		{#if filtered_data != null && selected_solution != null}
-			{#if filtered_data.length == 0}
-				<div class="text-center">No data with this selection.</div>
-			{:else}
-				<BarPlot
-					bind:config
-					bind:year_offset={selected_solution.detail.system
-						.reference_year}
-				></BarPlot>
-			{/if}
-		{:else if solution_loading || fetching}
+		{#if solution_loading || fetching}
 			<div class="text-center">
 				<div class="spinner-border center" role="status">
 					<span class="visually-hidden">Loading...</span>
 				</div>
 			</div>
+		{:else if selected_solution == null}
+			<div></div>
+		{:else if filtered_data == null}
+			<div></div>
+		{:else if technologies.length == 0}
+			<div class="text-center">No technologies with this selection.</div>
+		{:else if filtered_data.length == 0}
+			<div class="text-center">No data with this selection.</div>
+		{:else}
+			<BarPlot
+				bind:config
+				bind:year_offset={selected_solution.detail.system
+					.reference_year}
+			></BarPlot>
 		{/if}
 	</div>
 </div>

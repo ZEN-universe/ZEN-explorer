@@ -279,11 +279,12 @@
 								bind:years
 								bind:selected_solution
 								bind:loading={solution_loading}
+								enabled={!solution_loading && !fetching}
 							/>
 						</div>
 					</div>
 				</div>
-				{#if !fetching && fetched_capex}
+				{#if !fetching && !solution_loading && fetched_capex}
 					<div class="accordion-item">
 						<h2 class="accordion-header">
 							<button

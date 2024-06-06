@@ -2,6 +2,7 @@
     import { createEventDispatcher } from "svelte";
     export let options: any[];
     export let selected_option: any = options[0];
+    export let enabled: boolean = true;
     let uniqueID = options.join("_");
 
     const dispatch = createEventDispatcher();
@@ -21,6 +22,7 @@
                 bind:group={selected_option}
                 on:change={update_selection}
                 value={option}
+                disabled={!enabled}
             />
             <label class="form-check-label" for={"radio-" + option}>
                 {option}

@@ -12,7 +12,7 @@
 	const dispatch = createEventDispatcher<{
 		solution_selected: ActivatedSolution | null;
 	}>();
-	
+
 	let solution_list: Array<Solution> = [];
 	let active_solution: string;
 	let active_scenario: string;
@@ -23,6 +23,7 @@
 	export let years: number[] = [];
 	export let selected_solution: ActivatedSolution | null;
 	export let loading: boolean = false;
+	export let enabled: boolean = true;
 
 	onMount(async function () {
 		solution_list = await get_solutions();
@@ -80,6 +81,7 @@
 		<select
 			bind:value={active_solution}
 			on:change={() => update_solution_details()}
+			disabled={!enabled}
 		>
 			{#each solution_list as solution}
 				<option value={solution.name}>
@@ -97,6 +99,7 @@
 			<select
 				bind:value={active_scenario}
 				on:change={() => dispatch_solution()}
+				disabled={!enabled}
 			>
 				{#each Object.keys(solution_detail.scenarios) as scenario}
 					<option value={scenario}>

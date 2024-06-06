@@ -130,7 +130,11 @@
 				current_location = "node";
 			}
 
-			aggregation_options = [current_location, selected_grouping];
+			aggregation_options = [current_location];
+
+			if (selected_grouping) {
+				aggregation_options = [current_location, selected_grouping];
+			}
 
 			for (const d of data.data) {
 				if (d.technology) {
@@ -209,9 +213,12 @@
 				excluded_years,
 				selected_normalisation == "normalized",
 			);
-			filtered_limit_data[0].label = "Annual Emissions Limit";
-			filtered_limit_data[0].type = "line";
-			filtered_data = filtered_data.concat(filtered_limit_data);
+
+			if (filtered_limit_data.length > 0) {
+				filtered_limit_data[0].label = "Annual Emissions Limit";
+				filtered_limit_data[0].type = "line";
+				filtered_data = filtered_data.concat(filtered_limit_data);
+			}
 		}
 
 		config.data = { datasets: filtered_data };
@@ -258,150 +265,162 @@
 								bind:years
 								bind:selected_solution
 								bind:loading={solution_loading}
+								enabled={!solution_loading && !fetching}
 							/>
 						</div>
 					</div>
 				</div>
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button collapsed"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseTwo"
-							aria-expanded="false"
-							aria-controls="collapseTwo"
-						>
-							Variable Selection
-						</button>
-					</h2>
-					<div
-						id="collapseTwo"
-						class="accordion-collapse collapse"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							<h3>Subdivision</h3>
-							<input
-								type="checkbox"
-								class="btn-check"
-								id="btn-check-outlined"
-								autocomplete="off"
-								bind:checked={subdivision}
-								on:change={() => {
-									reset_subsection();
-								}}
-							/>
-							<label
-								class="btn btn-outline-primary"
-								for="btn-check-outlined"
-								>{subdivision ? "on" : "off"}</label
-							><br />
-							{#if !subdivision}
-								<div class="row">
-									<h3>Cumulation</h3>
-									<Radio
-										bind:options={variables}
-										bind:selected_option={selected_variable}
-										on:selection-changed={fetch_data}
-									></Radio>
-								</div>
-							{:else}
-								<div class="row">
-									<h3>Variable</h3>
-									<Radio
-										bind:options={groupings}
-										bind:selected_option={selected_grouping}
-										on:selection-changed={fetch_data}
-									></Radio>
-								</div>
-							{/if}
-						</div>
-					</div>
-				</div>
-				{#if !fetching && (selected_variable != null || selected_aggregation != null)}
+				{#if !solution_loading && selected_solution}
 					<div class="accordion-item">
 						<h2 class="accordion-header">
 							<button
 								class="accordion-button collapsed"
 								type="button"
 								data-bs-toggle="collapse"
-								data-bs-target="#collapseThree"
+								data-bs-target="#collapseTwo"
 								aria-expanded="false"
-								aria-controls="collapseThree"
+								aria-controls="collapseTwo"
 							>
-								Data Selection
+								Variable Selection
 							</button>
 						</h2>
 						<div
-							id="collapseThree"
+							id="collapseTwo"
 							class="accordion-collapse collapse"
 							data-bs-parent="#accordionExample"
 						>
 							<div class="accordion-body">
-								{#if subdivision}
-									<div class="row">
-										<div class="col-6">
-											<h3>Aggregation</h3>
-											<Radio
-												bind:options={aggregation_options}
-												bind:selected_option={selected_aggregation}
-												on:selection-changed={(e) => {
-													update_data();
-												}}
-											></Radio>
-										</div>
-										<div class="col-6">
-											<h3>Normalisation</h3>
-											<Radio
-												bind:options={normalisation_options}
-												bind:selected_option={selected_normalisation}
-												on:selection-changed={(e) => {
-													update_data();
-												}}
-											></Radio>
-										</div>
-									</div>
-									{#if selected_aggregation == "technology"}
-										<h3>Technology</h3>
-										<AllCheckbox
-											bind:selected_elements={selected_technologies}
-											bind:elements={technologies}
-											on:selection-changed={() => {
-												update_data();
-											}}
-										></AllCheckbox>
-									{:else if selected_aggregation == "carrier"}
-										<h3>Carrier</h3>
-										<AllCheckbox
-											bind:selected_elements={selected_carriers}
-											bind:elements={carriers}
-											on:selection-changed={(e) => {
-												update_data();
-											}}
-										></AllCheckbox>
-									{:else if selected_aggregation == current_location}
-										<h3>{current_location}</h3>
-										<AllCheckbox
-											bind:selected_elements={selected_locations}
-											bind:elements={locations}
-											on:selection-changed={(e) => {
-												update_data();
-											}}
-										></AllCheckbox>
-									{/if}
-								{/if}
-								<h3>Year</h3>
-								<AllCheckbox
-									on:selection-changed={(e) => {
-										update_data();
+								<h3>Subdivision</h3>
+								<input
+									type="checkbox"
+									class="btn-check"
+									id="btn-check-outlined"
+									autocomplete="off"
+									bind:checked={subdivision}
+									on:change={() => {
+										reset_subsection();
 									}}
-									bind:selected_elements={selected_years}
-									bind:elements={years}
-								></AllCheckbox>
+									disabled={fetching || solution_loading}
+								/>
+								<label
+									class="btn btn-outline-primary"
+									for="btn-check-outlined"
+									>{subdivision ? "on" : "off"}</label
+								><br />
+								{#if !subdivision}
+									<div class="row">
+										<h3>Cumulation</h3>
+										<Radio
+											bind:options={variables}
+											bind:selected_option={selected_variable}
+											on:selection-changed={fetch_data}
+											enabled={!fetching &&
+												!solution_loading}
+										></Radio>
+									</div>
+								{:else}
+									<div class="row">
+										<h3>Variable</h3>
+										<Radio
+											bind:options={groupings}
+											bind:selected_option={selected_grouping}
+											enabled={!fetching &&
+												!solution_loading}
+											on:selection-changed={fetch_data}
+										></Radio>
+									</div>
+								{/if}
 							</div>
 						</div>
 					</div>
+					{#if !fetching && (selected_variable || selected_grouping)}
+						<div class="accordion-item">
+							<h2 class="accordion-header">
+								<button
+									class="accordion-button collapsed"
+									type="button"
+									data-bs-toggle="collapse"
+									data-bs-target="#collapseThree"
+									aria-expanded="false"
+									aria-controls="collapseThree"
+								>
+									Data Selection
+								</button>
+							</h2>
+							<div
+								id="collapseThree"
+								class="accordion-collapse collapse"
+								data-bs-parent="#accordionExample"
+							>
+								<div class="accordion-body">
+									{#if subdivision}
+										<div class="row">
+											<div class="col-6">
+												<h3>Aggregation</h3>
+												<Radio
+													bind:options={aggregation_options}
+													bind:selected_option={selected_aggregation}
+													on:selection-changed={(
+														e,
+													) => {
+														update_data();
+													}}
+												></Radio>
+											</div>
+											<div class="col-6">
+												<h3>Normalisation</h3>
+												<Radio
+													bind:options={normalisation_options}
+													bind:selected_option={selected_normalisation}
+													on:selection-changed={(
+														e,
+													) => {
+														update_data();
+													}}
+												></Radio>
+											</div>
+										</div>
+										{#if selected_aggregation == "technology"}
+											<h3>Technology</h3>
+											<AllCheckbox
+												bind:selected_elements={selected_technologies}
+												bind:elements={technologies}
+												on:selection-changed={() => {
+													update_data();
+												}}
+											></AllCheckbox>
+										{:else if selected_aggregation == "carrier"}
+											<h3>Carrier</h3>
+											<AllCheckbox
+												bind:selected_elements={selected_carriers}
+												bind:elements={carriers}
+												on:selection-changed={(e) => {
+													update_data();
+												}}
+											></AllCheckbox>
+										{:else if selected_aggregation == current_location}
+											<h3>{current_location}</h3>
+											<AllCheckbox
+												bind:selected_elements={selected_locations}
+												bind:elements={locations}
+												on:selection-changed={(e) => {
+													update_data();
+												}}
+											></AllCheckbox>
+										{/if}
+									{/if}
+									<h3>Year</h3>
+									<AllCheckbox
+										on:selection-changed={(e) => {
+											update_data();
+										}}
+										bind:selected_elements={selected_years}
+										bind:elements={years}
+									></AllCheckbox>
+								</div>
+							</div>
+						</div>
+					{/if}
 				{/if}
 			</div>
 		</div>
