@@ -18,7 +18,6 @@
 	let groupings: string[] = ["technology", "carrier"];
 	let selected_solution: ActivatedSolution | null = null;
 	let current_unit: string = "";
-	let current_location: string = "";
 	let selected_years: number[] = [];
 	let normalisation_options = ["not_normalized", "normalized"];
 	let selected_normalisation: string = "not_normalized";
@@ -60,6 +59,13 @@
 						text: selected_variable + " [" + current_unit + "]",
 					},
 				},
+				yAxes: [
+					{
+						ticks: {
+							beginAtZero: true,
+						},
+					},
+				],
 			},
 		},
 	};
@@ -86,6 +92,75 @@
 				return "carbon_emissions_cumulative";
 			}
 		}
+	}
+
+	async function fetch_subdivision_data() {
+		fetching = true;
+
+		let carbon_emissions_technology = await get_component_total(
+			selected_solution!.solution_name,
+			"carbon_emissions_technology",
+			selected_solution!.scenario_name,
+			selected_solution!.detail.system.reference_year,
+			selected_solution!.detail.system.interval_between_years,
+		);
+
+		let carbon_emissions_carrier = await get_component_total(
+			selected_solution!.solution_name,
+			"carbon_emissions_carrier",
+			selected_solution!.scenario_name,
+			selected_solution!.detail.system.reference_year,
+			selected_solution!.detail.system.interval_between_years,
+		);
+
+		let set_carriers = new Set<string>();
+		let set_technologies = new Set<string>();
+		let set_locations = new Set<string>();
+
+		for (let i of carbon_emissions_technology.data.data) {
+			set_technologies.add(i.technology);
+			set_locations.add(i.location);
+
+			Object.defineProperty(
+				i,
+				"technology_carrier",
+				Object.getOwnPropertyDescriptor(i, "technology"),
+			);
+
+			delete i["technology"];
+		}
+
+		for (let i of carbon_emissions_carrier.data.data) {
+			set_carriers.add(i.carrier);
+			set_locations.add(i.node);
+
+			Object.defineProperty(
+				i,
+				"technology_carrier",
+				Object.getOwnPropertyDescriptor(i, "carrier"),
+			);
+
+			if (Object.hasOwn(i, "node")) {
+				Object.defineProperty(
+					i,
+					"location",
+					Object.getOwnPropertyDescriptor(i, "node"),
+				);
+			}
+
+			delete i["node"];
+			delete i["carrier"];
+		}
+
+		technologies = [...set_technologies];
+		carriers = [...set_carriers];
+		locations = [...set_locations];
+
+		data = carbon_emissions_technology.data;
+		data.data = data.data.concat(carbon_emissions_carrier.data.data);
+		unit = carbon_emissions_technology.unit;
+		fetching = false;
+		update_filters();
 	}
 
 	async function fetch_data() {
@@ -119,46 +194,23 @@
 		).then((fetched) => {
 			data = fetched.data;
 			unit = fetched.unit;
-
-			let set_technologies = new Set<string>();
-			let set_locations = new Set<string>();
-			let set_carriers = new Set<string>();
-
-			if (data.meta.fields?.includes("location")) {
-				current_location = "location";
-			} else {
-				current_location = "node";
-			}
-
-			aggregation_options = [current_location];
-
-			if (selected_grouping) {
-				aggregation_options = [current_location, selected_grouping];
-			}
-
-			for (const d of data.data) {
-				if (d.technology) {
-					set_technologies.add(d.technology);
-				}
-				if (d[current_location]) {
-					set_locations.add(d[current_location]);
-				}
-				if (d.carrier) {
-					set_carriers.add(d.carrier);
-				}
-			}
-
-			technologies = [...set_technologies];
-			locations = [...set_locations];
-			carriers = [...set_carriers];
-			selected_carriers = carriers;
-			selected_technologies = technologies;
-			selected_locations = locations;
-			selected_aggregation = current_location;
-
-			fetching = false;
-			update_data();
 		});
+	}
+
+	function update_filters() {
+		aggregation_options = ["location"];
+
+		if (selected_grouping) {
+			aggregation_options = ["location", selected_grouping];
+		}
+
+		selected_carriers = carriers;
+		selected_technologies = technologies;
+		selected_locations = locations;
+		selected_aggregation = "location";
+
+		fetching = false;
+		update_data();
 	}
 
 	function update_data() {
@@ -170,22 +222,14 @@
 		let datasets_aggregates: StringList = {};
 
 		if (subdivision) {
-			if (selected_grouping == "technology") {
-				if (selected_aggregation != current_location) {
-					dataset_selector[current_location] = locations;
-					datasets_aggregates["technology"] = selected_technologies;
-				} else {
-					dataset_selector["technology"] = technologies;
-					datasets_aggregates[current_location] = selected_locations;
-				}
+			if (selected_aggregation != "location") {
+				dataset_selector["location"] = locations;
+				datasets_aggregates["technology_carrier"] =
+					selected_technologies.concat(selected_carriers);
 			} else {
-				if (selected_aggregation != current_location) {
-					dataset_selector[current_location] = locations;
-					datasets_aggregates["carrier"] = selected_carriers;
-				} else {
-					dataset_selector["carrier"] = carriers;
-					datasets_aggregates[current_location] = selected_locations;
-				}
+				dataset_selector["technology_carrier"] =
+					technologies.concat(carriers);
+				datasets_aggregates["location"] = selected_locations;
 			}
 		}
 
@@ -298,7 +342,13 @@
 									autocomplete="off"
 									bind:checked={subdivision}
 									on:change={() => {
-										reset_subsection();
+										if (!subdivision) {
+											reset_subsection();
+										} else {
+											selected_grouping =
+												"technology_carrier";
+											fetch_subdivision_data();
+										}
 									}}
 									disabled={fetching || solution_loading}
 								/>
@@ -316,17 +366,6 @@
 											on:selection-changed={fetch_data}
 											enabled={!fetching &&
 												!solution_loading}
-										></Radio>
-									</div>
-								{:else}
-									<div class="row">
-										<h3>Variable</h3>
-										<Radio
-											bind:options={groupings}
-											bind:selected_option={selected_grouping}
-											enabled={!fetching &&
-												!solution_loading}
-											on:selection-changed={fetch_data}
 										></Radio>
 									</div>
 								{/if}
@@ -380,7 +419,7 @@
 												></Radio>
 											</div>
 										</div>
-										{#if selected_aggregation == "technology"}
+										{#if selected_aggregation != "location"}
 											<h3>Technology</h3>
 											<AllCheckbox
 												bind:selected_elements={selected_technologies}
@@ -389,7 +428,6 @@
 													update_data();
 												}}
 											></AllCheckbox>
-										{:else if selected_aggregation == "carrier"}
 											<h3>Carrier</h3>
 											<AllCheckbox
 												bind:selected_elements={selected_carriers}
@@ -398,8 +436,8 @@
 													update_data();
 												}}
 											></AllCheckbox>
-										{:else if selected_aggregation == current_location}
-											<h3>{current_location}</h3>
+										{:else}
+											<h3>Location</h3>
 											<AllCheckbox
 												bind:selected_elements={selected_locations}
 												bind:elements={locations}
