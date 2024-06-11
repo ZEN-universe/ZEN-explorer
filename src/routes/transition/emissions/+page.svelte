@@ -59,13 +59,6 @@
 						text: selected_variable + " [" + current_unit + "]",
 					},
 				},
-				yAxes: [
-					{
-						ticks: {
-							beginAtZero: true,
-						},
-					},
-				],
 			},
 		},
 	};
@@ -194,6 +187,7 @@
 		).then((fetched) => {
 			data = fetched.data;
 			unit = fetched.unit;
+			fetching = false;
 		});
 	}
 
