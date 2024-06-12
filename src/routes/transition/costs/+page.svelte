@@ -162,7 +162,6 @@
 				excluded_years,
 				normalized,
 				"line",
-				" (Shed Demand)	",
 			);
 			filtered_data = filtered_data.concat(shed_demand_data);
 		}
@@ -176,7 +175,6 @@
 					excluded_years,
 					normalized,
 					"line",
-					" (Opex)",
 				);
 				filtered_data = filtered_data.concat(opex_data);
 			}
@@ -188,7 +186,6 @@
 					excluded_years,
 					normalized,
 					"line",
-					" (Capex)",
 				);
 				filtered_data = filtered_data.concat(opex_data);
 			}
@@ -206,12 +203,28 @@
 				);
 				if (carbon_data.length > 0) {
 					carbon_data[0].label = "Cost of Carbon Emissions";
-					filtered_data = filtered_data.concat(carbon_data);
 				}
 			}
 		}
 
-		config.data = { datasets: filtered_data };
+		let added_datasets = {};
+
+		for (let s of filtered_data) {
+			if (!Object.hasOwn(added_datasets, s.label)) {
+				added_datasets[s.label] = s;
+			} else {
+				for (let year in s.data) {
+					added_datasets[s.label].data[year] += s.data[year];
+				}
+			}
+		}
+
+		let summed_data: Dataset[] = [];
+		console.log(added_datasets);
+		for (let d in added_datasets) {
+			summed_data.push(added_datasets[d]);
+		}
+		config.data = { datasets: summed_data };
 
 		config.options.scales.y.title.text =
 			selected_variable + " [" + current_unit + "]";
