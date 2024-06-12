@@ -145,12 +145,11 @@
 		if (selected_cost_carriers.length > 0) {
 			let cost_carriers_data = filter_and_aggregate_data(
 				fetched_cost_carrier.data.data,
-				{},
 				{ node: selected_nodes },
+				{ carrier: selected_cost_carriers },
 				excluded_years,
 				normalized,
 			);
-			cost_carriers_data[0].label = "Cost of carrier";
 			filtered_data = filtered_data.concat(cost_carriers_data);
 		}
 
@@ -191,20 +190,17 @@
 			}
 		}
 
-		if (selected_plots.includes("cost_carbon_emissions")) {
-			if (fetched_cost_carbon) {
-				let carbon_data = filter_and_aggregate_data(
-					fetched_cost_carbon.data.data,
-					{},
-					{},
-					excluded_years,
-					normalized,
-					"line",
-				);
-				if (carbon_data.length > 0) {
-					carbon_data[0].label = "Cost of Carbon Emissions";
-				}
-			}
+		if (fetched_cost_carbon) {
+			let carbon_data = filter_and_aggregate_data(
+				fetched_cost_carbon.data.data,
+				{},
+				{},
+				excluded_years,
+				normalized,
+				"line",
+			);
+
+			filtered_data = filtered_data.concat(carbon_data);
 		}
 
 		let added_datasets = {};
@@ -356,14 +352,6 @@
 								<AllCheckbox
 									bind:selected_elements={selected_demand_carriers}
 									bind:elements={demand_carriers}
-									on:selection-changed={() => {
-										update_data();
-									}}
-								></AllCheckbox>
-								<h3>Plots</h3>
-								<AllCheckbox
-									bind:selected_elements={selected_plots}
-									bind:elements={plots}
 									on:selection-changed={() => {
 										update_data();
 									}}
