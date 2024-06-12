@@ -67,6 +67,7 @@
 		selected_variable = null;
 		selected_grouping = null;
 		filtered_data = null;
+		subdivision = false;
 		selected_carriers = [];
 		selected_technologies = [];
 	}
@@ -238,6 +239,10 @@
 			excluded_years,
 			selected_normalisation == "normalized",
 		);
+
+		if (filtered_data.length == 0) {
+			return;
+		}
 
 		if (filtered_data.length == 1) {
 			filtered_data[0].label = get_variable_name();

@@ -28,11 +28,15 @@ export async function get_solution_detail(
 }
 
 export async function get_component_total(solution_name: string, component_name: string, scenario_name: string, start_year: number = 0, step_year: number = 1): Promise<ComponentTotal> {
+    const fetch_url = PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`
+
+    console.log("Fetching", fetch_url)
+
     let component_data = await (
-        await fetch(
-            PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`,
-        )
+        await fetch(fetch_url)
     ).json();
+
+    console.log("Fetched.")
 
     let first_line = component_data.data_csv.slice(0, component_data.data_csv.indexOf("\n"));
     let headers = first_line.split(",")
@@ -68,6 +72,17 @@ export async function get_component_total(solution_name: string, component_name:
     if (component_data.unit) {
         unit = Papa.parse(component_data.unit, { delimiter: ",", header: true, newline: "\n" })
     }
+    console.log(data.data.length, "datapoints fetched")
+    data.data = data.data.filter((row) => {
+        for (const key in row) {
+            let number_check = Number(key)
+            if (!Number.isNaN(number_check) && !Number.isNaN(row[key]) && Math.abs(row[key]) > 0) {
+                return true
+            }
+        }
+        return false
+    })
+    console.log(data.data.length, "datapoints after filtering zero values.")
 
     const ans: ComponentTotal = {
         unit: unit,

@@ -204,8 +204,10 @@
 					normalized,
 					"line",
 				);
-				carbon_data[0].label = "Cost of Carbon Emissions";
-				filtered_data = filtered_data.concat(carbon_data);
+				if (carbon_data.length > 0) {
+					carbon_data[0].label = "Cost of Carbon Emissions";
+					filtered_data = filtered_data.concat(carbon_data);
+				}
 			}
 		}
 

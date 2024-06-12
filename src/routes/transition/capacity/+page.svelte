@@ -376,7 +376,7 @@
 										></Radio>
 									{/if}
 								{/if}
-								{#if selected_technology_type != null}
+								{#if selected_technology_type != null && carriers.length > 0}
 									<h3>Carrier</h3>
 									<select
 										bind:value={selected_carrier}
@@ -495,12 +495,14 @@
 					<span class="visually-hidden">Loading...</span>
 				</div>
 			</div>
+		{:else if technologies.length == 0}
+			<div class="text-center">No technologies with this selection.</div>
+		{:else if carriers.length == 0}
+			<div class="text-center">No carriers with this selection.</div>
 		{:else if selected_solution == null}
 			<div></div>
 		{:else if filtered_data == null}
 			<div></div>
-		{:else if technologies.length == 0}
-			<div class="text-center">No technologies with this selection.</div>
 		{:else if locations.length == 0}
 			<div class="text-center">No locations with this selection.</div>
 		{:else if filtered_data.length == 0}

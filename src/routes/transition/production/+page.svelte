@@ -89,23 +89,23 @@
 
 	async function fetch_data() {
 		fetching = true;
-		await tick();
 
 		let variable_name = get_variable_name();
 		if (variable_name === null) {
 			return;
 		}
 
-		get_component_total(
+		await get_component_total(
 			selected_solution!.solution_name,
 			variable_name,
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
 		).then((fetched) => {
-			fetching = false;
 			data = fetched.data;
 			unit = fetched.unit;
+			fetching = false;
+			return;
 		});
 	}
 
@@ -151,7 +151,6 @@
 		}
 
 		reset_data_selection();
-		update_data();
 	}
 
 	function update_technologies() {
@@ -234,9 +233,13 @@
 		if (variables[selected_variable] != null) {
 			selected_subvariable = variables[selected_variable]![0];
 		}
-		fetch_data();
-		update_carriers();
-		update_technologies();
+
+		fetch_data().then(() => {
+			update_carriers();
+			update_technologies();
+			console.log("from variable", data);
+			update_data();
+		});
 	}
 
 	function update_data() {
@@ -245,7 +248,7 @@
 		} else {
 			selected_technologies = technologies;
 		}
-		console.log(nodes, technologies, data);
+
 		if (
 			selected_nodes.length == 0 ||
 			selected_years.length == 0 ||
@@ -279,6 +282,7 @@
 			selected_normalisation == "normalized",
 		);
 
+		console.log("Data after updating", filtered_data);
 		config.data = { datasets: filtered_data };
 		console.log(filtered_data);
 		config.options.scales.y.title.text =
@@ -352,7 +356,6 @@
 									disabled={solution_loading || fetching}
 									on:change={() => {
 										updated_variable();
-										update_technologies();
 									}}
 								>
 									{#each Object.entries(variables) as [variable, subvalues]}
@@ -370,6 +373,7 @@
 										on:selection-changed={(e) => {
 											update_carriers();
 											update_technologies();
+											update_data();
 										}}
 										enabled={!solution_loading && !fetching}
 									></Radio>
@@ -400,7 +404,7 @@
 						</div>
 					</div>
 				{/if}
-				{#if !fetching && selected_carrier && technologies.length > 0}
+				{#if !fetching && selected_carrier && technologies.length > 0 && filtered_data.length > 0}
 					<div class="accordion-item">
 						<h2 class="accordion-header">
 							<button

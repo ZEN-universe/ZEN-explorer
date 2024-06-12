@@ -19,9 +19,15 @@ export function filter_and_aggregate_data(
     plot_type: string | null = null,
     label_suffix: string = ""
 ): Dataset[] {
+
+    if (data.length == 0) {
+        return []
+    }
+
     let years_keys = Object.keys(data[0]).filter((k) => (!isNaN(Number(k)) && !years_exclude.includes(Number(k))));
     let dataset_keys = Object.keys(dataset_filters)
     let datasets: DatasetContainer = {};
+
 
     for (const row of data) {
         let skip = false;
