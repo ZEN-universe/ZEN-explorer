@@ -407,22 +407,28 @@
 											</div>
 										</div>
 										{#if selected_aggregation != "location"}
-											<h3>Technology</h3>
-											<AllCheckbox
-												bind:selected_elements={selected_technologies}
-												bind:elements={technologies}
-												on:selection-changed={() => {
-													update_data();
-												}}
-											></AllCheckbox>
-											<h3>Carrier</h3>
-											<AllCheckbox
-												bind:selected_elements={selected_carriers}
-												bind:elements={carriers}
-												on:selection-changed={(e) => {
-													update_data();
-												}}
-											></AllCheckbox>
+											{#if technologies.length > 0}
+												<h3>Technology</h3>
+												<AllCheckbox
+													bind:selected_elements={selected_technologies}
+													bind:elements={technologies}
+													on:selection-changed={() => {
+														update_data();
+													}}
+												></AllCheckbox>
+											{/if}
+											{#if carriers.length > 0}
+												<h3>Carrier</h3>
+												<AllCheckbox
+													bind:selected_elements={selected_carriers}
+													bind:elements={carriers}
+													on:selection-changed={(
+														e,
+													) => {
+														update_data();
+													}}
+												></AllCheckbox>
+											{/if}
 										{:else}
 											<h3>Location</h3>
 											<AllCheckbox

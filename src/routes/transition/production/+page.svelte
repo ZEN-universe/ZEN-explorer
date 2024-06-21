@@ -41,10 +41,10 @@
 	}
 
 	let selected_aggregation = "technology";
-
+	let datasets: any[] = [];
 	let config = {
 		type: "bar",
-		data: { datasets: [] },
+		data: { datasets: datasets },
 		options: {
 			responsive: true,
 			scales: {
@@ -363,9 +363,7 @@
 								</select>
 								{#if variables && selected_variable && variables[selected_variable] != null}
 									<Radio
-										bind:options={variables[
-											selected_variable
-										]}
+										bind:options={variables[selected_variable]}
 										bind:selected_option={selected_subvariable}
 										on:selection-changed={(e) => {
 											update_carriers();
