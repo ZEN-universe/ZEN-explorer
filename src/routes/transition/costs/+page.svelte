@@ -19,10 +19,8 @@
 
 	let carriers: string[] = [];
 	let nodes: string[] = [];
-	let selected_nodes: string[] = [];
 	let years: number[] = [];
 	let locations: string[] = [];
-	let plots: string[] = ["capex", "opex", "cost_carbon_emissions"];
 	let selected_solution: ActivatedSolution | null = null;
 	let current_unit: string = "";
 	let selected_years: number[] = [];
@@ -166,6 +164,7 @@
 	}
 
 	function update_data() {
+		fetching = true;
 		let dataset_selector: StringList = {};
 		let datasets_aggregates: StringList = {};
 		regroup_data();
@@ -197,6 +196,7 @@
 
 		let normalized = selected_normalisation == "normalized";
 
+		// Get Plot-Data
 		let filtered_data = filter_and_aggregate_data(
 			grouped_data.data,
 			dataset_selector,
@@ -205,10 +205,24 @@
 			normalized,
 		);
 
-		config.data = { datasets: filtered_data };
+		// Get Total Carbon Cost Data
+		if (fetched_cost_carbon.data.data.length > 0) {
+			filtered_data.push({
+				label: "Total Carbon Costs",
+				data: fetched_cost_carbon.data.data[0],
+				type: "bar",
+			});
+		}
+		tick().then(() => {
+			console.log(filtered_data);
 
-		config.options.scales.y.title.text =
-			selected_variable + " [" + current_unit + "]";
+			config.data = { datasets: filtered_data };
+
+			config.options.scales.y.title.text =
+				selected_variable + " [" + current_unit + "]";
+
+			fetching = false;
+		});
 	}
 
 	async function solution_changed() {
@@ -252,7 +266,7 @@
 		cost_carriers = selected_solution!.detail.carriers_import
 			.concat(selected_solution!.detail.carriers_export)
 			.filter((i) => set_cost_carriers.has(i));
-		console.log(cost_carriers);
+
 		selected_cost_carriers = cost_carriers;
 
 		// Options for Demand Carriers
