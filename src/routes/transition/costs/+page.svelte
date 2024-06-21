@@ -6,8 +6,14 @@
 		Dataset,
 	} from "$lib/types";
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
+	import Radio from "../../../components/Radio.svelte";
+
 	import { get_component_total } from "$lib/temple";
-	import { filter_and_aggregate_data } from "$lib/utils";
+	import {
+		filter_and_aggregate_data,
+		group_data,
+		rename_field,
+	} from "$lib/utils";
 	import { tick } from "svelte";
 	import BarPlot from "../../../components/plots/BarPlot.svelte";
 
@@ -24,8 +30,6 @@
 	let selected_variable: string | null = null;
 	let selected_cost_carriers: string[] = [];
 	let selected_demand_carriers: string[] = [];
-	let selected_technologies: string[] = [];
-	let technologies: string[] = [];
 	let solution_loading: boolean = false;
 	let fetching: boolean = false;
 	let transport_technologies: string[] = [];
@@ -34,7 +38,7 @@
 	let selected_storage_technologies: string[] = [];
 	let conversion_technologies: string[] = [];
 	let selected_conversion_technologies: string[] = [];
-	let selected_plots: string[] = plots;
+	let grouped_data: Papa.ParseResult<any>;
 	let fetched_cost_carbon: ComponentTotal;
 	let fetched_cost_carrier: ComponentTotal;
 	let fetched_capex: ComponentTotal;
@@ -42,6 +46,9 @@
 	let fetched_cost_shed_demand: ComponentTotal;
 	let cost_carriers: string[] = [];
 	let demand_carriers: string[] = [];
+	let combined_name = "Techology / Carrier";
+	let aggregation_options: string[] = [combined_name, "Location"];
+	let selected_aggregation: string = aggregation_options[0];
 
 	interface StringList {
 		[key: string]: string[];
@@ -119,142 +126,152 @@
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
 		);
+
+		rename_field(fetched_cost_carrier.data, "node", "location");
+		rename_field(fetched_cost_shed_demand.data, "node", "location");
+		fetching = false;
+	}
+
+	function regroup_data() {
+		fetching = true;
+
+		let filtered_cost_carrier = structuredClone(fetched_cost_carrier.data);
+
+		filtered_cost_carrier.data = filtered_cost_carrier.data.filter((i) =>
+			selected_cost_carriers.includes(i["carrier"]),
+		);
+
+		let filtered_fetched_cost_shed_demand = structuredClone(
+			fetched_cost_shed_demand.data,
+		);
+
+		filtered_fetched_cost_shed_demand.data =
+			filtered_fetched_cost_shed_demand.data.filter((i) =>
+				selected_demand_carriers.includes(i["carrier"]),
+			);
+
+		grouped_data = group_data(combined_name, [
+			["technology", fetched_capex.data],
+			["technology", fetched_opex.data],
+			["carrier", filtered_cost_carrier],
+			["carrier", filtered_fetched_cost_shed_demand],
+		]);
+
+		let set_locations = new Set<string>();
+		for (const i of grouped_data.data) {
+			set_locations.add(i["location"]);
+		}
+		locations = Array.from(set_locations);
 		fetching = false;
 	}
 
 	function update_data() {
 		let dataset_selector: StringList = {};
 		let datasets_aggregates: StringList = {};
-		dataset_selector["node"] = locations;
-		datasets_aggregates["technology"] = selected_technologies;
+		regroup_data();
 
+		// Select all technologies and carriers
+		let all_selected_carriers_technologies = [
+			...selected_conversion_technologies,
+			...selected_storage_technologies,
+			...selected_transport_technologies,
+			...selected_cost_carriers,
+			...selected_demand_carriers,
+		];
+
+		// Specify Aggregation
+		if (selected_aggregation == aggregation_options[0]) {
+			dataset_selector["location"] = locations;
+			datasets_aggregates[combined_name] =
+				all_selected_carriers_technologies;
+		} else {
+			dataset_selector[combined_name] =
+				all_selected_carriers_technologies;
+			datasets_aggregates["location"] = locations;
+		}
+
+		// Define excluded years
 		let excluded_years = years.filter(
 			(year) => !selected_years.includes(year),
 		);
 
-		let all_selected_technologies = [
-			...selected_conversion_technologies,
-			...selected_storage_technologies,
-			...selected_transport_technologies,
-		];
-
-		let filtered_data: Dataset[] = [];
 		let normalized = selected_normalisation == "normalized";
 
-		// Add Cost Carriers
-		if (selected_cost_carriers.length > 0) {
-			let cost_carriers_data = filter_and_aggregate_data(
-				fetched_cost_carrier.data.data,
-				{ node: selected_nodes },
-				{ carrier: selected_cost_carriers },
-				excluded_years,
-				normalized,
-			);
-			filtered_data = filtered_data.concat(cost_carriers_data);
-		}
+		let filtered_data = filter_and_aggregate_data(
+			grouped_data.data,
+			dataset_selector,
+			datasets_aggregates,
+			excluded_years,
+			normalized,
+		);
 
-		if (selected_demand_carriers.length > 0) {
-			let shed_demand_data = filter_and_aggregate_data(
-				fetched_cost_shed_demand.data.data,
-				{ node: selected_nodes },
-				{ carrier: selected_demand_carriers },
-				excluded_years,
-				normalized,
-				"line",
-			);
-			filtered_data = filtered_data.concat(shed_demand_data);
-		}
-
-		if (technologies.length > 0) {
-			if (selected_plots.includes("opex")) {
-				let opex_data = filter_and_aggregate_data(
-					fetched_opex.data.data,
-					{ location: selected_nodes },
-					{ technology: all_selected_technologies },
-					excluded_years,
-					normalized,
-					"line",
-				);
-				filtered_data = filtered_data.concat(opex_data);
-			}
-			if (selected_plots.includes("capex")) {
-				let opex_data = filter_and_aggregate_data(
-					fetched_capex.data.data,
-					{ location: selected_nodes },
-					{ technology: all_selected_technologies },
-					excluded_years,
-					normalized,
-					"line",
-				);
-				filtered_data = filtered_data.concat(opex_data);
-			}
-		}
-
-		if (fetched_cost_carbon) {
-			let carbon_data = filter_and_aggregate_data(
-				fetched_cost_carbon.data.data,
-				{},
-				{},
-				excluded_years,
-				normalized,
-				"line",
-			);
-
-			filtered_data = filtered_data.concat(carbon_data);
-		}
-
-		let added_datasets = {};
-
-		for (let s of filtered_data) {
-			if (!Object.hasOwn(added_datasets, s.label)) {
-				added_datasets[s.label] = s;
-			} else {
-				for (let year in s.data) {
-					added_datasets[s.label].data[year] += s.data[year];
-				}
-			}
-		}
-
-		let summed_data: Dataset[] = [];
-		console.log(added_datasets);
-		for (let d in added_datasets) {
-			summed_data.push(added_datasets[d]);
-		}
-		config.data = { datasets: summed_data };
+		config.data = { datasets: filtered_data };
 
 		config.options.scales.y.title.text =
 			selected_variable + " [" + current_unit + "]";
 	}
 
 	async function solution_changed() {
-		technologies = selected_solution!.detail.system.set_technologies;
+		await fetch_data();
+		fetching = true;
+
+		// Options for Capex / Opex
+		let set_apex_opex_technologies = new Set<string>();
+		for (const row of fetched_capex.data.data) {
+			set_apex_opex_technologies.add(row[combined_name]);
+		}
+		for (const row of fetched_opex.data.data) {
+			set_apex_opex_technologies.add(row[combined_name]);
+		}
 
 		transport_technologies =
-			selected_solution!.detail.system.set_transport_technologies;
+			selected_solution!.detail.system.set_transport_technologies.filter(
+				(t) => set_apex_opex_technologies.has(t),
+			);
 		conversion_technologies =
-			selected_solution!.detail.system.set_conversion_technologies;
+			selected_solution!.detail.system.set_conversion_technologies.filter(
+				(t) => set_apex_opex_technologies.has(t),
+			);
 		storage_technologies =
-			selected_solution!.detail.system.set_storage_technologies;
+			selected_solution!.detail.system.set_storage_technologies.filter(
+				(t) => set_apex_opex_technologies.has(t),
+			);
 
 		selected_transport_technologies = transport_technologies;
 		selected_conversion_technologies = conversion_technologies;
 		selected_storage_technologies = storage_technologies;
 
+		// Options for Cost Carriers
+		let set_cost_carriers = new Set<string>();
+
+		for (const row of fetched_cost_carrier.data.data) {
+			set_cost_carriers.add(row["carrier"]);
+		}
+
 		carriers = selected_solution!.detail.system.set_carriers;
-		cost_carriers = selected_solution!.detail.carriers_import.concat(
-			selected_solution!.detail.carriers_export,
+		cost_carriers = selected_solution!.detail.carriers_import
+			.concat(selected_solution!.detail.carriers_export)
+			.filter((i) => set_cost_carriers.has(i));
+		console.log(cost_carriers);
+		selected_cost_carriers = cost_carriers;
+
+		// Options for Demand Carriers
+		let set_demand_carriers = new Set<string>();
+		for (const row of fetched_cost_shed_demand.data.data) {
+			set_demand_carriers.add(row["carrier"]);
+		}
+		demand_carriers = selected_solution!.detail.carriers_demand.filter(
+			(i) => set_demand_carriers.has(i),
 		);
 
-		selected_cost_carriers = cost_carriers;
-		demand_carriers = selected_solution!.detail.carriers_demand;
 		selected_demand_carriers = demand_carriers;
 		nodes = selected_solution!.detail.system.set_nodes;
-		selected_nodes = nodes;
-		selected_years = years;
-		await tick();
 
-		await fetch_data();
+		// Set years
+		selected_years = years;
+
 		update_data();
+		fetching = false;
 	}
 </script>
 
@@ -316,46 +333,56 @@
 						>
 							<div class="accordion-body">
 								<h3>Technologies (for Capex/Opex)</h3>
-								<h4>Transport</h4>
-								<AllCheckbox
-									bind:selected_elements={selected_transport_technologies}
-									bind:elements={transport_technologies}
-									on:selection-changed={() => {
-										update_data();
-									}}
-								></AllCheckbox>
-								<h4>Storage</h4>
-								<AllCheckbox
-									bind:selected_elements={selected_storage_technologies}
-									bind:elements={storage_technologies}
-									on:selection-changed={() => {
-										update_data();
-									}}
-								></AllCheckbox>
-								<h4>Conversion</h4>
-								<AllCheckbox
-									bind:selected_elements={selected_conversion_technologies}
-									bind:elements={conversion_technologies}
-									on:selection-changed={() => {
-										update_data();
-									}}
-								></AllCheckbox>
-								<h3>Cost of Carrier</h3>
-								<AllCheckbox
-									bind:selected_elements={selected_cost_carriers}
-									bind:elements={cost_carriers}
-									on:selection-changed={() => {
-										update_data();
-									}}
-								></AllCheckbox>
-								<h3>Shed Demand</h3>
-								<AllCheckbox
-									bind:selected_elements={selected_demand_carriers}
-									bind:elements={demand_carriers}
-									on:selection-changed={() => {
-										update_data();
-									}}
-								></AllCheckbox>
+								{#if transport_technologies.length > 0}
+									<h4>Transport</h4>
+									<AllCheckbox
+										bind:selected_elements={selected_transport_technologies}
+										bind:elements={transport_technologies}
+										on:selection-changed={() => {
+											update_data();
+										}}
+									></AllCheckbox>
+								{/if}
+								{#if storage_technologies.length > 0}
+									<h4>Storage</h4>
+									<AllCheckbox
+										bind:selected_elements={selected_storage_technologies}
+										bind:elements={storage_technologies}
+										on:selection-changed={() => {
+											update_data();
+										}}
+									></AllCheckbox>
+								{/if}
+								{#if conversion_technologies.length > 0}
+									<h4>Conversion</h4>
+									<AllCheckbox
+										bind:selected_elements={selected_conversion_technologies}
+										bind:elements={conversion_technologies}
+										on:selection-changed={() => {
+											update_data();
+										}}
+									></AllCheckbox>
+								{/if}
+								{#if cost_carriers.length > 0}
+									<h3>Cost of Carrier</h3>
+									<AllCheckbox
+										bind:selected_elements={selected_cost_carriers}
+										bind:elements={cost_carriers}
+										on:selection-changed={() => {
+											update_data();
+										}}
+									></AllCheckbox>
+								{/if}
+								{#if demand_carriers.length > 0}
+									<h3>Shed Demand</h3>
+									<AllCheckbox
+										bind:selected_elements={selected_demand_carriers}
+										bind:elements={demand_carriers}
+										on:selection-changed={() => {
+											update_data();
+										}}
+									></AllCheckbox>
+								{/if}
 							</div>
 						</div>
 					</div>
@@ -379,23 +406,28 @@
 						>
 							<div class="accordion-body">
 								<div class="accordion-body">
-									<h3>Node</h3>
-									<AllCheckbox
-										bind:selected_elements={selected_nodes}
-										bind:elements={nodes}
-										on:selection-changed={(e) => {
-											update_data();
-										}}
-									></AllCheckbox>
-
-									<h3>Year</h3>
-									<AllCheckbox
-										bind:selected_elements={selected_years}
-										bind:elements={years}
-										on:selection-changed={(e) => {
-											update_data();
-										}}
-									></AllCheckbox>
+									<div class="row">
+										<div class="col-6">
+											<h3>Aggregation</h3>
+											<Radio
+												bind:options={aggregation_options}
+												bind:selected_option={selected_aggregation}
+												on:selection-changed={(e) => {
+													update_data();
+												}}
+											></Radio>
+										</div>
+									</div>
+									{#if selected_years}
+										<h3>Year</h3>
+										<AllCheckbox
+											bind:selected_elements={selected_years}
+											elements={years}
+											on:selection-changed={(e) => {
+												update_data();
+											}}
+										></AllCheckbox>
+									{/if}
 								</div>
 							</div>
 						</div>

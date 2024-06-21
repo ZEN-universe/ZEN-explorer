@@ -4,7 +4,7 @@
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import Radio from "../../../components/Radio.svelte";
 	import { get_component_total } from "$lib/temple";
-	import { filter_and_aggregate_data } from "$lib/utils";
+	import { filter_and_aggregate_data, group_data } from "$lib/utils";
 	import { tick } from "svelte";
 	import BarPlot from "../../../components/plots/BarPlot.svelte";
 
@@ -114,25 +114,11 @@
 		for (let i of carbon_emissions_technology.data.data) {
 			set_technologies.add(i.technology);
 			set_locations.add(i.location);
-
-			Object.defineProperty(
-				i,
-				"technology_carrier",
-				Object.getOwnPropertyDescriptor(i, "technology"),
-			);
-
-			delete i["technology"];
 		}
 
 		for (let i of carbon_emissions_carrier.data.data) {
 			set_carriers.add(i.carrier);
 			set_locations.add(i.node);
-
-			Object.defineProperty(
-				i,
-				"technology_carrier",
-				Object.getOwnPropertyDescriptor(i, "carrier"),
-			);
 
 			if (Object.hasOwn(i, "node")) {
 				Object.defineProperty(
@@ -143,15 +129,17 @@
 			}
 
 			delete i["node"];
-			delete i["carrier"];
 		}
 
 		technologies = [...set_technologies];
 		carriers = [...set_carriers];
 		locations = [...set_locations];
 
-		data = carbon_emissions_technology.data;
-		data.data = data.data.concat(carbon_emissions_carrier.data.data);
+		data = group_data("technology_carrier", [
+			["carrier", carbon_emissions_carrier.data],
+			["technology", carbon_emissions_technology.data],
+		]);
+
 		unit = carbon_emissions_technology.unit;
 		fetching = false;
 		update_filters();

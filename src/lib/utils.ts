@@ -7,7 +7,42 @@ import type {
 
 interface DatasetContainer {
     [key: string]: YearValue;
+}
 
+interface GroupData {
+    [key: string]: Papa.ParseResult<any>;
+}
+
+export function rename_field(papa_result: Papa.ParseResult<any>, old_name: string, new_name: string) {
+    for (let i of papa_result.data) {
+        let new_val = Object.getOwnPropertyDescriptor(i, old_name)
+
+        if (new_val === undefined) {
+            continue
+        }
+
+        Object.defineProperty(
+            i,
+            new_name,
+            new_val,
+        );
+        delete i[old_name];
+    }
+}
+
+export function group_data(new_name: string, group_data: [string, Papa.ParseResult<any>][]): Papa.ParseResult<any> {
+    let ans: Papa.ParseResult<any> | undefined = undefined;
+
+    for (let group_pair of group_data) {
+        rename_field(group_pair[1], group_pair[0], new_name)
+        if (ans === undefined) {
+            ans = structuredClone(group_pair[1])
+        } else {
+            ans.data = ans.data.concat(group_pair[1].data)
+        }
+    }
+
+    return ans!
 }
 
 export function filter_and_aggregate_data(
@@ -16,10 +51,9 @@ export function filter_and_aggregate_data(
     dataset_aggregations: DatasetSelectors,
     years_exclude: any[] = [],
     normalise: boolean = false,
-    plot_type: string | null = null,
+    plot_type: string = "bar",
     label_suffix: string = ""
 ): Dataset[] {
-
     if (data.length == 0) {
         return []
     }

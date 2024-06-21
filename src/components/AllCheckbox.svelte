@@ -27,6 +27,7 @@
     }
 
     onMount(() => {
+        selected_elements = elements;
         id = Math.random().toString(16).slice(2);
         update_all_checkbox();
     });
