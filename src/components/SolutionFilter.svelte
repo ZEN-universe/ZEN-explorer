@@ -36,6 +36,7 @@
 			active_scenario = Object.keys(solution_detail.scenarios)[0];
 			dispatch_solution();
 		} else {
+			selected_solution = null;
 			active_scenario = "";
 			dispatch("solution_selected", null);
 		}

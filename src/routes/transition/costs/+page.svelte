@@ -213,8 +213,6 @@
 			});
 		}
 		tick().then(() => {
-			console.log(filtered_data);
-
 			config.data = { datasets: filtered_data };
 
 			config.options.scales.y.title.text =
@@ -329,7 +327,7 @@
 						</div>
 					</div>
 				</div>
-				{#if !fetching && !solution_loading && fetched_capex}
+				{#if !fetching && !solution_loading && fetched_capex && selected_solution != null}
 					<div class="accordion-item">
 						<h2 class="accordion-header">
 							<button

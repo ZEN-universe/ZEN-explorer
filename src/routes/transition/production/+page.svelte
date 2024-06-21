@@ -237,7 +237,6 @@
 		fetch_data().then(() => {
 			update_carriers();
 			update_technologies();
-			console.log("from variable", data);
 			update_data();
 		});
 	}
@@ -282,9 +281,7 @@
 			selected_normalisation == "normalized",
 		);
 
-		console.log("Data after updating", filtered_data);
 		config.data = { datasets: filtered_data };
-		console.log(filtered_data);
 		config.options.scales.y.title.text =
 			selected_variable + " [" + current_unit + "]";
 	}
