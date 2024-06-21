@@ -77,14 +77,13 @@
 	};
 
 	async function fetch_data() {
+		if (selected_solution == null) {
+			return;
+		}
 		fetching = true;
 		await tick();
 
 		let variable_name = "";
-		if (variable_name === null) {
-			return;
-		}
-
 		fetched_capex = await get_component_total(
 			selected_solution!.solution_name,
 			"capex_yearly",
@@ -226,7 +225,11 @@
 	}
 
 	async function solution_changed() {
+		if (selected_solution == null) {
+			return;
+		}
 		await fetch_data();
+
 		fetching = true;
 
 		// Options for Capex / Opex
