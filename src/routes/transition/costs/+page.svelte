@@ -21,6 +21,7 @@
 	let nodes: string[] = [];
 	let years: number[] = [];
 	let locations: string[] = [];
+	let selected_locations: string[] = [];
 	let selected_solution: ActivatedSolution | null = null;
 	let current_unit: string = "";
 	let selected_years: number[] = [];
@@ -185,7 +186,7 @@
 		} else {
 			dataset_selector[combined_name] =
 				all_selected_carriers_technologies;
-			datasets_aggregates["location"] = locations;
+			datasets_aggregates["location"] = selected_locations;
 		}
 
 		// Define excluded years
@@ -338,7 +339,7 @@
 								aria-expanded="false"
 								aria-controls="collapseTwo"
 							>
-								Variable Selection
+								Technology and Carrier Selection
 							</button>
 						</h2>
 						<div
@@ -433,6 +434,16 @@
 											></Radio>
 										</div>
 									</div>
+									{#if selected_aggregation == aggregation_options[1]}
+										<h3>Location</h3>
+										<AllCheckbox
+											bind:selected_elements={selected_locations}
+											elements={locations}
+											on:selection-changed={(e) => {
+												update_data();
+											}}
+										></AllCheckbox>
+									{/if}
 									{#if selected_years}
 										<h3>Year</h3>
 										<AllCheckbox
