@@ -467,17 +467,17 @@
 												update_data();
 											}}
 										></AllCheckbox>
-
-										<h3>Year</h3>
-										<AllCheckbox
-											bind:selected_elements={selected_years}
-											bind:elements={years}
-											on:selection-changed={(e) => {
-												console.log("Year changed");
-												update_data();
-											}}
-										></AllCheckbox>
 									{/if}
+
+									<h3>Year</h3>
+									<AllCheckbox
+										bind:selected_elements={selected_years}
+										bind:elements={years}
+										on:selection-changed={(e) => {
+											console.log("Year changed");
+											update_data();
+										}}
+									></AllCheckbox>
 								</div>
 							</div>
 						</div>
