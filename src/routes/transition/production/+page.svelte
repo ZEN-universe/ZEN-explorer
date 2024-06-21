@@ -401,7 +401,7 @@
 						</div>
 					</div>
 				{/if}
-				{#if !fetching && selected_carrier && technologies.length > 0 && filtered_data.length > 0}
+				{#if !fetching && selected_carrier && technologies.length > 0}
 					<div class="accordion-item">
 						<h2 class="accordion-header">
 							<button
