@@ -51,7 +51,7 @@
                     </ul>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{base}/">The Energy Balance</a>
+                    <a class="nav-link" href="{base}/energy_balance">The Energy Balance</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{base}/">The Energy System</a>

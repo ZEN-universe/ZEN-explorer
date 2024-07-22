@@ -1,0 +1,246 @@
+<script lang="ts">
+    import SolutionFilter from "../../components/SolutionFilter.svelte";
+    import type { ActivatedSolution } from "$lib/types";
+    import Dropdown from "../../components/Dropdown.svelte";
+    import { get_energy_balance } from "$lib/temple";
+    import BarPlot from "../../components/plots/BarPlot.svelte";
+    import { filter_and_aggregate_data } from "$lib/utils";
+    import { tick } from "svelte";
+
+    let selected_solution: ActivatedSolution | null = null;
+    let plot_ready = false;
+    let solution_loading: boolean = false;
+    let fetching = false;
+
+    let nodes: string[] = [];
+    let selected_node: string | null = null;
+
+    let carriers: string[] = [];
+    let selected_carrier: string | null = null;
+
+    let years: number[] = [];
+    let selected_year: number | null = null;
+
+    interface StringList {
+        [key: string]: string[];
+    }
+
+    let config = {
+        type: "line",
+        data: { datasets: [] as any[] },
+        options: {
+            elements: {
+                point: {
+                    radius: 0,
+                },
+            },
+            responsive: true,
+            scales: {
+                x: {
+                    stacked: true,
+                    title: {
+                        display: true,
+                        text: "Time",
+                    },
+                },
+                y: {
+                    stacked: true,
+                    title: {
+                        display: true,
+                        text: "Power",
+                    },
+                },
+            },
+            borderWidth: 1
+        },
+    };
+
+    function solution_changed() {
+        if (!selected_solution) {
+            return;
+        }
+        selected_node = nodes[0];
+        selected_carrier = carriers[0];
+        selected_year = years[0];
+        plot_ready = false;
+        data_changed();
+        return;
+    }
+
+    function data_changed() {
+        fetching = true;
+        tick();
+        if (
+            selected_node == null ||
+            selected_carrier == null ||
+            selected_year == null ||
+            selected_solution == null
+        ) {
+            fetching = false;
+            return;
+        }
+        let year_index =
+            selected_year - selected_solution.detail.system.reference_year;
+
+        get_energy_balance(
+            selected_solution.solution_name,
+            selected_node,
+            selected_carrier,
+            selected_solution.scenario_name,
+            year_index,
+        ).then((a) => {
+            config.data.datasets = [];
+            for (const plot_name in a) {
+                let dataset_selector: StringList = {
+                    node: [selected_node!],
+                };
+
+                if (a[plot_name] == undefined) {
+                    continue;
+                }
+
+                if ("technology" in a[plot_name].data[0]) {
+                    let technologies = [];
+                    for (const row of a[plot_name].data) {
+                        technologies.push(row["technology"]);
+                    }
+                    dataset_selector = {
+                        technology: technologies,
+                    };
+                }
+                let datasets_aggregates: StringList = {};
+                let current_plots = filter_and_aggregate_data(
+                    a[plot_name].data,
+                    dataset_selector,
+                    datasets_aggregates,
+                );
+
+                if (current_plots.length == 0) {
+                    continue;
+                }
+
+                for (let current_plot of current_plots) {
+                    if (current_plot.label == selected_node) {
+                        current_plot.label = plot_name;
+                    } else {
+                        current_plot.label =
+                            plot_name + " (" + current_plot.label + ")";
+                    }
+                    current_plot.type = "line";
+                    current_plot.fill = "origin";
+                    config.data.labels = [];
+                    config.data.datasets.push(current_plot);
+                }
+            }
+            fetching = false;
+            plot_ready = true;
+        });
+    }
+</script>
+
+<div class="row">
+    <div class="col">
+        <h2>Production</h2>
+    </div>
+</div>
+<div class="row">
+    <div class="col position-relative">
+        <div class="filters" style="position: absolute; width: 100%;">
+            <div class="accordion" id="accordionExample">
+                <div class="accordion-item solution-selection">
+                    <h2 class="accordion-header">
+                        <button
+                            class="accordion-button"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapseOne"
+                            aria-expanded="true"
+                            aria-controls="collapseOne"
+                        >
+                            Solution Selection
+                        </button>
+                    </h2>
+                    <div
+                        id="collapseOne"
+                        class="accordion-collapse collapse show"
+                        data-bs-parent="#accordionExample"
+                    >
+                        <div class="accordion-body">
+                            <SolutionFilter
+                                on:solution_selected={solution_changed}
+                                bind:carriers
+                                bind:nodes
+                                bind:years
+                                bind:selected_solution
+                                bind:loading={solution_loading}
+                                enabled={!solution_loading && !fetching}
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button
+                            class="accordion-button collapsed"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapseTwo"
+                            aria-expanded="false"
+                            aria-controls="collapseTwo"
+                        >
+                            Data selection
+                        </button>
+                    </h2>
+                    <div
+                        id="collapseTwo"
+                        class="accordion-collapse collapse"
+                        data-bs-parent="#accordionExample"
+                    >
+                        <div class="accordion-body">
+                            <div class="row">
+                                <div class="col-6">
+                                    <h3>Year</h3>
+                                    <Dropdown
+                                        bind:options={years}
+                                        bind:selected_option={selected_year}
+                                        on:selection-changed={data_changed}
+                                        enabled={!fetching && !solution_loading}
+                                    ></Dropdown>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <h3>Node</h3>
+                                    <Dropdown
+                                        bind:options={nodes}
+                                        bind:selected_option={selected_node}
+                                        on:selection-changed={data_changed}
+                                        enabled={!fetching && !solution_loading}
+                                    ></Dropdown>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <h3>Carrier</h3>
+                                    <Dropdown
+                                        bind:options={carriers}
+                                        bind:selected_option={selected_carrier}
+                                        on:selection-changed={data_changed}
+                                        enabled={!fetching && !solution_loading}
+                                    ></Dropdown>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{#if !fetching && plot_ready}
+    <div class="row">
+        <div class="col" style="margin-top: 400px;">
+            <BarPlot bind:config></BarPlot>
+        </div>
+    </div>
+{/if}

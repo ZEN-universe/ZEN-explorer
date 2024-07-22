@@ -62,7 +62,6 @@ export function filter_and_aggregate_data(
     let dataset_keys = Object.keys(dataset_filters)
     let datasets: DatasetContainer = {};
 
-
     for (const row of data) {
         let skip = false;
         for (let key in dataset_filters) {
@@ -132,7 +131,7 @@ export function filter_and_aggregate_data(
         if (Object.values(datasets[label]).includes(NaN)) {
             continue;
         }
-
+        
         ans_datasets.push({
             label: label,
             data: datasets[label],
