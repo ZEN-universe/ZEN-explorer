@@ -7,6 +7,25 @@
     import { filter_and_aggregate_data } from "$lib/utils";
     import { tick } from "svelte";
 
+    var defaultColors = [
+        "rgb(75, 192, 192)",
+        "rgb(54, 162, 235)",
+        "rgb(255, 206, 86)",
+        "rgb(153, 102, 255)",
+        "rgb(255, 159, 64)",
+        "rgb(255, 99, 132)",
+        "rgb(201, 203, 207)",
+        "rgb(220,20,60)",
+        "rgb(255,99,71)",
+        "rgb(255,69,0)",
+        "rgb(154,205,50)",
+        "rgb(0,100,0)",
+        "rgb(50,205,50)",
+        "rgb(0,139,139)",,
+        "rgb(153,50,204)",
+        "rgb(255,105,180)",
+    ];
+
     let selected_solution: ActivatedSolution | null = null;
     let plot_ready = false;
     let solution_loading: boolean = false;
@@ -51,7 +70,7 @@
                     },
                 },
             },
-            borderWidth: 1
+            borderWidth: 1,
         },
     };
 
@@ -90,6 +109,8 @@
             year_index,
         ).then((a) => {
             config.data.datasets = [];
+            config.data.labels = [];
+            let i = 0;
             for (const plot_name in a) {
                 let dataset_selector: StringList = {
                     node: [selected_node!],
@@ -120,16 +141,56 @@
                 }
 
                 for (let current_plot of current_plots) {
-                    if (current_plot.label == selected_node) {
-                        current_plot.label = plot_name;
-                    } else {
+                    if (plot_name == "flow_conversion_discharge") {
                         current_plot.label =
-                            plot_name + " (" + current_plot.label + ")";
+                            current_plot.label + " (discharge)";
                     }
-                    current_plot.type = "line";
-                    current_plot.fill = "origin";
-                    config.data.labels = [];
+                    if (plot_name == "flow_transport_in") {
+                        current_plot.label =
+                            current_plot.label + " (transport in)";
+                    }
+
+                    if (plot_name == "flow_import") {
+                        current_plot.label = "Import";
+                    }
+
+                    if (plot_name == "shed_demand") {
+                        current_plot.label = "Shed Demand";
+                    }
+
+                    if (plot_name == "flow_storage_charge") {
+                        current_plot.label = current_plot.label + " (charge)";
+                    }
+
+                    if (plot_name == "flow_transport_out") {
+                        current_plot.label =
+                            current_plot.label + " (transport out)";
+                    }
+
+                    if (plot_name == "flow_export") {
+                        current_plot.label = "Export";
+                    }
+
+                    if (plot_name == "demand") {
+                        current_plot.label = "Demand";
+                        current_plot.type = "line";
+                        current_plot.stack = "ownCustomStack";
+                        current_plot.fill = false;
+                        current_plot.borderColor = "black";
+                        current_plot.backgroundColor = "white";
+                        current_plot.borderWidth = 2;
+                    } else {
+                        current_plot.type = "line";
+                        current_plot.fill = "origin";
+                        current_plot.borderColor =
+                            defaultColors[i % defaultColors.length];
+                        current_plot.backgroundColor = defaultColors[
+                            i % defaultColors.length
+                        ].replace(")", ", 0.8)");
+                    }
+
                     config.data.datasets.push(current_plot);
+                    i++;
                 }
             }
             fetching = false;
