@@ -47,7 +47,7 @@
 	let demand_carriers: string[] = [];
 	let combined_name = "Techology / Carrier";
 	let aggregation_options: string[] = [combined_name, "Location"];
-	let selected_aggregation: string = aggregation_options[0];
+	let selected_aggregation: string = aggregation_options[1];
 
 	interface StringList {
 		[key: string]: string[];
@@ -285,6 +285,9 @@
 
 		// Set years
 		selected_years = years;
+
+		// Set locations
+		selected_locations = locations;
 
 		update_data();
 		fetching = false;

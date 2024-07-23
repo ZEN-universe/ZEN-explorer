@@ -40,7 +40,7 @@
 		[key: string]: string[];
 	}
 
-	let selected_aggregation = "technology";
+	let selected_aggregation = "node";
 	let datasets: any[] = [];
 	let config = {
 		type: "bar",
