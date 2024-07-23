@@ -142,7 +142,7 @@
                 }
 
                 for (let current_plot of current_plots) {
-                    if (plot_name == "flow_conversion_discharge") {
+                    if (plot_name == "flow_storage_discharge") {
                         current_plot.label =
                             current_plot.label + " (discharge)";
                     }
