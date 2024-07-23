@@ -46,7 +46,7 @@
     }
 
     let config = {
-        type: "line",
+        type: "bar",
         data: { datasets: [] as any[] },
         options: {
             elements: {
@@ -109,7 +109,7 @@
             selected_solution.scenario_name,
             year_index,
         ).then((a) => {
-            config.data.datasets = [];
+            let datasets = [];
             config.data.labels = [];
             let i = 0;
             for (const plot_name in a) {
@@ -172,6 +172,12 @@
                         current_plot.label = "Export";
                     }
 
+                    let plot_type = "line";
+
+                    if (Object.keys(current_plot.data).length == 1) {
+                        plot_type = "bar";
+                    }
+
                     if (plot_name == "demand") {
                         current_plot.label = "Demand";
                         current_plot.type = "line";
@@ -180,20 +186,25 @@
                         current_plot.borderColor = "black";
                         current_plot.backgroundColor = "white";
                         current_plot.borderWidth = 2;
+                        if (Object.keys(current_plot.data).length == 1) {
+                            current_plot.pointRadius = 2;
+                        }
                     } else {
-                        current_plot.type = "line";
+                        current_plot.type = plot_type;
                         current_plot.fill = "origin";
                         current_plot.borderColor =
                             defaultColors[i % defaultColors.length];
                         current_plot.backgroundColor = defaultColors[
                             i % defaultColors.length
-                        ].replace(")", ", 0.8)");
+                        ]!.replace(")", ", 0.8)");
                     }
 
-                    config.data.datasets.push(current_plot);
+                    datasets.push(current_plot);
                     i++;
                 }
             }
+
+            config.data.datasets = datasets;
             fetching = false;
             plot_ready = true;
         });
