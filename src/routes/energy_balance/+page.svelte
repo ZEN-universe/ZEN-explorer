@@ -21,7 +21,8 @@
         "rgb(154,205,50)",
         "rgb(0,100,0)",
         "rgb(50,205,50)",
-        "rgb(0,139,139)",,
+        "rgb(0,139,139)",
+        ,
         "rgb(153,50,204)",
         "rgb(255,105,180)",
     ];
@@ -201,7 +202,7 @@
 
 <div class="row">
     <div class="col">
-        <h2>Production</h2>
+        <h2>The Energy Balance</h2>
     </div>
 </div>
 <div class="row">
@@ -298,10 +299,17 @@
         </div>
     </div>
 </div>
-{#if !fetching && plot_ready}
-    <div class="row">
-        <div class="col" style="margin-top: 400px;">
+<div class="row">
+    <div class="col" style="margin-top: 400px;">
+        {#if fetching}
+            <div class="text-center">
+                <div class="spinner-border center" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        {/if}
+        {#if !fetching && plot_ready}
             <BarPlot bind:config></BarPlot>
-        </div>
+        {/if}
     </div>
-{/if}
+</div>
