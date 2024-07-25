@@ -100,8 +100,11 @@
             fetching = false;
             return;
         }
-        let year_index =
-            selected_year - selected_solution.detail.system.reference_year;
+        let year_index = Math.floor(
+            (selected_year - selected_solution.detail.system.reference_year) /
+                selected_solution.detail.system.interval_between_years,
+        );
+
         console.log("Getting energy balance.");
         let a = await get_energy_balance(
             selected_solution.solution_name,
