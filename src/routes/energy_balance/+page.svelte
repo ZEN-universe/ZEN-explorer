@@ -22,7 +22,6 @@
         "rgb(0,100,0)",
         "rgb(50,205,50)",
         "rgb(0,139,139)",
-        ,
         "rgb(153,50,204)",
         "rgb(255,105,180)",
     ];
@@ -191,6 +190,7 @@
                         current_plot.pointRadius = 2;
                     }
                 } else {
+                    console.log(i % defaultColors.length, defaultColors.length, defaultColors);
                     current_plot.type = plot_type;
                     current_plot.fill = "origin";
                     current_plot.borderColor =
