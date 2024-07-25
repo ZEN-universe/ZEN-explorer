@@ -190,7 +190,6 @@
                         current_plot.pointRadius = 2;
                     }
                 } else {
-                    console.log(i % defaultColors.length, defaultColors.length, defaultColors);
                     current_plot.type = plot_type;
                     current_plot.fill = "origin";
                     current_plot.borderColor =
