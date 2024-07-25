@@ -49,6 +49,8 @@
         type: "bar",
         data: { datasets: [] as any[] },
         options: {
+            animation: false,
+            normalized: true,
             elements: {
                 point: {
                     radius: 0,
@@ -75,7 +77,7 @@
         },
     };
 
-    function solution_changed() {
+    async function solution_changed() {
         if (!selected_solution) {
             return;
         }
@@ -83,11 +85,11 @@
         selected_carrier = carriers[0];
         selected_year = years[0];
         plot_ready = false;
-        data_changed();
+        await data_changed();
         return;
     }
 
-    function data_changed() {
+    async function data_changed() {
         fetching = true;
         tick();
         if (
@@ -101,113 +103,114 @@
         }
         let year_index =
             selected_year - selected_solution.detail.system.reference_year;
-
-        get_energy_balance(
+        console.log("Getting energy balance.");
+        let a = await get_energy_balance(
             selected_solution.solution_name,
             selected_node,
             selected_carrier,
             selected_solution.scenario_name,
             year_index,
-        ).then((a) => {
-            let datasets = [];
-            config.data.labels = [];
-            let i = 0;
-            for (const plot_name in a) {
-                let dataset_selector: StringList = {
-                    node: [selected_node!],
-                };
+        );
+        console.log("Received.");
+        let datasets = [];
+        config.data.labels = [];
+        let i = 0;
+        for (const plot_name in a) {
+            let dataset_selector: StringList = {
+                node: [selected_node!],
+            };
 
-                if (a[plot_name] == undefined) {
-                    continue;
-                }
-
-                if ("technology" in a[plot_name].data[0]) {
-                    let technologies = [];
-                    for (const row of a[plot_name].data) {
-                        technologies.push(row["technology"]);
-                    }
-                    dataset_selector = {
-                        technology: technologies,
-                    };
-                }
-                let datasets_aggregates: StringList = {};
-                let current_plots = filter_and_aggregate_data(
-                    a[plot_name].data,
-                    dataset_selector,
-                    datasets_aggregates,
-                );
-
-                if (current_plots.length == 0) {
-                    continue;
-                }
-
-                for (let current_plot of current_plots) {
-                    if (plot_name == "flow_storage_discharge") {
-                        current_plot.label =
-                            current_plot.label + " (discharge)";
-                    }
-                    if (plot_name == "flow_transport_in") {
-                        current_plot.label =
-                            current_plot.label + " (transport in)";
-                    }
-
-                    if (plot_name == "flow_import") {
-                        current_plot.label = "Import";
-                    }
-
-                    if (plot_name == "shed_demand") {
-                        current_plot.label = "Shed Demand";
-                    }
-
-                    if (plot_name == "flow_storage_charge") {
-                        current_plot.label = current_plot.label + " (charge)";
-                    }
-
-                    if (plot_name == "flow_transport_out") {
-                        current_plot.label =
-                            current_plot.label + " (transport out)";
-                    }
-
-                    if (plot_name == "flow_export") {
-                        current_plot.label = "Export";
-                    }
-
-                    let plot_type = "line";
-
-                    if (Object.keys(current_plot.data).length == 1) {
-                        plot_type = "bar";
-                    }
-
-                    if (plot_name == "demand") {
-                        current_plot.label = "Demand";
-                        current_plot.type = "line";
-                        current_plot.stack = "ownCustomStack";
-                        current_plot.fill = false;
-                        current_plot.borderColor = "black";
-                        current_plot.backgroundColor = "white";
-                        current_plot.borderWidth = 2;
-                        if (Object.keys(current_plot.data).length == 1) {
-                            current_plot.pointRadius = 2;
-                        }
-                    } else {
-                        current_plot.type = plot_type;
-                        current_plot.fill = "origin";
-                        current_plot.borderColor =
-                            defaultColors[i % defaultColors.length];
-                        current_plot.backgroundColor = defaultColors[
-                            i % defaultColors.length
-                        ]!.replace(")", ", 0.8)");
-                    }
-
-                    datasets.push(current_plot);
-                    i++;
-                }
+            if (a[plot_name] == undefined) {
+                continue;
             }
 
-            config.data.datasets = datasets;
-            fetching = false;
-            plot_ready = true;
-        });
+            if ("technology" in a[plot_name].data[0]) {
+                let technologies = [];
+                for (const row of a[plot_name].data) {
+                    technologies.push(row["technology"]);
+                }
+                dataset_selector = {
+                    technology: technologies,
+                };
+            }
+            let datasets_aggregates: StringList = {};
+
+            let current_plots = filter_and_aggregate_data(
+                a[plot_name].data,
+                dataset_selector,
+                datasets_aggregates,
+            );
+            if (current_plots.length == 0) {
+                continue;
+            }
+
+            for (let current_plot of current_plots) {
+                if (plot_name == "flow_storage_discharge") {
+                    current_plot.label = current_plot.label + " (discharge)";
+                }
+                if (plot_name == "flow_transport_in") {
+                    current_plot.label = current_plot.label + " (transport in)";
+                }
+
+                if (plot_name == "flow_import") {
+                    current_plot.label = "Import";
+                }
+
+                if (plot_name == "shed_demand") {
+                    current_plot.label = "Shed Demand";
+                }
+
+                if (plot_name == "flow_storage_charge") {
+                    current_plot.label = current_plot.label + " (charge)";
+                }
+
+                if (plot_name == "flow_transport_out") {
+                    current_plot.label =
+                        current_plot.label + " (transport out)";
+                }
+
+                if (plot_name == "flow_export") {
+                    current_plot.label = "Export";
+                }
+
+                let plot_type = "line";
+
+                if (Object.keys(current_plot.data).length == 1) {
+                    plot_type = "bar";
+                }
+
+                if (plot_name == "demand") {
+                    current_plot.label = "Demand";
+                    current_plot.type = "line";
+                    current_plot.stack = "ownCustomStack";
+                    current_plot.fill = false;
+                    current_plot.borderColor = "black";
+                    current_plot.backgroundColor = "white";
+                    current_plot.borderWidth = 2;
+                    if (Object.keys(current_plot.data).length == 1) {
+                        current_plot.pointRadius = 2;
+                    }
+                } else {
+                    current_plot.type = plot_type;
+                    current_plot.fill = "origin";
+                    current_plot.borderColor =
+                        defaultColors[i % defaultColors.length];
+                    current_plot.backgroundColor = defaultColors[
+                        i % defaultColors.length
+                    ]!.replace(")", ", 0.8)");
+                }
+
+                datasets.push(current_plot);
+                i++;
+            }
+        }
+        config.data.datasets = datasets;
+        fetching = false;
+        plot_ready = true;
+        let start = performance.now();
+        await tick();
+        console.log("Building plot took", performance.now() - start);
+        console.log("Done.");
     }
 </script>
 
@@ -319,8 +322,14 @@
                 </div>
             </div>
         {/if}
-        {#if !fetching && plot_ready}
+        <div class:hidden={fetching || !plot_ready}>
             <BarPlot bind:config></BarPlot>
-        {/if}
+        </div>
     </div>
 </div>
+
+<style>
+    .hidden {
+        opacity: 0;
+    }
+</style>
