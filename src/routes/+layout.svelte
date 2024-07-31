@@ -6,7 +6,7 @@
         Capacity: base + "/transition/capacity",
         Production: base + "/transition/production",
         Emissions: base + "/transition/emissions",
-        Costs: base + "/transition/costs"
+        Costs: base + "/transition/costs",
     };
 </script>
 
@@ -51,7 +51,9 @@
                     </ul>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{base}/energy_balance">The Energy Balance</a>
+                    <a class="nav-link" href="{base}/energy_balance"
+                        >The Energy Balance</a
+                    >
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{base}/">The Energy System</a>
