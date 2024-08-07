@@ -55,12 +55,6 @@
                         >The Energy Balance</a
                     >
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{base}/">The Energy System</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{base}/">The Map</a>
-                </li>
             </ul>
         </div>
     </div>
