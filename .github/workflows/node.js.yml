@@ -39,3 +39,4 @@ jobs:
         user-email: muserv@ethz.ch
         target-directory: explorer
         commit-message: "Updated explorer"
+        user-name: vinzenz-muser
