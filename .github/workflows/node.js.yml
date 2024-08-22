@@ -26,3 +26,16 @@ jobs:
         cache: 'npm'
     - run: npm install
     - run: npm run build
+    - name: Deploy to external repository
+      uses: cpina/github-action-push-to-another-repository@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.TEMPLE_ACCESS_TOKEN }}
+
+      with:
+        # GitHub Action output files
+        source-directory: build/
+        destination-github-username: vinzenz-muser
+        destination-repository-name: git@github.com:ZEN-universe/ZEN-temple.git
+        user-email: muserv@ethz.ch
+        target-directory: explorer
+        commit-message: "Updated explorer"
