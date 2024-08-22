@@ -45,6 +45,7 @@ export function group_data(new_name: string, group_data: [string, Papa.ParseResu
     return ans!
 }
 
+
 export function filter_and_aggregate_data(
     data: Row[],
     dataset_filters: DatasetSelectors,
@@ -121,7 +122,11 @@ export function filter_and_aggregate_data(
 
         for (let year of years_keys) {
             for (let dataset_label in datasets) {
-                datasets[dataset_label][year] *= 1 / year_totals[year]
+                if (year_totals[year] == 0) {
+                    datasets[dataset_label][year] = 0
+                } else {
+                    datasets[dataset_label][year] *= 1 / year_totals[year]
+                }
             }
         }
     }
@@ -131,12 +136,13 @@ export function filter_and_aggregate_data(
         if (Object.values(datasets[label]).includes(NaN)) {
             continue;
         }
-        
+
         ans_datasets.push({
             label: label,
             data: datasets[label],
             type: plot_type
         });
     }
+
     return ans_datasets;
 }

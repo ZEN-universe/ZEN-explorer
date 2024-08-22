@@ -73,6 +73,20 @@
                 },
             },
             borderWidth: 1,
+            plugins: {
+                zoom: {
+                    pan: {
+                        enabled: true,
+                        mode: "x",
+                    },
+                    zoom: {
+                        wheel: {
+                            enabled: true,
+                        },
+                        mode: "x",
+                    },
+                },
+            },
         },
     };
 
@@ -115,7 +129,6 @@
         );
         console.log("Received.");
         let datasets = [];
-        config.data.labels = [];
         let i = 0;
         for (const plot_name in a) {
             let dataset_selector: StringList = {
@@ -203,10 +216,13 @@
                 }
 
                 datasets.push(current_plot);
+
                 i++;
             }
         }
+        config.data.labels = Object.keys(datasets[0].data);
         config.data.datasets = datasets;
+        console.log(config);
         fetching = false;
         plot_ready = true;
         let start = performance.now();
@@ -324,9 +340,11 @@
                 </div>
             </div>
         {/if}
-        <div class:hidden={fetching || !plot_ready}>
-            <BarPlot bind:config></BarPlot>
-        </div>
+        {#if !fetching && plot_ready}
+            <div class:hidden={fetching || !plot_ready}>
+                <BarPlot bind:config></BarPlot>
+            </div>
+        {/if}
     </div>
 </div>
 

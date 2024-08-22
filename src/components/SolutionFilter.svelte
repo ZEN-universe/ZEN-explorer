@@ -20,6 +20,7 @@
 	let active_scenario_detail: ScenarioDetail | null = null;
 	export let carriers: string[] = [];
 	export let nodes: string[] = [];
+	export let edges: string[] = [];
 	export let years: number[] = [];
 	export let selected_solution: ActivatedSolution | null;
 	export let loading: boolean = false;
@@ -63,6 +64,7 @@
 
 		carriers = selected_solution.detail.system.set_carriers;
 		nodes = selected_solution.detail.system.set_nodes;
+		edges = Object.keys(selected_solution.detail.edges);
 		let years_index = [
 			...Array(selected_solution.detail.system.optimized_years).keys(),
 		];

@@ -1,5 +1,12 @@
 <script lang="ts">
     import Chart, { type ChartDataset } from "chart.js/auto";
+    import { onMount } from "svelte";
+
+    onMount(async () => {
+        const zoomPlugin = (await import("chartjs-plugin-zoom")).default;
+        Chart.register(zoomPlugin);
+    });
+
     export let config;
     export let year_offset = 0;
 
@@ -7,6 +14,7 @@
         let chart = new Chart(element, config);
         return {
             update(config) {
+                console.log("Destroyed")
                 chart.destroy();
                 chart = new Chart(element, config);
             },

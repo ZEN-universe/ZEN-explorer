@@ -56,6 +56,7 @@ export interface ScenarioDetail {
     carriers_input: { [key: string]: string[] },
     carriers_output: { [key: string]: string[] },
     carriers_demand: string[]
+    edges: { [key: string]: string },
 }
 
 export interface Scenarios {

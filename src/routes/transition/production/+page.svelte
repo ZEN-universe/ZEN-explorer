@@ -12,6 +12,8 @@
 	let data: Papa.ParseResult<any>;
 	let carriers: string[] = [];
 	let nodes: string[] = [];
+	let edges: string[] = [];
+	let locations: string[] = [];
 	let years: number[] = [];
 	let variables: { [key: string]: string[] | null } = {
 		conversion: ["input", "output"],
@@ -28,7 +30,7 @@
 	let selected_carrier: string | null = null;
 	let technologies: string[] = [];
 	let selected_technologies: string[] = [];
-	let selected_nodes: string[] = [];
+	let selected_locations: string[] = [];
 	let selected_subvariable: string | null = null;
 	let selected_years: number[] = [];
 	let normalisation_options = ["not_normalized", "normalized"];
@@ -68,7 +70,7 @@
 
 	function reset_data_selection() {
 		selected_years = years;
-		selected_nodes = nodes;
+		selected_locations = nodes;
 		selected_technologies = technologies;
 	}
 
@@ -164,7 +166,7 @@
 		}
 
 		technologies = selected_solution?.detail.system.set_technologies ?? [];
-
+		console.log(selected_solution);
 		switch (selected_variable) {
 			case "conversion":
 				technologies = [];
@@ -183,21 +185,23 @@
 				}
 				break;
 			case "storage":
-				technologies = technologies.filter(
-					(technology) =>
-						selected_solution?.detail.reference_carrier[
-							technology
-						] == selected_carrier,
-				);
+				technologies =
+					selected_solution?.detail.system.set_storage_technologies.filter(
+						(technology) =>
+							selected_solution?.detail.reference_carrier[
+								technology
+							] == selected_carrier,
+					) ?? [];
 
 				break;
 			case "transport":
-				technologies = technologies.filter(
-					(technology) =>
-						selected_solution?.detail.reference_carrier[
-							technology
-						] == selected_carrier,
-				);
+				technologies =
+					selected_solution?.detail.system.set_transport_technologies.filter(
+						(technology) =>
+							selected_solution?.detail.reference_carrier[
+								technology
+							] == selected_carrier,
+					) ?? [];
 
 				break;
 			case "import_export":
@@ -223,6 +227,13 @@
 		reset_data_selection();
 	}
 
+	function update_locations() {
+		locations = nodes;
+		if (selected_variable == "transport") {
+			locations = edges;
+		}
+	}
+
 	function updated_variable() {
 		filtered_data = [];
 
@@ -237,19 +248,20 @@
 		fetch_data().then(() => {
 			update_carriers();
 			update_technologies();
+			update_locations();
 			update_data();
 		});
 	}
 
 	function update_data() {
 		if (selected_aggregation == "technology") {
-			selected_nodes = nodes;
+			selected_locations = nodes;
 		} else {
 			selected_technologies = technologies;
 		}
 
 		if (
-			selected_nodes.length == 0 ||
+			selected_locations.length == 0 ||
 			selected_years.length == 0 ||
 			selected_technologies.length == 0 ||
 			!data
@@ -260,13 +272,18 @@
 
 		let dataset_selector: StringList = {};
 		let datasets_aggregates: StringList = {};
+		let location_name = "node";
+
+		if (selected_variable == "transport") {
+			location_name = "edge";
+		}
 
 		if (selected_aggregation == "technology") {
-			dataset_selector["node"] = selected_nodes;
+			dataset_selector[location_name] = selected_locations;
 			datasets_aggregates["technology"] = selected_technologies;
 		} else {
 			dataset_selector["technology"] = selected_technologies;
-			datasets_aggregates["node"] = selected_nodes;
+			datasets_aggregates[location_name] = selected_locations;
 		}
 
 		let excluded_years = years.filter(
@@ -321,6 +338,7 @@
 								bind:nodes
 								bind:years
 								bind:selected_solution
+								bind:edges
 								bind:loading={solution_loading}
 								enabled={!solution_loading && !fetching}
 							/>
@@ -363,7 +381,9 @@
 								</select>
 								{#if variables && selected_variable && variables[selected_variable] != null}
 									<Radio
-										bind:options={variables[selected_variable]}
+										bind:options={variables[
+											selected_variable
+										]}
 										bind:selected_option={selected_subvariable}
 										on:selection-changed={(e) => {
 											update_carriers();
@@ -461,8 +481,8 @@
 										on:selection-changed={(e) => {
 											update_data();
 										}}
-										bind:selected_elements={selected_nodes}
-										bind:elements={nodes}
+										bind:selected_elements={selected_locations}
+										bind:elements={locations}
 										enabled={!solution_loading && !fetching}
 									></AllCheckbox>
 								{/if}

@@ -65,7 +65,7 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
     let first_line = data_csv.slice(0, data_csv.indexOf("\n"));
     let headers = first_line.split(",")
 
-    if (headers.length == 2) {
+    if (headers.lenth == 2) {
         let lines = data_csv.split("\n")
         let years = ""
         let data = ""
@@ -93,7 +93,14 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
     return data
 }
 
-export async function get_component_total(solution_name: string, component_name: string, scenario_name: string, start_year: number = 0, step_year: number = 1): Promise<ComponentTotal> {
+export async function get_component_total(
+    solution_name: string,
+    component_name: string,
+    scenario_name: string,
+    start_year: number = 0,
+    step_year: number = 1,
+    suffix: string[] | undefined = undefined): Promise<ComponentTotal> {
+
     const fetch_url = PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`
 
     console.log("Fetching", fetch_url)
@@ -102,15 +109,13 @@ export async function get_component_total(solution_name: string, component_name:
         await fetch(fetch_url)
     ).json();
 
-    console.log("Fetched.")
-
     let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv, start_year, step_year)
     let unit: Papa.ParseResult<Row> | null = null
 
     if (component_data.unit) {
         unit = Papa.parse(component_data.unit, { delimiter: ",", header: true, newline: "\n" })
     }
-    console.log(data.data.length, "datapoints fetched")
+
     data.data = data.data.filter((row) => {
         for (const key in row) {
             let number_check = Number(key)
@@ -120,7 +125,6 @@ export async function get_component_total(solution_name: string, component_name:
         }
         return false
     })
-    console.log(data.data.length, "datapoints after filtering zero values.")
 
     const ans: ComponentTotal = {
         unit: unit,
