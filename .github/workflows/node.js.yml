@@ -35,7 +35,7 @@ jobs:
         # GitHub Action output files
         source-directory: build/
         destination-github-username: vinzenz-muser
-        destination-repository-name: git@github.com:ZEN-universe/ZEN-temple.git
+        destination-repository-name: ZEN-universe/ZEN-explorer
         user-email: muserv@ethz.ch
         target-directory: explorer
         commit-message: "Updated explorer"
