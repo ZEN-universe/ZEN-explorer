@@ -44,7 +44,8 @@
         [key: string]: string[];
     }
 
-    let config = {
+    const initial_config = {
+        counter: 1,
         type: "bar",
         data: { datasets: [] as any[] },
         options: {
@@ -77,9 +78,13 @@
                 zoom: {
                     pan: {
                         enabled: true,
+                        modifierKey: "ctrl",
                         mode: "x",
                     },
                     zoom: {
+                        drag: {
+                            enabled: true,
+                        },
                         wheel: {
                             enabled: true,
                         },
@@ -90,14 +95,19 @@
         },
     };
 
+    let config = structuredClone(initial_config);
+
     async function solution_changed() {
         if (!selected_solution) {
             return;
         }
+        config = structuredClone(initial_config);
+
         selected_node = nodes[0];
         selected_carrier = carriers[0];
         selected_year = years[0];
         plot_ready = false;
+
         await data_changed();
         return;
     }
@@ -127,7 +137,7 @@
             selected_solution.scenario_name,
             year_index,
         );
-        console.log("Received.");
+        console.log("Received", a);
         let datasets = [];
         let i = 0;
         for (const plot_name in a) {
@@ -160,6 +170,9 @@
             }
 
             for (let current_plot of current_plots) {
+                if (Object.keys(current_plot.data).length == 0) {
+                    continue;
+                }
                 if (plot_name == "flow_storage_discharge") {
                     current_plot.label = current_plot.label + " (discharge)";
                 }
@@ -341,7 +354,7 @@
             </div>
         {/if}
         {#if !fetching && plot_ready}
-            <div class:hidden={fetching || !plot_ready}>
+            <div style="position: relative;">
                 <BarPlot bind:config></BarPlot>
             </div>
         {/if}

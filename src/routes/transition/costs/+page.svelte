@@ -141,8 +141,7 @@
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
 		);
-		console.log(fetched_cost_shed_demand)
-		console.log(fetched_cost_carbon)
+ 
 		rename_field(fetched_cost_carrier.data, "node", "location");
 		rename_field(fetched_cost_shed_demand.data, "node", "location");
 
