@@ -279,7 +279,7 @@
 		<h2>Capacity</h2>
 	</div>
 </div>
-<div class="row">
+<div class="row" style="z-index: 1; position: relative;">
 	<div class="col position-relative">
 		<div class="filters" style="position: absolute; width: 100%;">
 			<div class="accordion" id="accordionExample">
@@ -510,8 +510,6 @@
 		{:else}
 			<BarPlot
 				bind:config
-				bind:year_offset={selected_solution.detail.system
-					.reference_year}
 			></BarPlot>
 		{/if}
 	</div>

@@ -355,7 +355,7 @@
         {/if}
         {#if !fetching && plot_ready}
             <div style="position: relative;">
-                <BarPlot bind:config></BarPlot>
+                <BarPlot zoom={true} bind:config></BarPlot>
             </div>
         {/if}
     </div>

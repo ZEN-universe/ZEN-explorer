@@ -4,11 +4,12 @@
 
     import { onMount } from "svelte";
     export let config;
+    export let zoom = false;
+
     onMount(async () => {
         const zoomPlugin = (await import("chartjs-plugin-zoom")).default;
         Chart.register(zoomPlugin);
         config.counter += 1;
-        downloadData();
     });
 
     let chart: Chart | undefined = undefined;
@@ -76,15 +77,16 @@
     The download button downloads the data that is plotted as csv.<br />
 </Modal>
 <div class="row">
-    <div class="col canvas-container">
+    <div class="col canvas-container" style="position: relative;">
         <div style="position: absolute; top: -1em; right: 0;" class="btn-group">
-            <Button on:click={toggle}><i class="bi bi-info"></i></Button>
-            <Button
-                on:click={() => {
-                    chart?.resetZoom();
-                }}><i class="bi bi-house"></i></Button
-            >
-
+            {#if zoom}
+                <Button on:click={toggle}><i class="bi bi-info"></i></Button>
+                <Button
+                    on:click={() => {
+                        chart?.resetZoom();
+                    }}><i class="bi bi-house"></i></Button
+                >
+            {/if}
             <Button on:click={downloadData}
                 ><i class="bi bi-download"></i></Button
             >

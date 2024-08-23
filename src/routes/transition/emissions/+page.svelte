@@ -267,7 +267,7 @@
 <h2>Emissions</h2>
 
 <div class="row">
-	<div class="col position-relative">
+	<div class="col position-relative" style="z-index: 1; position: relative;">
 		<div class="filters" style="position: absolute; width: 100%;">
 			<div class="accordion" id="accordionExample">
 				<div class="accordion-item solution-selection">
