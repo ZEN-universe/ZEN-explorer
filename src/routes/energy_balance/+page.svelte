@@ -241,7 +241,6 @@
         let start = performance.now();
         await tick();
         console.log("Building plot took", performance.now() - start);
-        console.log("Done.");
     }
 </script>
 

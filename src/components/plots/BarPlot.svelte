@@ -23,8 +23,6 @@
                 }
                 chart!.destroy();
                 chart = new Chart(element, config);
-                console.log("RESET ZOOM DAMIT GOT DAMIT");
-                console.log(chart);
             },
             destroy() {
                 chart!.destroy();
