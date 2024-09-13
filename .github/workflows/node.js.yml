@@ -37,6 +37,6 @@ jobs:
         destination-github-username: ZEN-universe
         destination-repository-name: ZEN-temple
         user-email: muserv@ethz.ch
-        target-directory: explorer
+        target-directory: src/zen_temple/explorer
         commit-message: "Updated explorer"
         user-name: vinzenz-muser
