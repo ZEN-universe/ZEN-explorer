@@ -1,4 +1,4 @@
-import { PUBLIC_TEMPLE_URL } from "$env/static/public";
+import { env } from "$env/dynamic/public";
 import Papa from 'papaparse';
 import type {
     Solution,
@@ -11,7 +11,7 @@ import type {
 
 export async function get_solutions(): Promise<Solution[]> {
     let solution_list: Array<Solution> = await (
-        await fetch(PUBLIC_TEMPLE_URL + "solutions/list")
+        await fetch(env.PUBLIC_TEMPLE_URL + "solutions/list")
     ).json();
     return solution_list
 }
@@ -21,7 +21,7 @@ export async function get_solution_detail(
 ): Promise<SolutionDetail> {
     let solution_detail = await (
         await fetch(
-            PUBLIC_TEMPLE_URL + `solutions/get_detail/${solution}`,
+            env.PUBLIC_TEMPLE_URL + `solutions/get_detail/${solution}`,
         )
     ).json();
 
@@ -33,7 +33,7 @@ export async function get_energy_balance(
 ): Promise<EnergyBalanceDataframes> {
     let energy_balance_data = await (
         await fetch(
-            PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}`,
+            env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}`,
         )
     ).json();
 
@@ -101,7 +101,7 @@ export async function get_component_total(
     step_year: number = 1,
     suffix: string[] | undefined = undefined): Promise<ComponentTotal> {
 
-    const fetch_url = PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`
+    const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`
 
     console.log("Fetching", fetch_url)
 
