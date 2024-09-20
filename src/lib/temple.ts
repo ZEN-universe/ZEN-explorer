@@ -11,7 +11,7 @@ import type {
 
 export async function get_solutions(): Promise<Solution[]> {
     let solution_list: Array<Solution> = await (
-        await fetch(env.PUBLIC_TEMPLE_URL + "solutions/list")
+        await fetch(env.PUBLIC_TEMPLE_URL + "solutions/list", { cache: "no-store" })
     ).json();
     return solution_list
 }
@@ -22,6 +22,7 @@ export async function get_solution_detail(
     let solution_detail = await (
         await fetch(
             env.PUBLIC_TEMPLE_URL + `solutions/get_detail/${solution}`,
+            { cache: "no-store" }
         )
     ).json();
 
@@ -34,6 +35,7 @@ export async function get_energy_balance(
     let energy_balance_data = await (
         await fetch(
             env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}`,
+            { cache: "no-store" }
         )
     ).json();
 
@@ -106,7 +108,7 @@ export async function get_component_total(
     console.log("Fetching", fetch_url)
 
     let component_data = await (
-        await fetch(fetch_url)
+        await fetch(fetch_url, { cache: "no-store" })
     ).json();
 
     let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv, start_year, step_year)
