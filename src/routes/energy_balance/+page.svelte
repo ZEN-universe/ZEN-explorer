@@ -46,7 +46,7 @@
 
     const initial_config = {
         counter: 1,
-        type: "bar",
+        type: "line",
         data: { datasets: [] as any[] },
         options: {
             animation: false,
@@ -225,9 +225,10 @@
                         defaultColors[i % defaultColors.length];
                     current_plot.backgroundColor = defaultColors[
                         i % defaultColors.length
-                    ]!.replace(")", ", 0.8)");
+                    ]!.replace(")", ", 1)");
+                    current_plot.stepped = true;
+                    current_plot.cubicInterpolationMode = "monotone";
                 }
-
                 datasets.push(current_plot);
 
                 i++;
@@ -235,7 +236,6 @@
         }
         config.data.labels = Object.keys(datasets[0].data);
         config.data.datasets = datasets;
-        console.log(config);
         fetching = false;
         plot_ready = true;
         let start = performance.now();
