@@ -289,7 +289,7 @@
 
 		if (selected_variable == "import_export") {
 			dataset_selector[location_name] = selected_locations;
-			datasets_aggregates["carrier"] = selected_carrier;
+			datasets_aggregates["carrier"] = [selected_carrier!];
 		} else {
 			if (selected_aggregation == "technology") {
 				dataset_selector[location_name] = selected_locations;
@@ -400,6 +400,7 @@
 										]}
 										bind:selected_option={selected_subvariable}
 										on:selection-changed={(e) => {
+											fetch_data();
 											update_carriers();
 											update_technologies();
 											update_data();

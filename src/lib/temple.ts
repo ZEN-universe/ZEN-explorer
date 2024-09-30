@@ -67,7 +67,7 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
     let first_line = data_csv.slice(0, data_csv.indexOf("\n"));
     let headers = first_line.split(",")
 
-    if (headers.lenth == 2) {
+    if (headers.length == 2) {
         let lines = data_csv.split("\n")
         let years = ""
         let data = ""
