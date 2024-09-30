@@ -18,13 +18,16 @@
         chart = new Chart(element, config);
         return {
             async update(config) {
+                console.log("HERE");
                 if (chart!.resetZoom) {
+                    console.log("RESETTING ZOOM");
                     chart!.resetZoom();
                 }
                 chart!.destroy();
                 chart = new Chart(element, config);
             },
             destroy() {
+                chart!.resetZoom();
                 chart!.destroy();
             },
         };
