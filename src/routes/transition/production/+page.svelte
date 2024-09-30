@@ -166,7 +166,7 @@
 		}
 
 		technologies = selected_solution?.detail.system.set_technologies ?? [];
-		console.log(selected_solution);
+
 		switch (selected_variable) {
 			case "conversion":
 				technologies = [];
@@ -245,6 +245,10 @@
 			selected_subvariable = variables[selected_variable]![0];
 		}
 
+		if (selected_variable == "import_export") {
+			selected_aggregation = "technology";
+		}
+
 		fetch_data().then(() => {
 			update_carriers();
 			update_technologies();
@@ -254,6 +258,10 @@
 	}
 
 	function update_data() {
+		if (selected_variable == "import_export") {
+			selected_aggregation = "node";
+		}
+
 		if (selected_aggregation == "technology") {
 			selected_locations = nodes;
 		} else {
@@ -263,7 +271,8 @@
 		if (
 			selected_locations.length == 0 ||
 			selected_years.length == 0 ||
-			selected_technologies.length == 0 ||
+			(selected_technologies.length == 0 &&
+				selected_variable != "import_export") ||
 			!data
 		) {
 			filtered_data = [];
@@ -278,12 +287,17 @@
 			location_name = "edge";
 		}
 
-		if (selected_aggregation == "technology") {
+		if (selected_variable == "import_export") {
 			dataset_selector[location_name] = selected_locations;
-			datasets_aggregates["technology"] = selected_technologies;
+			datasets_aggregates["carrier"] = selected_carrier;
 		} else {
-			dataset_selector["technology"] = selected_technologies;
-			datasets_aggregates[location_name] = selected_locations;
+			if (selected_aggregation == "technology") {
+				dataset_selector[location_name] = selected_locations;
+				datasets_aggregates["technology"] = selected_technologies;
+			} else {
+				dataset_selector["technology"] = selected_technologies;
+				datasets_aggregates[location_name] = selected_locations;
+			}
 		}
 
 		let excluded_years = years.filter(
@@ -419,7 +433,7 @@
 						</div>
 					</div>
 				{/if}
-				{#if !fetching && selected_carrier && technologies.length > 0}
+				{#if !fetching && selected_carrier && (technologies.length > 0 || selected_variable == "import_export")}
 					<div class="accordion-item">
 						<h2 class="accordion-header">
 							<button
@@ -440,18 +454,20 @@
 						>
 							<div class="accordion-body">
 								<div class="row">
-									<div class="col-6">
-										<h3>Aggregation</h3>
-										<Radio
-											bind:options={aggregation_options}
-											bind:selected_option={selected_aggregation}
-											on:selection-changed={(e) => {
-												update_data();
-											}}
-											enabled={!solution_loading &&
-												!fetching}
-										></Radio>
-									</div>
+									{#if selected_variable != "import_export"}
+										<div class="col-6">
+											<h3>Aggregation</h3>
+											<Radio
+												bind:options={aggregation_options}
+												bind:selected_option={selected_aggregation}
+												on:selection-changed={(e) => {
+													update_data();
+												}}
+												enabled={!solution_loading &&
+													!fetching}
+											></Radio>
+										</div>
+									{/if}
 									<div class="col-6">
 										<h3>Normalisation</h3>
 										<Radio
@@ -486,7 +502,6 @@
 										enabled={!solution_loading && !fetching}
 									></AllCheckbox>
 								{/if}
-
 								<h3>Year</h3>
 								<AllCheckbox
 									on:selection-changed={(e) => {
@@ -516,7 +531,7 @@
 			<div></div>
 		{:else if filtered_data == null}
 			<div></div>
-		{:else if technologies.length == 0}
+		{:else if technologies.length == 0 && selected_variable != "import_export"}
 			<div class="text-center">No technologies with this selection.</div>
 		{:else if filtered_data.length == 0}
 			<div class="text-center">No data with this selection.</div>
