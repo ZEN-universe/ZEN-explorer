@@ -215,6 +215,7 @@
                     current_plot.borderColor = "black";
                     current_plot.backgroundColor = "white";
                     current_plot.borderWidth = 2;
+                    current_plot.stepped = true;
                     if (Object.keys(current_plot.data).length == 1) {
                         current_plot.pointRadius = 2;
                     }
