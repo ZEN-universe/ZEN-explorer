@@ -232,7 +232,7 @@
 			return;
 		}
 
-		if (filtered_data.length == 1) {
+		if (filtered_data.length == 1 && !subdivision) {
 			filtered_data[0].label = get_variable_name();
 		}
 
