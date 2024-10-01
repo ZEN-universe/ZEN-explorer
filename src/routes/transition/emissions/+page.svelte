@@ -56,7 +56,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: selected_variable + " [" + current_unit + "]",
+						text: "Emissions [" + current_unit + "]",
 					},
 				},
 			},
@@ -255,7 +255,7 @@
 		config.data = { datasets: filtered_data };
 
 		config.options.scales.y.title.text =
-			selected_variable + " [" + current_unit + "]";
+			"Emissions [ " + current_unit + "]";
 	}
 
 	function solution_changed() {
