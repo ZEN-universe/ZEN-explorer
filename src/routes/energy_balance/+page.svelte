@@ -2,7 +2,7 @@
     import SolutionFilter from "../../components/SolutionFilter.svelte";
     import type { ActivatedSolution } from "$lib/types";
     import Dropdown from "../../components/Dropdown.svelte";
-    import { get_energy_balance } from "$lib/temple";
+    import { get_energy_balance, get_unit } from "$lib/temple";
     import BarPlot from "../../components/plots/BarPlot.svelte";
     import { filter_and_aggregate_data } from "$lib/utils";
     import { tick } from "svelte";
@@ -137,15 +137,22 @@
             selected_solution.scenario_name,
             year_index,
         );
-        console.log("Received", a);
+
+        let unit = await get_unit(
+            selected_solution.solution_name,
+            "flow_export",
+            selected_solution.scenario_name,
+        );
+
         let datasets = [];
         let i = 0;
+
         for (const plot_name in a) {
             let dataset_selector: StringList = {
                 node: [selected_node!],
             };
 
-            if (a[plot_name] == undefined) {
+            if (a[plot_name] == undefined || a[plot_name].data.length == 0) {
                 continue;
             }
 
@@ -173,32 +180,25 @@
                 if (Object.keys(current_plot.data).length == 0) {
                     continue;
                 }
-                if (plot_name == "flow_storage_discharge") {
-                    current_plot.label = current_plot.label + " (discharge)";
-                }
-                if (plot_name == "flow_transport_in") {
-                    current_plot.label = current_plot.label + " (transport in)";
-                }
 
-                if (plot_name == "flow_import") {
-                    current_plot.label = "Import";
-                }
-
-                if (plot_name == "shed_demand") {
-                    current_plot.label = "Shed Demand";
-                }
-
-                if (plot_name == "flow_storage_charge") {
-                    current_plot.label = current_plot.label + " (charge)";
-                }
-
-                if (plot_name == "flow_transport_out") {
-                    current_plot.label =
-                        current_plot.label + " (transport out)";
-                }
-
-                if (plot_name == "flow_export") {
-                    current_plot.label = "Export";
+                switch (plot_name) {
+                    case "flow_storage_discharge":
+                        current_plot.label =
+                            current_plot.label + " (discharge)";
+                    case "flow_transport_in":
+                        current_plot.label =
+                            current_plot.label + " (transport in)";
+                    case "flow_import":
+                        current_plot.label = "Import";
+                    case "shed_demand":
+                        current_plot.label = "Shed Demand";
+                    case "flow_storage_charge":
+                        current_plot.label = current_plot.label + " (charge)";
+                    case "flow_transport_out":
+                        current_plot.label =
+                            current_plot.label + " (transport out)";
+                    case "plot_name":
+                        current_plot.label = "Export";
                 }
 
                 let plot_type = "line";
@@ -237,6 +237,8 @@
         }
         config.data.labels = Object.keys(datasets[0].data);
         config.data.datasets = datasets;
+        config.options.scales.y.title.text = "Power [" + unit + "]";
+
         fetching = false;
         plot_ready = true;
         let start = performance.now();

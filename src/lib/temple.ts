@@ -2,7 +2,6 @@ import { env } from "$env/dynamic/public";
 import Papa from 'papaparse';
 import type {
     Solution,
-    Component,
     ComponentTotal,
     SolutionDetail,
     EnergyBalanceDataframes,
@@ -29,6 +28,20 @@ export async function get_solution_detail(
     return solution_detail
 }
 
+export async function get_unit(solution_name: string,
+    component_name: string,
+    scenario_name: string) {
+
+    let unit = await (
+        await fetch(
+            env.PUBLIC_TEMPLE_URL + `solutions/get_unit/${solution_name}/${component_name}?scenario=${scenario_name}`,
+            { cache: "no-store" }
+        )
+    ).json();
+    console.log(unit)
+    return unit
+}
+
 export async function get_energy_balance(
     solution: string, node: string, carrier: string, scenario: string, year: number
 ): Promise<EnergyBalanceDataframes> {
@@ -48,9 +61,9 @@ export async function get_energy_balance(
         "flow_storage_discharge",
         "flow_transport_in",
         "flow_transport_out",
-        "shed_demand",
-        "flow_conversion_output"
-    ]
+        "cost_shed_demand",
+        "flow_conversion_output"]
+
     let ans: EnergyBalanceDataframes = {}
 
     for (const series_name of series_names) {
@@ -91,6 +104,11 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
         }
         return h
     }
+
+    if (data_csv.slice(-1) == "\n") {
+        data_csv = data_csv.slice(0, -1)
+    }
+
     let data: Papa.ParseResult<Row> = Papa.parse(data_csv, { delimiter: ",", header: true, newline: "\n", transformHeader: transform_year })
     return data
 }
@@ -115,8 +133,9 @@ export async function get_component_total(
     let unit: Papa.ParseResult<Row> | null = null
 
     if (component_data.unit) {
-        unit = Papa.parse(component_data.unit, { delimiter: ",", header: true, newline: "\n" })
+        unit = component_data.unit
     }
+
 
     data.data = data.data.filter((row) => {
         for (const key in row) {

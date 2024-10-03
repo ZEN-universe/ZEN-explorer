@@ -7,6 +7,7 @@
 	import { get_component_total } from "$lib/temple";
 	import { filter_and_aggregate_data } from "$lib/utils";
 	import { tick } from "svelte";
+	import Papa from "papaparse";
 
 	interface StringList {
 		[key: string]: string[];
@@ -24,8 +25,7 @@
 	let aggregation_options = ["technology", "node"];
 	let normalisation_options = ["not_normalized", "normalized"];
 	let storage_type_options = ["energy", "power"];
-	let unit: Papa.ParseResult<Row> | null = null;
-	let current_unit: string = "";
+	let unit: string | null = null;
 
 	let selected_variable: string | null = null;
 	let selected_carrier: string | null = null;
@@ -57,7 +57,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: selected_variable + " [" + current_unit + "]",
+						text: selected_variable,
 					},
 				},
 			},
@@ -197,6 +197,13 @@
 		return ans;
 	}
 
+	function get_unit() {
+		if (unit != null) {
+			return unit;
+		}
+		return "";
+	}
+
 	function update_technologies() {
 		if (selected_technology_type === null) {
 			return;
@@ -206,14 +213,6 @@
 			selected_technology_type,
 		);
 
-		if (unit && technologies.length > 0) {
-			let current_units = unit.data.filter((r) =>
-				technologies.includes(r.set_technologies),
-			);
-			if (current_units.length > 0) {
-				current_unit = current_units[0][0];
-			}
-		}
 		technologies = all_technologies.filter(
 			(technology) =>
 				selected_solution?.detail.reference_carrier[technology] ==
@@ -270,7 +269,7 @@
 		);
 		config.data = { datasets: filtered_data };
 		config.options.scales.y.title.text =
-			selected_variable + " [" + current_unit + "]";
+			selected_variable + " [" + get_unit() + "]";
 	}
 </script>
 
@@ -508,9 +507,7 @@
 		{:else if filtered_data.length == 0}
 			<div class="text-center">No data with this selection.</div>
 		{:else}
-			<BarPlot
-				bind:config
-			></BarPlot>
+			<BarPlot bind:config></BarPlot>
 		{/if}
 	</div>
 </div>

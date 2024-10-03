@@ -109,5 +109,5 @@ export interface YearValue {
 
 export interface ComponentTotal {
     unit: Papa.ParseResult<Row> | null
-    data: Papa.ParseResult<Row>
+    data: string
 }

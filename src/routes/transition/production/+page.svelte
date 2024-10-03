@@ -8,6 +8,7 @@
 	import Radio from "../../../components/Radio.svelte";
 	import { get_component_total } from "$lib/temple";
 	import { tick } from "svelte";
+	import Papa from "papaparse";
 
 	let data: Papa.ParseResult<any>;
 	let carriers: string[] = [];
@@ -24,7 +25,6 @@
 	let aggregation_options = ["technology", "node"];
 	let filtered_data: any[] | null = null;
 	let unit: Papa.ParseResult<any> | null = null;
-	let current_unit: string = "";
 	let selected_solution: ActivatedSolution | null = null;
 	let selected_variable: string | null = null;
 	let selected_carrier: string | null = null;
@@ -61,7 +61,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: selected_variable + " [" + current_unit + "]",
+						text: selected_variable + " [" + get_unit() + "]",
 					},
 				},
 			},
@@ -87,6 +87,13 @@
 			default:
 				return null;
 		}
+	}
+
+	function get_unit() {
+		if (unit === null) {
+			return "";
+		}
+		return unit;
 	}
 
 	async function fetch_data() {
@@ -209,17 +216,6 @@
 				break;
 		}
 
-		if (unit && technologies.length > 0) {
-			let current_units = unit.data.filter((r) =>
-				technologies.includes(
-					r["set_" + selected_variable + "_technologies"],
-				),
-			);
-			if (current_units.length > 0) {
-				current_unit = current_units[0][0];
-			}
-		}
-
 		if (technologies.length == 1) {
 			selected_technologies = [technologies[0]];
 		}
@@ -314,7 +310,7 @@
 
 		config.data = { datasets: filtered_data };
 		config.options.scales.y.title.text =
-			selected_variable + " [" + current_unit + "]";
+			selected_variable + " [" + get_unit() + "]";
 	}
 </script>
 
@@ -537,11 +533,7 @@
 		{:else if filtered_data.length == 0}
 			<div class="text-center">No data with this selection.</div>
 		{:else}
-			<BarPlot
-				bind:config
-				bind:year_offset={selected_solution.detail.system
-					.reference_year}
-			></BarPlot>
+			<BarPlot bind:config></BarPlot>
 		{/if}
 	</div>
 </div>

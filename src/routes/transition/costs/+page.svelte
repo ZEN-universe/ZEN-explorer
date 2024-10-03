@@ -8,6 +8,7 @@
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import Radio from "../../../components/Radio.svelte";
 	import ToggleButton from "../../../components/ToggleButton.svelte";
+	import { get_variable_name } from "$lib/variables";
 
 	import { get_component_total } from "$lib/temple";
 	import {
@@ -24,7 +25,6 @@
 	let locations: string[] = [];
 	let selected_locations: string[] = [];
 	let selected_solution: ActivatedSolution | null = null;
-	let current_unit: string = "";
 	let selected_years: number[] = [];
 	let selected_normalisation: string = "not_normalized";
 	let selected_variable: string | null = null;
@@ -60,6 +60,7 @@
 			subdivision: false,
 		},
 	};
+
 	const capex_suffix = " (Capex)";
 	const opex_suffix = " (Opex)";
 	const capex_label = "Capex";
@@ -88,7 +89,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: selected_variable + " [" + current_unit + "]",
+						text: "Costs [" + get_unit() + "]",
 					},
 				},
 			},
@@ -104,7 +105,7 @@
 
 		fetched_capex = await get_component_total(
 			selected_solution!.solution_name,
-			"capex_yearly",
+			get_variable_name("capex_yearly"),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
@@ -112,7 +113,7 @@
 
 		fetched_opex = await get_component_total(
 			selected_solution!.solution_name,
-			"opex_yearly",
+			get_variable_name("opex_yearly"),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
@@ -120,7 +121,7 @@
 
 		fetched_cost_carbon = await get_component_total(
 			selected_solution!.solution_name,
-			"cost_carbon_emissions_total",
+			get_variable_name("cost_carbon_emissions_total"),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
@@ -128,7 +129,7 @@
 
 		fetched_cost_carrier = await get_component_total(
 			selected_solution!.solution_name,
-			"cost_carrier",
+			get_variable_name("cost_carrier"),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
@@ -136,15 +137,14 @@
 
 		fetched_cost_shed_demand = await get_component_total(
 			selected_solution!.solution_name,
-			"shed_demand",
+			get_variable_name("cost_shed_demand"),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
 		);
- 
+
 		rename_field(fetched_cost_carrier.data, "node", "location");
 		rename_field(fetched_cost_shed_demand.data, "node", "location");
-
 		rename_field(fetched_opex.data, "technology", combined_name);
 		rename_field(fetched_capex.data, "technology", combined_name);
 		rename_field(fetched_cost_carrier.data, "carrier", combined_name);
@@ -300,6 +300,13 @@
 		fetching = false;
 	}
 
+	function get_unit() {
+		if (!fetched_capex) {
+			return "";
+		}
+		return fetched_capex.unit;
+	}
+
 	function update_data() {
 		fetching = true;
 		let dataset_selector: StringList = {};
@@ -391,8 +398,7 @@
 		tick().then(() => {
 			config.data = { datasets: filtered_data };
 
-			config.options.scales.y.title.text =
-				selected_variable + " [" + current_unit + "]";
+			config.options.scales.y.title.text = "Costs [" + get_unit() + "]";
 
 			fetching = false;
 		});

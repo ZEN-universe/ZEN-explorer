@@ -3,7 +3,7 @@
 	import type { ActivatedSolution } from "$lib/types";
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import Radio from "../../../components/Radio.svelte";
-	import { get_component_total } from "$lib/temple";
+	import { get_component_total, get_solution_detail } from "$lib/temple";
 	import { filter_and_aggregate_data, group_data } from "$lib/utils";
 	import { tick } from "svelte";
 	import BarPlot from "../../../components/plots/BarPlot.svelte";
@@ -17,7 +17,6 @@
 	let variables: string[] = ["Annual", "Cumulative"];
 	let groupings: string[] = ["technology", "carrier"];
 	let selected_solution: ActivatedSolution | null = null;
-	let current_unit: string = "";
 	let selected_years: number[] = [];
 	let normalisation_options = ["not_normalized", "normalized"];
 	let selected_normalisation: string = "not_normalized";
@@ -56,12 +55,19 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: "Emissions [" + current_unit + "]",
+						text: "Emissions [" + get_unit() + "]",
 					},
 				},
 			},
 		},
 	};
+
+	function get_unit() {
+		if (unit === null) {
+			return "";
+		}
+		return unit;
+	}
 
 	function reset_subsection() {
 		selected_variable = null;
@@ -140,7 +146,7 @@
 			["technology", carbon_emissions_technology.data],
 		]);
 
-		unit = carbon_emissions_technology.unit;
+		unit = carbon_emissions_carrier.unit;
 		fetching = false;
 		update_filters();
 	}
@@ -254,8 +260,7 @@
 
 		config.data = { datasets: filtered_data };
 
-		config.options.scales.y.title.text =
-			"Emissions [ " + current_unit + "]";
+		config.options.scales.y.title.text = "Emissions [" + get_unit() + "]";
 	}
 
 	function solution_changed() {
