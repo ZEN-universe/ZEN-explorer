@@ -146,7 +146,7 @@
 
         let datasets = [];
         let i = 0;
-
+        console.log(a)
         for (const plot_name in a) {
             let dataset_selector: StringList = {
                 node: [selected_node!],
@@ -185,20 +185,29 @@
                     case "flow_storage_discharge":
                         current_plot.label =
                             current_plot.label + " (discharge)";
+                        break;
                     case "flow_transport_in":
                         current_plot.label =
                             current_plot.label + " (transport in)";
+                        break;
                     case "flow_import":
                         current_plot.label = "Import";
+                        break;
                     case "shed_demand":
                         current_plot.label = "Shed Demand";
+                        break;
                     case "flow_storage_charge":
                         current_plot.label = current_plot.label + " (charge)";
+                        break;
                     case "flow_transport_out":
                         current_plot.label =
                             current_plot.label + " (transport out)";
-                    case "plot_name":
+                        break;
+                    case "flow_export":
                         current_plot.label = "Export";
+                        break;
+                    default:
+                        break;
                 }
 
                 let plot_type = "line";
