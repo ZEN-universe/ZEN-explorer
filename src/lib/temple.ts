@@ -8,16 +8,36 @@ import type {
     Row
 } from "$lib/types";
 
+const folder_char = "  > ";
+const folder_char_url = ".";
+
 export async function get_solutions(): Promise<Solution[]> {
     let solution_list: Array<Solution> = await (
         await fetch(env.PUBLIC_TEMPLE_URL + "solutions/list", { cache: "no-store" })
     ).json();
+
+    for (let solution of solution_list) {
+
+        solution.name = solution.folder_name.replace(".", "").replace("/outputs/", "").replace("/", folder_char)
+
+
+        if (solution.name[0] == ">") {
+            solution.name = solution.name.slice(1, solution.name.length)
+        }
+    }
+    solution_list.sort((a, b) => {
+        return ((a.name < b.name) ? -1 : ((a.name > b.name) ? 1 : 0))
+    })
+
+
     return solution_list
 }
 
 export async function get_solution_detail(
     solution: string
 ): Promise<SolutionDetail> {
+    solution = solution.replace(folder_char, folder_char_url)
+    console.log(folder_char_url)
     let solution_detail = await (
         await fetch(
             env.PUBLIC_TEMPLE_URL + `solutions/get_detail/${solution}`,
@@ -31,7 +51,7 @@ export async function get_solution_detail(
 export async function get_unit(solution_name: string,
     component_name: string,
     scenario_name: string) {
-
+    solution_name = solution_name.replace(folder_char, folder_char_url)
     let unit = await (
         await fetch(
             env.PUBLIC_TEMPLE_URL + `solutions/get_unit/${solution_name}/${component_name}?scenario=${scenario_name}`,
@@ -45,6 +65,7 @@ export async function get_unit(solution_name: string,
 export async function get_energy_balance(
     solution: string, node: string, carrier: string, scenario: string, year: number
 ): Promise<EnergyBalanceDataframes> {
+    solution = solution.replace(folder_char, folder_char_url)
     let energy_balance_data = await (
         await fetch(
             env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}`,
@@ -121,6 +142,7 @@ export async function get_component_total(
     step_year: number = 1,
     suffix: string[] | undefined = undefined): Promise<ComponentTotal> {
 
+    solution_name = solution_name.replace(folder_char, folder_char_url)
     const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`
 
     console.log("Fetching", fetch_url)

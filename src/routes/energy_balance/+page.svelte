@@ -146,7 +146,7 @@
 
         let datasets = [];
         let i = 0;
-        console.log(a)
+        
         for (const plot_name in a) {
             let dataset_selector: StringList = {
                 node: [selected_node!],

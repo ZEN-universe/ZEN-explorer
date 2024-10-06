@@ -1,6 +1,7 @@
 export interface Solution {
     id: string,
     name: string,
+    folder_name: string,
     nodes: string[],
     technologies: string[],
 }
