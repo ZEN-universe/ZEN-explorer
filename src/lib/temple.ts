@@ -8,27 +8,14 @@ import type {
     Row
 } from "$lib/types";
 
-const folder_char = "  > ";
-const folder_char_url = ".";
-
 export async function get_solutions(): Promise<Solution[]> {
     let solution_list: Array<Solution> = await (
         await fetch(env.PUBLIC_TEMPLE_URL + "solutions/list", { cache: "no-store" })
     ).json();
 
-    for (let solution of solution_list) {
-
-        solution.name = solution.folder_name.replace(".", "").replace("/outputs/", "").replace("/", folder_char)
-
-
-        if (solution.name[0] == ">") {
-            solution.name = solution.name.slice(1, solution.name.length)
-        }
-    }
     solution_list.sort((a, b) => {
         return ((a.name < b.name) ? -1 : ((a.name > b.name) ? 1 : 0))
     })
-
 
     return solution_list
 }
@@ -36,8 +23,7 @@ export async function get_solutions(): Promise<Solution[]> {
 export async function get_solution_detail(
     solution: string
 ): Promise<SolutionDetail> {
-    solution = solution.replace(folder_char, folder_char_url)
-    console.log(folder_char_url)
+
     let solution_detail = await (
         await fetch(
             env.PUBLIC_TEMPLE_URL + `solutions/get_detail/${solution}`,
@@ -51,21 +37,19 @@ export async function get_solution_detail(
 export async function get_unit(solution_name: string,
     component_name: string,
     scenario_name: string) {
-    solution_name = solution_name.replace(folder_char, folder_char_url)
     let unit = await (
         await fetch(
             env.PUBLIC_TEMPLE_URL + `solutions/get_unit/${solution_name}/${component_name}?scenario=${scenario_name}`,
             { cache: "no-store" }
         )
     ).json();
-    console.log(unit)
+    unit = Papa.parse(unit, { delimiter: ",", header: true, newline: "\n" })
     return unit
 }
 
 export async function get_energy_balance(
     solution: string, node: string, carrier: string, scenario: string, year: number
 ): Promise<EnergyBalanceDataframes> {
-    solution = solution.replace(folder_char, folder_char_url)
     let energy_balance_data = await (
         await fetch(
             env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}`,
@@ -83,12 +67,15 @@ export async function get_energy_balance(
         "flow_transport_in",
         "flow_transport_out",
         "cost_shed_demand",
-        "flow_conversion_output"]
+        "flow_conversion_output"
+    ]
 
+    // @ts-ignore   
     let ans: EnergyBalanceDataframes = {}
 
     for (const series_name of series_names) {
         if (energy_balance_data[series_name] !== undefined) {
+            // @ts-ignore
             ans[series_name] = parse_csv(energy_balance_data[series_name])
         }
     }
@@ -142,7 +129,6 @@ export async function get_component_total(
     step_year: number = 1,
     suffix: string[] | undefined = undefined): Promise<ComponentTotal> {
 
-    solution_name = solution_name.replace(folder_char, folder_char_url)
     const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`
 
     console.log("Fetching", fetch_url)
@@ -154,8 +140,12 @@ export async function get_component_total(
     let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv, start_year, step_year)
     let unit: Papa.ParseResult<Row> | null = null
 
-    if (component_data.unit) {
-        unit = component_data.unit
+    if (component_data.unit != null) {
+        if (component_data.unit.slice(-1) == "\n") {
+            component_data.unit = component_data.unit.slice(0, component_data.unit.length - 1)
+        }
+
+        unit = Papa.parse(component_data.unit, { delimiter: ",", header: true, newline: "\n" })
     }
 
 
@@ -168,6 +158,7 @@ export async function get_component_total(
         }
         return false
     })
+
 
     const ans: ComponentTotal = {
         unit: unit,

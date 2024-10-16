@@ -8,7 +8,7 @@
 	import { tick } from "svelte";
 	import BarPlot from "../../../components/plots/BarPlot.svelte";
 
-	let data: Papa.ParseResult<any>;
+	let data: Papa.ParseResult<any> | null;
 	let limit_data: Papa.ParseResult<any> | null;
 	let carriers: string[] = [];
 	let nodes: string[] = [];
@@ -63,10 +63,7 @@
 	};
 
 	function get_unit() {
-		if (unit === null) {
-			return "";
-		}
-		return unit;
+		return unit?.data[0][0];
 	}
 
 	function reset_subsection() {
@@ -117,21 +114,23 @@
 		let set_technologies = new Set<string>();
 		let set_locations = new Set<string>();
 
-		for (let i of carbon_emissions_technology.data.data) {
+		for (let i of carbon_emissions_technology.data!.data) {
 			set_technologies.add(i.technology);
 			set_locations.add(i.location);
 		}
 
-		for (let i of carbon_emissions_carrier.data.data) {
+		for (let i of carbon_emissions_carrier.data!.data) {
 			set_carriers.add(i.carrier);
 			set_locations.add(i.node);
 
 			if (Object.hasOwn(i, "node")) {
-				Object.defineProperty(
-					i,
-					"location",
-					Object.getOwnPropertyDescriptor(i, "node"),
-				);
+				let location = Object.getOwnPropertyDescriptor(i, "node");
+
+				if (location === undefined) {
+					continue;
+				}
+
+				Object.defineProperty(i, "location", location);
 			}
 
 			delete i["node"];
@@ -142,8 +141,8 @@
 		locations = [...set_locations];
 
 		data = group_data("technology_carrier", [
-			["carrier", carbon_emissions_carrier.data],
-			["technology", carbon_emissions_technology.data],
+			["carrier", carbon_emissions_carrier.data!],
+			["technology", carbon_emissions_technology.data!],
 		]);
 
 		unit = carbon_emissions_carrier.unit;
@@ -474,11 +473,7 @@
 			{#if filtered_data.length == 0 || filtered_data[0].data.length == 0}
 				<div class="text-center">No data with this selection.</div>
 			{:else}
-				<BarPlot
-					bind:config
-					bind:year_offset={selected_solution.detail.system
-						.reference_year}
-				></BarPlot>
+				<BarPlot bind:config></BarPlot>
 			{/if}
 		{/if}
 	</div>

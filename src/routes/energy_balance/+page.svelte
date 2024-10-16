@@ -40,6 +40,8 @@
     let years: number[] = [];
     let selected_year: number | null = null;
 
+    let unit: str = "";
+
     interface StringList {
         [key: string]: string[];
     }
@@ -138,15 +140,17 @@
             year_index,
         );
 
-        let unit = await get_unit(
+        let unit_data = await get_unit(
             selected_solution.solution_name,
             "flow_export",
             selected_solution.scenario_name,
         );
 
+        unit = unit_data.data[0][0];
+
         let datasets = [];
         let i = 0;
-        
+
         for (const plot_name in a) {
             let dataset_selector: StringList = {
                 node: [selected_node!],

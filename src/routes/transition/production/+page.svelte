@@ -93,7 +93,15 @@
 		if (unit === null) {
 			return "";
 		}
-		return unit;
+		for (const u of unit.data) {
+			if (
+				technologies[0] == u.technology &&
+				(u.carrier == selected_carrier || u.carrier === undefined)
+			) {
+				return u[0];
+			}
+		}
+		return "";
 	}
 
 	async function fetch_data() {
@@ -111,6 +119,10 @@
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
 		).then((fetched) => {
+			if (fetched.data === null) {
+				return;
+			}
+
 			data = fetched.data;
 			unit = fetched.unit;
 			fetching = false;

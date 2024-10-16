@@ -4,6 +4,7 @@
 		ActivatedSolution,
 		ComponentTotal,
 		Dataset,
+		Row,
 	} from "$lib/types";
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import Radio from "../../../components/Radio.svelte";
@@ -18,6 +19,7 @@
 	} from "$lib/utils";
 	import { tick } from "svelte";
 	import BarPlot from "../../../components/plots/BarPlot.svelte";
+	import type { ParseResult } from "papaparse";
 
 	let carriers: string[] = [];
 	let nodes: string[] = [];
@@ -27,7 +29,6 @@
 	let selected_solution: ActivatedSolution | null = null;
 	let selected_years: number[] = [];
 	let selected_normalisation: string = "not_normalized";
-	let selected_variable: string | null = null;
 	let selected_cost_carriers: string[] = [];
 	let selected_demand_carriers: string[] = [];
 	let solution_loading: boolean = false;
@@ -38,7 +39,7 @@
 	let selected_storage_technologies: string[] = [];
 	let conversion_technologies: string[] = [];
 	let selected_conversion_technologies: string[] = [];
-	let grouped_data: Papa.ParseResult<any> | undefined;
+	let grouped_data: Row[] | undefined;
 	let fetched_cost_carbon: ComponentTotal;
 	let fetched_cost_carrier: ComponentTotal;
 	let fetched_capex: ComponentTotal;
@@ -105,7 +106,7 @@
 
 		fetched_capex = await get_component_total(
 			selected_solution!.solution_name,
-			get_variable_name("capex_yearly"),
+			get_variable_name("capex_yearly", selected_solution.version),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
@@ -113,7 +114,7 @@
 
 		fetched_opex = await get_component_total(
 			selected_solution!.solution_name,
-			get_variable_name("opex_yearly"),
+			get_variable_name("opex_yearly", selected_solution.version),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
@@ -121,7 +122,10 @@
 
 		fetched_cost_carbon = await get_component_total(
 			selected_solution!.solution_name,
-			get_variable_name("cost_carbon_emissions_total"),
+			get_variable_name(
+				"cost_carbon_emissions_total",
+				selected_solution.version,
+			),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
@@ -129,7 +133,7 @@
 
 		fetched_cost_carrier = await get_component_total(
 			selected_solution!.solution_name,
-			get_variable_name("cost_carrier"),
+			get_variable_name("cost_carrier", selected_solution.version),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
@@ -137,27 +141,27 @@
 
 		fetched_cost_shed_demand = await get_component_total(
 			selected_solution!.solution_name,
-			get_variable_name("cost_shed_demand"),
+			get_variable_name("cost_shed_demand", selected_solution.version),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
 		);
 
-		rename_field(fetched_cost_carrier.data, "node", "location");
-		rename_field(fetched_cost_shed_demand.data, "node", "location");
-		rename_field(fetched_opex.data, "technology", combined_name);
-		rename_field(fetched_capex.data, "technology", combined_name);
-		rename_field(fetched_cost_carrier.data, "carrier", combined_name);
-		rename_field(fetched_cost_shed_demand.data, "carrier", combined_name);
+		rename_field(fetched_cost_carrier.data!, "node", "location");
+		rename_field(fetched_cost_shed_demand.data!, "node", "location");
+		rename_field(fetched_opex.data!, "technology", combined_name);
+		rename_field(fetched_capex.data!, "technology", combined_name);
+		rename_field(fetched_cost_carrier.data!, "carrier", combined_name);
+		rename_field(fetched_cost_shed_demand.data!, "carrier", combined_name);
 
 		// Add Capex / Opex suffix
-		for (let i in fetched_capex.data.data) {
-			fetched_capex.data.data[i][combined_name] =
-				fetched_capex.data.data[i][combined_name] + capex_suffix;
+		for (let i in fetched_capex.data!.data) {
+			fetched_capex.data!.data[i][combined_name] =
+				fetched_capex.data!.data[i][combined_name] + capex_suffix;
 		}
-		for (let i in fetched_opex.data.data) {
-			fetched_opex.data.data[i][combined_name] =
-				fetched_opex.data.data[i][combined_name] + opex_suffix;
+		for (let i in fetched_opex.data!.data) {
+			fetched_opex.data!.data[i][combined_name] =
+				fetched_opex.data!.data[i][combined_name] + opex_suffix;
 		}
 		locations = Object.keys(selected_solution!.detail.edges).concat(
 			selected_solution!.detail.system.set_nodes,
@@ -166,13 +170,13 @@
 		fetching = false;
 	}
 
-	function regroup_data(all_selected_carriers_technologies) {
+	function regroup_data(all_selected_carriers_technologies: string[]) {
 		fetching = true;
-		grouped_data = { data: [] };
+		grouped_data = new Array<Row>();
 
 		let filtered_cost_carrier = structuredClone(fetched_cost_carrier.data);
 
-		filtered_cost_carrier.data = filtered_cost_carrier.data.filter((i) =>
+		filtered_cost_carrier!.data = filtered_cost_carrier!.data.filter((i) =>
 			selected_cost_carriers.includes(i[combined_name]),
 		);
 
@@ -180,72 +184,64 @@
 			fetched_cost_shed_demand.data,
 		);
 
-		filtered_fetched_cost_shed_demand.data =
-			filtered_fetched_cost_shed_demand.data.filter((i) =>
+		filtered_fetched_cost_shed_demand!.data =
+			filtered_fetched_cost_shed_demand!.data.filter((i) =>
 				selected_demand_carriers.includes(i[combined_name]),
 			);
 
 		if (show_costs.capex.show) {
 			if (show_costs.capex.subdivision) {
-				grouped_data.data = grouped_data.data.concat(
-					fetched_capex.data.data,
-				);
+				grouped_data! = grouped_data!.concat(fetched_capex.data!.data);
 			} else {
 				let comb = {};
-				comb[combined_name] = all_selected_carriers_technologies;
 
 				let new_data = filter_and_aggregate_data(
-					fetched_capex.data.data,
+					fetched_capex.data!.data,
 					{ location: selected_locations },
-					comb,
+					{ [combined_name]: all_selected_carriers_technologies },
 					[],
 					false,
 				);
 				for (let i in new_data) {
 					new_data[i].data["location"] = new_data[i].label;
 					new_data[i].data[combined_name] = capex_label;
-					grouped_data.data.push(new_data[i].data);
+					grouped_data.push(new_data[i].data);
 				}
 			}
 		}
 
 		if (show_costs.opex.show) {
 			if (show_costs.opex.subdivision) {
-				grouped_data.data = grouped_data.data.concat(
-					fetched_opex.data.data,
-				);
+				grouped_data! = grouped_data!.concat(fetched_opex.data!.data);
 			} else {
-				let comb = {};
-				comb[combined_name] = all_selected_carriers_technologies;
-
 				let new_data = filter_and_aggregate_data(
-					fetched_opex.data.data,
+					fetched_opex.data!.data,
 					{ location: selected_locations },
-					comb,
+					{
+						[combined_name]: all_selected_carriers_technologies,
+					},
 					[],
 					false,
 				);
 				for (let i in new_data) {
 					new_data[i].data["location"] = new_data[i].label;
 					new_data[i].data[combined_name] = opex_label;
-					grouped_data.data.push(new_data[i].data);
+					grouped_data.push(new_data[i].data);
 				}
 			}
 		}
 
 		if (show_costs.carrier.show) {
 			if (show_costs.carrier.subdivision) {
-				grouped_data.data = grouped_data.data.concat(
-					filtered_cost_carrier.data,
+				grouped_data! = grouped_data!.concat(
+					filtered_cost_carrier!.data,
 				);
 			} else {
 				let comb = {};
-				comb[combined_name] = all_selected_carriers_technologies;
-
 				let new_data = filter_and_aggregate_data(
-					filtered_cost_carrier.data,
+					filtered_cost_carrier!.data,
 					{ location: selected_locations },
-					comb,
+					{ [combined_name]: all_selected_carriers_technologies },
 					[],
 					false,
 				);
@@ -253,47 +249,45 @@
 				for (let i in new_data) {
 					new_data[i].data["location"] = new_data[i].label;
 					new_data[i].data[combined_name] = carrier_label;
-					grouped_data.data.push(new_data[i].data);
+					grouped_data.push(new_data[i].data);
 				}
 			}
 		}
 
 		if (show_costs.shed_demand.show) {
 			if (show_costs.shed_demand.subdivision) {
-				grouped_data.data = grouped_data.data.concat(
-					filtered_fetched_cost_shed_demand.data,
+				grouped_data! = grouped_data!.concat(
+					filtered_fetched_cost_shed_demand!.data,
 				);
 			} else {
 				let comb = {};
-				comb[combined_name] = all_selected_carriers_technologies;
-
 				let new_data = filter_and_aggregate_data(
-					filtered_fetched_cost_shed_demand.data,
+					filtered_fetched_cost_shed_demand!.data,
 					{ location: selected_locations },
-					comb,
+					{ [combined_name]: all_selected_carriers_technologies },
 					[],
 					false,
 				);
 				for (let i in new_data) {
 					new_data[i].data["location"] = new_data[i].label;
 					new_data[i].data[combined_name] = shed_demand_label;
-					grouped_data.data.push(new_data[i].data);
+					grouped_data.push(new_data[i].data);
 				}
 			}
 		}
 
-		if (grouped_data.data.length == 0) {
+		if (grouped_data!.length == 0) {
 			grouped_data = undefined;
 			fetching = false;
 			return;
 		}
 		let set_locations = new Set<string>();
 
-		grouped_data.data = grouped_data.data.filter((e) => {
+		grouped_data! = grouped_data!.filter((e) => {
 			return e != undefined;
 		});
 
-		for (const i of grouped_data.data) {
+		for (const i of grouped_data!) {
 			set_locations.add(i["location"]);
 		}
 		locations = Array.from(set_locations);
@@ -301,10 +295,11 @@
 	}
 
 	function get_unit() {
-		if (!fetched_capex) {
+		if (!fetched_capex || fetched_capex.unit === null) {
 			return "";
 		}
-		return fetched_capex.unit;
+
+		return fetched_capex.unit.data[0][0];
 	}
 
 	function update_data() {
@@ -375,7 +370,7 @@
 		// Get Plot-Data
 		if (grouped_data) {
 			filtered_data = filter_and_aggregate_data(
-				grouped_data.data,
+				grouped_data,
 				dataset_selector,
 				datasets_aggregates,
 				excluded_years,
@@ -385,12 +380,12 @@
 
 		// Get Total Carbon Cost Data
 		if (
-			fetched_cost_carbon.data.data.length > 0 &&
+			fetched_cost_carbon.data!.data.length > 0 &&
 			show_costs.carbon_emission.show
 		) {
 			filtered_data.push({
 				label: "Total Carbon Costs",
-				data: fetched_cost_carbon.data.data[0],
+				data: fetched_cost_carbon.data!.data[0],
 				type: "bar",
 			});
 		}
@@ -415,12 +410,12 @@
 		// Options for Capex / Opex
 		let set_capex_opex_technologies = new Set<string>();
 
-		for (const row of fetched_capex.data.data) {
+		for (const row of fetched_capex.data!.data) {
 			set_capex_opex_technologies.add(
 				row[combined_name].replace(capex_suffix, ""),
 			);
 		}
-		for (const row of fetched_opex.data.data) {
+		for (const row of fetched_opex.data!.data) {
 			set_capex_opex_technologies.add(
 				row[combined_name].replace(opex_suffix, ""),
 			);
@@ -446,7 +441,7 @@
 		// Options for Cost Carriers
 		let set_cost_carriers = new Set<string>();
 
-		for (const row of fetched_cost_carrier.data.data) {
+		for (const row of fetched_cost_carrier.data!.data) {
 			set_cost_carriers.add(row[combined_name]);
 		}
 
@@ -459,7 +454,7 @@
 
 		// Options for Demand Carriers
 		let set_demand_carriers = new Set<string>();
-		for (const row of fetched_cost_shed_demand.data.data) {
+		for (const row of fetched_cost_shed_demand.data!.data) {
 			set_demand_carriers.add(row[combined_name]);
 		}
 		demand_carriers = selected_solution!.detail.carriers_demand.filter(

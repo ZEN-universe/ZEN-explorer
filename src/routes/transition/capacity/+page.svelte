@@ -25,7 +25,7 @@
 	let aggregation_options = ["technology", "node"];
 	let normalisation_options = ["not_normalized", "normalized"];
 	let storage_type_options = ["energy", "power"];
-	let unit: string | null = null;
+	let unit: Papa.ParseResult<Row> | null = null;
 
 	let selected_variable: string | null = null;
 	let selected_carrier: string | null = null;
@@ -199,7 +199,22 @@
 
 	function get_unit() {
 		if (unit != null) {
-			return unit;
+			for (const u of unit.data) {
+				if (!u.capacity_type) {
+					continue;
+				}
+
+				if (
+					selected_technology_type == "storage" &&
+					selected_storage_type != u.capacity_type
+				) {
+					continue;
+				}
+
+				if (technologies[0] == u.technology) {
+					return u[0];
+				}
+			}
 		}
 		return "";
 	}
@@ -268,6 +283,8 @@
 			selected_normalisation == "normalized",
 		);
 		config.data = { datasets: filtered_data };
+
+		// @ts-ignore
 		config.options.scales.y.title.text =
 			selected_variable + " [" + get_unit() + "]";
 	}

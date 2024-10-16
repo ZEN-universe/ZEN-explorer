@@ -67,13 +67,15 @@ export interface Scenarios {
 export interface SolutionDetail {
     folder_name: string,
     name: string,
-    scenarios: Scenarios
+    scenarios: Scenarios,
+    version: string
 }
 
 export interface ActivatedSolution {
     solution_name: string;
     scenario_name: string;
     detail: ScenarioDetail;
+    version: string;
 }
 
 export interface Row {
@@ -110,5 +112,5 @@ export interface YearValue {
 
 export interface ComponentTotal {
     unit: Papa.ParseResult<Row> | null
-    data: string
+    data: Papa.ParseResult<Row> | null
 }
