@@ -37,13 +37,17 @@ export async function get_solution_detail(
 export async function get_unit(solution_name: string,
     component_name: string,
     scenario_name: string) {
+
     let unit = await (
         await fetch(
             env.PUBLIC_TEMPLE_URL + `solutions/get_unit/${solution_name}/${component_name}?scenario=${scenario_name}`,
             { cache: "no-store" }
         )
     ).json();
-    unit = Papa.parse(unit, { delimiter: ",", header: true, newline: "\n" })
+
+    if (unit != null) {
+        unit = Papa.parse(unit, { delimiter: ",", header: true, newline: "\n" })
+    }
     return unit
 }
 

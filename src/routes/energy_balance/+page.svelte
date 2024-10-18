@@ -146,7 +146,11 @@
             selected_solution.scenario_name,
         );
 
-        unit = unit_data.data[0][0];
+        if (unit_data === null) {
+            unit = "";
+        } else {
+            unit = unit_data.data[0][0];
+        }
 
         let datasets = [];
         let i = 0;
