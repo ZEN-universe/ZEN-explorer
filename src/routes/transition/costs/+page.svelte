@@ -68,6 +68,7 @@
 	const opex_label = "Opex";
 	const carrier_label = "Carrier";
 	const shed_demand_label = "Shed Demand";
+	let plot_name = "plot";
 
 	interface StringList {
 		[key: string]: string[];
@@ -472,6 +473,12 @@
 
 		update_data();
 		fetching = false;
+		let solution_names = selected_solution!.solution_name.split(".");
+		plot_name = [
+			solution_names[solution_names?.length - 1],
+			selected_solution?.scenario_name,
+			"costs",
+		].join("_");
 	}
 </script>
 
@@ -703,6 +710,7 @@
 					bind:config
 					bind:year_offset={selected_solution.detail.system
 						.reference_year}
+					bind:plot_name
 				></BarPlot>
 			{/if}
 		{/if}

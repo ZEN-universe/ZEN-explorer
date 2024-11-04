@@ -9,28 +9,37 @@ import type {
 } from "$lib/types";
 
 export async function get_solutions(): Promise<Solution[]> {
-    let solution_list: Array<Solution> = await (
-        await fetch(env.PUBLIC_TEMPLE_URL + "solutions/list", { cache: "no-store" })
-    ).json();
+    let url = env.PUBLIC_TEMPLE_URL + "solutions/list";
+
+    let solution_list_request = await fetch(url, { cache: "no-store" })
+
+    if (!solution_list_request.ok) {
+        alert("could not fetch " + url)
+        return []
+    }
+    let solution_list: Array<Solution> = await solution_list_request.json();
 
     solution_list.sort((a, b) => {
         return ((a.name < b.name) ? -1 : ((a.name > b.name) ? 1 : 0))
     })
-
     return solution_list
+
 }
 
 export async function get_solution_detail(
     solution: string
-): Promise<SolutionDetail> {
+): Promise<SolutionDetail | undefined> {
+    const url = env.PUBLIC_TEMPLE_URL + `solutions/get_detail/${solution}`
+    let solution_detail_request = await fetch(
+        url,
+        { cache: "no-store" }
+    )
 
-    let solution_detail = await (
-        await fetch(
-            env.PUBLIC_TEMPLE_URL + `solutions/get_detail/${solution}`,
-            { cache: "no-store" }
-        )
-    ).json();
-
+    if (!solution_detail_request.ok) {
+        alert("Could not fetch "+ url)
+        return {}
+    }
+    let solution_detail = await solution_detail_request.json()
     return solution_detail
 }
 
@@ -54,14 +63,22 @@ export async function get_unit(solution_name: string,
 export async function get_energy_balance(
     solution: string, node: string, carrier: string, scenario: string, year: number
 ): Promise<EnergyBalanceDataframes> {
-    let energy_balance_data = await (
-        await fetch(
-            env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}`,
-            { cache: "no-store" }
-        )
-    ).json();
+    const url =  env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}`
+
+    let energy_balance_data_request = await fetch(
+                url,
+                { cache: "no-store" }
+            );
+    
+    if (!energy_balance_data_request.ok) {
+        alert("Could not fetch " + url)
+        return {}
+    }
+    
+    let energy_balance_data = await energy_balance_data_request.json()
 
     let series_names = [
+        "shed_demand",
         "demand",
         "flow_conversion_input",
         "flow_export",
@@ -137,9 +154,17 @@ export async function get_component_total(
 
     console.log("Fetching", fetch_url)
 
-    let component_data = await (
-        await fetch(fetch_url, { cache: "no-store" })
-    ).json();
+    let component_data_request = await fetch(fetch_url, { cache: "no-store" });
+
+    if (!component_data_request.ok) {
+        alert("Error when fetching " + fetch_url)
+        return {
+            unit: [],
+            data: []
+        }
+    }
+
+    let component_data = await component_data_request.json();
 
     let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv, start_year, step_year)
     let unit: Papa.ParseResult<Row> | null = null

@@ -5,6 +5,7 @@
     import { onMount } from "svelte";
     export let config;
     export let zoom = false;
+    export let plot_name = "plot_data";
 
     onMount(async () => {
         const zoomPlugin = (await import("chartjs-plugin-zoom")).default;
@@ -56,7 +57,7 @@
         var encodedUri = encodeURI(csvContent);
         var link = document.createElement("a");
         link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "my_data.csv");
+        link.setAttribute("download", plot_name);
         document.body.appendChild(link); // Required for FF
 
         link.click();

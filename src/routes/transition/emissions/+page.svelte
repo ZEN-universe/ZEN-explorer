@@ -33,6 +33,7 @@
 	let technologies: string[] = [];
 	let solution_loading: boolean = false;
 	let fetching: boolean = false;
+	let plot_name = "plot";
 
 	interface StringList {
 		[key: string]: string[];
@@ -260,6 +261,13 @@
 		config.data = { datasets: filtered_data };
 
 		config.options.scales.y.title.text = "Emissions [" + get_unit() + "]";
+
+		let solution_names = selected_solution!.solution_name.split(".");
+		plot_name = [
+			solution_names[solution_names?.length - 1],
+			selected_solution?.scenario_name,
+			get_variable_name(),
+		].join("_");
 	}
 
 	function solution_changed() {
@@ -473,7 +481,7 @@
 			{#if filtered_data.length == 0 || filtered_data[0].data.length == 0}
 				<div class="text-center">No data with this selection.</div>
 			{:else}
-				<BarPlot bind:config></BarPlot>
+				<BarPlot bind:config bind:plot_name></BarPlot>
 			{/if}
 		{/if}
 	</div>

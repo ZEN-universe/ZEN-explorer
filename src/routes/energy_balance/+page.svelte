@@ -41,6 +41,7 @@
     let selected_year: number | null = null;
 
     let unit: str = "";
+    let plot_name = "";
 
     interface StringList {
         [key: string]: string[];
@@ -260,6 +261,17 @@
         plot_ready = true;
         let start = performance.now();
         await tick();
+
+        let solution_names = selected_solution!.solution_name.split(".");
+        plot_name = [
+            solution_names[solution_names?.length - 1],
+            selected_solution?.scenario_name,
+            "balance",
+            selected_carrier,
+            selected_node,
+            selected_year,
+        ].join("_");
+
         console.log("Building plot took", performance.now() - start);
     }
 </script>
@@ -374,7 +386,7 @@
         {/if}
         {#if !fetching && plot_ready}
             <div style="position: relative;">
-                <BarPlot zoom={true} bind:config></BarPlot>
+                <BarPlot zoom={true} bind:config bind:plot_name></BarPlot>
             </div>
         {/if}
     </div>

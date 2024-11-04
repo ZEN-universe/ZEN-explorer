@@ -37,6 +37,7 @@
 	let selected_normalisation: string = "not_normalized";
 	let solution_loading: boolean = false;
 	let fetching = false;
+	let plot_name = "plot";
 
 	interface StringList {
 		[key: string]: string[];
@@ -323,6 +324,14 @@
 		config.data = { datasets: filtered_data };
 		config.options.scales.y.title.text =
 			selected_variable + " [" + get_unit() + "]";
+
+		let solution_names = selected_solution!.solution_name.split(".");
+		plot_name = [
+			solution_names[solution_names?.length - 1],
+			selected_solution?.scenario_name,
+			get_variable_name(),
+			selected_carrier,
+		].join("_");
 	}
 </script>
 
@@ -545,7 +554,7 @@
 		{:else if filtered_data.length == 0}
 			<div class="text-center">No data with this selection.</div>
 		{:else}
-			<BarPlot bind:config></BarPlot>
+			<BarPlot bind:config bind:plot_name></BarPlot>
 		{/if}
 	</div>
 </div>
