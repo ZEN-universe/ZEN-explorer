@@ -313,8 +313,10 @@
 			(year) => !selected_years.includes(year),
 		);
 
+		let filtered_result = data.data.filter((a) => a.carrier == selected_carrier)
+		
 		filtered_data = filter_and_aggregate_data(
-			data.data,
+			filtered_result,
 			dataset_selector,
 			datasets_aggregates,
 			excluded_years,
