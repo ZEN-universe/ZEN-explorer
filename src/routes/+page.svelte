@@ -1,6 +1,6 @@
 <script lang="ts">
     import { base } from "$app/paths";
-    import logo from "$lib/assets/zen_garden.png";
+    import logo from "$lib/assets/zen_garden_small.png";
     import close from "$lib/assets/x.svg";
     let logo_size = "70vh";
     let links_active = false;
