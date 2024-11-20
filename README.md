@@ -1,5 +1,5 @@
 # Explorer
-The Explorer is the frontend of the ZEN Land. It directly uses the endpoints provided by the web service ZEN Temple (https://github.com/ZEN-universe/ZEN-temple) to fetch the data of the solutions and plots them.
+The Explorer is the frontend of the ZEN-garden (https://github.com/ZEN-universe/ZEN-garden) visualization platform. It directly uses the endpoints provided by the web service ZEN-temple (https://github.com/ZEN-universe/ZEN-temple) to fetch the data of the solutions and plots them.
 
 ## Setup
 The project uses Svelte as the Javascript framework (https://svelte.dev/). The Javascript framework is responsible for setting up the pages HTML structure and the dynamic parts that are happening. 
