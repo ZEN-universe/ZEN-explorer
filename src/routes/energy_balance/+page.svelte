@@ -70,6 +70,7 @@
                 },
                 y: {
                     stacked: true,
+                    beginAtZero: true,
                     title: {
                         display: true,
                         text: "Power",
