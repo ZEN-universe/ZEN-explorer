@@ -71,9 +71,15 @@
 		selected_variable = null;
 		selected_grouping = null;
 		filtered_data = null;
-		subdivision = false;
 		selected_carriers = [];
 		selected_technologies = [];
+
+		if (subdivision) {
+			selected_grouping =
+				"technology_carrier";
+			fetch_subdivision_data();
+		}
+
 	}
 
 	function get_variable_name() {
@@ -340,15 +346,7 @@
 									id="btn-check-outlined"
 									autocomplete="off"
 									bind:checked={subdivision}
-									on:change={() => {
-										if (!subdivision) {
-											reset_subsection();
-										} else {
-											selected_grouping =
-												"technology_carrier";
-											fetch_subdivision_data();
-										}
-									}}
+									on:change={reset_subsection}
 									disabled={fetching || solution_loading}
 								/>
 								<label
