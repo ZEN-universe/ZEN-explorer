@@ -222,7 +222,6 @@
 								technology
 							] == selected_carrier,
 					) ?? [];
-
 				break;
 			case "import_export":
 				technologies = [];
@@ -313,8 +312,8 @@
 			(year) => !selected_years.includes(year),
 		);
 
-		let filtered_result = data.data.filter((a) => a.carrier == selected_carrier)
-		
+		let filtered_result = data.data.filter((a) => a.carrier === undefined || a.carrier == selected_carrier)
+
 		filtered_data = filter_and_aggregate_data(
 			filtered_result,
 			dataset_selector,
