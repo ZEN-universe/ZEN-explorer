@@ -39,7 +39,7 @@
 	let solution_loading: boolean = false;
 	let datasets: any[] = [];
 	let fetching: boolean = false;
-	let plot_name: str = "";
+	let plot_name: string = "";
 
 	let config = {
 		type: "bar",

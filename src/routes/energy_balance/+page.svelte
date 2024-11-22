@@ -40,7 +40,7 @@
     let years: number[] = [];
     let selected_year: number | null = null;
 
-    let unit: str = "";
+    let unit: string = "";
     let plot_name = "";
 
     interface StringList {
