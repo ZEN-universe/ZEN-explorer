@@ -9,6 +9,7 @@
 	import { get_component_total } from "$lib/temple";
 	import { tick } from "svelte";
 	import Papa from "papaparse";
+	import { get_variable_name } from "$lib/variables";
 
 	let data: Papa.ParseResult<any>;
 	let carriers: string[] = [];
@@ -75,7 +76,7 @@
 		selected_technologies = technologies;
 	}
 
-	function get_variable_name() {
+	function get_local_variable() {
 		switch (selected_variable) {
 			case "conversion":
 				return "flow_conversion_" + selected_subvariable;
@@ -108,10 +109,12 @@
 	async function fetch_data() {
 		fetching = true;
 
-		let variable_name = get_variable_name();
+		let variable_name = get_local_variable();
 		if (variable_name === null) {
 			return;
 		}
+
+		variable_name = get_variable_name(variable_name, selected_solution?.version);
 
 		await get_component_total(
 			selected_solution!.solution_name,
@@ -141,14 +144,14 @@
 		}
 
 		switch (selected_variable) {
-			case "import_export":
+			case get_variable_name("import_export", selected_solution?.version):
 				if (selected_subvariable == "import") {
 					carriers = selected_solution!.detail.carriers_import;
 				} else {
 					carriers = selected_solution!.detail.carriers_export;
 				}
 				break;
-			case "conversion":
+			case get_variable_name("conversion", selected_solution?.version):
 				let relevant_carriers =
 					selected_solution!.detail.carriers_output;
 				if (selected_subvariable == "input") {
@@ -330,7 +333,7 @@
 		plot_name = [
 			solution_names[solution_names?.length - 1],
 			selected_solution?.scenario_name,
-			get_variable_name(),
+			get_variable_name(get_local_variable()!, selected_solution?.version),
 			selected_carrier,
 		].join("_");
 	}

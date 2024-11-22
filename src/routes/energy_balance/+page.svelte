@@ -6,6 +6,7 @@
     import BarPlot from "../../components/plots/BarPlot.svelte";
     import { filter_and_aggregate_data } from "$lib/utils";
     import { tick } from "svelte";
+	import { get_variable_name } from "$lib/variables";
 
     var defaultColors = [
         "rgb(75, 192, 192)",
@@ -144,7 +145,7 @@
 
         let unit_data = await get_unit(
             selected_solution.solution_name,
-            "flow_export",
+            get_variable_name("flow_export", selected_solution.version),
             selected_solution.scenario_name,
         );
 
@@ -192,28 +193,28 @@
                 }
 
                 switch (plot_name) {
-                    case "flow_storage_discharge":
+                    case get_variable_name("flow_storage_discharge", selected_solution.version):
                         current_plot.label =
                             current_plot.label + " (discharge)";
                         break;
-                    case "flow_transport_in":
+                    case get_variable_name("flow_transport_in", selected_solution.version):
                         current_plot.label =
                             current_plot.label + " (transport in)";
                         break;
-                    case "flow_import":
-                        current_plot.label = "Import";
+                    case get_variable_name("flow_import", selected_solution.version):
+                        current_plot.label = "Import", selected_solution.version;
                         break;
-                    case "shed_demand":
+                    case get_variable_name("shed_demand", selected_solution.version):
                         current_plot.label = "Shed Demand";
                         break;
-                    case "flow_storage_charge":
+                    case get_variable_name("flow_storage_charge", selected_solution.version):
                         current_plot.label = current_plot.label + " (charge)";
                         break;
-                    case "flow_transport_out":
+                    case get_variable_name("flow_transport_out", selected_solution.version):
                         current_plot.label =
                             current_plot.label + " (transport out)";
                         break;
-                    case "flow_export":
+                    case get_variable_name("flow_export", selected_solution.version):
                         current_plot.label = "Export";
                         break;
                     default:
