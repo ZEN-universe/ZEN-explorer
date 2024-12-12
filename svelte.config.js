@@ -21,7 +21,7 @@ const config = {
 			strict: true
 		}),
 		paths: {
-			base: "/explorer",
+			base: "",
 			relative: false
 		}
 	}
