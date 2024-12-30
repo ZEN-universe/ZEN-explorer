@@ -3,7 +3,7 @@
     import { Button, Modal } from "@sveltestrap/sveltestrap";
 
     import { onMount } from "svelte";
-    export let config;
+    export let config: any;
     export let zoom = false;
     export let plot_name = "plot_data";
 
@@ -15,11 +15,11 @@
 
     let chart: Chart | undefined = undefined;
 
-    const handleChart = (element, config) => {
+    const handleChart = (element: any, config: any) => {
         chart = new Chart(element, config);
         return {
-            async update(config) {
-                if (chart!.resetZoom) {
+            async update(config: any) {
+                if (chart!.resetZoom != undefined) {
                     chart!.resetZoom();
                 }
                 chart!.destroy();

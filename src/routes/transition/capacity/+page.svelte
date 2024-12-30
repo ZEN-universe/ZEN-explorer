@@ -2,7 +2,7 @@
 	import SolutionFilter from "../../../components/SolutionFilter.svelte";
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import Radio from "../../../components/Radio.svelte";
-	import BarPlot from "../../../components/plots/BarPlot.svelte";
+	import BarPlot from "../../../components/BarPlot.svelte";
 	import type { ActivatedSolution, Row } from "$lib/types";
 	import { get_component_total } from "$lib/temple";
 	import { filter_and_aggregate_data } from "$lib/utils";
@@ -65,6 +65,10 @@
 		},
 	};
 
+	/**
+	 * This function sets all the necessary variables back to the initial state in order to reset the plot.
+	 *
+	 */
 	async function reset_data_selection() {
 		selected_normalisation = "not_normalized";
 		selected_locations = locations;
@@ -74,12 +78,16 @@
 		await tick();
 	}
 
+	/**
+	 * This function fetches the the data from the api of the selected values in the form
+	 */
 	async function fetch_data() {
 		fetching = true;
 		data = null;
 		await tick();
 
 		if (selected_variable === null) {
+			fetching = false;
 			return;
 		}
 
@@ -96,6 +104,10 @@
 		});
 	}
 
+	/**
+	 * This function is called is called whenever the solution filter sends a change event.
+	 * It resets all the selected values of the form.
+	 */
 	function solution_changed() {
 		data = null;
 		selected_variable = null;
@@ -104,35 +116,48 @@
 		selected_carrier = null;
 	}
 
+	/**
+	 * This function is called, whenever the variable in the form is changed.
+	 * It will fetch the necessary data from the API.
+	 */
 	function variable_changed() {
 		fetch_data();
 	}
 
+	/**
+	 * This function is called, when the technology type is changed. It updates all the necessary values for further selection in the form.
+	 */
 	function technology_type_changed() {
 		update_carriers();
 		update_technologies();
 		update_locations();
 		reset_data_selection();
-		update_data();
+		update_plot_data();
 	}
 
+	/**
+	 * This function is called, when the carrier is changed. It updates all the necessary values for further selection in the form.
+	 */
 	function carrier_changed() {
 		update_technologies();
 		update_locations();
 		reset_data_selection();
-		update_data();
+		update_plot_data();
 	}
 
+	/**
+	 * This function updates the avaible carriers for the current variable selection.
+	 */
 	function update_carriers() {
 		carriers = [];
 		if (data === null || selected_technology_type === null) {
 			return;
 		}
 
-		let all_technologies: string[] = get_technologies_by_type(
-			selected_technology_type,
-		);
+		// Get the technologies for the current technology type
+		let all_technologies: string[] = get_technologies_by_type();
 
+		// Add all the available carriers to the set of carriers for the current set of technologies
 		data!.data.forEach((element) => {
 			let current_technology = element.technology;
 			let current_carrier =
@@ -151,6 +176,9 @@
 		}
 	}
 
+	/**
+	 * This function updates the avaible locations for the current variable selection.
+	 */
 	function update_locations() {
 		locations = [];
 
@@ -177,7 +205,10 @@
 		selected_locations = locations;
 	}
 
-	function get_technologies_by_type(tech_type: string) {
+	/**
+	 * This function returns the relevant technologies given the currently selected technology type
+	 */
+	function get_technologies_by_type() {
 		let ans: string[] = [];
 
 		switch (selected_technology_type) {
@@ -198,6 +229,9 @@
 		return ans;
 	}
 
+	/**
+	 * This function returns the unit of the currently selected variable
+	 */
 	function get_unit() {
 		if (unit != null) {
 			for (const u of unit.data) {
@@ -220,14 +254,15 @@
 		return "";
 	}
 
+	/**
+	 * This function updates the available technologies depending on the currently selected carrier and resets the currently selected technologies.
+	 */
 	function update_technologies() {
 		if (selected_technology_type === null) {
 			return;
 		}
 
-		let all_technologies = get_technologies_by_type(
-			selected_technology_type,
-		);
+		let all_technologies = get_technologies_by_type();
 
 		technologies = all_technologies.filter(
 			(technology) =>
@@ -237,7 +272,10 @@
 		selected_technologies = technologies;
 	}
 
-	function update_data() {
+	/**
+	 * This function updates the data for the plot depending on the currently selected values.
+	 */
+	function update_plot_data() {
 		if (selected_aggregation == "technology") {
 			selected_locations = locations;
 		} else {
@@ -452,7 +490,7 @@
 													console.log(
 														"Aggregation changed",
 													);
-													update_data();
+													update_plot_data();
 												}}
 											></Radio>
 										</div>
@@ -466,7 +504,7 @@
 														"Normalisation changed",
 													);
 
-													update_data();
+													update_plot_data();
 												}}
 											></Radio>
 										</div>
@@ -480,7 +518,7 @@
 												console.log(
 													"Technology changed",
 												);
-												update_data();
+												update_plot_data();
 											}}
 										></AllCheckbox>
 									{:else}
@@ -490,7 +528,7 @@
 											bind:elements={locations}
 											on:selection-changed={(e) => {
 												console.log("Node changed");
-												update_data();
+												update_plot_data();
 											}}
 										></AllCheckbox>
 									{/if}
@@ -501,7 +539,7 @@
 										bind:elements={years}
 										on:selection-changed={(e) => {
 											console.log("Year changed");
-											update_data();
+											update_plot_data();
 										}}
 									></AllCheckbox>
 								</div>
@@ -526,9 +564,9 @@
 		{:else if carriers.length == 0}
 			<div class="text-center">No carriers with this selection.</div>
 		{:else if selected_solution == null}
-			<div></div>
+			<div class="text-center">No solution selected.</div>
 		{:else if filtered_data == null}
-			<div></div>
+			<div class="text-center">No data with this selection.</div>
 		{:else if locations.length == 0}
 			<div class="text-center">No locations with this selection.</div>
 		{:else if filtered_data.length == 0}

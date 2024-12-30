@@ -6,7 +6,7 @@
 	import { get_component_total, get_solution_detail } from "$lib/temple";
 	import { filter_and_aggregate_data, group_data } from "$lib/utils";
 	import { tick } from "svelte";
-	import BarPlot from "../../../components/plots/BarPlot.svelte";
+	import BarPlot from "../../../components/BarPlot.svelte";
 	import { get_variable_name } from "$lib/variables";
 
 	let data: Papa.ParseResult<any> | null;
@@ -76,25 +76,35 @@
 		selected_technologies = [];
 
 		if (subdivision) {
-			selected_grouping =
-				"technology_carrier";
+			selected_grouping = "technology_carrier";
 			fetch_subdivision_data();
 		}
-
 	}
 
 	function get_division_variable() {
 		if (subdivision) {
 			if (selected_grouping == groupings[0]) {
-				return get_variable_name("carbon_emissions_technology", selected_solution?.version);
+				return get_variable_name(
+					"carbon_emissions_technology",
+					selected_solution?.version,
+				);
 			} else {
-				return get_variable_name("carbon_emissions_carrier", selected_solution?.version);
+				return get_variable_name(
+					"carbon_emissions_carrier",
+					selected_solution?.version,
+				);
 			}
 		} else {
 			if (selected_variable == variables[0]) {
-				return get_variable_name("carbon_emissions_annual", selected_solution?.version);
+				return get_variable_name(
+					"carbon_emissions_annual",
+					selected_solution?.version,
+				);
 			} else {
-				return get_variable_name("carbon_emissions_cumulative", selected_solution?.version);
+				return get_variable_name(
+					"carbon_emissions_cumulative",
+					selected_solution?.version,
+				);
 			}
 		}
 	}
@@ -104,7 +114,10 @@
 
 		let carbon_emissions_technology = await get_component_total(
 			selected_solution!.solution_name,
-			get_variable_name("carbon_emissions_technology", selected_solution?.version),
+			get_variable_name(
+				"carbon_emissions_technology",
+				selected_solution?.version,
+			),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
@@ -112,7 +125,10 @@
 
 		let carbon_emissions_carrier = await get_component_total(
 			selected_solution!.solution_name,
-			get_variable_name("carbon_emissions_carrier", selected_solution?.version),
+			get_variable_name(
+				"carbon_emissions_carrier",
+				selected_solution?.version,
+			),
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
@@ -167,10 +183,19 @@
 			return;
 		}
 
-		if (variable_name == get_variable_name("carbon_emissions_annual", selected_solution?.version)) {
+		if (
+			variable_name ==
+			get_variable_name(
+				"carbon_emissions_annual",
+				selected_solution?.version,
+			)
+		) {
 			let res = await get_component_total(
 				selected_solution!.solution_name,
-				get_variable_name("carbon_emissions_annual_limit", selected_solution?.version),
+				get_variable_name(
+					"carbon_emissions_annual_limit",
+					selected_solution?.version,
+				),
 				selected_solution!.scenario_name,
 				selected_solution!.detail.system.reference_year,
 				selected_solution!.detail.system.interval_between_years,

@@ -3,10 +3,10 @@
     import type { ActivatedSolution } from "$lib/types";
     import Dropdown from "../../components/Dropdown.svelte";
     import { get_energy_balance, get_unit } from "$lib/temple";
-    import BarPlot from "../../components/plots/BarPlot.svelte";
+    import BarPlot from "../../components/BarPlot.svelte";
     import { filter_and_aggregate_data } from "$lib/utils";
     import { tick } from "svelte";
-	import { get_variable_name } from "$lib/variables";
+    import { get_variable_name } from "$lib/variables";
 
     var defaultColors = [
         "rgb(75, 192, 192)",
@@ -102,6 +102,10 @@
 
     let config = structuredClone(initial_config);
 
+    /**
+     * This function is being called, when a change event is received from the SolutionFilter.
+     * It will update the selected variables and reload the data.
+     */
     async function solution_changed() {
         if (!selected_solution) {
             return;
@@ -117,9 +121,14 @@
         return;
     }
 
+    /**
+     * This function fetches the energy balance dataframe from the api server and all the data according to the selected variables and fields.
+     * Once fetched, it adds all the data to the datasets for the plots.
+     */
     async function data_changed() {
         fetching = true;
         tick();
+
         if (
             selected_node == null ||
             selected_carrier == null ||
@@ -129,13 +138,16 @@
             fetching = false;
             return;
         }
+
+        // Calculate index of year
         let year_index = Math.floor(
             (selected_year - selected_solution.detail.system.reference_year) /
                 selected_solution.detail.system.interval_between_years,
         );
 
+        // Fetch the energy balance data
         console.log("Getting energy balance.");
-        let a = await get_energy_balance(
+        let energy_balance_data = await get_energy_balance(
             selected_solution.solution_name,
             selected_node,
             selected_carrier,
@@ -143,6 +155,7 @@
             year_index,
         );
 
+        // Fetch the units
         let unit_data = await get_unit(
             selected_solution.solution_name,
             get_variable_name("flow_export", selected_solution.version),
@@ -158,63 +171,95 @@
         let datasets = [];
         let i = 0;
 
-        for (const plot_name in a) {
+        // Loop through the energy balance dataframes and add them to the plots
+        for (const plot_name in energy_balance_data) {
             let dataset_selector: StringList = {
                 node: [selected_node!],
             };
 
-            if (a[plot_name] == undefined || a[plot_name].data.length == 0) {
+            // Some plots might not have data
+            if (
+                energy_balance_data[plot_name] == undefined ||
+                energy_balance_data[plot_name].data.length == 0
+            ) {
                 continue;
             }
 
-            if ("technology" in a[plot_name].data[0]) {
+            // If the dataframe has a row "technology", add all of them to the list of technologies
+            if ("technology" in energy_balance_data[plot_name].data[0]) {
                 let technologies = [];
-                for (const row of a[plot_name].data) {
+                for (const row of energy_balance_data[plot_name].data) {
                     technologies.push(row["technology"]);
                 }
                 dataset_selector = {
                     technology: technologies,
                 };
             }
+
             let datasets_aggregates: StringList = {};
 
             let current_plots = filter_and_aggregate_data(
-                a[plot_name].data,
+                energy_balance_data[plot_name].data,
                 dataset_selector,
                 datasets_aggregates,
             );
+
             if (current_plots.length == 0) {
                 continue;
             }
 
+            // Loop through the different variables
             for (let current_plot of current_plots) {
                 if (Object.keys(current_plot.data).length == 0) {
                     continue;
                 }
 
+                // Get label-name for the plot
                 switch (plot_name) {
-                    case get_variable_name("flow_storage_discharge", selected_solution.version):
+                    case get_variable_name(
+                        "flow_storage_discharge",
+                        selected_solution.version,
+                    ):
                         current_plot.label =
                             current_plot.label + " (discharge)";
                         break;
-                    case get_variable_name("flow_transport_in", selected_solution.version):
+                    case get_variable_name(
+                        "flow_transport_in",
+                        selected_solution.version,
+                    ):
                         current_plot.label =
                             current_plot.label + " (transport in)";
                         break;
-                    case get_variable_name("flow_import", selected_solution.version):
-                        current_plot.label = "Import", selected_solution.version;
+                    case get_variable_name(
+                        "flow_import",
+                        selected_solution.version,
+                    ):
+                        (current_plot.label = "Import"),
+                            selected_solution.version;
                         break;
-                    case get_variable_name("shed_demand", selected_solution.version):
+                    case get_variable_name(
+                        "shed_demand",
+                        selected_solution.version,
+                    ):
                         current_plot.label = "Shed Demand";
                         break;
-                    case get_variable_name("flow_storage_charge", selected_solution.version):
+                    case get_variable_name(
+                        "flow_storage_charge",
+                        selected_solution.version,
+                    ):
                         current_plot.label = current_plot.label + " (charge)";
                         break;
-                    case get_variable_name("flow_transport_out", selected_solution.version):
+                    case get_variable_name(
+                        "flow_transport_out",
+                        selected_solution.version,
+                    ):
                         current_plot.label =
                             current_plot.label + " (transport out)";
                         break;
-                    case get_variable_name("flow_export", selected_solution.version):
+                    case get_variable_name(
+                        "flow_export",
+                        selected_solution.version,
+                    ):
                         current_plot.label = "Export";
                         break;
                     default:
@@ -223,10 +268,12 @@
 
                 let plot_type = "line";
 
+                // If only one timestep is available, it should be a bar plot
                 if (Object.keys(current_plot.data).length == 1) {
                     plot_type = "bar";
                 }
 
+                // Demand is plotted in a different way than the other plots
                 if (plot_name == "demand") {
                     current_plot.label = "Demand";
                     current_plot.type = "line";
@@ -255,16 +302,19 @@
                 i++;
             }
         }
+
+        // Finalize plot-config
         config.data.labels = Object.keys(datasets[0].data);
         config.data.datasets = datasets;
         config.options.scales.y.title.text = "Power [" + unit + "]";
 
         fetching = false;
         plot_ready = true;
-        let start = performance.now();
         await tick();
 
         let solution_names = selected_solution!.solution_name.split(".");
+
+        // Define the filename when downloading
         plot_name = [
             solution_names[solution_names?.length - 1],
             selected_solution?.scenario_name,
@@ -273,8 +323,6 @@
             selected_node,
             selected_year,
         ].join("_");
-
-        console.log("Building plot took", performance.now() - start);
     }
 </script>
 

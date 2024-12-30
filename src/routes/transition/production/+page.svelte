@@ -3,7 +3,7 @@
 	import AllCheckbox from "../../../components/AllCheckbox.svelte";
 	import type { ActivatedSolution } from "$lib/types";
 	import { filter_and_aggregate_data } from "$lib/utils";
-	import BarPlot from "../../../components/plots/BarPlot.svelte";
+	import BarPlot from "../../../components/BarPlot.svelte";
 
 	import Radio from "../../../components/Radio.svelte";
 	import { get_component_total } from "$lib/temple";
@@ -70,12 +70,18 @@
 		},
 	};
 
+	/**
+	 * This function resets the selections of the form.
+	 */
 	function reset_data_selection() {
 		selected_years = years;
 		selected_locations = nodes;
 		selected_technologies = technologies;
 	}
 
+	/**
+	 * This function returns the variable name depending on the variable selection
+	 */
 	function get_local_variable() {
 		switch (selected_variable) {
 			case "conversion":
@@ -91,6 +97,9 @@
 		}
 	}
 
+	/**
+	 * This function returns the unit of the currently selected carrier
+	 */
 	function get_unit() {
 		if (unit === null) {
 			return "";
@@ -106,6 +115,9 @@
 		return "";
 	}
 
+	/**
+	 * This function fetches the relevant data from the API server given the current selection
+	 */
 	async function fetch_data() {
 		fetching = true;
 
@@ -114,8 +126,13 @@
 			return;
 		}
 
-		variable_name = get_variable_name(variable_name, selected_solution?.version);
+		// Get the versioned name of the variable
+		variable_name = get_variable_name(
+			variable_name,
+			selected_solution?.version,
+		);
 
+		// Fetch the data
 		await get_component_total(
 			selected_solution!.solution_name,
 			variable_name,
@@ -134,6 +151,9 @@
 		});
 	}
 
+	/**
+	 * This function updates the available carriers depending on the current selection and resets the data selection.
+	 */
 	function update_carriers() {
 		filtered_data = null;
 		selected_carrier = "";
@@ -178,6 +198,9 @@
 		reset_data_selection();
 	}
 
+	/**
+	 * This function updates the available technologies given the currently selected solution and variable.
+	 */
 	function update_technologies() {
 		filtered_data = [];
 
@@ -238,6 +261,9 @@
 		reset_data_selection();
 	}
 
+	/**
+	 * This function updates the available locations to select.
+	 */
 	function update_locations() {
 		locations = nodes;
 		if (selected_variable == "transport") {
@@ -245,6 +271,10 @@
 		}
 	}
 
+	/**
+	 * This function is being called whenever the selected variable is changed.
+	 * It resets the form and re-fetches the necessary data.
+	 */
 	function updated_variable() {
 		filtered_data = [];
 
@@ -268,17 +298,22 @@
 		});
 	}
 
+	/**
+	 * This function updates the plot data according to the current form selection.
+	 */
 	function update_data() {
 		if (selected_variable == "import_export") {
 			selected_aggregation = "node";
 		}
 
+		// If the selected aggregation is technology, include all available nodes and vice versa
 		if (selected_aggregation == "technology") {
 			selected_locations = nodes;
 		} else {
 			selected_technologies = technologies;
 		}
 
+		// Check if there is data to plot
 		if (
 			selected_locations.length == 0 ||
 			selected_years.length == 0 ||
@@ -298,6 +333,7 @@
 			location_name = "edge";
 		}
 
+		// Define which series should be aggregated and which should be shown separately, depending on the selected aggregation and variable.
 		if (selected_variable == "import_export") {
 			dataset_selector[location_name] = selected_locations;
 			datasets_aggregates["carrier"] = [selected_carrier!];
@@ -311,12 +347,16 @@
 			}
 		}
 
+		// Filter years
 		let excluded_years = years.filter(
 			(year) => !selected_years.includes(year),
 		);
 
-		let filtered_result = data.data.filter((a) => a.carrier === undefined || a.carrier == selected_carrier)
+		let filtered_result = data.data.filter(
+			(a) => a.carrier === undefined || a.carrier == selected_carrier,
+		);
 
+		// Aggregate data
 		filtered_data = filter_and_aggregate_data(
 			filtered_result,
 			dataset_selector,
@@ -325,15 +365,21 @@
 			selected_normalisation == "normalized",
 		);
 
+		// Set data in plot config
 		config.data = { datasets: filtered_data };
 		config.options.scales.y.title.text =
 			selected_variable + " [" + get_unit() + "]";
 
 		let solution_names = selected_solution!.solution_name.split(".");
+
+		// Define filename of the plot when downloading.
 		plot_name = [
 			solution_names[solution_names?.length - 1],
 			selected_solution?.scenario_name,
-			get_variable_name(get_local_variable()!, selected_solution?.version),
+			get_variable_name(
+				get_local_variable()!,
+				selected_solution?.version,
+			),
 			selected_carrier,
 		].join("_");
 	}

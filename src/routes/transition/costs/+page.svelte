@@ -12,14 +12,9 @@
 	import { get_variable_name } from "$lib/variables";
 
 	import { get_component_total } from "$lib/temple";
-	import {
-		filter_and_aggregate_data,
-		group_data,
-		rename_field,
-	} from "$lib/utils";
+	import { filter_and_aggregate_data, rename_field } from "$lib/utils";
 	import { tick } from "svelte";
-	import BarPlot from "../../../components/plots/BarPlot.svelte";
-	import type { ParseResult } from "papaparse";
+	import BarPlot from "../../../components/BarPlot.svelte";
 
 	let carriers: string[] = [];
 	let nodes: string[] = [];
@@ -50,6 +45,7 @@
 	let combined_name = "Techology / Carrier";
 	let aggregation_options: string[] = [combined_name, "Location"];
 	let selected_aggregation: string = aggregation_options[1];
+
 	let show_costs = {
 		capex: { title: "Capex", show: true, subdivision: false },
 		opex: { title: "Opex", show: true, subdivision: false },
@@ -74,6 +70,7 @@
 		[key: string]: string[];
 	}
 
+	// Define initial plot config
 	let config = {
 		type: "line",
 		data: { datasets: [] as any[] },
@@ -98,6 +95,9 @@
 		},
 	};
 
+	/**
+	 * This funciton fetches all necessary cost-data  given the currently selected solution.
+	 */
 	async function fetch_data() {
 		if (selected_solution == null) {
 			return;
@@ -148,6 +148,7 @@
 			selected_solution!.detail.system.interval_between_years,
 		);
 
+		// "Standardize" all series names
 		rename_field(fetched_cost_carrier.data!, "node", "location");
 		rename_field(fetched_cost_shed_demand.data!, "node", "location");
 		rename_field(fetched_opex.data!, "technology", combined_name);
@@ -164,6 +165,8 @@
 			fetched_opex.data!.data[i][combined_name] =
 				fetched_opex.data!.data[i][combined_name] + opex_suffix;
 		}
+
+		// Set available locations
 		locations = Object.keys(selected_solution!.detail.edges).concat(
 			selected_solution!.detail.system.set_nodes,
 		);
@@ -171,8 +174,13 @@
 		fetching = false;
 	}
 
+	/**
+	 * This function groups the data if subdivisons are active.
+	 */
 	function regroup_data(all_selected_carriers_technologies: string[]) {
 		fetching = true;
+
+		// This variable will contain all the datasets to plot
 		grouped_data = new Array<Row>();
 
 		let filtered_cost_carrier = structuredClone(fetched_cost_carrier.data);
@@ -191,11 +199,10 @@
 			);
 
 		if (show_costs.capex.show) {
+			// If the subdivision is active, no aggregation is necessary.
 			if (show_costs.capex.subdivision) {
 				grouped_data! = grouped_data!.concat(fetched_capex.data!.data);
 			} else {
-				let comb = {};
-
 				let new_data = filter_and_aggregate_data(
 					fetched_capex.data!.data,
 					{ location: selected_locations },
@@ -212,6 +219,7 @@
 		}
 
 		if (show_costs.opex.show) {
+			// If the subdivision is active, no aggregation is necessary.
 			if (show_costs.opex.subdivision) {
 				grouped_data! = grouped_data!.concat(fetched_opex.data!.data);
 			} else {
@@ -277,13 +285,16 @@
 			}
 		}
 
+		// If no data is available to show, reset everything.
 		if (grouped_data!.length == 0) {
 			grouped_data = undefined;
 			fetching = false;
 			return;
 		}
+
 		let set_locations = new Set<string>();
 
+		// Filter undefined datasets
 		grouped_data! = grouped_data!.filter((e) => {
 			return e != undefined;
 		});
@@ -291,6 +302,8 @@
 		for (const i of grouped_data!) {
 			set_locations.add(i["location"]);
 		}
+
+		// Update available locations
 		locations = Array.from(set_locations);
 		fetching = false;
 	}
@@ -331,6 +344,7 @@
 			...selected_demand_carriers,
 		];
 
+		// Update the dataset aggregations and groupings
 		regroup_data(all_selected_carriers_technologies);
 
 		if (!show_costs.capex.subdivision) {
@@ -349,7 +363,7 @@
 			all_selected_carriers_technologies.push(shed_demand_label);
 		}
 
-		// Specify Aggregation
+		// Specify Aggregation. If the aggregation type is location, all technologies have to be aggregated and vice versa.
 		if (selected_aggregation == aggregation_options[0]) {
 			dataset_selector["location"] = locations;
 			datasets_aggregates[combined_name] =
@@ -368,7 +382,7 @@
 		let normalized = selected_normalisation == "normalized";
 		let filtered_data: Dataset[] = [];
 
-		// Get Plot-Data
+		// Get Plot-Data, as a base we now take the grouped data that are adapted to the subdivision selection.
 		if (grouped_data) {
 			filtered_data = filter_and_aggregate_data(
 				grouped_data,
@@ -391,6 +405,7 @@
 			});
 		}
 
+		// Set the actual data in the plot config
 		tick().then(() => {
 			config.data = { datasets: filtered_data };
 
@@ -400,6 +415,10 @@
 		});
 	}
 
+	/**
+	 * This function is being called whenever the solution filter emits a solution changed event.
+	 * It refetches the necessary data, defines all available data for the form, resets the form
+	 */
 	async function solution_changed() {
 		if (selected_solution == null) {
 			return;
@@ -422,6 +441,7 @@
 			);
 		}
 
+		// Define available technologies of the different types
 		transport_technologies =
 			selected_solution!.detail.system.set_transport_technologies.filter(
 				(t) => set_capex_opex_technologies.has(t),
@@ -435,6 +455,7 @@
 				(t) => set_capex_opex_technologies.has(t),
 			);
 
+		// Reset selected technologies
 		selected_transport_technologies = transport_technologies;
 		selected_conversion_technologies = conversion_technologies;
 		selected_storage_technologies = storage_technologies;
@@ -451,6 +472,7 @@
 			.concat(selected_solution!.detail.carriers_export)
 			.filter((i) => set_cost_carriers.has(i));
 
+		// Reset selected cost carriers
 		selected_cost_carriers = cost_carriers;
 
 		// Options for Demand Carriers
@@ -462,18 +484,24 @@
 			(i) => set_demand_carriers.has(i),
 		);
 
+		// Reset selected demand carriers
 		selected_demand_carriers = demand_carriers;
+
+		// Set available nodes
 		nodes = selected_solution!.detail.system.set_nodes;
 
-		// Set years
+		// Reset selected years
 		selected_years = years;
 
-		// Set locations
+		// Reset selected locations
 		selected_locations = locations;
 
+		// Update the plot
 		update_data();
 		fetching = false;
 		let solution_names = selected_solution!.solution_name.split(".");
+
+		// Define the filename of the plot when downloading.
 		plot_name = [
 			solution_names[solution_names?.length - 1],
 			selected_solution?.scenario_name,
