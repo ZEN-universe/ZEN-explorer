@@ -2,16 +2,9 @@ import type {
     Row,
     DatasetSelectors,
     Dataset,
-    YearValue
+    DatasetContainer
 } from "$lib/types";
 
-interface DatasetContainer {
-    [key: string]: YearValue;
-}
-
-interface GroupData {
-    [key: string]: Papa.ParseResult<any>;
-}
 
 export function rename_field(papa_result: Papa.ParseResult<any>, old_name: string, new_name: string) {
     for (let i of papa_result.data) {
@@ -45,7 +38,34 @@ export function group_data(new_name: string, group_data: [string, Papa.ParseResu
     return ans!
 }
 
-
+/**
+ * This function takes a set of rows and creates aggregated plots out of these rows. The result can be directly used in d3 plots.
+ * 
+ * @param data - An array of row objects of the form {<field_name>: <field_value>, ..., <year>: value}. For example: 
+ * {
+ *   2024: "0.0"
+ *   2025: "1.234"
+ *   node: "CH"
+ *   technology: "natural_gas_storage"
+ * }
+ * @param dataset_filters - An object that defines which rows to include in the answer. 
+ * The attribute name defines the field_name of the provided data and the attribute valie has to be a list of strings of the values to include in the answer. For example:
+ * {
+ *  technology: ["natural_gas_storage", "battery"]
+ * }
+ * will include all rows that have technology "natural_gas_storage" or "battery".
+ * @param dataset_aggregations - An object that defines which rows to aggregate in the answer.
+ * The attribute name defines the field_name of the provided data and the attribute valie has to be a list of strings of the values to include in the answer. For example:
+ * {
+ *  node: ["CH", "DE"]
+ * }
+ * will sum all rows that have the node "CH" or "DE" into one dataset.
+ * @param years_exclude - A list of years to exclude from the response
+ * @param normalise - A boolean value that specifies if the returned values should be normalised or not
+ * @param plot_type - The D3 Plottype
+ * @param label_suffix - An optional suffix to the label of the plot. 
+ * @returns 
+ */
 export function filter_and_aggregate_data(
     data: Row[],
     dataset_filters: DatasetSelectors,

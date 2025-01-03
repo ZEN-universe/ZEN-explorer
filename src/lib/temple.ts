@@ -36,10 +36,11 @@ export async function get_solution_detail(
     )
 
     if (!solution_detail_request.ok) {
-        alert("Could not fetch "+ url)
+        alert("Could not fetch " + url)
         return {}
     }
     let solution_detail = await solution_detail_request.json()
+
     return solution_detail
 }
 
@@ -63,18 +64,18 @@ export async function get_unit(solution_name: string,
 export async function get_energy_balance(
     solution: string, node: string, carrier: string, scenario: string, year: number
 ): Promise<EnergyBalanceDataframes> {
-    const url =  env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}`
+    const url = env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}`
 
     let energy_balance_data_request = await fetch(
-                url,
-                { cache: "no-store" }
-            );
-    
+        url,
+        { cache: "no-store" }
+    );
+
     if (!energy_balance_data_request.ok) {
         alert("Could not fetch " + url)
         return {}
     }
-    
+
     let energy_balance_data = await energy_balance_data_request.json()
 
     let series_names = [
