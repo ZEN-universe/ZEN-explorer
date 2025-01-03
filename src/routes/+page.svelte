@@ -4,6 +4,7 @@
     import close from "$lib/assets/x.svg";
     let logo_size = "70vh";
     let links_active = false;
+    let energy_links_active = false;
 </script>
 
 <div class="row">
@@ -19,9 +20,13 @@
                 >
                     <p class="content">The Transition Pathway</p>
                 </button>
-                <a href="./energy_balance" class="quarter active quarter2">
+                <button
+                    class="quarter active quarter2"
+                    on:click={() =>
+                        (energy_links_active = !energy_links_active)}
+                >
                     <p class="content">The Energy Balance</p>
-                </a>
+                </button>
                 <div class="quarter quarter3">
                     <p class="content">The Energy System</p>
                 </div>
@@ -55,6 +60,28 @@
                     </div>
                     <button
                         on:click={() => (links_active = !links_active)}
+                        type="button"
+                        class="close"
+                        aria-label="Close"
+                    >
+                        <img alt="The project logo" src={close} />
+                    </button>
+                </div>
+                <div class="links" class:active={energy_links_active}>
+                    <div class="sublink l1">
+                        <a href="./energy_balance" class="link-secondary"
+                            >Nodal Energy Balance</a
+                        >
+                    </div>
+                    <div class="sublink l2">
+                        <a
+                            href="./energy_balance_storage"
+                            class="link-secondary">Storage Energy Balance</a
+                        >
+                    </div>
+                    <button
+                        on:click={() =>
+                            (energy_links_active = !energy_links_active)}
                         type="button"
                         class="close"
                         aria-label="Close"

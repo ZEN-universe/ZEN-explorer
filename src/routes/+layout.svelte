@@ -8,6 +8,11 @@
         Emissions: base + "/transition/emissions",
         Costs: base + "/transition/costs",
     };
+
+    let energy_balance_urls = {
+        Nodal: base + "/energy_balance",
+        Storage: base + "/energy_balance_storage",
+    };
 </script>
 
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
@@ -50,10 +55,29 @@
                         {/each}
                     </ul>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{base}/energy_balance"
-                        >The Energy Balance</a
+                <li class="nav-item dropdown">
+                    <a
+                        class="nav-link dropdown-toggle"
+                        href="#"
+                        role="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
                     >
+                        The Energy Balance
+                    </a>
+                    <ul class="dropdown-menu">
+                        {#each Object.entries(energy_balance_urls) as [title, url]}
+                            <li>
+                                <a
+                                    class="dropdown-item {$page.url.pathname ==
+                                    url
+                                        ? 'active'
+                                        : ''}"
+                                    href={url}>{title}</a
+                                >
+                            </li>
+                        {/each}
+                    </ul>
                 </li>
             </ul>
         </div>

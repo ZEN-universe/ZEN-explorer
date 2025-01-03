@@ -26,7 +26,6 @@
 	let normalisation_options = ["not_normalized", "normalized"];
 	let storage_type_options = ["energy", "power"];
 	let unit: Papa.ParseResult<Row> | null = null;
-
 	let selected_variable: string | null = null;
 	let selected_carrier: string | null = null;
 	let selected_storage_type = "energy";
