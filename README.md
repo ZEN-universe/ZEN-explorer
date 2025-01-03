@@ -19,3 +19,8 @@ This will start a server running on `http://localhost:5173/explorer` which you c
 
 ## Deployment
 The simplest way to start the frontend in production mode is by using the provided Dockefile. Simply install Docker (https://docs.docker.com/get-docker/), build the image with `docker build . -t explorer` and run it with `docker run -p 8050:8050 explorer`. 
+
+
+## Project structure
+
+Each route in Svelte is one folder in the `routes` that contains a `+page.svelte` file. All of these pages are more or less independent of each other. There are some parts of the pages, that can be reused. These are called components and are contained in the `components` folder. The `lib` folder contains utilities that are used by different pages and components.
