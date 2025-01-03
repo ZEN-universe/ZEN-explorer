@@ -20,7 +20,7 @@
 	let solution_list: Array<Solution> = [];
 	let levels: Levels = {};
 	let active_scenario: string;
-	let solution_detail: SolutionDetail | null = null;
+	let solution_detail: SolutionDetail | undefined = undefined;
 	let active_scenario_detail: ScenarioDetail | null = null;
 	let solution_names: string[][] = [];
 	let active_first_level: string;
@@ -69,8 +69,9 @@
 		loading = true;
 
 		solution_detail = await get_solution_detail(active_solution_name);
-		if (Object.keys(solution_detail.scenarios).length == 1) {
-			active_scenario = Object.keys(solution_detail.scenarios)[0];
+
+		if (Object.keys(solution_detail!.scenarios).length == 1) {
+			active_scenario = Object.keys(solution_detail!.scenarios)[0];
 			dispatch_solution();
 		} else {
 			selected_solution = null;
@@ -90,6 +91,7 @@
 			solution_name: active_solution_name,
 			scenario_name: active_scenario,
 			detail: active_scenario_detail,
+			components: solution_detail.components,
 			version: solution_detail.version,
 		};
 
