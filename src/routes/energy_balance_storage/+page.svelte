@@ -154,17 +154,8 @@
      * This function returns the unit of the currently selected variable
      */
     function get_unit() {
-        console.log(unit);
-        if (unit != null) {
-            for (const u of unit.data) {
-                if (!u.capacity_type) {
-                    continue;
-                }
-
-                if (technologies[0] == u.technology) {
-                    return u[0];
-                }
-            }
+        if (unit != null && unit.data.length > 0 && unit.data[0].length > 0) {
+            return unit.data[0][0];
         }
         return "";
     }

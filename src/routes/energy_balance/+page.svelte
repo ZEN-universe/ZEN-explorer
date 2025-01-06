@@ -146,7 +146,6 @@
         );
 
         // Fetch the energy balance data
-        console.log("Getting energy balance.");
         let energy_balance_data = await get_energy_balance(
             selected_solution.solution_name,
             selected_node,
