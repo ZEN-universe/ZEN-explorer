@@ -153,7 +153,6 @@ export async function get_component_total(
 
     const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`
 
-    console.log("Fetching", fetch_url)
 
     let component_data_request = await fetch(fetch_url, { cache: "no-store" });
 

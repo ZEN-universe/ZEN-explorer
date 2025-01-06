@@ -486,9 +486,6 @@
 												bind:options={aggregation_options}
 												bind:selected_option={selected_aggregation}
 												on:selection-changed={(e) => {
-													console.log(
-														"Aggregation changed",
-													);
 													update_plot_data();
 												}}
 											></Radio>
@@ -499,10 +496,6 @@
 												bind:options={normalisation_options}
 												bind:selected_option={selected_normalisation}
 												on:selection-changed={(e) => {
-													console.log(
-														"Normalisation changed",
-													);
-
 													update_plot_data();
 												}}
 											></Radio>
@@ -514,9 +507,6 @@
 											bind:selected_elements={selected_technologies}
 											bind:elements={technologies}
 											on:selection-changed={() => {
-												console.log(
-													"Technology changed",
-												);
 												update_plot_data();
 											}}
 										></AllCheckbox>
@@ -526,7 +516,6 @@
 											bind:selected_elements={selected_locations}
 											bind:elements={locations}
 											on:selection-changed={(e) => {
-												console.log("Node changed");
 												update_plot_data();
 											}}
 										></AllCheckbox>
@@ -537,7 +526,6 @@
 										bind:selected_elements={selected_years}
 										bind:elements={years}
 										on:selection-changed={(e) => {
-											console.log("Year changed");
 											update_plot_data();
 										}}
 									></AllCheckbox>
