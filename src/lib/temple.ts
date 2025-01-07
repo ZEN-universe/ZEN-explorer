@@ -147,11 +147,12 @@ export async function get_component_total(
     solution_name: string,
     component_name: string,
     scenario_name: string,
+    year: number,
     start_year: number = 0,
     step_year: number = 1,
     suffix: string[] | undefined = undefined): Promise<ComponentTotal> {
 
-    const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}`
+    const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}`
 
 
     let component_data_request = await fetch(fetch_url, { cache: "no-store" });
@@ -187,6 +188,46 @@ export async function get_component_total(
         }
         return false
     })
+
+
+    const ans: ComponentTotal = {
+        unit: unit,
+        data: data
+    }
+
+    return ans
+}
+
+export async function get_full_ts(
+    solution_name: string,
+    component_name: string,
+    scenario_name: string,
+    year: number = 0) {
+
+    const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_full_ts/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}`
+    console.log(fetch_url)
+    let component_data_request = await fetch(fetch_url, { cache: "no-store" });
+
+    if (!component_data_request.ok) {
+        alert("Error when fetching " + fetch_url)
+        return {
+            unit: [],
+            data: []
+        }
+    }
+
+    let component_data = await component_data_request.json();
+
+    let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv)
+    let unit: Papa.ParseResult<Row> | null = null
+
+    if (component_data.unit != null) {
+        if (component_data.unit.slice(-1) == "\n") {
+            component_data.unit = component_data.unit.slice(0, component_data.unit.length - 1)
+        }
+
+        unit = Papa.parse(component_data.unit, { delimiter: ",", header: true, newline: "\n" })
+    }
 
 
     const ans: ComponentTotal = {
