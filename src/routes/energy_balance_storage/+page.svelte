@@ -1,14 +1,15 @@
 <script lang="ts">
     import SolutionFilter from "../../components/SolutionFilter.svelte";
     import AllCheckbox from "../../components/AllCheckbox.svelte";
-    import Radio from "../../components/Radio.svelte";
     import BarPlot from "../../components/BarPlot.svelte";
+    import Dropdown from "../../components/Dropdown.svelte";
+
     import type { ActivatedSolution, Row } from "$lib/types";
-    import { get_component_total } from "$lib/temple";
+    import { get_full_ts } from "$lib/temple";
     import { filter_and_aggregate_data } from "$lib/utils";
-    import { tick } from "svelte";
     import Papa from "papaparse";
     import { get_variable_name } from "$lib/variables";
+    import ToggleButton from "../../components/ToggleButton.svelte";
 
     interface StringList {
         [key: string]: string[];
@@ -16,45 +17,69 @@
 
     let data: Papa.ParseResult<Row> | null = null;
     let filtered_data: any[] | null = null;
-    let variables: string[] = [];
     let carriers: string[] = [];
     let locations: string[] = [];
-    let years: number[] = [];
     let technologies: string[] = [];
     let selected_solution: ActivatedSolution | null = null;
-    let aggregation_options = ["technology", "node"];
     let unit: Papa.ParseResult<Row> | null = null;
-    let selected_variable: string | null = null;
+    let selected_variable: string | null = "storage_level";
     let selected_carrier: string | null = null;
     let selected_aggregation = "technology";
     let selected_technologies: string[] = [];
-    let selected_years: number[] = [];
     let selected_locations: string[] = [];
     let solution_loading: boolean = false;
-    let datasets: any[] = [];
     let fetching: boolean = false;
     let plot_name: string = "";
-    let plot_options = ["Line", "Bar (stacked)"];
-    let selected_plot = "Line";
+    let stacked: boolean = false;
+    let years: number[] = [];
+    let selected_year: number = 0;
 
-    let config = {
-        type: "bar",
-        data: { datasets: datasets },
+    let plot_config = {
+        counter: 1,
+        type: "line",
+        data: { datasets: [] as any[] },
         options: {
+            animation: false,
+            normalized: true,
+            elements: {
+                point: {
+                    radius: 0,
+                },
+            },
             responsive: true,
             scales: {
                 x: {
                     stacked: true,
                     title: {
                         display: true,
-                        text: "Year",
+                        text: "Time",
                     },
                 },
                 y: {
-                    stacked: true,
+                    stacked: false,
+                    beginAtZero: true,
                     title: {
                         display: true,
-                        text: selected_variable,
+                        text: "Power",
+                    },
+                },
+            },
+            borderWidth: 1,
+            plugins: {
+                zoom: {
+                    pan: {
+                        enabled: true,
+                        modifierKey: "ctrl",
+                        mode: "x",
+                    },
+                    zoom: {
+                        drag: {
+                            enabled: true,
+                        },
+                        wheel: {
+                            enabled: true,
+                        },
+                        mode: "x",
                     },
                 },
             },
@@ -65,64 +90,54 @@
      * This function sets all the necessary variables back to the initial state in order to reset the plot.
      *
      */
-    async function reset_data_selection() {
+    function reset_data_selection() {
         selected_locations = locations;
         selected_technologies = technologies;
-        selected_years = years;
         selected_aggregation = "node";
-        await tick();
     }
 
     /**
      * This function fetches the the data from the api of the selected values in the form
      */
     async function fetch_data() {
-        fetching = true;
         data = null;
-        await tick();
-        if (selected_variable === null) {
-            fetching = false;
+        if (selected_variable === null || selected_solution === null) {
             return;
         }
+        console.log("SELECTED YEAR");
+        console.log(selected_year);
+        console.log("WAT");
+        // Calculate index of year
+        let year_index = Math.floor(
+            (selected_year - selected_solution.detail.system.reference_year) /
+                selected_solution.detail.system.interval_between_years,
+        );
 
-        let fetched = await get_component_total(
+        let fetched = await get_full_ts(
             selected_solution!.solution_name,
             get_variable_name(selected_variable),
             selected_solution!.scenario_name,
-            selected_solution!.detail.system.reference_year,
-            selected_solution!.detail.system.interval_between_years,
+            year_index,
         );
 
         data = fetched.data;
         unit = fetched.unit;
-        fetching = false;
     }
 
     /**
      * This function is called is called whenever the solution filter sends a change event.
      * It resets all the selected values of the form.
      */
-    function solution_changed() {
-        variables = [
-            "storage_level",
-            "flow_storage_charge",
-            "flow_storage_discharge",
-            "flow_storage_inflow",
-            "flow_storage_spillage",
-        ].filter((a) => selected_solution!.components.includes(a));
-        data = null;
-        selected_variable = null;
-        filtered_data = null;
-        selected_carrier = null;
-    }
-
-    /**
-     * This function is called, whenever the variable in the form is changed.
-     * It will fetch the necessary data from the API.
-     */
-    async function variable_changed() {
+    async function solution_changed() {
+        if (selected_solution === null) {
+            return;
+        }
+        console.log(years);
         fetching = true;
+        selected_year = years[0];
+
         await fetch_data();
+
         update_carriers();
         update_technologies();
         update_locations();
@@ -134,12 +149,17 @@
     /**
      * This function is called, when the carrier is changed. It updates all the necessary values for further selection in the form.
      */
-    function carrier_changed() {
-        update_carriers();
+    async function data_changed() {
+        fetching = true;
+
+        await fetch_data();
+
         update_technologies();
         update_locations();
         reset_data_selection();
         update_plot_data();
+
+        fetching = false;
     }
 
     /**
@@ -218,7 +238,6 @@
         if (
             selected_variable == null ||
             selected_locations.length == 0 ||
-            selected_years.length == 0 ||
             selected_technologies.length == 0 ||
             data === null
         ) {
@@ -228,36 +247,24 @@
 
         let dataset_selector: StringList = {};
         let datasets_aggregates: StringList = {};
-
-        if (selected_aggregation == "technology") {
-            dataset_selector["node"] = selected_locations;
-            datasets_aggregates["technology"] = selected_technologies;
-        } else {
-            dataset_selector["technology"] = selected_technologies;
-            datasets_aggregates["node"] = selected_locations;
-        }
-
-        let excluded_years = years.filter(
-            (year) => !selected_years.includes(year),
-        );
+        dataset_selector["technology"] = selected_technologies;
+        datasets_aggregates["node"] = selected_locations;
 
         filtered_data = filter_and_aggregate_data(
             data.data,
             dataset_selector,
             datasets_aggregates,
-            excluded_years,
+            [],
             false,
-            selected_plot == "Line" ? "line" : "bar",
+            "line",
         );
 
-        config.data = { datasets: filtered_data };
+        plot_config.data = { datasets: filtered_data };
 
         // @ts-ignore
-        config.options.scales.y.title.text =
+        plot_config.options.scales.y.title.text =
             selected_variable + " [" + get_unit() + "]";
-
-        config.options.scales.y.stacked = selected_plot != "Line";
-
+        plot_config.options.scales.y.stacked = stacked;
         let solution_names = selected_solution!.solution_name.split(".");
         plot_name = [
             solution_names[solution_names?.length - 1],
@@ -297,9 +304,9 @@
                     >
                         <div class="accordion-body">
                             <SolutionFilter
-                                bind:years
                                 bind:selected_solution
                                 bind:loading={solution_loading}
+                                bind:years
                                 on:solution_selected={() => {
                                     solution_changed();
                                 }}
@@ -309,7 +316,7 @@
                     </div>
                 </div>
                 {#if !solution_loading && selected_solution}
-                    <div class="accordion-item variable-selection">
+                    <div class="accordion-item variable-selction">
                         <h2 class="accordion-header">
                             <button
                                 class="accordion-button collapsed"
@@ -328,28 +335,11 @@
                             data-bs-parent="#accordionExample"
                         >
                             <div class="accordion-body">
-                                <h3>Variable</h3>
-                                <select
-                                    bind:value={selected_variable}
-                                    on:change={(e) => {
-                                        variable_changed();
-                                    }}
-                                    disabled={fetching || solution_loading}
-                                >
-                                    {#each variables as variable}
-                                        <option value={variable}>
-                                            {variable}
-                                        </option>
-                                    {/each}
-                                </select>
-
                                 {#if carriers.length > 0}
                                     <h3>Carrier</h3>
                                     <select
                                         bind:value={selected_carrier}
-                                        on:change={() => {
-                                            carrier_changed();
-                                        }}
+                                        on:change={data_changed}
                                         disabled={fetching || solution_loading}
                                     >
                                         {#each carriers as carrier}
@@ -359,6 +349,13 @@
                                         {/each}
                                         disabled={fetching || solution_loading}
                                     </select>
+                                    <h3>Year</h3>
+                                    <Dropdown
+                                        bind:options={years}
+                                        bind:selected_option={selected_year}
+                                        on:selection-changed={data_changed}
+                                        enabled={!fetching && !solution_loading}
+                                    ></Dropdown>
                                 {/if}
                             </div>
                         </div>
@@ -383,55 +380,18 @@
                                 data-bs-parent="#accordionExample"
                             >
                                 <div class="accordion-body">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <h3>Aggregation</h3>
-                                            <Radio
-                                                bind:options={aggregation_options}
-                                                bind:selected_option={selected_aggregation}
-                                                on:selection-changed={(e) => {
-                                                    update_plot_data();
-                                                }}
-                                            ></Radio>
-                                        </div>
-                                        <div class="col-6">
-                                            <h3>Plot Style</h3>
-                                            <Radio
-                                                bind:options={plot_options}
-                                                bind:selected_option={selected_plot}
-                                                on:selection-changed={(e) => {
-                                                    update_plot_data();
-                                                }}
-                                            ></Radio>
-                                        </div>
-                                    </div>
-                                    {#if selected_aggregation == "technology"}
-                                        <h3>Technology</h3>
-                                        <AllCheckbox
-                                            bind:selected_elements={selected_technologies}
-                                            bind:elements={technologies}
-                                            on:selection-changed={() => {
-                                                update_plot_data();
-                                            }}
-                                        ></AllCheckbox>
-                                    {:else}
-                                        <h3>Node</h3>
-                                        <AllCheckbox
-                                            bind:selected_elements={selected_locations}
-                                            bind:elements={locations}
-                                            on:selection-changed={(e) => {
-                                                update_plot_data();
-                                            }}
-                                        ></AllCheckbox>
-                                    {/if}
+                                    <div class="row"></div>
+                                    <h3>Stacked</h3>
+                                    <ToggleButton
+                                        bind:value={stacked}
+                                        on:change={update_plot_data}
+                                    ></ToggleButton>
 
-                                    <h3>Year</h3>
+                                    <h3>Node</h3>
                                     <AllCheckbox
-                                        bind:selected_elements={selected_years}
-                                        bind:elements={years}
-                                        on:selection-changed={(e) => {
-                                            update_plot_data();
-                                        }}
+                                        bind:selected_elements={selected_locations}
+                                        bind:elements={locations}
+                                        on:selection-changed={update_plot_data}
                                     ></AllCheckbox>
                                 </div>
                             </div>
@@ -463,7 +423,8 @@
         {:else if filtered_data.length == 0}
             <div class="text-center">No data with this selection.</div>
         {:else}
-            <BarPlot bind:config bind:plot_name></BarPlot>
+            <BarPlot bind:config={plot_config} bind:plot_name zoom={true}
+            ></BarPlot>
         {/if}
     </div>
 </div>
