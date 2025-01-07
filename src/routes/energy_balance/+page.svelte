@@ -365,61 +365,66 @@
                         </div>
                     </div>
                 </div>
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button
-                            class="accordion-button collapsed"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#collapseTwo"
-                            aria-expanded="false"
-                            aria-controls="collapseTwo"
+                {#if !solution_loading && selected_solution}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button
+                                class="accordion-button collapsed"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapseTwo"
+                                aria-expanded="false"
+                                aria-controls="collapseTwo"
+                            >
+                                Data selection
+                            </button>
+                        </h2>
+                        <div
+                            id="collapseTwo"
+                            class="accordion-collapse collapse"
+                            data-bs-parent="#accordionExample"
                         >
-                            Data selection
-                        </button>
-                    </h2>
-                    <div
-                        id="collapseTwo"
-                        class="accordion-collapse collapse"
-                        data-bs-parent="#accordionExample"
-                    >
-                        <div class="accordion-body">
-                            <div class="row">
-                                <div class="col-6">
-                                    <h3>Year</h3>
-                                    <Dropdown
-                                        bind:options={years}
-                                        bind:selected_option={selected_year}
-                                        on:selection-changed={data_changed}
-                                        enabled={!fetching && !solution_loading}
-                                    ></Dropdown>
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <h3>Year</h3>
+                                        <Dropdown
+                                            bind:options={years}
+                                            bind:selected_option={selected_year}
+                                            on:selection-changed={data_changed}
+                                            enabled={!fetching &&
+                                                !solution_loading}
+                                        ></Dropdown>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-6">
-                                    <h3>Node</h3>
-                                    <Dropdown
-                                        bind:options={nodes}
-                                        bind:selected_option={selected_node}
-                                        on:selection-changed={data_changed}
-                                        enabled={!fetching && !solution_loading}
-                                    ></Dropdown>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <h3>Node</h3>
+                                        <Dropdown
+                                            bind:options={nodes}
+                                            bind:selected_option={selected_node}
+                                            on:selection-changed={data_changed}
+                                            enabled={!fetching &&
+                                                !solution_loading}
+                                        ></Dropdown>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-6">
-                                    <h3>Carrier</h3>
-                                    <Dropdown
-                                        bind:options={carriers}
-                                        bind:selected_option={selected_carrier}
-                                        on:selection-changed={data_changed}
-                                        enabled={!fetching && !solution_loading}
-                                    ></Dropdown>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <h3>Carrier</h3>
+                                        <Dropdown
+                                            bind:options={carriers}
+                                            bind:selected_option={selected_carrier}
+                                            on:selection-changed={data_changed}
+                                            enabled={!fetching &&
+                                                !solution_loading}
+                                        ></Dropdown>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                {/if}
             </div>
         </div>
     </div>
