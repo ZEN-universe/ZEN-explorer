@@ -1,15 +1,15 @@
 <script lang="ts">
-    import SolutionFilter from "../../components/SolutionFilter.svelte";
-    import AllCheckbox from "../../components/AllCheckbox.svelte";
-    import BarPlot from "../../components/BarPlot.svelte";
-    import Dropdown from "../../components/Dropdown.svelte";
+    import SolutionFilter from "../../../components/SolutionFilter.svelte";
+    import AllCheckbox from "../../../components/AllCheckbox.svelte";
+    import BarPlot from "../../../components/BarPlot.svelte";
+    import Dropdown from "../../../components/Dropdown.svelte";
 
     import type { ActivatedSolution, Row } from "$lib/types";
     import { get_full_ts } from "$lib/temple";
     import { filter_and_aggregate_data } from "$lib/utils";
     import Papa from "papaparse";
     import { get_variable_name } from "$lib/variables";
-    import ToggleButton from "../../components/ToggleButton.svelte";
+    import ToggleButton from "../../../components/ToggleButton.svelte";
 
     interface StringList {
         [key: string]: string[];
@@ -277,7 +277,7 @@
 
 <div class="row">
     <div class="col">
-        <h2>Energy Balance Storage</h2>
+        <h2>The Energy Balance Storage</h2>
     </div>
 </div>
 <div class="row" style="z-index: 1; position: relative;">

@@ -10,8 +10,8 @@
     };
 
     let energy_balance_urls = {
-        Nodal: base + "/energy_balance",
-        Storage: base + "/energy_balance_storage",
+        Nodal: base + "/energy_balance/nodal",
+        Storage: base + "/energy_balance/storage",
     };
 </script>
 

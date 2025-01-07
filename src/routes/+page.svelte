@@ -69,13 +69,13 @@
                 </div>
                 <div class="links" class:active={energy_links_active}>
                     <div class="sublink l1">
-                        <a href="./energy_balance" class="link-secondary"
+                        <a href="./energy_balance/nodal" class="link-secondary"
                             >Nodal Energy Balance</a
                         >
                     </div>
                     <div class="sublink l2">
                         <a
-                            href="./energy_balance_storage"
+                            href="./energy_balance/storage"
                             class="link-secondary">Storage Energy Balance</a
                         >
                     </div>

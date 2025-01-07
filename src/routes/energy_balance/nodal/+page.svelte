@@ -1,9 +1,9 @@
 <script lang="ts">
-    import SolutionFilter from "../../components/SolutionFilter.svelte";
+    import SolutionFilter from "../../../components/SolutionFilter.svelte";
     import type { ActivatedSolution } from "$lib/types";
-    import Dropdown from "../../components/Dropdown.svelte";
+    import Dropdown from "../../../components/Dropdown.svelte";
     import { get_energy_balance, get_unit } from "$lib/temple";
-    import BarPlot from "../../components/BarPlot.svelte";
+    import BarPlot from "../../../components/BarPlot.svelte";
     import { filter_and_aggregate_data } from "$lib/utils";
     import { tick } from "svelte";
     import { get_variable_name } from "$lib/variables";
