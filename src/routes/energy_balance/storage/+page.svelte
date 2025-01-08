@@ -30,7 +30,7 @@
     let solution_loading: boolean = false;
     let fetching: boolean = false;
     let plot_name: string = "";
-    let stacked: boolean = false;
+    let subdivision: boolean = true;
     let years: number[] = [];
     let selected_year: number = 0;
 
@@ -259,13 +259,31 @@
             "line",
         );
 
+        if (!subdivision) {
+            let new_data: any = {};
+            for (const i in filtered_data[0].data) {
+                new_data[i] = filtered_data
+                    .map((j) => j.data[i])
+                    .reduce((partialSum, a) => partialSum + a, 0);
+            }
+            filtered_data = [
+                {
+                    data: new_data,
+                    label: "Storage level",
+                    type: "line",
+                    borderColor: "black",
+                },
+            ];
+        }
+
         plot_config.data = { datasets: filtered_data };
 
         // @ts-ignore
         plot_config.options.scales.y.title.text =
             selected_variable + " [" + get_unit() + "]";
-        plot_config.options.scales.y.stacked = stacked;
+
         let solution_names = selected_solution!.solution_name.split(".");
+
         plot_name = [
             solution_names[solution_names?.length - 1],
             selected_solution?.scenario_name,
@@ -381,9 +399,9 @@
                             >
                                 <div class="accordion-body">
                                     <div class="row"></div>
-                                    <h3>Stacked</h3>
+                                    <h3>Technology Subdivision</h3>
                                     <ToggleButton
-                                        bind:value={stacked}
+                                        bind:value={subdivision}
                                         on:change={update_plot_data}
                                     ></ToggleButton>
 
