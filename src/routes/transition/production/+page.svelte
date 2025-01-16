@@ -157,6 +157,15 @@
 	function update_carriers() {
 		filtered_data = null;
 		selected_carrier = "";
+		let possible_technologies = new Set(data.data.map((d) => d.technology));
+
+		let possible_carriers = [
+			...new Set(
+				[...possible_technologies].map(
+					(d) => selected_solution?.detail.reference_carrier[d],
+				),
+			),
+		];
 
 		if (selected_solution == null) {
 			carriers = [];
@@ -190,7 +199,7 @@
 			default:
 				carriers = selected_solution!.detail.system.set_carriers;
 		}
-
+		carriers = carriers.filter((d) => possible_carriers.includes(d));
 		if (carriers.length == 1) {
 			selected_carrier = carriers[0];
 		}
@@ -414,7 +423,6 @@
 					>
 						<div class="accordion-body">
 							<SolutionFilter
-								on:solution_selected={update_carriers}
 								bind:carriers
 								bind:nodes
 								bind:years
@@ -475,7 +483,7 @@
 										enabled={!solution_loading && !fetching}
 									></Radio>
 								{/if}
-								{#if selected_variable != null}
+								{#if selected_variable != null && carriers.length > 0}
 									<div class="row">
 										<div class="col">
 											<h3>Carrier</h3>
@@ -601,6 +609,8 @@
 			<div></div>
 		{:else if technologies.length == 0 && selected_variable != "import_export"}
 			<div class="text-center">No technologies with this selection.</div>
+		{:else if carriers.length == 0}
+			<div class="text-center">No carriers with this selection.</div>
 		{:else if filtered_data.length == 0}
 			<div class="text-center">No data with this selection.</div>
 		{:else}
