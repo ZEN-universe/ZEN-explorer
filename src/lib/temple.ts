@@ -134,11 +134,12 @@ export async function get_energy_balance(
  * Helper function that parses the CSV data as returned by the API. 
  * It parses the CSV using Papaparse but first normalizes the CSV string returned by the API: 
  * If the dataset only consists of one column, we transpose it s.t. the header consists of the years and it only has one more line containing the data. 
- * This is done because ZEN Garden sometimes returns a pd.Series and sometimes a pd.Dataframe put in case the pd.Dataframe consists of one column it is reformated to a Series-CSV Format.
- * @param data_csv 
- * @param start_year 
- * @param step_year 
- * @returns 
+ * This is done because ZEN Garden sometimes returns a pd.Series and sometimes a pd.Dataframe. In case a pd.Datafram only consists of one column it is reformated to a Series-CSV Format.
+ * Furthermore the function transforms the years: In the CSV data from the API it is 0 based normally indexed and this function translates it to actual years.
+ * @param data_csv CSV string
+ * @param start_year Start year (corresponds to the 0-index)
+ * @param step_year Years between each index 
+ * @returns Papaparsed CSV
  */
 function parse_csv(data_csv: string, start_year: number = 0, step_year: number = 1) {
     // Get first line of the csv data
@@ -147,7 +148,7 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
     // Get column names
     let headers = first_line.split(",")
 
-    // If only two columns, we transpose the csv
+    // If there are only two columns, we transpose the csv
     if (headers.length == 2) {
         let lines = data_csv.split("\n")
         let years = ""
@@ -186,7 +187,7 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
 }
 
 /**
- * Helper function to fetch the total of a component from the Temple. It filters rows that only contain zeros.
+ * Helper function to fetch the total of a component from the Temple. It removes rows that only contain zeros.
  * @param solution_name Name of the solution
  * @param component_name Name of the component
  * @param scenario_name Name of the scenario

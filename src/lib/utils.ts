@@ -32,7 +32,7 @@ export function rename_field(papa_result: Papa.ParseResult<any>, old_name: strin
 
 /**
  * This function takes a new column name and a list of pairs of an old column name and a Papaparsed CSV. 
- * It then renames the old column name of the CSV into the new CSV and finally adds all the parsed data into one CSV.
+ * It renames the old column name of the CSV into the new CSV and finally adds all the parsed data into one CSV.
  * For example, if you call the function with ("new_name", [["old_name_1", CSV1], ["old_name_2", CSV2]]) 
  * it will rename the column "old_name_1" in the CSV1 into "new_name" and rename the column "old_name_2" of the CSV2 into "new_name" and group all the rows into one list.
  * @param new_name 
