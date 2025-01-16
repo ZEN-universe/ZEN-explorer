@@ -16,7 +16,6 @@
 	let years: number[] = [];
 	let locations: string[] = [];
 	let variables: string[] = ["Annual", "Cumulative"];
-	let groupings: string[] = ["technology", "carrier"];
 	let selected_solution: ActivatedSolution | null = null;
 	let selected_years: number[] = [];
 	let normalisation_options = ["not_normalized", "normalized"];
@@ -64,10 +63,16 @@
 		},
 	};
 
+	/**
+	 * This function returns the unit string of the currently fetched unit data.
+	 */
 	function get_unit() {
 		return unit?.data[0][0];
 	}
 
+	/**
+	 * This function resets selected values of the form. It is called whenever the selected solution or the selected subdivision is changed.
+	 */
 	function reset_subsection() {
 		selected_variable = null;
 		selected_grouping = null;
@@ -81,19 +86,15 @@
 		}
 	}
 
+	/**
+	 * This function gets the currently relevant variable name based on the subdivision and variable selection.
+	 */
 	function get_division_variable() {
 		if (subdivision) {
-			if (selected_grouping == groupings[0]) {
-				return get_variable_name(
-					"carbon_emissions_technology",
-					selected_solution?.version,
-				);
-			} else {
-				return get_variable_name(
-					"carbon_emissions_carrier",
-					selected_solution?.version,
-				);
-			}
+			return get_variable_name(
+				"carbon_emissions_carrier",
+				selected_solution?.version,
+			);
 		} else {
 			if (selected_variable == variables[0]) {
 				return get_variable_name(
@@ -108,10 +109,18 @@
 			}
 		}
 	}
-
+	/**
+	 * This function fetches the relevant data if subdivision is active.
+	 * In that case, we need the data series carbon_emissions_technology and carbon_emissions_carrier.
+	 * We then combine the data series by renaming the "technology" column and the "carrier" column in the two respective data sets into "technology_carrier".
+	 */
 	async function fetch_subdivision_data() {
+		if (!selected_solution) {
+			return;
+		}
 		fetching = true;
 
+		// Fetch carbon_emissions_technology
 		let carbon_emissions_technology = await get_component_total(
 			selected_solution!.solution_name,
 			get_variable_name(
@@ -123,6 +132,7 @@
 			selected_solution!.detail.system.interval_between_years,
 		);
 
+		// Fetch carbon_emissions_carrier
 		let carbon_emissions_carrier = await get_component_total(
 			selected_solution!.solution_name,
 			get_variable_name(
@@ -143,6 +153,7 @@
 			set_locations.add(i.location);
 		}
 
+		// Rename "node" to "location" so both data series have the same location-name
 		for (let i of carbon_emissions_carrier.data!.data) {
 			set_carriers.add(i.carrier);
 			set_locations.add(i.node);
@@ -160,20 +171,25 @@
 			delete i["node"];
 		}
 
-		technologies = [...set_technologies];
-		carriers = [...set_carriers];
-		locations = [...set_locations];
-
+		// Rename "carrier" and "technology" columns into technology_carrier and group all datasets into one list.
 		data = group_data("technology_carrier", [
 			["carrier", carbon_emissions_carrier.data!],
 			["technology", carbon_emissions_technology.data!],
 		]);
 
+		technologies = [...set_technologies];
+		carriers = [...set_carriers];
+		locations = [...set_locations];
+
 		unit = carbon_emissions_carrier.unit;
 		fetching = false;
+
 		update_filters();
 	}
 
+	/**
+	 * Fetch the relevant data if subdivision is not activated.
+	 */
 	async function fetch_data() {
 		fetching = true;
 		await tick();
@@ -183,6 +199,7 @@
 			return;
 		}
 
+		// If annual emissions are selected, we want to add carbon_emissions_annual_limit and if cumulative is selected we add a constant carbon_emissions_budget
 		if (
 			variable_name ==
 			get_variable_name(
@@ -202,9 +219,28 @@
 			);
 			limit_data = res.data;
 		} else {
-			limit_data = null;
+			let res = await get_component_total(
+				selected_solution!.solution_name,
+				get_variable_name(
+					"carbon_emissions_budget",
+					selected_solution?.version,
+				),
+				selected_solution!.scenario_name,
+				selected_solution!.detail.system.reference_year,
+				selected_solution!.detail.system.interval_between_years,
+			);
+
+			// Add first value to all years
+
+			if (res.data) {
+				for (const year of years) {
+					res.data.data[0][year] = res.data.data[0][years[0]];
+				}
+			}
+			limit_data = res.data;
 		}
 
+		// Get variable values
 		get_component_total(
 			selected_solution!.solution_name,
 			variable_name,
@@ -218,6 +254,9 @@
 		});
 	}
 
+	/**
+	 * This function updates the possible values of the filters and updates the plot data once the filters have been updated.
+	 */
 	function update_filters() {
 		aggregation_options = ["location"];
 
@@ -231,10 +270,13 @@
 		selected_aggregation = "location";
 
 		fetching = false;
-		update_data();
+		update_plot_data();
 	}
 
-	function update_data() {
+	/**
+	 * This function prepares all the necessary data for the plots based on the users selection in the form.
+	 */
+	function update_plot_data() {
 		if (!data) {
 			return;
 		}
@@ -284,7 +326,10 @@
 			);
 
 			if (filtered_limit_data.length > 0) {
-				filtered_limit_data[0].label = "Annual Emissions Limit";
+				filtered_limit_data[0].label =
+					selected_variable == variables[0]
+						? "Annual Emissions Limit"
+						: "Carbon Emissions Budget";
 				filtered_limit_data[0].type = "line";
 				filtered_data = filtered_data.concat(filtered_limit_data);
 			}
@@ -300,11 +345,6 @@
 			selected_solution?.scenario_name,
 			get_division_variable(),
 		].join("_");
-	}
-
-	function solution_changed() {
-		reset_subsection();
-		selected_years = years;
 	}
 </script>
 
@@ -334,7 +374,10 @@
 					>
 						<div class="accordion-body">
 							<SolutionFilter
-								on:solution_selected={solution_changed}
+								on:solution_selected={() => {
+									reset_subsection();
+									selected_years = years;
+								}}
 								bind:carriers
 								bind:nodes
 								bind:years
@@ -425,7 +468,7 @@
 													on:selection-changed={(
 														e,
 													) => {
-														update_data();
+														update_plot_data();
 													}}
 												></Radio>
 											</div>
@@ -437,7 +480,7 @@
 													on:selection-changed={(
 														e,
 													) => {
-														update_data();
+														update_plot_data();
 													}}
 												></Radio>
 											</div>
@@ -449,7 +492,7 @@
 													bind:selected_elements={selected_technologies}
 													bind:elements={technologies}
 													on:selection-changed={() => {
-														update_data();
+														update_plot_data();
 													}}
 												></AllCheckbox>
 											{/if}
@@ -461,7 +504,7 @@
 													on:selection-changed={(
 														e,
 													) => {
-														update_data();
+														update_plot_data();
 													}}
 												></AllCheckbox>
 											{/if}
@@ -471,7 +514,7 @@
 												bind:selected_elements={selected_locations}
 												bind:elements={locations}
 												on:selection-changed={(e) => {
-													update_data();
+													update_plot_data();
 												}}
 											></AllCheckbox>
 										{/if}
@@ -479,7 +522,7 @@
 									<h3>Year</h3>
 									<AllCheckbox
 										on:selection-changed={(e) => {
-											update_data();
+											update_plot_data();
 										}}
 										bind:selected_elements={selected_years}
 										bind:elements={years}

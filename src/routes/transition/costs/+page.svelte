@@ -316,7 +316,10 @@
 		return fetched_capex.unit.data[0][0];
 	}
 
-	function update_data() {
+	/**
+	 * This function prepares all the necessary data for the plots based on the users selection in the form.
+	 */
+	function update_plot_data() {
 		fetching = true;
 		let dataset_selector: StringList = {};
 		let datasets_aggregates: StringList = {};
@@ -497,7 +500,7 @@
 		selected_locations = locations;
 
 		// Update the plot
-		update_data();
+		update_plot_data();
 		fetching = false;
 		let solution_names = selected_solution!.solution_name.split(".");
 
@@ -572,7 +575,7 @@
 										<h4>{show_costs[key].title} :</h4>
 										<ToggleButton
 											bind:value={show_costs[key].show}
-											on:change={update_data}
+											on:change={update_plot_data}
 										></ToggleButton>
 
 										{#if show_costs[key].show && key != "carbon_emission"}
@@ -580,7 +583,7 @@
 											<ToggleButton
 												bind:value={show_costs[key]
 													.subdivision}
-												on:change={update_data}
+												on:change={update_plot_data}
 											></ToggleButton>
 										{/if}
 									</div>
@@ -614,7 +617,7 @@
 										bind:selected_elements={selected_transport_technologies}
 										bind:elements={transport_technologies}
 										on:selection-changed={() => {
-											update_data();
+											update_plot_data();
 										}}
 									></AllCheckbox>
 								{/if}
@@ -624,7 +627,7 @@
 										bind:selected_elements={selected_storage_technologies}
 										bind:elements={storage_technologies}
 										on:selection-changed={() => {
-											update_data();
+											update_plot_data();
 										}}
 									></AllCheckbox>
 								{/if}
@@ -634,7 +637,7 @@
 										bind:selected_elements={selected_conversion_technologies}
 										bind:elements={conversion_technologies}
 										on:selection-changed={() => {
-											update_data();
+											update_plot_data();
 										}}
 									></AllCheckbox>
 								{/if}
@@ -644,7 +647,7 @@
 										bind:selected_elements={selected_cost_carriers}
 										bind:elements={cost_carriers}
 										on:selection-changed={() => {
-											update_data();
+											update_plot_data();
 										}}
 									></AllCheckbox>
 								{/if}
@@ -654,7 +657,7 @@
 										bind:selected_elements={selected_demand_carriers}
 										bind:elements={demand_carriers}
 										on:selection-changed={() => {
-											update_data();
+											update_plot_data();
 										}}
 									></AllCheckbox>
 								{/if}
@@ -688,7 +691,7 @@
 												bind:options={aggregation_options}
 												bind:selected_option={selected_aggregation}
 												on:selection-changed={(e) => {
-													update_data();
+													update_plot_data();
 												}}
 											></Radio>
 										</div>
@@ -699,7 +702,7 @@
 											bind:selected_elements={selected_locations}
 											elements={locations}
 											on:selection-changed={(e) => {
-												update_data();
+												update_plot_data();
 											}}
 										></AllCheckbox>
 									{/if}
@@ -709,7 +712,7 @@
 											bind:selected_elements={selected_years}
 											elements={years}
 											on:selection-changed={(e) => {
-												update_data();
+												update_plot_data();
 											}}
 										></AllCheckbox>
 									{/if}

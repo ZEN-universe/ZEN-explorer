@@ -262,7 +262,6 @@
         };
 
         if (!subdivision) {
-            console.log(filtered_data);
             let new_data: any = {};
             for (const i in filtered_data[0].data) {
                 new_data[i] = filtered_data
