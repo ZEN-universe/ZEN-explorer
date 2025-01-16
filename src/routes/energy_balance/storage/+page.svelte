@@ -104,9 +104,6 @@
         if (selected_variable === null || selected_solution === null) {
             return;
         }
-        console.log("SELECTED YEAR");
-        console.log(selected_year);
-        console.log("WAT");
         // Calculate index of year
         let year_index = Math.floor(
             (selected_year - selected_solution.detail.system.reference_year) /
@@ -132,7 +129,7 @@
         if (selected_solution === null) {
             return;
         }
-        console.log(years);
+
         fetching = true;
         selected_year = years[0];
 
@@ -259,7 +256,13 @@
             "line",
         );
 
+        plot_config.data = {
+            datasets: filtered_data,
+            labels: Object.keys(filtered_data[0].data),
+        };
+
         if (!subdivision) {
+            console.log(filtered_data);
             let new_data: any = {};
             for (const i in filtered_data[0].data) {
                 new_data[i] = filtered_data
@@ -268,15 +271,18 @@
             }
             filtered_data = [
                 {
-                    data: new_data,
+                    data: Object.values(new_data),
                     label: "Storage level",
                     type: "line",
                     borderColor: "black",
                 },
             ];
-        }
 
-        plot_config.data = { datasets: filtered_data };
+            plot_config.data = {
+                datasets: filtered_data,
+                labels: Object.keys(new_data),
+            };
+        }
 
         // @ts-ignore
         plot_config.options.scales.y.title.text =
