@@ -6,6 +6,12 @@ import type {
 } from "$lib/types";
 
 
+/**
+ * Renames the column of a Papaparsed CSV
+ * @param papa_result Papaparsed CSV
+ * @param old_name Old name of the column
+ * @param new_name New name of the column
+ */
 export function rename_field(papa_result: Papa.ParseResult<any>, old_name: string, new_name: string) {
     for (let i of papa_result.data) {
         let new_val = Object.getOwnPropertyDescriptor(i, old_name)
@@ -23,6 +29,16 @@ export function rename_field(papa_result: Papa.ParseResult<any>, old_name: strin
     }
 }
 
+
+/**
+ * This function takes a new column name and a list of pairs of an old column name and a Papaparsed CSV. 
+ * It then renames the old column name of the CSV into the new CSV and finally adds all the parsed data into one CSV.
+ * For example, if you call the function with ("new_name", [["old_name_1", CSV1], ["old_name_2", CSV2]]) 
+ * it will rename the column "old_name_1" in the CSV1 into "new_name" and rename the column "old_name_2" of the CSV2 into "new_name" and group all the rows into one list.
+ * @param new_name 
+ * @param group_data 
+ * @returns 
+ */
 export function group_data(new_name: string, group_data: [string, Papa.ParseResult<any>][]): Papa.ParseResult<any> {
     let ans: Papa.ParseResult<any> | undefined = undefined;
 
@@ -49,11 +65,11 @@ export function group_data(new_name: string, group_data: [string, Papa.ParseResu
  *   technology: "natural_gas_storage"
  * }
  * @param dataset_filters - An object that defines which rows to include in the answer. 
- * The attribute name defines the field_name of the provided data and the attribute valie has to be a list of strings of the values to include in the answer. For example:
+ * The attribute name defines the field_name of the provided data and the attribute value has to be a list of strings of the values to include in the answer. For example:
  * {
  *  technology: ["natural_gas_storage", "battery"]
  * }
- * will include all rows that have technology "natural_gas_storage" or "battery".
+ * will include all rows that have the technology "natural_gas_storage" or "battery".
  * @param dataset_aggregations - An object that defines which rows to aggregate in the answer.
  * The attribute name defines the field_name of the provided data and the attribute valie has to be a list of strings of the values to include in the answer. For example:
  * {
@@ -85,6 +101,8 @@ export function filter_and_aggregate_data(
 
     for (const row of data) {
         let skip = false;
+
+        // If the row does not contain one of the dataset_filters we skip it.
         for (let key in dataset_filters) {
             if (!dataset_filters[key].includes(row[key])) {
                 skip = true;
@@ -92,6 +110,7 @@ export function filter_and_aggregate_data(
             }
         }
 
+        // Same for the aggregations, if the row does not contain any of the aggregations we skip it.
         for (let aggregate_key of Object.keys(dataset_aggregations)) {
             if (
                 !dataset_aggregations[aggregate_key].includes(
@@ -105,20 +124,24 @@ export function filter_and_aggregate_data(
 
         if (skip) { continue; }
 
+        // Since we might aggregate several indices, we have to concat the label into one string
         let row_dataset_keys = [];
 
         for (let key of dataset_keys) {
             row_dataset_keys.push(row[key]);
         }
 
+        // Define new label by concating all indices
         let dataset_label = row_dataset_keys.join("_") + label_suffix;
 
+        // Initialize new row with all zeroes
         if (!(dataset_label in datasets)) {
             datasets[dataset_label] = Object.fromEntries(
                 years_keys.map((k) => [k, 0.0]),
             );
         }
 
+        // Aggregate the values
         for (let year of years_keys) {
             let current = Number(row[year]);
 
@@ -129,6 +152,7 @@ export function filter_and_aggregate_data(
         }
     }
 
+    // Normalize values if necessary
     if (normalise) {
         let year_totals = Object.fromEntries(
             years_keys.map((k) => [k, 0.0]),
@@ -152,6 +176,8 @@ export function filter_and_aggregate_data(
     }
 
     let ans_datasets: Dataset[] = [];
+
+    // Filter Rows that contain NaNs
     for (let label in datasets) {
         if (Object.values(datasets[label]).includes(NaN)) {
             continue;

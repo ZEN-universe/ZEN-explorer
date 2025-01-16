@@ -8,6 +8,10 @@ import type {
     Row
 } from "$lib/types";
 
+/**
+ * Helper function to fetch the solutions/list endpoint of the temple
+ * @returns Promise with a list of solutions as returned by the API Server.
+ */
 export async function get_solutions(): Promise<Solution[]> {
     let url = env.PUBLIC_TEMPLE_URL + "solutions/list";
 
@@ -26,6 +30,11 @@ export async function get_solutions(): Promise<Solution[]> {
 
 }
 
+/**
+ * Helper function to fetch the solution-detail endpoint of the temple. 
+ * @param solution Name of the solution
+ * @returns Promise with the SolutionDetail API Server.
+ */
 export async function get_solution_detail(
     solution: string
 ): Promise<SolutionDetail | undefined> {
@@ -44,6 +53,13 @@ export async function get_solution_detail(
     return solution_detail
 }
 
+/**
+ * Helper function to fetch the unit endpoint of the temple. 
+ * @param solution_name Name of the solution
+ * @param component_name Name of the component
+ * @param scenario_name Name of the scneario
+ * @returns Papaparsed CSV of the Unit-Dataframe from the API Server
+ */
 export async function get_unit(solution_name: string,
     component_name: string,
     scenario_name: string) {
@@ -61,6 +77,15 @@ export async function get_unit(solution_name: string,
     return unit
 }
 
+/**
+ * Helper function to fetch energy-balance dataframes of the temple. 
+ * @param solution Name of the solution
+ * @param node Name of the node
+ * @param carrier Name of the carrier
+ * @param scenario Name of the scenario
+ * @param year Desired year
+ * @returns Promise of an Object that contains the Energy Balance Dataframes
+ */
 export async function get_energy_balance(
     solution: string, node: string, carrier: string, scenario: string, year: number
 ): Promise<EnergyBalanceDataframes> {
@@ -105,11 +130,24 @@ export async function get_energy_balance(
     return ans
 }
 
+/**
+ * Helper function that parses the CSV data as returned by the API. 
+ * It parses the CSV using Papaparse but first normalizes the CSV string returned by the API: 
+ * If the dataset only consists of one column, we transpose it s.t. the header consists of the years and it only has one more line containing the data. 
+ * This is done because ZEN Garden sometimes returns a pd.Series and sometimes a pd.Dataframe put in case the pd.Dataframe consists of one column it is reformated to a Series-CSV Format.
+ * @param data_csv 
+ * @param start_year 
+ * @param step_year 
+ * @returns 
+ */
 function parse_csv(data_csv: string, start_year: number = 0, step_year: number = 1) {
-
+    // Get first line of the csv data
     let first_line = data_csv.slice(0, data_csv.indexOf("\n"));
+
+    // Get column names
     let headers = first_line.split(",")
 
+    // If only two columns, we transpose the csv
     if (headers.length == 2) {
         let lines = data_csv.split("\n")
         let years = ""
@@ -128,6 +166,7 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
         data_csv = years.substring(0, years.length - 1) + "\n" + data.substring(0, data.length - 1)
     }
 
+    // Define header-transform-function that translates the years of index to actual years
     function transform_year(h: string): string {
         if (!isNaN(Number(h))) {
             return String(Number(h) * step_year + start_year)
@@ -135,23 +174,34 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
         return h
     }
 
+    // Remove trailing new line if necessary
     if (data_csv.slice(-1) == "\n") {
         data_csv = data_csv.slice(0, -1)
     }
 
+    // Parse CSV
     let data: Papa.ParseResult<Row> = Papa.parse(data_csv, { delimiter: ",", header: true, newline: "\n", transformHeader: transform_year })
+
     return data
 }
 
+/**
+ * Helper function to fetch the total of a component from the Temple. It filters rows that only contain zeros.
+ * @param solution_name Name of the solution
+ * @param component_name Name of the component
+ * @param scenario_name Name of the scenario
+ * @param start_year Start year
+ * @param step_year Number of steps between years
+ * @param year Year to fetch
+ * @returns Promise of the ComponentTotal as returned by the temple.
+ */
 export async function get_component_total(
     solution_name: string,
     component_name: string,
     scenario_name: string,
-    year: number,
     start_year: number = 0,
     step_year: number = 1,
-    suffix: string[] | undefined = undefined): Promise<ComponentTotal> {
-
+    year: number = 0): Promise<ComponentTotal> {
     const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}`
 
 
@@ -170,6 +220,7 @@ export async function get_component_total(
     let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv, start_year, step_year)
     let unit: Papa.ParseResult<Row> | null = null
 
+    // Parse unit data if necessary
     if (component_data.unit != null) {
         if (component_data.unit.slice(-1) == "\n") {
             component_data.unit = component_data.unit.slice(0, component_data.unit.length - 1)
@@ -179,6 +230,7 @@ export async function get_component_total(
     }
 
 
+    // Filter zero rows
     data.data = data.data.filter((row) => {
         for (const key in row) {
             let number_check = Number(key)
@@ -198,6 +250,14 @@ export async function get_component_total(
     return ans
 }
 
+/**
+ * Helper function to fetch the full timeseries of a component from the Temple.
+ * @param solution_name Name of the solution
+ * @param component_name Name of the compoennt
+ * @param scenario_name Name of the scenario
+ * @param year Year
+ * @returns Promise of the TimeSeries as returned by the API
+ */
 export async function get_full_ts(
     solution_name: string,
     component_name: string,
@@ -205,7 +265,7 @@ export async function get_full_ts(
     year: number = 0) {
 
     const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_full_ts/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}`
-    console.log(fetch_url)
+
     let component_data_request = await fetch(fetch_url, { cache: "no-store" });
 
     if (!component_data_request.ok) {
@@ -221,6 +281,7 @@ export async function get_full_ts(
     let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv)
     let unit: Papa.ParseResult<Row> | null = null
 
+    // Add unit if necessary
     if (component_data.unit != null) {
         if (component_data.unit.slice(-1) == "\n") {
             component_data.unit = component_data.unit.slice(0, component_data.unit.length - 1)
@@ -228,7 +289,6 @@ export async function get_full_ts(
 
         unit = Papa.parse(component_data.unit, { delimiter: ",", header: true, newline: "\n" })
     }
-
 
     const ans: ComponentTotal = {
         unit: unit,
