@@ -11,7 +11,7 @@
 	import Papa from "papaparse";
 	import { get_variable_name } from "$lib/variables";
 
-	let data: Papa.ParseResult<any>;
+	let data: Papa.ParseResult<any> | null = null;
 	let carriers: string[] = [];
 	let nodes: string[] = [];
 	let edges: string[] = [];
@@ -70,10 +70,14 @@
 		},
 	};
 
-	function subvariable_changed() {
+	/**
+	 * This function refetches the data from the API and then updates the carriers, technologies, locations and the plot.
+	 */
+	function refetch() {
 		fetch_data().then(() => {
 			update_carriers();
 			update_technologies();
+			update_locations();
 			update_data();
 		});
 	}
@@ -128,9 +132,10 @@
 	 */
 	async function fetch_data() {
 		fetching = true;
-
+		data = null;
 		let variable_name = get_local_variable();
 		if (variable_name === null) {
+			fetching = false;
 			return;
 		}
 
@@ -141,30 +146,37 @@
 		);
 
 		// Fetch the data
-		await get_component_total(
+		let fetched = await get_component_total(
 			selected_solution!.solution_name,
 			variable_name,
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years,
-		).then((fetched) => {
-			if (fetched.data === null) {
-				return;
-			}
-			data = fetched.data;
-			unit = fetched.unit;
-			fetching = false;
+		);
+
+		if (fetched.data === null) {
 			return;
-		});
+		}
+		data = fetched.data;
+		unit = fetched.unit;
+		fetching = false;
+		return;
 	}
 
 	/**
 	 * This function updates the available carriers depending on the current selection and resets the data selection.
 	 */
 	function update_carriers() {
+		if (data == null) {
+			carriers = [];
+			return;
+		}
+
 		filtered_data = null;
 		selected_carrier = "";
-		let possible_technologies = new Set(data.data.map((d) => d.technology));
+		let possible_technologies = new Set(
+			data!.data.map((d) => d.technology),
+		);
 		let possible_carriers = [
 			...new Set(
 				[...possible_technologies].map(
@@ -283,11 +295,13 @@
 		if (selected_variable == "transport") {
 			locations = edges;
 		}
+
+		reset_data_selection();
 	}
 
 	/**
 	 * This function is being called whenever the selected variable is changed.
-	 * It resets the form and re-fetches the necessary data.
+	 * It resets the form according to the selected variable.
 	 */
 	function updated_variable() {
 		filtered_data = [];
@@ -303,13 +317,6 @@
 		if (selected_variable == "import_export") {
 			selected_aggregation = "technology";
 		}
-
-		fetch_data().then(() => {
-			update_carriers();
-			update_technologies();
-			update_locations();
-			update_data();
-		});
 	}
 
 	/**
@@ -435,8 +442,7 @@
 								bind:edges
 								bind:loading={solution_loading}
 								on:solution_selected={() => {
-									updated_variable();
-									reset_data_selection();
+									refetch();
 								}}
 								enabled={!solution_loading && !fetching}
 							/>
@@ -469,6 +475,7 @@
 									disabled={solution_loading || fetching}
 									on:change={() => {
 										updated_variable();
+										refetch();
 									}}
 								>
 									{#each Object.entries(variables) as [variable, subvalues]}
@@ -484,7 +491,7 @@
 										]}
 										bind:selected_option={selected_subvariable}
 										on:selection-changed={(e) => {
-											subvariable_changed();
+											refetch();
 										}}
 										enabled={!solution_loading && !fetching}
 									></Radio>
