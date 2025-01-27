@@ -70,6 +70,14 @@
 		},
 	};
 
+	function subvariable_changed() {
+		fetch_data().then(() => {
+			update_carriers();
+			update_technologies();
+			update_data();
+		});
+	}
+
 	/**
 	 * This function resets the selections of the form.
 	 */
@@ -143,7 +151,6 @@
 			if (fetched.data === null) {
 				return;
 			}
-
 			data = fetched.data;
 			unit = fetched.unit;
 			fetching = false;
@@ -158,7 +165,6 @@
 		filtered_data = null;
 		selected_carrier = "";
 		let possible_technologies = new Set(data.data.map((d) => d.technology));
-
 		let possible_carriers = [
 			...new Set(
 				[...possible_technologies].map(
@@ -171,7 +177,6 @@
 			carriers = [];
 			return;
 		}
-
 		switch (selected_variable) {
 			case get_variable_name("import_export", selected_solution?.version):
 				if (selected_subvariable == "import") {
@@ -479,10 +484,7 @@
 										]}
 										bind:selected_option={selected_subvariable}
 										on:selection-changed={(e) => {
-											fetch_data();
-											update_carriers();
-											update_technologies();
-											update_data();
+											subvariable_changed();
 										}}
 										enabled={!solution_loading && !fetching}
 									></Radio>
