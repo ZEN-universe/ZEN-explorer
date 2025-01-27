@@ -429,6 +429,10 @@
 								bind:selected_solution
 								bind:edges
 								bind:loading={solution_loading}
+								on:solution_selected={() => {
+									updated_variable();
+									reset_data_selection();
+								}}
 								enabled={!solution_loading && !fetching}
 							/>
 						</div>
