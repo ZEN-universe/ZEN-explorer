@@ -87,9 +87,9 @@ export async function get_unit(solution_name: string,
  * @returns Promise of an Object that contains the Energy Balance Dataframes
  */
 export async function get_energy_balance(
-    solution: string, node: string, carrier: string, scenario: string, year: number
+    solution: string, node: string, carrier: string, scenario: string, year: number, window_size: number
 ): Promise<EnergyBalanceDataframes> {
-    const url = env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}`
+    const url = env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}&rolling_average_size=${window_size}`
 
     let energy_balance_data_request = await fetch(
         url,
@@ -263,9 +263,10 @@ export async function get_full_ts(
     solution_name: string,
     component_name: string,
     scenario_name: string,
-    year: number = 0) {
+    year: number = 0,
+    window_size: number = 1) {
 
-    const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_full_ts/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}`
+    const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_full_ts/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}&rolling_average_size=${window_size}`
 
     let component_data_request = await fetch(fetch_url, { cache: "no-store" });
 

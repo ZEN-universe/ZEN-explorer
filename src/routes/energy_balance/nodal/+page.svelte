@@ -44,6 +44,9 @@
     let unit: string = "";
     let plot_name = "";
 
+    let window_sizes = ["Hourly", "Daily", "Weekly", "Monthly"];
+    let selected_window_size = "Hourly";
+
     interface StringList {
         [key: string]: string[];
     }
@@ -145,6 +148,20 @@
                 selected_solution.detail.system.interval_between_years,
         );
 
+        let window_size = 1;
+
+        switch (selected_window_size) {
+            case "Daily":
+                window_size = 24;
+                break;
+            case "Weekly":
+                window_size = 168;
+                break;
+            case "Monthly":
+                window_size = 720;
+                break;
+        }
+
         // Fetch the energy balance data
         let energy_balance_data = await get_energy_balance(
             selected_solution.solution_name,
@@ -152,6 +169,7 @@
             selected_carrier,
             selected_solution.scenario_name,
             year_index,
+            window_size,
         );
 
         // Fetch the units
@@ -415,6 +433,18 @@
                                         <Dropdown
                                             bind:options={carriers}
                                             bind:selected_option={selected_carrier}
+                                            on:selection-changed={data_changed}
+                                            enabled={!fetching &&
+                                                !solution_loading}
+                                        ></Dropdown>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <h3>Smoothing Window Size</h3>
+                                        <Dropdown
+                                            bind:options={window_sizes}
+                                            bind:selected_option={selected_window_size}
                                             on:selection-changed={data_changed}
                                             enabled={!fetching &&
                                                 !solution_loading}

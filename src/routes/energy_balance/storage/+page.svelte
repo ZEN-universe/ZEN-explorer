@@ -34,6 +34,9 @@
     let years: number[] = [];
     let selected_year: number = 0;
 
+    let window_sizes = ["Hourly", "Daily", "Weekly", "Monthly"];
+    let selected_window_size = "Hourly";
+
     let plot_config = {
         counter: 1,
         type: "line",
@@ -110,11 +113,26 @@
                 selected_solution.detail.system.interval_between_years,
         );
 
+        let window_size = 1;
+
+        switch (selected_window_size) {
+            case "Daily":
+                window_size = 24;
+                break;
+            case "Weekly":
+                window_size = 168;
+                break;
+            case "Monthly":
+                window_size = 720;
+                break;
+        }
+
         let fetched = await get_full_ts(
             selected_solution!.solution_name,
             get_variable_name(selected_variable),
             selected_solution!.scenario_name,
             year_index,
+            window_size,
         );
 
         data = fetched.data;
@@ -376,6 +394,13 @@
                                     <Dropdown
                                         bind:options={years}
                                         bind:selected_option={selected_year}
+                                        on:selection-changed={data_changed}
+                                        enabled={!fetching && !solution_loading}
+                                    ></Dropdown>
+                                    <h3>Smoothing Window Size</h3>
+                                    <Dropdown
+                                        bind:options={window_sizes}
+                                        bind:selected_option={selected_window_size}
                                         on:selection-changed={data_changed}
                                         enabled={!fetching && !solution_loading}
                                     ></Dropdown>
