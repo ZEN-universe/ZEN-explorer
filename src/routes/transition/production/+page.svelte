@@ -172,11 +172,18 @@
 			return;
 		}
 
+		if (selected_solution == null) {
+			carriers = [];
+			return;
+		}
+
 		filtered_data = null;
 		selected_carrier = "";
+
 		let possible_technologies = new Set(
 			data!.data.map((d) => d.technology),
 		);
+
 		let possible_carriers = [
 			...new Set(
 				[...possible_technologies].map(
@@ -185,10 +192,10 @@
 			),
 		];
 
-		if (selected_solution == null) {
-			carriers = [];
-			return;
+		if (selected_variable == "import_export") {
+			possible_carriers = [...new Set(data!.data.map((d) => d.carrier))];
 		}
+
 		switch (selected_variable) {
 			case get_variable_name("import_export", selected_solution?.version):
 				if (selected_subvariable == "import") {
@@ -216,6 +223,7 @@
 			default:
 				carriers = selected_solution!.detail.system.set_carriers;
 		}
+
 		carriers = carriers.filter((d) => possible_carriers.includes(d));
 		if (carriers.length == 1) {
 			selected_carrier = carriers[0];
