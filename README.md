@@ -26,16 +26,13 @@ You can test if you have a running ZEN Temple instance on your machine by openin
 If you do not have to work on the Temple, you can skip the first step in the previous setup and set the `PUBLIC_TEMPLE_URL` to `https://zen-garden.ethz.ch/api`. This means that the frontend now fetches the public ZEN Temple API.
 
 ### Hosting without Development
-If you only want to use the Explorer without doing any development work, you do not have to compile the HTML files yourself. Since on every commit to ZEN Explorer the HTML files are compiled automatically and pushed to the ZEN Temple repository, the easiset way to access the Explorer in that case is to start the ZEN Temple API Server as described in the README and open http://0.0.0.0:8000/.
+If you only want to use the Explorer without doing any development work, you do not have to compile the HTML files yourself. Since on every commit to ZEN Explorer the HTML files are compiled automatically and pushed to the ZEN Temple repository, the easiset way to access the Explorer in that case is to start the ZEN Temple API Server as described in the README and open http://0.0.0.0:8000/. It is important to see that in this case, the FastAPI server from the ZEN Temple repository acts as an API Server as well as the server that serves the static HTML files. This difference can be seen in the following graphic.
 
-## Developing
-A normal webbrowser such as Chrome or Firefox can only interpret `.html`, `.css`, and `.js` files. Therefore it is necessary to compile the svelte (`.svelte`) and typescript (`.ts`) files into browser readable files. This is done by Vite (https://vite.dev/). Vite
-In order to create the HTML, JS and CSS files that are necessary to show the Visualization, you need Node.js which compiles the `.svelte`, `.ts` and other files into browser readable `.html`, `.js` and `.css` files. 
-In order to start the frontend locally, you need to install Node.js. 
-Once installed, you can install the dependencies by running the command `npm install` from the root directory of the project. 
-At last, you have to edit the `.env` file and specify the URL of a running ZEN Temple server.
-In order to start the development mode, you can start the local server with `npm run dev`.
-This will start a server running on `http://localhost:5173/` which you can open in your browser.
+<p align="center">
+  <img src="[http://some_place.com/image.png](https://github.com/user-attachments/assets/5eda98fe-ac07-4c8b-8ec3-591fd093afe1)" />
+</p>
+
+![ZEN_Explorer drawio](https://github.com/user-attachments/assets/5eda98fe-ac07-4c8b-8ec3-591fd093afe1)
 
 ## Project structure
 
