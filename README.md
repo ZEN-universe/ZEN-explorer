@@ -9,7 +9,7 @@ In these static files, API calls to ZEN Temple are being processed using the sta
 Therefore, in order for the explorer to be working, a running ZEN Temple API Server is necessary. You can either start this server locally by your own (which would be running under http://0.0.0.0:8000/api by default) or you can use one of the API server that is hosted on our VM, for example https://zen-garden.ethz.ch/api.
 This URL has to be defined in the .env file and if you specify http://0.0.0.0:8000/api, you also need a running ZEN-Temple instance on your machine. 
 
-In general, you will probably one of the following to options:
+In general, you will probably use one of the following to options:
 
 ### Local Developing on Explorer and Temple
 If you have to work on both ends, ZEN Temple and ZEN Explorer, you need to start ZEN Temple on your machine. For this, follow the instructions given in the Readme of ZEN Temple (https://github.com/ZEN-universe/ZEN-temple/blob/main/README.md).
