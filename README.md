@@ -13,15 +13,15 @@ Anytime any changes are pushed to the main branch, a Github workflow is triggere
 > This means that the ZEN Temple always has the latest version of the ZEN Explorer. If at some point the ZEN Temple should have a specific version of the ZEN Explorer, the pulling of the correct version should be done on Temple side.
 
 ## Running the explorer
-The project uses Svelte (https://svelte.dev/) and Typescript (https://www.typescriptlang.org/). In order to create browser readble files (`.html`, `.css`, and `.js`) from these framework files (`.svelte` and `.ts`) Vite is used (https://vite.dev/).
+The project uses Svelte (https://svelte.dev/) and Typescript (https://www.typescriptlang.org/). In order to create browser readble files (`.html`, `.css`, and `.js`) from these framework files (`.svelte` and `.ts`) transpilation is necessary which is done by Vite (https://vite.dev/).
 
-On a conceptual scale, the ZEN Explorer is a static website which means that it is a collection of `.html`, `.css`, and `.js` files that are not dependant on the user that fetches them. 
-In these static files, API calls to ZEN Temple are being processed using the standard Javascript Fetch API (https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch). 
+On a larger scale, the ZEN Explorer is a static website which means that it is a collection of `.html`, `.css`, and `.js` files that are not dependant on the user that fetches them. 
+API calls to ZEN Temple are being processed using the standard Javascript Fetch API (https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch). 
 
 Therefore, in order for the explorer to be working, a running ZEN Temple API Server is necessary. You can either start this server locally by your own (which would be running under http://0.0.0.0:8000/api by default) or you can use one of the API server that is hosted on our VM, for example https://zen-garden.ethz.ch/api.
 This URL has to be defined in the .env file and if you specify http://0.0.0.0:8000/api, you also need a running ZEN-Temple instance on your machine. 
 
-In general, you will probably use one of the following to options:
+In general, you will probably use one of the following to approaches:
 
 ### Local Development on Explorer and Temple
 If you have to work on both ends, ZEN Temple and ZEN Explorer, you can follow these steps:
