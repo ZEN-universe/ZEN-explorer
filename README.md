@@ -2,24 +2,21 @@
 The Explorer is the frontend of the ZEN-garden (https://github.com/ZEN-universe/ZEN-garden) visualization platform. It directly uses the endpoints provided by the web service ZEN-temple (https://github.com/ZEN-universe/ZEN-temple) to fetch the data of the solutions and plots them.
 
 ## Setup
-The project uses Svelte as the Javascript framework (https://svelte.dev/). The Javascript framework is responsible for setting up the pages HTML structure and the dynamic parts that are happening. 
-In this case, this is mostly fetching the data of the results and setting up the correct filters. The plots themselves are created with Chart.js (https://www.chartjs.org/).
-The structure of the project is provided by SvelteKit, which is the official recommendation to set up a svelte project (https://kit.svelte.dev/).
+The project uses Svelte (https://svelte.dev/) and Typescript (https://www.typescriptlang.org/). In order to create browser readble files (`.html`, `.css`, and `.js`) from these framework files (`.svelte` and `.ts`) Vite is used (https://vite.dev/).
 
-> [!NOTE]
-> Javascript Frameworks gained a lot more impact in web development in the past years. The standard used to be to sepearate HTML, CSS and Javascript, where HTML was used to define the structure of a webpage, CSS the styling, and Javascript the logic that was happening on the webbrowser.
-> A webserver was set up to provide these Files to the client. With modern web frameworks like Svelte or React, the boundaries became fuzzier and all these steps can be handled by a single framework. This is mostly possible thanks to Node.js, a Javascript Runtime Environment that let's you execute Javascript in your terminal and not just in a web browser.
+On a conceptual scale, the ZEN Explorer is a static website which means that it is a collection of `.html`, `.css`, and `.js` files that are not dependant on the user that fetches them. 
+In these static files, API calls to ZEN Temple are being processed using the standard Javascript Fetch API (https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch). 
+Therefore, in order for the explorer to be working, a running ZEN Temple API Server is necessary. You can either start this server locally by your own (which would be running under http://0.0.0.0:8000 by default) or you can use one of the API server that is hosted on our VM, for example https://zen-garden.ethz.ch/api.
+This URL has to be defined in the .env file and if you specify http://0.0.0.0:8000, you also need a running ZEN-Temple instance on your machine. 
 
 ## Developing
+A normal webbrowser such as Chrome or Firefox can only interpret `.html`, `.css`, and `.js` files. Therefore it is necessary to compile the svelte (`.svelte`) and typescript (`.ts`) files into browser readable files. This is done by Vite (https://vite.dev/). Vite
+In order to create the HTML, JS and CSS files that are necessary to show the Visualization, you need Node.js which compiles the `.svelte`, `.ts` and other files into browser readable `.html`, `.js` and `.css` files. 
 In order to start the frontend locally, you need to install Node.js. 
 Once installed, you can install the dependencies by running the command `npm install` from the root directory of the project. 
 At last, you have to edit the `.env` file and specify the URL of a running ZEN Temple server.
 In order to start the development mode, you can start the local server with `npm run dev`.
-This will start a server running on `http://localhost:5173/explorer` which you can open in your browser.
-
-## Deployment
-The simplest way to start the frontend in production mode is by using the provided Dockefile. Simply install Docker (https://docs.docker.com/get-docker/), build the image with `docker build . -t explorer` and run it with `docker run -p 8050:8050 explorer`. 
-
+This will start a server running on `http://localhost:5173/` which you can open in your browser.
 
 ## Project structure
 
