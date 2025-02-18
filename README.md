@@ -29,7 +29,7 @@ If you have to work on both ends, ZEN Temple and ZEN Explorer, you can follow th
 1. First you need a running instance of ZEN Temple on your local machine. For this, follow the instructions given in the Readme of ZEN Temple (https://github.com/ZEN-universe/ZEN-temple/blob/main/README.md).
 You can test if you have a running ZEN Temple instance on your machine by opening [http://0.0.0.0:8000/api/docs](http://0.0.0.0:8000/api/docs) in your browser. If you see the Swagger documentation of the Temple endpoints, everything is correct and running.
 
-2. Clone the explorer repository and switch to the directory that containes the project and make sure that you set the `PUBLIC_TEMPLE_URL` variable in the `.env` file to `http://localhost:8000/api/`.
+2. Clone the explorer repository and switch to the directory that containes the project and make sure that the variable `PUBLIC_TEMPLE_URL` in the `.env` file is set to `http://localhost:8000/api/`.
 3. Install the dependncies with `npm install`. An istallation of Node.js is necessary for this, see https://nodejs.org/en.
 4. Once you installed the dependencies, you can compile the `.svelte` and `.ts` files to `.html`, `.css`, and `.js` with the command `npm run dev`. This command does not only compiule the files but also starts a local Node.js server that hosts the compiled files. You can check that everything worked by opening http://localhost:5174/. Additionally to the compilation and hosting of the compiled files, the command also starts a file watcher that watches for changes in any files. Once you change any of the files in the `src` folder, everything is being recompiled and you can see the changes in the browser without having to restart the command.
 
