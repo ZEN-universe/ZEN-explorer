@@ -1,7 +1,18 @@
 # Explorer
 The Explorer is the frontend of the ZEN-garden (https://github.com/ZEN-universe/ZEN-garden) visualization platform. It directly uses the endpoints provided by the web service ZEN-temple (https://github.com/ZEN-universe/ZEN-temple) to fetch the data of the solutions and plots them.
 
-## Setup
+## Project structure
+
+Each route in Svelte is one folder in the `routes` that contains a `+page.svelte` file. All of these pages are more or less independent of each other. There are some parts of the pages, that can be reused. These are called components and are contained in the `components` folder. The `lib` folder contains utilities that are used by different pages and components.
+
+## Workflows
+
+Anytime any changes are pushed to the main branch, a Github workflow is triggered which builds a static site (see https://svelte.dev/docs/kit/adapter-static). These static files are automatically pushed to the ZEN Temple repository (https://github.com/ZEN-universe/ZEN-temple) where they are served by a FastAPI Server.
+
+> [!NOTE]
+> This means that the ZEN Temple always has the latest version of the ZEN Explorer. If at some point the ZEN Temple should have a specific version of the ZEN Explorer, the pulling of the correct version should be done on Temple side.
+
+## Running the explorer
 The project uses Svelte (https://svelte.dev/) and Typescript (https://www.typescriptlang.org/). In order to create browser readble files (`.html`, `.css`, and `.js`) from these framework files (`.svelte` and `.ts`) Vite is used (https://vite.dev/).
 
 On a conceptual scale, the ZEN Explorer is a static website which means that it is a collection of `.html`, `.css`, and `.js` files that are not dependant on the user that fetches them. 
@@ -28,20 +39,4 @@ If you do not have to work on the Temple, you can skip the first step in the pre
 ### Hosting without Development
 If you only want to use the Explorer without doing any development work, you do not have to compile the HTML files yourself. Since on every commit to ZEN Explorer the HTML files are compiled automatically and pushed to the ZEN Temple repository, the easiset way to access the Explorer in that case is to start the ZEN Temple API Server as described in the README and open http://0.0.0.0:8000/. It is important to see that in this case, the FastAPI server from the ZEN Temple repository acts as an API Server as well as the server that serves the static HTML files. This difference can be seen in the following graphic.
 
-<p align="center">
-  <img src="[http://some_place.com/image.png](https://github.com/user-attachments/assets/5eda98fe-ac07-4c8b-8ec3-591fd093afe1)" />
-</p>
-
 ![ZEN_Explorer drawio](https://github.com/user-attachments/assets/5eda98fe-ac07-4c8b-8ec3-591fd093afe1)
-
-## Project structure
-
-Each route in Svelte is one folder in the `routes` that contains a `+page.svelte` file. All of these pages are more or less independent of each other. There are some parts of the pages, that can be reused. These are called components and are contained in the `components` folder. The `lib` folder contains utilities that are used by different pages and components.
-
-
-## Workflows
-
-Anytime any changes are pushed to the main branch, a Github workflow is triggered which builds a static site (see https://svelte.dev/docs/kit/adapter-static). These static files are automatically pushed to the ZEN Temple repository (https://github.com/ZEN-universe/ZEN-temple) where they are served by a FastAPI Server.
-
-> [!NOTE]
-> This means that the ZEN Temple always has the latest version of the ZEN Explorer. If at some point the ZEN Temple should have a specific version of the ZEN Explorer, the pulling of the correct version should be done on Temple side.
