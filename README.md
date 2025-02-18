@@ -23,10 +23,10 @@ You can test if you have a running ZEN Temple instance on your machine by openin
 4. Once you installed the dependencies, you can compile the `.svelte` and `.ts` files to `.html`, `.css`, and `.js` with the command `npm run dev`. This command does not only compiule the files but also starts a local Node.js server that hosts the compiled files. You can check that everything worked by opening http://localhost:5174/. Additionally to the compilation and hosting of the compiled files, the command also starts a file watcher that watches for changes in any files. Once you change any of the files in the `src` folder, everything is being recompiled and you can see the changes in the browser without having to restart the command.
 
 ### Local Development on Explorer
-If you do not have to work on the Temple simultaneously, you can skip the first step in the previous setup and set the `PUBLIC_TEMPLE_URL` to `https://zen-garden.ethz.ch/api`. This means that the frontend now fetches the public ZEN Temple API.
+If you do not have to work on the Temple, you can skip the first step in the previous setup and set the `PUBLIC_TEMPLE_URL` to `https://zen-garden.ethz.ch/api`. This means that the frontend now fetches the public ZEN Temple API.
 
-![image](https://github.com/user-attachments/assets/d5ddb1e0-45a0-4f98-a72c-8599b448eb2c)
-
+### Hosting without Development
+If you only want to use the Explorer without doing any development work, you do not have to compile the HTML files yourself. Since on every commit to ZEN Explorer the HTML files are compiled automatically and pushed to the ZEN Temple repository, the easiset way to access the Explorer in that case is to start the ZEN Temple API Server as described in the README and open http://0.0.0.0:8000/.
 
 ## Developing
 A normal webbrowser such as Chrome or Firefox can only interpret `.html`, `.css`, and `.js` files. Therefore it is necessary to compile the svelte (`.svelte`) and typescript (`.ts`) files into browser readable files. This is done by Vite (https://vite.dev/). Vite
