@@ -38,6 +38,9 @@ If you do not have to work on the Temple and can work with the solutions that ar
 ### Hosting without Development
 If you only want to use the Explorer without doing any development work, you do not have to compile the HTML files yourself. Since on every commit to ZEN Explorer the HTML files are compiled automatically and pushed to the ZEN Temple repository, the easiset way to access the Explorer in that case is to start the ZEN Temple API Server as described in the README and open http://0.0.0.0:8000/. It is important to see that in this case, the FastAPI server from the ZEN Temple repository acts as an API Server as well as the server that serves the static HTML files. 
 
+> [!NOTE]
+> On the hosting, we also follow this approach. Therefore, we use FastAPI to act as the API server as well as the Webserver on our VM.
+
 The difference between these aproaches can be seen in the following graphic:
 
 ![ZEN_Explorer drawio](https://github.com/user-attachments/assets/5eda98fe-ac07-4c8b-8ec3-591fd093afe1)
