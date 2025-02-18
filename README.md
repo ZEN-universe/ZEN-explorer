@@ -6,8 +6,15 @@ The project uses Svelte (https://svelte.dev/) and Typescript (https://www.typesc
 
 On a conceptual scale, the ZEN Explorer is a static website which means that it is a collection of `.html`, `.css`, and `.js` files that are not dependant on the user that fetches them. 
 In these static files, API calls to ZEN Temple are being processed using the standard Javascript Fetch API (https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch). 
-Therefore, in order for the explorer to be working, a running ZEN Temple API Server is necessary. You can either start this server locally by your own (which would be running under http://0.0.0.0:8000 by default) or you can use one of the API server that is hosted on our VM, for example https://zen-garden.ethz.ch/api.
-This URL has to be defined in the .env file and if you specify http://0.0.0.0:8000, you also need a running ZEN-Temple instance on your machine. 
+Therefore, in order for the explorer to be working, a running ZEN Temple API Server is necessary. You can either start this server locally by your own (which would be running under http://0.0.0.0:8000/api by default) or you can use one of the API server that is hosted on our VM, for example https://zen-garden.ethz.ch/api.
+This URL has to be defined in the .env file and if you specify http://0.0.0.0:8000/api, you also need a running ZEN-Temple instance on your machine. 
+
+In general, you will probably one of the following to options:
+
+### Local Developing on Explorer and Temple
+If you have to work on both ends, ZEN Temple and ZEN Explorer, you need to start ZEN Temple on your machine. For this, follow the instructions given in the Readme of ZEN Temple (https://github.com/ZEN-universe/ZEN-temple/blob/main/README.md).
+You can test if you have a running ZEN Temple instance on your machine by opening [http://0.0.0.0:8000/api/docs](http://0.0.0.0:8000/api/docs) in your browser. If you see the Swagger documentation of the Temple endpoints, everything is correct and running.
+
 
 ## Developing
 A normal webbrowser such as Chrome or Firefox can only interpret `.html`, `.css`, and `.js` files. Therefore it is necessary to compile the svelte (`.svelte`) and typescript (`.ts`) files into browser readable files. This is done by Vite (https://vite.dev/). Vite
