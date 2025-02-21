@@ -517,7 +517,7 @@
 
 <div class="row">
 	<div class="col position-relative" style="z-index: 1; position: relative;">
-		<div class="filters" style="position: absolute; width: 100%;">
+		<div class="filters">
 			<div class="accordion" id="accordionExample">
 				<div class="accordion-item solution-selection">
 					<h2 class="accordion-header">
@@ -726,7 +726,7 @@
 	</div>
 </div>
 <div class="row">
-	<div class="col" style="margin-top: 400px;">
+	<div class="col">
 		{#if solution_loading || fetching}
 			<div class="text-center">
 				<div class="spinner-border center" role="status">
