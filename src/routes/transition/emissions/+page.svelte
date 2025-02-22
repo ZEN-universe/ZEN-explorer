@@ -537,7 +537,7 @@
 	</div>
 </div>
 <div class="row">
-	<div class="col">
+	<div class="col mt-4">
 		{#if solution_loading || fetching}
 			<div class="text-center">
 				<div class="spinner-border center" role="status">

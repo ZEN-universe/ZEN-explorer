@@ -68,17 +68,16 @@
 	 * This function sets all the necessary variables back to the initial state in order to reset the plot.
 	 *
 	 */
-	async function reset_data_selection() {
+	function reset_data_selection() {
 		selected_normalisation = "not_normalized";
 		selected_locations = locations;
 		selected_technologies = technologies;
 		selected_years = years;
 		selected_aggregation = "node";
-		await tick();
 	}
 
 	/**
-	 * This function fetches the the data from the api of the selected values in the form
+	 * This function fetches the data from the api of the selected values in the form
 	 */
 	async function fetch_data() {
 		fetching = true;
@@ -157,7 +156,7 @@
 		let all_technologies: string[] = get_technologies_by_type();
 
 		// Add all the available carriers to the set of carriers for the current set of technologies
-		data!.data.forEach((element) => {
+		data.data.forEach((element) => {
 			let current_technology = element.technology;
 			let current_carrier =
 				selected_solution!.detail.reference_carrier[current_technology];

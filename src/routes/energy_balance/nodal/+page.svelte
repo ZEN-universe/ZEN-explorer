@@ -460,7 +460,7 @@
     </div>
 </div>
 <div class="row">
-    <div class="col">
+    <div class="col mt-4">
         {#if fetching}
             <div class="text-center">
                 <div class="spinner-border center" role="status">

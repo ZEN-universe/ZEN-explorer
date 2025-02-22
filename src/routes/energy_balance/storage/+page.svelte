@@ -40,7 +40,7 @@
     let plot_config = {
         counter: 1,
         type: "line",
-        data: { datasets: [] as any[] },
+        data: { datasets: [] as any[], labels: [] as string[] },
         options: {
             animation: false,
             normalized: true,
@@ -451,7 +451,7 @@
     </div>
 </div>
 <div class="col">
-    <div class="row">
+    <div class="row mt-4">
         {#if solution_loading || fetching}
             <div class="text-center">
                 <div class="spinner-border center" role="status">
