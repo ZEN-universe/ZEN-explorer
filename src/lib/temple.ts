@@ -45,19 +45,19 @@ export async function get_solution_detail(
     )
 
     if (!solution_detail_request.ok) {
-        alert("Could not fetch " + url)
-        return {}
+        alert("Could not fetch " + url);
+        throw new Error("Could not fetch " + url);
     }
     let solution_detail = await solution_detail_request.json()
 
-    return solution_detail
+    return solution_detail;
 }
 
 /**
  * Helper function to fetch the unit endpoint of the temple. 
  * @param solution_name Name of the solution
  * @param component_name Name of the component
- * @param scenario_name Name of the scneario
+ * @param scenario_name Name of the scenario
  * @returns Papaparsed CSV of the Unit-Dataframe from the API Server
  */
 export async function get_unit(solution_name: string,
@@ -91,14 +91,11 @@ export async function get_energy_balance(
 ): Promise<EnergyBalanceDataframes> {
     const url = env.PUBLIC_TEMPLE_URL + `solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}&rolling_average_size=${window_size}`
 
-    let energy_balance_data_request = await fetch(
-        url,
-        { cache: "no-store" }
-    );
+  let energy_balance_data_request = await fetch(url, { cache: "no-store" });
 
     if (!energy_balance_data_request.ok) {
-        alert("Could not fetch " + url)
-        return {}
+        alert("Could not fetch " + url);
+        throw new Error("Could not fetch " + url);
     }
 
     let energy_balance_data = await energy_balance_data_request.json()
@@ -134,7 +131,7 @@ export async function get_energy_balance(
  * Helper function that parses the CSV data as returned by the API. 
  * It parses the CSV using Papaparse but first normalizes the CSV string returned by the API: 
  * If the dataset only consists of one column, we transpose it s.t. the header consists of the years and it only has one more line containing the data. 
- * This is done because ZEN Garden sometimes returns a pd.Series and sometimes a pd.Dataframe. In case a pd.Datafram only consists of one column it is reformated to a Series-CSV Format.
+ * This is done because ZEN Garden sometimes returns a pd.Series and sometimes a pd.Dataframe. In case a pd.Dataframe only consists of one column it is reformated to a Series-CSV Format.
  * Furthermore the function transforms the years: In the CSV data from the API it is 0 based normally indexed and this function translates it to actual years.
  * @param data_csv CSV string
  * @param start_year Start year (corresponds to the 0-index)
@@ -209,11 +206,8 @@ export async function get_component_total(
     let component_data_request = await fetch(fetch_url, { cache: "no-store" });
 
     if (!component_data_request.ok) {
-        alert("Error when fetching " + fetch_url)
-        return {
-            unit: [],
-            data: []
-        }
+        alert("Error when fetching " + fetch_url);
+        throw new Error("Error when fetching " + fetch_url);
     }
 
     let component_data = await component_data_request.json();
@@ -264,18 +258,15 @@ export async function get_full_ts(
     component_name: string,
     scenario_name: string,
     year: number = 0,
-    window_size: number = 1) {
+    window_size: number = 1): Promise<ComponentTotal> {
 
     const fetch_url = env.PUBLIC_TEMPLE_URL + `solutions/get_full_ts/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}&rolling_average_size=${window_size}`
 
     let component_data_request = await fetch(fetch_url, { cache: "no-store" });
 
     if (!component_data_request.ok) {
-        alert("Error when fetching " + fetch_url)
-        return {
-            unit: [],
-            data: []
-        }
+        alert("Error when fetching " + fetch_url);
+        throw new Error("Error when fetching " + fetch_url);
     }
 
     let component_data = await component_data_request.json();
