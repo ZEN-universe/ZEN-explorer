@@ -1,8 +1,15 @@
-venv
-__pycache__
+# Python folders
+venv/
+__pycache__/
 
+# Node folders
 node_modules
 .svelte-kit
 build
 
+# IDE files
+.idea/
+.vscode/
+
+# Environment variables
 .env
