@@ -10,13 +10,20 @@
     import Papa from "papaparse";
     import { get_variable_name } from "$lib/variables";
     import ToggleButton from "../../../components/ToggleButton.svelte";
+    import type { ChartConfiguration } from "chart.js";
 
     interface StringList {
         [key: string]: string[];
     }
 
     let data: Papa.ParseResult<Row> | null = null;
+    let chargeData: Papa.ParseResult<Row> | null = null;
+    let dischargeData: Papa.ParseResult<Row> | null = null;
+    let spillageData: Papa.ParseResult<Row> | null = null;
+    let inflowData: Papa.ParseResult<Row> | null = null;
     let filtered_data: any[] | null = null;
+    let charge_filtered_data: any[] | null = null;
+    let discharge_filtered_data: any[] | null = null;
     let carriers: string[] = [];
     let locations: string[] = [];
     let technologies: string[] = [];
@@ -37,7 +44,7 @@
     let window_sizes = ["Hourly", "Daily", "Weekly", "Monthly"];
     let selected_window_size = "Hourly";
 
-    let plot_config = {
+    let plot_config: ChartConfiguration<"line", { x: string; y: number }[], string> = {
         counter: 1,
         type: "line",
         data: { datasets: [] as any[], labels: [] as string[] },
@@ -58,7 +65,19 @@
                         text: "Time",
                     },
                 },
-                y: {
+                y1: {
+                    type: "linear",
+                    position: "left",
+                    stacked: false,
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: "Power",
+                    },
+                },
+                y2: {
+                    type: "linear",
+                    position: "right",
                     stacked: false,
                     beginAtZero: true,
                     title: {
@@ -104,7 +123,7 @@
      */
     async function fetch_data() {
         data = null;
-        if (selected_variable === null || selected_solution === null) {
+        if (selected_solution === null) {
             return;
         }
         // Calculate index of year
@@ -127,16 +146,51 @@
                 break;
         }
 
-        let fetched = await get_full_ts(
+        let levelResponse = await get_full_ts(
             selected_solution!.solution_name,
-            get_variable_name(selected_variable),
+            get_variable_name("storage_level"),
             selected_solution!.scenario_name,
             year_index,
             window_size,
         );
+        data = levelResponse.data;
+        unit = levelResponse.unit;
 
-        data = fetched.data;
-        unit = fetched.unit;
+        let chargeResponse = await get_full_ts(
+            selected_solution!.solution_name,
+            get_variable_name("flow_storage_charge"),
+            selected_solution!.scenario_name,
+            year_index,
+            window_size,
+        );
+        chargeData = chargeResponse.data;
+
+        let dischargeResponse = await get_full_ts(
+            selected_solution!.solution_name,
+            get_variable_name("flow_storage_discharge"),
+            selected_solution!.scenario_name,
+            year_index,
+            window_size,
+        );
+        dischargeData = dischargeResponse.data;
+
+        // let spillageResponse = await get_full_ts(
+        //     selected_solution!.solution_name,
+        //     get_variable_name("flow_storage_spillage"),
+        //     selected_solution!.scenario_name,
+        //     year_index,
+        //     window_size,
+        // );
+        // spillageData = spillageResponse.data;
+
+        // let inflowResponse = await get_full_ts(
+        //     selected_solution!.solution_name,
+        //     get_variable_name("flow_storage_inflow"),
+        //     selected_solution!.scenario_name,
+        //     year_index,
+        //     window_size,
+        // );
+        // inflowData = inflowResponse.data;
     }
 
     /**
@@ -254,7 +308,9 @@
             selected_variable == null ||
             selected_locations.length == 0 ||
             selected_technologies.length == 0 ||
-            data === null
+            data === null ||
+            chargeData === null ||
+            dischargeData === null
         ) {
             filtered_data = null;
             return;
@@ -272,26 +328,104 @@
             [],
             false,
             "line",
-        );
+            "",
+        ).map((dataset) => {
+            return {
+                ...dataset,
+                fill: 'origin',
+                stepped: true,
+                yAxisID: "y1",
+            }
+        });
+        charge_filtered_data = filter_and_aggregate_data(
+            chargeData.data,
+            dataset_selector,
+            datasets_aggregates,
+            [],
+            false,
+            "line",
+            "_charge",
+        ).map((dataset) => {
+            return {
+                ...dataset,
+                stepped: true,
+                yAxisID: "y2",
+            }
+        });
+        discharge_filtered_data = filter_and_aggregate_data(
+            dischargeData.data,
+            dataset_selector,
+            datasets_aggregates,
+            [],
+            false,
+            "line",
+            "_discharge",
+        ).map((dataset) => {
+            let data: { [key: string]: number } = {};
+            for (let i in Object.keys(dataset.data)) {
+                if (dataset.data[i] > 0) {
+                    data[i] = -dataset.data[i];
+                }
+            }
+            return {
+                data,
+                label: dataset.label,
+                type: dataset.type,
+                stepped: true,
+                yAxisID: "y2",
+            }
+        });
+        console.log(dischargeData.data, discharge_filtered_data);
 
         plot_config.data = {
-            datasets: filtered_data,
+            datasets: filtered_data.concat(charge_filtered_data).concat(discharge_filtered_data).reverse(),
             labels: Object.keys(filtered_data[0].data),
         };
 
         if (!subdivision) {
-            let new_data: any = {};
+            let new_data: { [key: string]: number } = {};
             for (const i in filtered_data[0].data) {
                 new_data[i] = filtered_data
                     .map((j) => j.data[i])
                     .reduce((partialSum, a) => partialSum + a, 0);
             }
+            let new_charge: { [key: string]: number } = {};
+            for (const i in charge_filtered_data[0].data) {
+                new_charge[i] = charge_filtered_data
+                    .map((j) => j.data[i])
+                    .reduce((partialSum, a) => partialSum + a, 0);
+            }
+            let new_discharge: { [key: string]: number } = {};
+            for (const i in discharge_filtered_data[0].data) {
+                new_discharge[i] = discharge_filtered_data
+                    .map((j) => j.data[i])
+                    .reduce((partialSum, a) => partialSum + a, 0);
+            }
             filtered_data = [
+                {
+                    data: Object.values(new_charge),
+                    label: "Flow Storage Charge",
+                    type: "line",
+                    borderColor: "blue",
+                    stepped: true,
+                    yAxisID: "y2",
+                },
+                {
+                    data: Object.values(new_discharge),
+                    label: "Flow Storage Discharge",
+                    type: "line",
+                    borderColor: "red",
+                    stepped: true,
+                    yAxisID: "y2",
+                },
                 {
                     data: Object.values(new_data),
                     label: "Storage level",
                     type: "line",
                     borderColor: "black",
+                    fill: 'origin',
+                    stepped: true,
+                    yAxisID: "y1",
                 },
             ];
 
@@ -302,7 +436,7 @@
         }
 
         // @ts-ignore
-        plot_config.options.scales.y.title.text =
+        plot_config.options.scales.y1.title.text =
             selected_variable + " [" + get_unit() + "]";
 
         let solution_names = selected_solution!.solution_name.split(".");
