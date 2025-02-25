@@ -1,6 +1,6 @@
 <script lang="ts">
     import Chart, { type ChartDataset } from "chart.js/auto";
-    import { Button, Modal } from "@sveltestrap/sveltestrap";
+    import Modal from "./Modal.svelte";
 
     import { onMount } from "svelte";
     export let config: any;
@@ -65,31 +65,31 @@
 </script>
 
 <!-- Modal -->
-<Modal body header="Modal title" isOpen={modal_open} {toggle}>
-    You can zoom in the graph into the chart by either highlighting an area with
-    your mouse or by scrolling. <br />
-    <br />
-    When zoomed in, you can press and hold CTRL and drag the plot to move along the
-    time axis.<br />
-    <br />
-    The home button resets the zoom.<br />
-    <br />
-    The download button downloads the data that is plotted as csv.<br />
+<Modal header="Modal title" isOpen={modal_open} {toggle}>
+    <p>You can zoom in the graph into the chart by either highlighting an area with your mouse or by scrolling.</p>
+    <p>When zoomed in, you can press and hold CTRL and drag the plot to move along the time axis.</p>
+    <p>The home button resets the zoom.</p>
+    <p>The download button downloads the data that is plotted as csv.</p>
 </Modal>
 <div class="row">
     <div class="col canvas-container" style="position: relative;">
         <div style="position: absolute; top: -1em; right: 0;" class="btn-group">
             {#if zoom}
-                <Button on:click={toggle}><i class="bi bi-info"></i></Button>
-                <Button
+                <button class="btn btn-secondary" on:click={toggle}>
+                    <i class="bi bi-info"></i>
+                </button>
+                <button
+                    class="btn btn-secondary"
                     on:click={() => {
                         chart?.resetZoom();
-                    }}><i class="bi bi-house"></i></Button
+                    }}
                 >
+                    <i class="bi bi-house"></i>
+                </button>
             {/if}
-            <Button on:click={downloadData}
-                ><i class="bi bi-download"></i></Button
-            >
+            <button class="btn btn-secondary" on:click={downloadData}>
+                <i class="bi bi-download"></i>
+            </button>
         </div>
         <canvas use:handleChart={config} id="myChart"></canvas>
     </div>
