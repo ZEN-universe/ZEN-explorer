@@ -1,41 +1,49 @@
 <script lang="ts">
-	import Chart, { type ChartDataset } from 'chart.js/auto';
+	import Chart, { type ChartConfiguration } from 'chart.js/auto';
 	import Modal from './Modal.svelte';
 
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
+	import type { Action } from 'svelte/action';
 
 	interface Props {
-		config: any;
+		config: ChartConfiguration;
 		zoom?: boolean;
 		plot_name?: string;
 	}
 
-	let { config = $bindable(), zoom = false, plot_name = 'plot_data' }: Props = $props();
+	let { config, zoom = false, plot_name = 'plot_data' }: Props = $props();
 
 	onMount(async () => {
 		const zoomPlugin = (await import('chartjs-plugin-zoom')).default;
 		Chart.register(zoomPlugin);
-		config.counter += 1;
 	});
 
-	let chart: Chart | undefined = $state(undefined);
+	onDestroy(() => {
+		if (chart === undefined) return;
+		chart.destroy();
+	});
 
-	const handleChart = (element: any, config: any) => {
+	let chart: Chart | undefined = undefined;
+
+	const handleChart: Action<HTMLCanvasElement> = (element) => {
+		if (element == null) return;
+
 		chart = new Chart(element, config);
-		return {
-			async update(config: any) {
-				if (chart!.resetZoom != undefined) {
-					chart!.resetZoom();
-				}
-				chart!.destroy();
-				chart = new Chart(element, config);
-			},
-			destroy() {
-				chart!.resetZoom();
-				chart!.destroy();
+
+		$effect(() => {
+			if (chart !== undefined) {
+				chart.destroy();
 			}
-		};
+			chart = new Chart(element, config);
+
+			return () => {
+				if (chart !== undefined) {
+					chart.destroy();
+				}
+			};
+		});
 	};
+
 	let modal_open = $state(false);
 	const toggle = () => {
 		modal_open = !modal_open;
@@ -47,7 +55,7 @@
 		let labels: String[] = [];
 		const n_data = 1;
 		for (let i of config.data.datasets) {
-			labels.push(i.label);
+			labels.push(i.label != undefined ? i.label : '');
 		}
 
 		csvContent += 'timestep,' + labels.join(',') + '\r\n';
@@ -55,6 +63,7 @@
 		for (let timestep of Object.keys(config.data.datasets[0].data)) {
 			csvContent += timestep;
 			for (const dataset of config.data.datasets) {
+				// @ts-ignore
 				csvContent += ',' + dataset.data[timestep];
 			}
 			csvContent += '\r\n';
@@ -101,7 +110,7 @@
 			<div class="visually-hidden">Download CSV Data</div>
 		</button>
 	</div>
-	<canvas use:handleChart={config} id="myChart"></canvas>
+	<canvas use:handleChart id="myChart"></canvas>
 </div>
 
 <style>

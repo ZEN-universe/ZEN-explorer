@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	interface Props {
 		elements: any[];
 		selected_elements: any[];
@@ -10,7 +8,7 @@
 
 	let {
 		elements,
-		selected_elements,
+		selected_elements = $bindable(elements),
 		enabled = true,
 		selection_changed
 	}: Props = $props();
@@ -18,32 +16,25 @@
 
 	let all_selected: boolean = $derived(selected_elements.length == elements.length);
 
-	function toggle_all() {
+	function toggleAll() {
 		if (all_selected) {
-			selected_elements = elements;
-		} else {
 			selected_elements = [];
+		} else {
+			selected_elements = elements;
 		}
         selection_changed(selected_elements);
 	}
 
-    function on_change() {
+    function dispatchEvent() {
         selection_changed(selected_elements);
     }
-
-	onMount(() => {
-		selected_elements = elements;
-	});
-
-    $effect(() => {
-        selected_elements = elements;
-    });
 </script>
 
-<form>
+<div class="form-group">
     <button
         class="btn btn-outline-primary btn-sm"
-        onclick={toggle_all}
+		style="min-width: 100px"
+        onclick={toggleAll}
         id={`all_checkbox_${id}`}
         disabled={!enabled}
     >
@@ -61,7 +52,7 @@
 				value={element}
 				bind:group={selected_elements}
 				id={`${element}_checkbox_${id}`}
-				onchange={on_change}
+				onchange={dispatchEvent}
 				disabled={!enabled}
 			/>
 			<label class="form-check-label" for={`${element}_checkbox_${id}`}>
@@ -69,4 +60,4 @@
 			</label>
 		</div>
 	{/each}
-</form>
+</div>
