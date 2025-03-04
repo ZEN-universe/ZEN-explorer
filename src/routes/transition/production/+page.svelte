@@ -46,11 +46,11 @@
 	}
 
 	let selected_aggregation = $state('node');
-	
+
 	// let datasets: any[] = $state([]);
 	let labels: string[] = $state([]);
 	let scaleYText: string = $derived(selected_variable + ' [' + get_unit() + ']');
-	
+
 	let plot_config: ChartConfiguration = $derived({
 		type: 'bar',
 		data: { datasets: filtered_data, labels: labels },
@@ -409,10 +409,7 @@
 						Solution Selection
 					</button>
 				</h2>
-				<div
-					id="collapseOne"
-					class="accordion-collapse collapse show"
-				>
+				<div id="collapseOne" class="accordion-collapse collapse show">
 					<div class="accordion-body">
 						<SolutionFilter
 							bind:carriers
@@ -442,10 +439,7 @@
 							Variable Selection
 						</button>
 					</h2>
-					<div
-						id="collapseTwo"
-						class="accordion-collapse collapse show"
-					>
+					<div id="collapseTwo" class="accordion-collapse collapse show">
 						<div class="accordion-body">
 							<select
 								bind:value={selected_variable}
@@ -504,10 +498,7 @@
 							Data Selection
 						</button>
 					</h2>
-					<div
-						id="collapseThree"
-						class="accordion-collapse collapse show"
-					>
+					<div id="collapseThree" class="accordion-collapse collapse show">
 						<div class="accordion-body">
 							<div class="row">
 								{#if selected_variable != 'import_export'}

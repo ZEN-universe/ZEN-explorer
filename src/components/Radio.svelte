@@ -7,7 +7,12 @@
 		selection_changed: (selected_option: any) => void;
 	}
 
-	let { options, selected_option = $bindable(options[0]), enabled = true, selection_changed }: Props = $props();
+	let {
+		options,
+		selected_option = $bindable(options[0]),
+		enabled = true,
+		selection_changed
+	}: Props = $props();
 	let uniqueID = options.join('_');
 
 	function update_selection() {

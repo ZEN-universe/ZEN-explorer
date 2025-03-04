@@ -330,10 +330,7 @@
 						Solution Selection
 					</button>
 				</h2>
-				<div
-					id="collapseOne"
-					class="accordion-collapse collapse show"
-				>
+				<div id="collapseOne" class="accordion-collapse collapse show">
 					<div class="accordion-body">
 						<SolutionFilter
 							bind:carriers
@@ -364,10 +361,7 @@
 							Variable Selection
 						</button>
 					</h2>
-					<div
-						id="collapseTwo"
-						class="accordion-collapse collapse show"
-					>
+					<div id="collapseTwo" class="accordion-collapse collapse show">
 						<div class="accordion-body">
 							<h3>Subdivision</h3>
 							<input
@@ -408,10 +402,7 @@
 								Data Selection
 							</button>
 						</h2>
-						<div
-							id="collapseThree"
-							class="accordion-collapse collapse show"
-						>
+						<div id="collapseThree" class="accordion-collapse collapse show">
 							<div class="accordion-body">
 								{#if subdivision}
 									<div class="row">

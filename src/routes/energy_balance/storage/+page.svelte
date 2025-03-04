@@ -247,11 +247,7 @@
 	 * This function updates the data for the plot depending on the currently selected values.
 	 */
 	function update_plot_data() {
-		if (
-			selected_locations.length == 0 ||
-			selected_technologies.length == 0 ||
-			data === null
-		) {
+		if (selected_locations.length == 0 || selected_technologies.length == 0 || data === null) {
 			datasets = [];
 			labels = [];
 			plot_name = '';
@@ -324,10 +320,7 @@
 						Solution Selection
 					</button>
 				</h2>
-				<div
-					id="collapseOne"
-					class="accordion-collapse collapse show"
-				>
+				<div id="collapseOne" class="accordion-collapse collapse show">
 					<div class="accordion-body">
 						<SolutionFilter
 							bind:selected_solution
@@ -353,10 +346,7 @@
 							Variable Selection
 						</button>
 					</h2>
-					<div
-						id="collapseTwo"
-						class="accordion-collapse collapse show"
-					>
+					<div id="collapseTwo" class="accordion-collapse collapse show">
 						<div class="accordion-body">
 							{#if carriers.length > 0}
 								<h3>Carrier</h3>
@@ -404,10 +394,7 @@
 								Data Selection
 							</button>
 						</h2>
-						<div
-							id="collapseThree"
-							class="accordion-collapse collapse show"
-						>
+						<div id="collapseThree" class="accordion-collapse collapse show">
 							<div class="accordion-body">
 								<h3>Technology Subdivision</h3>
 								<ToggleButton bind:value={subdivision} change={update_plot_data}></ToggleButton>

@@ -38,7 +38,7 @@
 		selected_solution = $bindable(),
 		loading = $bindable(false),
 		enabled = true,
-		solution_selected,
+		solution_selected
 	}: Props = $props();
 
 	onMount(async function () {
@@ -125,7 +125,7 @@
 		<h3>Solution</h3>
 		<select
 			class="form-select"
-			 bind:value={active_first_level} 
+			bind:value={active_first_level}
 			disabled={!enabled}
 			onchange={first_level_changed}
 		>
@@ -137,21 +137,21 @@
 		</select>
 	</div>
 	{#if second_levels.length > 0}
-	<div class="col-4">
-		<h3>Subsolution</h3>
-		<select
-			class="form-select"
-			bind:value={active_second_level}
-			disabled={!enabled}
-			onchange={second_level_changed}
-		>
-			{#each second_levels as solution}
-			<option value={solution}>
-				{solution}
-			</option>
-			{/each}
-		</select>
-	</div>
+		<div class="col-4">
+			<h3>Subsolution</h3>
+			<select
+				class="form-select"
+				bind:value={active_second_level}
+				disabled={!enabled}
+				onchange={second_level_changed}
+			>
+				{#each second_levels as solution}
+					<option value={solution}>
+						{solution}
+					</option>
+				{/each}
+			</select>
+		</div>
 	{/if}
 
 	{#if solution_detail != null && Object.keys(solution_detail.scenarios).length > 1}

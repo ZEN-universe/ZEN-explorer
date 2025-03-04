@@ -78,14 +78,14 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: 'Year',
+						text: 'Year'
 					}
 				},
 				y: {
 					stacked: true,
 					title: {
 						display: true,
-						text: 'Costs [' + get_unit() + ']',
+						text: 'Costs [' + get_unit() + ']'
 					}
 				}
 			}
@@ -282,7 +282,7 @@
 		// TODO: Find out when and why this actually was used
 		// Currently, this just removes labels once they are unselected, except if none are remaining.
 		let set_locations = new Set<string>();
-		
+
 		// Filter undefined datasets
 		// grouped_data! = grouped_data!.filter((e) => {
 		// 	return e != undefined;
@@ -547,9 +547,7 @@
 
 									{#if show_costs[key].show && key != 'carbon_emission'}
 										Subdivision
-										<ToggleButton
-											bind:value={show_costs[key].subdivision}
-											change={update_plot_data}
+										<ToggleButton bind:value={show_costs[key].subdivision} change={update_plot_data}
 										></ToggleButton>
 									{/if}
 								</div>

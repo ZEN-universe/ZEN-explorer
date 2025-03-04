@@ -22,28 +22,28 @@
 		} else {
 			selected_elements = elements;
 		}
-        selection_changed(selected_elements);
+		selection_changed(selected_elements);
 	}
 
-    function dispatchEvent() {
-        selection_changed(selected_elements);
-    }
+	function dispatchEvent() {
+		selection_changed(selected_elements);
+	}
 </script>
 
 <div class="form-group">
-    <button
-        class="btn btn-outline-primary btn-sm"
+	<button
+		class="btn btn-outline-primary btn-sm"
 		style="min-width: 100px"
-        onclick={toggleAll}
-        id={`all_checkbox_${id}`}
-        disabled={!enabled}
-    >
-        {#if all_selected}
-            Deselect all
-        {:else}
-            Select all
-        {/if}
-    </button>
+		onclick={toggleAll}
+		id={`all_checkbox_${id}`}
+		disabled={!enabled}
+	>
+		{#if all_selected}
+			Deselect all
+		{:else}
+			Select all
+		{/if}
+	</button>
 	{#each elements as element, i}
 		<div class="form-check form-check-inline">
 			<input

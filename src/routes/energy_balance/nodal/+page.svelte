@@ -54,7 +54,7 @@
 
 	let datasets: ChartDataset[] = $state([]);
 	let labels: string[] = $state([]);
-	
+
 	const plot_config: ChartConfiguration = $derived({
 		type: 'line',
 		data: { datasets: datasets, labels: labels },
@@ -80,7 +80,7 @@
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: 'Power [' + unit + ']',
+						text: 'Power [' + unit + ']'
 					}
 				}
 			},
@@ -336,10 +336,7 @@
 						Solution Selection
 					</button>
 				</h2>
-				<div
-					id="collapseOne"
-					class="accordion-collapse collapse show"
-				>
+				<div id="collapseOne" class="accordion-collapse collapse show">
 					<div class="accordion-body">
 						<SolutionFilter
 							bind:carriers
@@ -367,10 +364,7 @@
 							Data selection
 						</button>
 					</h2>
-					<div
-						id="collapseTwo"
-						class="accordion-collapse collapse show"
-					>
+					<div id="collapseTwo" class="accordion-collapse collapse show">
 						<div class="accordion-body">
 							<div class="row">
 								<div class="col-6">

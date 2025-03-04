@@ -37,10 +37,10 @@
 	let selected_locations: string[] = $state([]);
 	let selected_normalisation: string = $state('not_normalized');
 	let solution_loading: boolean = $state(false);
-	
+
 	let fetching: boolean = $state(false);
 	let plot_name: string = $state('');
-	
+
 	let datasets: any[] = $state([]);
 	let labels: string[] = $state([]);
 	let scaleYText: string = $state('');
@@ -62,7 +62,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: scaleYText,
+						text: scaleYText
 					}
 				}
 			}
@@ -336,10 +336,7 @@
 						Solution Selection
 					</button>
 				</h2>
-				<div
-					id="collapseOne"
-					class="accordion-collapse collapse show"
-				>
+				<div id="collapseOne" class="accordion-collapse collapse show">
 					<div class="accordion-body">
 						<SolutionFilter
 							bind:years
@@ -365,10 +362,7 @@
 							Variable Selection
 						</button>
 					</h2>
-					<div
-						id="collapseTwo"
-						class="accordion-collapse collapse show"
-					>
+					<div id="collapseTwo" class="accordion-collapse collapse show">
 						<div class="accordion-body">
 							<h3>Variable</h3>
 							<select
@@ -443,10 +437,7 @@
 								Data Selection
 							</button>
 						</h2>
-						<div
-							id="collapseThree"
-							class="accordion-collapse collapse show"
-						>
+						<div id="collapseThree" class="accordion-collapse collapse show">
 							<div class="accordion-body">
 								<div class="row">
 									<div class="col-6">
