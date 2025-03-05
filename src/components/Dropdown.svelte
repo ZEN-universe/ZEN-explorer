@@ -19,7 +19,12 @@
 </script>
 
 <div class="dropdown">
-	<select bind:value={selected_option} onchange={() => update_selection()} disabled={!enabled}>
+	<select
+		class="form-select"
+		bind:value={selected_option}
+		onchange={() => update_selection()}
+		disabled={!enabled}
+	>
 		{#each options as option}
 			<option value={option}>
 				{option}

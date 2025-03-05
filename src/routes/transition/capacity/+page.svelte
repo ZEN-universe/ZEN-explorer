@@ -366,6 +366,7 @@
 						<div class="accordion-body">
 							<h3>Variable</h3>
 							<select
+								class="form-select"
 								bind:value={selected_variable}
 								onchange={(e) => {
 									variable_changed();
@@ -382,6 +383,7 @@
 							{#if selected_variable != null}
 								<h3>Technology Type</h3>
 								<select
+									class="form-select"
 									bind:value={selected_technology_type}
 									onchange={() => {
 										technology_type_changed();
@@ -406,6 +408,7 @@
 							{#if selected_technology_type != null && carriers.length > 0}
 								<h3>Carrier</h3>
 								<select
+									class="form-select"
 									bind:value={selected_carrier}
 									onchange={() => {
 										carrier_changed();

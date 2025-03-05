@@ -441,7 +441,9 @@
 					</h2>
 					<div id="collapseTwo" class="accordion-collapse collapse show">
 						<div class="accordion-body">
+							<h3>Variable</h3>
 							<select
+								class="form-select"
 								bind:value={selected_variable}
 								disabled={solution_loading || fetching}
 								onchange={() => {
@@ -456,6 +458,7 @@
 								{/each}
 							</select>
 							{#if variables && selected_variable && variables[selected_variable] != null}
+								<h3>Subvariable</h3>
 								<Radio
 									options={variables[selected_variable]}
 									bind:selected_option={selected_subvariable}

@@ -351,6 +351,7 @@
 							{#if carriers.length > 0}
 								<h3>Carrier</h3>
 								<select
+									class="form-select"
 									bind:value={selected_carrier}
 									onchange={data_changed}
 									disabled={fetching || solution_loading}
