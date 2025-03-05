@@ -17,7 +17,15 @@
 	}
 
 	let data: Papa.ParseResult<Row> | null = $state(null);
+	let chargeData: Papa.ParseResult<Row> | null = $state(null);
+	let dischargeData: Papa.ParseResult<Row> | null = $state(null);
+	let spillageData: Papa.ParseResult<Row> | null = $state(null);
+	let inflowData: Papa.ParseResult<Row> | null = $state(null);
 	let filtered_data: any[] | null = $state(null);
+	let charge_filtered_data: any[] | null = $state(null);
+	let discharge_filtered_data: any[] | null = $state(null);
+	let inflow_filtered_data: any[] | null = $state(null);
+	let spillage_filtered_data: any[] | null = $state(null);
 
 	let carriers: string[] = $state([]);
 	let locations: string[] = $state([]);
@@ -28,13 +36,13 @@
 	let selected_solution: ActivatedSolution | null = $state(null);
 	const selected_variable: string = 'storage_level';
 	let selected_carrier: string | null = $state(null);
-	// let selected_aggregation = 'technology';
 	let selected_technologies: string[] = [];
 	let selected_locations: string[] = $state([]);
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 	let plot_name: string = $state('');
+	let plot_name_flows: string = $state('');
 	let subdivision: boolean = $state(true);
 	let years: number[] = $state([]);
 	let selected_year: number = $state(0);
@@ -42,11 +50,14 @@
 	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
 	let selected_window_size = $state('Hourly');
 
+	let level_plot: BarPlot;
+	let flow_plot: BarPlot;
+
 	let datasets: any[] = $state([]);
+	let flow_datasets: any[] = $state([]);
 	let labels: string[] = $state([]);
-	let scaleXLabel: string = $state('Time');
-	let scaleYLabel: string = $state('Power');
-	let plot_config: ChartConfiguration<'line', number[], string> = $derived({
+
+	let plot_config: ChartConfiguration = $derived({
 		type: 'line',
 		data: { datasets: datasets, labels: labels },
 		options: {
@@ -63,15 +74,15 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: scaleXLabel
+						text: 'Time'
 					}
 				},
 				y: {
-					stacked: false,
+					stacked: true,
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: scaleYLabel
+						text: `Storage Level [${get_unit()}]`
 					}
 				}
 			},
@@ -81,7 +92,10 @@
 					pan: {
 						enabled: true,
 						modifierKey: 'ctrl',
-						mode: 'x'
+						mode: 'x',
+						onPanComplete: (event) => {
+							flow_plot.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
+						}
 					},
 					zoom: {
 						drag: {
@@ -90,7 +104,71 @@
 						wheel: {
 							enabled: true
 						},
-						mode: 'x'
+						mode: 'x',
+						onZoomComplete: (event) => {
+							flow_plot.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
+						}
+					},
+					limits: {
+						x: { minRange: 10 }
+					}
+				}
+			}
+		}
+	});
+	let plot_config_flows: ChartConfiguration = $derived({
+		counter: 1,
+		type: 'line',
+		data: { datasets: flow_datasets, labels: labels },
+		options: {
+			animation: false,
+			normalized: true,
+			elements: {
+				point: {
+					radius: 0
+				}
+			},
+			responsive: true,
+			scales: {
+				x: {
+					stacked: true,
+					title: {
+						display: true,
+						text: 'Time'
+					}
+				},
+				y: {
+					type: 'linear',
+					stacked: true,
+					beginAtZero: true,
+					title: {
+						display: true,
+						text: `Storage Flow [${get_unit()}]`
+					}
+				}
+			},
+			borderWidth: 1,
+			plugins: {
+				zoom: {
+					pan: {
+						enabled: true,
+						modifierKey: 'ctrl',
+						mode: 'x',
+						onPanComplete: (event) => {
+							level_plot.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
+						}
+					},
+					zoom: {
+						drag: {
+							enabled: true
+						},
+						wheel: {
+							enabled: true
+						},
+						mode: 'x',
+						onZoomComplete: (event) => {
+							level_plot.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
+						}
 					},
 					limits: {
 						x: { minRange: 10 }
@@ -138,16 +216,51 @@
 				break;
 		}
 
-		let fetched = await get_full_ts(
+		let levelResponse = await get_full_ts(
 			selected_solution!.solution_name,
-			get_variable_name(selected_variable),
+			get_variable_name('storage_level'),
 			selected_solution!.scenario_name,
 			year_index,
 			window_size
 		);
+		data = levelResponse.data;
+		unit = levelResponse.unit;
 
-		data = fetched.data;
-		unit = fetched.unit;
+		let chargeResponse = await get_full_ts(
+			selected_solution!.solution_name,
+			get_variable_name('flow_storage_charge'),
+			selected_solution!.scenario_name,
+			year_index,
+			window_size
+		);
+		chargeData = chargeResponse.data;
+
+		let dischargeResponse = await get_full_ts(
+			selected_solution!.solution_name,
+			get_variable_name('flow_storage_discharge'),
+			selected_solution!.scenario_name,
+			year_index,
+			window_size
+		);
+		dischargeData = dischargeResponse.data;
+
+		let spillageResponse = await get_full_ts(
+			selected_solution!.solution_name,
+			get_variable_name('flow_storage_spillage'),
+			selected_solution!.scenario_name,
+			year_index,
+			window_size
+		);
+		spillageData = spillageResponse.data;
+
+		let inflowResponse = await get_full_ts(
+			selected_solution!.solution_name,
+			get_variable_name('flow_storage_inflow'),
+			selected_solution!.scenario_name,
+			year_index,
+			window_size
+		);
+		inflowData = inflowResponse.data;
 	}
 
 	/**
@@ -200,11 +313,7 @@
 	 * This function returns the unit of the currently selected variable
 	 */
 	function get_unit() {
-		try {
-			return unit!.data[0][0];
-		} catch {
-			return '';
-		}
+		return unit?.data[0][0] || unit?.data[0]['units'] || '';
 	}
 
 	/**
@@ -247,7 +356,15 @@
 	 * This function updates the data for the plot depending on the currently selected values.
 	 */
 	function update_plot_data() {
-		if (selected_locations.length == 0 || selected_technologies.length == 0 || data === null) {
+		if (
+			selected_locations.length == 0 ||
+			selected_technologies.length == 0 ||
+			data === null ||
+			chargeData === null ||
+			dischargeData === null ||
+			inflowData === null ||
+			spillageData === null
+		) {
 			datasets = [];
 			labels = [];
 			plot_name = '';
@@ -265,35 +382,174 @@
 			datasets_aggregates,
 			[],
 			false,
-			'line'
-		);
+			'line',
+			''
+		).map((dataset) => {
+			return {
+				...dataset,
+				fill: 'origin'
+			};
+		});
+		charge_filtered_data = filter_and_aggregate_data(
+			chargeData.data,
+			dataset_selector,
+			datasets_aggregates,
+			[],
+			false,
+			'line',
+			'_charge'
+		).map((dataset) => {
+			return {
+				...dataset,
+				stepped: true,
+				fill: 'origin'
+			};
+		});
+		discharge_filtered_data = filter_and_aggregate_data(
+			dischargeData.data,
+			dataset_selector,
+			datasets_aggregates,
+			[],
+			false,
+			'line',
+			'_discharge'
+		).map((dataset) => {
+			let data: { [key: string]: number } = {};
+			for (let i in dataset.data) {
+				data[i] = dataset.data[i] > 0 ? -dataset.data[i] : dataset.data[i];
+			}
+			return {
+				data,
+				label: dataset.label,
+				type: dataset.type,
+				stepped: true,
+				fill: 'origin'
+			};
+		});
+		spillage_filtered_data = filter_and_aggregate_data(
+			spillageData.data,
+			dataset_selector,
+			datasets_aggregates,
+			[],
+			false,
+			'line',
+			'_spillage'
+		).map((dataset) => {
+			let data: { [key: string]: number } = {};
+			for (let i in dataset.data) {
+				data[i] = dataset.data[i] > 0 ? -dataset.data[i] : dataset.data[i];
+			}
+			return {
+				data,
+				label: dataset.label,
+				type: dataset.type,
+				stepped: true,
+				fill: 'origin'
+			};
+		});
+		inflow_filtered_data = filter_and_aggregate_data(
+			inflowData.data,
+			dataset_selector,
+			datasets_aggregates,
+			[],
+			false,
+			'line',
+			'_inflow'
+		).map((dataset) => {
+			return {
+				...dataset,
+				stepped: true,
+				fill: 'origin'
+			};
+		});
+
+		datasets = filtered_data;
+		flow_datasets = charge_filtered_data
+			.concat(discharge_filtered_data)
+			.concat(inflow_filtered_data)
+			.concat(spillage_filtered_data);
+		labels = Object.keys(filtered_data[0].data);
 
 		if (subdivision) {
 			datasets = filtered_data;
 			labels = Object.keys(filtered_data[0].data);
 		} else {
-			let new_data: any = {};
+			let new_data: { [key: string]: number } = {};
 			for (const i in filtered_data[0].data) {
 				new_data[i] = filtered_data
 					.map((j) => j.data[i])
 					.reduce((partialSum, a) => partialSum + a, 0);
 			}
-			filtered_data = [
+			let new_charge: { [key: string]: number } = {};
+			for (const i in charge_filtered_data[0].data) {
+				new_charge[i] = charge_filtered_data
+					.map((j) => j.data[i])
+					.reduce((partialSum, a) => partialSum + a, 0);
+			}
+			let new_discharge: { [key: string]: number } = {};
+			for (const i in discharge_filtered_data[0].data) {
+				new_discharge[i] = discharge_filtered_data
+					.map((j) => j.data[i])
+					.reduce((partialSum, a) => partialSum + a, 0);
+			}
+			let new_inflow: { [key: string]: number } = {};
+			for (const i in inflowData.data[0]) {
+				new_inflow[i] = inflowData.data
+					.map((j) => j.data[i])
+					.reduce((partialSum, a) => partialSum + a, 0);
+			}
+			let new_spillage: { [key: string]: number } = {};
+			for (const i in spillageData.data[0]) {
+				new_spillage[i] = spillageData.data
+					.map((j) => j.data[i])
+					.reduce((partialSum, a) => partialSum + a, 0);
+			}
+
+			datasets = [
 				{
 					data: Object.values(new_data),
 					label: 'Storage level',
 					type: 'line',
-					borderColor: 'black'
+					borderColor: 'black',
+					fill: 'origin',
+					stepped: true
 				}
 			];
-
-			datasets = filtered_data;
+			flow_datasets = [
+				{
+					data: Object.values(new_charge),
+					label: 'Flow Storage Charge',
+					type: 'line',
+					borderColor: 'blue',
+					stepped: true
+				},
+				{
+					data: Object.values(new_discharge),
+					label: 'Flow Storage Discharge',
+					type: 'line',
+					borderColor: 'red',
+					stepped: true
+				},
+				{
+					data: Object.values(new_inflow),
+					label: 'Flow Storage Discharge',
+					type: 'line',
+					borderColor: 'red',
+					stepped: true
+				},
+				{
+					data: Object.values(new_spillage),
+					label: 'Flow Storage Discharge',
+					type: 'line',
+					borderColor: 'red',
+					stepped: true
+				}
+			];
 			labels = Object.keys(new_data);
 		}
 
-		scaleYLabel = selected_variable + ' [' + get_unit() + ']';
-
 		let solution_names = selected_solution!.solution_name.split('.');
+
 		plot_name = [
 			solution_names[solution_names?.length - 1],
 			selected_solution?.scenario_name,
@@ -434,6 +690,12 @@
 	{:else if filtered_data.length == 0}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot config={plot_config} {plot_name} zoom={true}></BarPlot>
+		<BarPlot config={plot_config} {plot_name} zoom={true} bind:this={level_plot}></BarPlot>
+		<BarPlot
+			config={plot_config_flows}
+			plot_name={plot_name_flows}
+			zoom={true}
+			bind:this={flow_plot}
+		></BarPlot>
 	{/if}
 </div>

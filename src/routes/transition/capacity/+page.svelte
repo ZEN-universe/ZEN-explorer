@@ -233,7 +233,7 @@
 				}
 
 				if (technologies[0] == u.technology) {
-					return u[0];
+					return u[0] || u['units'] || '';
 				}
 			}
 		}

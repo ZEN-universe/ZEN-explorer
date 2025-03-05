@@ -68,7 +68,7 @@
 	 * This function returns the unit string of the currently fetched unit data.
 	 */
 	function get_unit() {
-		return unit?.data[0][0];
+		return unit?.data[0][0] || unit?.data[0]['units'] || '';
 	}
 
 	/**

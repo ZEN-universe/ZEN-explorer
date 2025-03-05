@@ -1,28 +1,20 @@
 <script lang="ts">
 	import Chart, { type ChartConfiguration } from 'chart.js/auto';
-	import Modal from './Modal.svelte';
-
-	import { onDestroy, onMount } from 'svelte';
+	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
+	import Modal from './Modal.svelte';
+	import { onDestroy } from 'svelte';
+
+	Chart.register(zoomPlugin);
 
 	interface Props {
 		config: ChartConfiguration;
 		zoom?: boolean;
 		plot_name?: string;
+		zoom_rect?: (min: number, max: number) => void;
 	}
 
 	let { config, zoom = false, plot_name = 'plot_data' }: Props = $props();
-
-	onMount(async () => {
-		const zoomPlugin = (await import('chartjs-plugin-zoom')).default;
-		Chart.register(zoomPlugin);
-	});
-
-	onDestroy(() => {
-		if (chart === undefined) return;
-		chart.destroy();
-	});
-
 	let chart: Chart | undefined = undefined;
 
 	const handleChart: Action<HTMLCanvasElement> = (element) => {
@@ -35,14 +27,21 @@
 				chart.destroy();
 			}
 			chart = new Chart(element, config);
-
-			return () => {
-				if (chart !== undefined) {
-					chart.destroy();
-				}
-			};
 		});
 	};
+
+	onDestroy(() => {
+		if (chart !== undefined) {
+			chart.destroy();
+		}
+	});
+
+	export function zoom_rect(min: number, max: number) {
+		if (chart == undefined || chart.canvas == null) {
+			return;
+		}
+		chart.zoomScale('x', { min, max });
+	}
 
 	let modal_open = $state(false);
 	const toggle = () => {
