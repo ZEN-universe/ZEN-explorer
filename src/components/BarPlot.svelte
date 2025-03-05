@@ -3,6 +3,7 @@
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
 	import Modal from './Modal.svelte';
+	import { onDestroy } from 'svelte';
 
 	Chart.register(zoomPlugin);
 
@@ -22,15 +23,18 @@
 		chart = new Chart(element, config);
 
 		$effect(() => {
+			if (chart !== undefined) {
+				chart.destroy();
+			}
 			chart = new Chart(element, config);
-
-			return () => {
-				if (chart !== undefined) {
-					chart.destroy();
-				}
-			};
 		});
 	};
+
+	onDestroy(() => {
+		if (chart !== undefined) {
+			chart.destroy();
+		}
+	});
 
 	export function zoom_rect(min: number, max: number) {
 		if (chart == undefined || chart.canvas == null) {

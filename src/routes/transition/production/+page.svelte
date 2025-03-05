@@ -118,18 +118,7 @@
 	 * This function returns the unit of the currently selected carrier
 	 */
 	function get_unit() {
-		if (unit === null) {
-			return '';
-		}
-		for (const u of unit.data) {
-			if (
-				technologies[0] == u.technology &&
-				(u.carrier == selected_carrier || u.carrier === undefined)
-			) {
-				return u[0];
-			}
-		}
-		return '';
+		return unit?.data[0][0] || unit?.data[0]['units'] || '';
 	}
 
 	/**
@@ -469,6 +458,7 @@
 							{#if selected_variable != null && carriers.length > 0}
 								<h3>Carrier</h3>
 								<select
+									class="form-select"
 									bind:value={selected_carrier}
 									onchange={() => {
 										update_technologies();

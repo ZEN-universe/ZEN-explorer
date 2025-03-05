@@ -302,7 +302,7 @@
 			return '';
 		}
 
-		return fetched_capex.unit.data[0][0];
+		return fetched_capex.unit.data[0][0] || fetched_capex.unit.data[0]['units'] || '';
 	}
 
 	/**

@@ -56,9 +56,7 @@
 	let datasets: any[] = $state([]);
 	let flow_datasets: any[] = $state([]);
 	let labels: string[] = $state([]);
-	let scaleXLabel: string = $state('Time');
-	let scaleYLabel: string = $state('Storage Level');
-	let scaleYLabelFlows: string = $state('Storage Flow');
+
 	let plot_config: ChartConfiguration = $derived({
 		type: 'line',
 		data: { datasets: datasets, labels: labels },
@@ -76,7 +74,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: scaleXLabel
+						text: 'Time'
 					}
 				},
 				y: {
@@ -84,7 +82,7 @@
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: scaleYLabel
+						text: `Storage Level [${get_unit()}]`
 					}
 				}
 			},
@@ -145,7 +143,7 @@
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: scaleYLabelFlows
+						text: `Storage Flow [${get_unit()}]`
 					}
 				}
 			},
@@ -315,11 +313,7 @@
 	 * This function returns the unit of the currently selected variable
 	 */
 	function get_unit() {
-		try {
-			return unit!.data[0][0];
-		} catch {
-			return '';
-		}
+		return unit?.data[0][0] || unit?.data[0]['units'] || '';
 	}
 
 	/**
@@ -553,10 +547,6 @@
 			];
 			labels = Object.keys(new_data);
 		}
-
-		// @ts-ignore
-		scaleYLabel = selected_variable + ' [' + get_unit() + ']';
-		scaleYLabelFlows = 'Storage Flow [' + get_unit() + ']';
 
 		let solution_names = selected_solution!.solution_name.split('.');
 
