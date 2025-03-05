@@ -1,483 +1,433 @@
 <script lang="ts">
-    import SolutionFilter from "../../../components/SolutionFilter.svelte";
-    import type { ActivatedSolution } from "$lib/types";
-    import Dropdown from "../../../components/Dropdown.svelte";
-    import { get_energy_balance, get_unit } from "$lib/temple";
-    import BarPlot from "../../../components/BarPlot.svelte";
-    import { filter_and_aggregate_data } from "$lib/utils";
-    import { tick } from "svelte";
-    import { get_variable_name } from "$lib/variables";
+	import SolutionFilter from '../../../components/SolutionFilter.svelte';
+	import type { ActivatedSolution } from '$lib/types';
+	import Dropdown from '../../../components/Dropdown.svelte';
+	import { get_energy_balance, get_unit } from '$lib/temple';
+	import BarPlot from '../../../components/BarPlot.svelte';
+	import { filter_and_aggregate_data } from '$lib/utils';
+	import { tick } from 'svelte';
+	import { get_variable_name } from '$lib/variables';
+	import type { ChartConfiguration, ChartDataset } from 'chart.js';
 
-    var defaultColors = [
-        "rgb(75, 192, 192)",
-        "rgb(54, 162, 235)",
-        "rgb(255, 206, 86)",
-        "rgb(153, 102, 255)",
-        "rgb(255, 159, 64)",
-        "rgb(255, 99, 132)",
-        "rgb(201, 203, 207)",
-        "rgb(220,20,60)",
-        "rgb(255,99,71)",
-        "rgb(255,69,0)",
-        "rgb(154,205,50)",
-        "rgb(0,100,0)",
-        "rgb(50,205,50)",
-        "rgb(0,139,139)",
-        "rgb(153,50,204)",
-        "rgb(255,105,180)",
-    ];
+	var defaultColors = [
+		'rgb(75, 192, 192)',
+		'rgb(54, 162, 235)',
+		'rgb(255, 206, 86)',
+		'rgb(153, 102, 255)',
+		'rgb(255, 159, 64)',
+		'rgb(255, 99, 132)',
+		'rgb(201, 203, 207)',
+		'rgb(220,20,60)',
+		'rgb(255,99,71)',
+		'rgb(255,69,0)',
+		'rgb(154,205,50)',
+		'rgb(0,100,0)',
+		'rgb(50,205,50)',
+		'rgb(0,139,139)',
+		'rgb(153,50,204)',
+		'rgb(255,105,180)'
+	];
 
-    let selected_solution: ActivatedSolution | null = null;
-    let plot_ready = false;
-    let solution_loading: boolean = false;
-    let fetching = false;
+	let selected_solution: ActivatedSolution | null = $state(null);
+	let plot_ready = $state(false);
+	let solution_loading: boolean = $state(false);
+	let fetching = $state(false);
 
-    let nodes: string[] = [];
-    let selected_node: string | null = null;
+	let nodes: string[] = $state([]);
+	let selected_node: string | null = $state(null);
 
-    let carriers: string[] = [];
-    let selected_carrier: string | null = null;
+	let carriers: string[] = $state([]);
+	let selected_carrier: string | null = $state(null);
 
-    let years: number[] = [];
-    let selected_year: number | null = null;
+	let years: number[] = $state([]);
+	let selected_year: number | null = $state(null);
 
-    let unit: string = "";
-    let plot_name = "";
+	let unit: string = '';
+	let plot_name = $state('');
 
-    let window_sizes = ["Hourly", "Daily", "Weekly", "Monthly"];
-    let selected_window_size = "Hourly";
+	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
+	let selected_window_size = $state('Hourly');
 
-    interface StringList {
-        [key: string]: string[];
-    }
+	interface StringList {
+		[key: string]: string[];
+	}
 
-    const initial_config = {
-        counter: 1,
-        type: "line",
-        data: { datasets: [] as any[] },
-        options: {
-            animation: false,
-            normalized: true,
-            elements: {
-                point: {
-                    radius: 0,
-                },
-            },
-            responsive: true,
-            scales: {
-                x: {
-                    stacked: true,
-                    title: {
-                        display: true,
-                        text: "Time",
-                    },
-                },
-                y: {
-                    stacked: true,
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: "Power",
-                    },
-                },
-            },
-            borderWidth: 1,
-            plugins: {
-                zoom: {
-                    pan: {
-                        enabled: true,
-                        modifierKey: "ctrl",
-                        mode: "x",
-                    },
-                    zoom: {
-                        drag: {
-                            enabled: true,
-                        },
-                        wheel: {
-                            enabled: true,
-                        },
-                        mode: "x",
-                    },
-                },
-            },
-        },
-    };
+	let datasets: ChartDataset[] = $state([]);
+	let labels: string[] = $state([]);
 
-    let config = structuredClone(initial_config);
+	const plot_config: ChartConfiguration = $derived({
+		type: 'line',
+		data: { datasets: datasets, labels: labels },
+		options: {
+			animation: false,
+			normalized: true,
+			elements: {
+				point: {
+					radius: 0
+				}
+			},
+			responsive: true,
+			scales: {
+				x: {
+					stacked: true,
+					title: {
+						display: true,
+						text: 'Time'
+					}
+				},
+				y: {
+					stacked: true,
+					beginAtZero: true,
+					title: {
+						display: true,
+						text: 'Power [' + unit + ']'
+					}
+				}
+			},
+			borderWidth: 1,
+			plugins: {
+				zoom: {
+					pan: {
+						enabled: true,
+						modifierKey: 'ctrl',
+						mode: 'x'
+					},
+					zoom: {
+						drag: {
+							enabled: true
+						},
+						wheel: {
+							enabled: true
+						},
+						mode: 'x'
+					}
+				}
+			}
+		}
+	});
 
-    /**
-     * This function is being called, when a change event is received from the SolutionFilter.
-     * It will update the selected variables and reload the data.
-     */
-    async function solution_changed() {
-        if (!selected_solution) {
-            return;
-        }
-        config = structuredClone(initial_config);
+	// let config = $state(structuredClone(initial_config));
 
-        selected_node = nodes[0];
-        selected_carrier = carriers[0];
-        selected_year = years[0];
-        plot_ready = false;
+	/**
+	 * This function is being called, when a change event is received from the SolutionFilter.
+	 * It will update the selected variables and reload the data.
+	 */
+	async function solution_changed() {
+		if (!selected_solution) {
+			return;
+		}
+		// config = structuredClone(initial_config);
 
-        await data_changed();
-        return;
-    }
+		selected_node = nodes[0];
+		selected_carrier = carriers[0];
+		selected_year = years[0];
+		plot_ready = false;
 
-    /**
-     * This function fetches the energy balance dataframe from the api server and all the data according to the selected variables and fields.
-     * Once fetched, it adds all the data to the datasets for the plots.
-     */
-    async function data_changed() {
-        fetching = true;
-        tick();
+		await data_changed();
+		return;
+	}
 
-        if (
-            selected_node == null ||
-            selected_carrier == null ||
-            selected_year == null ||
-            selected_solution == null
-        ) {
-            fetching = false;
-            return;
-        }
+	/**
+	 * This function fetches the energy balance dataframe from the api server and all the data according to the selected variables and fields.
+	 * Once fetched, it adds all the data to the datasets for the plots.
+	 */
+	async function data_changed() {
+		fetching = true;
+		tick();
 
-        // Calculate index of year
-        let year_index = Math.floor(
-            (selected_year - selected_solution.detail.system.reference_year) /
-                selected_solution.detail.system.interval_between_years,
-        );
+		if (
+			selected_node == null ||
+			selected_carrier == null ||
+			selected_year == null ||
+			selected_solution == null
+		) {
+			fetching = false;
+			return;
+		}
 
-        let window_size = 1;
+		// Calculate index of year
+		let year_index = Math.floor(
+			(selected_year - selected_solution.detail.system.reference_year) /
+				selected_solution.detail.system.interval_between_years
+		);
 
-        switch (selected_window_size) {
-            case "Daily":
-                window_size = 24;
-                break;
-            case "Weekly":
-                window_size = 168;
-                break;
-            case "Monthly":
-                window_size = 720;
-                break;
-        }
+		let window_size = 1;
 
-        // Fetch the energy balance data
-        let energy_balance_data = await get_energy_balance(
-            selected_solution.solution_name,
-            selected_node,
-            selected_carrier,
-            selected_solution.scenario_name,
-            year_index,
-            window_size,
-        );
+		switch (selected_window_size) {
+			case 'Daily':
+				window_size = 24;
+				break;
+			case 'Weekly':
+				window_size = 168;
+				break;
+			case 'Monthly':
+				window_size = 720;
+				break;
+		}
 
-        // Fetch the units
-        let unit_data = await get_unit(
-            selected_solution.solution_name,
-            get_variable_name("flow_export", selected_solution.version),
-            selected_solution.scenario_name,
-        );
+		// Fetch the energy balance data
+		let energy_balance_data = await get_energy_balance(
+			selected_solution.solution_name,
+			selected_node,
+			selected_carrier,
+			selected_solution.scenario_name,
+			year_index,
+			window_size
+		);
 
-        if (unit_data === null) {
-            unit = "";
-        } else {
-            unit = unit_data.data[0][0];
-        }
+		// Fetch the units
+		let unit_data = await get_unit(
+			selected_solution.solution_name,
+			get_variable_name('flow_export', selected_solution.version),
+			selected_solution.scenario_name
+		);
 
-        let datasets = [];
-        let i = 0;
+		if (unit_data === null) {
+			unit = '';
+		} else {
+			unit = unit_data.data[0][0];
+		}
 
-        // Loop through the energy balance dataframes and add them to the plots
-        for (const plot_name in energy_balance_data) {
-            let dataset_selector: StringList = {
-                node: [selected_node!],
-            };
+		datasets = [];
+		let i = 0;
 
-            // Some plots might not have data
-            if (
-                energy_balance_data[plot_name] == undefined ||
-                energy_balance_data[plot_name].data.length == 0
-            ) {
-                continue;
-            }
+		// Loop through the energy balance dataframes and add them to the plots
+		for (const plot_name in energy_balance_data) {
+			let dataset_selector: StringList = {
+				node: [selected_node!]
+			};
 
-            // If the dataframe has a row "technology", add all of them to the list of technologies
-            if ("technology" in energy_balance_data[plot_name].data[0]) {
-                let technologies = [];
-                for (const row of energy_balance_data[plot_name].data) {
-                    technologies.push(row["technology"]);
-                }
-                dataset_selector = {
-                    technology: technologies,
-                };
-            }
+			// Some plots might not have data
+			if (
+				energy_balance_data[plot_name] == undefined ||
+				energy_balance_data[plot_name].data.length == 0
+			) {
+				continue;
+			}
 
-            let datasets_aggregates: StringList = {};
+			// If the dataframe has a row "technology", add all of them to the list of technologies
+			if ('technology' in energy_balance_data[plot_name].data[0]) {
+				let technologies = [];
+				for (const row of energy_balance_data[plot_name].data) {
+					technologies.push(row['technology']);
+				}
+				dataset_selector = {
+					technology: technologies
+				};
+			}
 
-            let current_plots = filter_and_aggregate_data(
-                energy_balance_data[plot_name].data,
-                dataset_selector,
-                datasets_aggregates,
-            );
+			let datasets_aggregates: StringList = {};
 
-            if (current_plots.length == 0) {
-                continue;
-            }
+			let current_plots = filter_and_aggregate_data(
+				energy_balance_data[plot_name].data,
+				dataset_selector,
+				datasets_aggregates
+			);
 
-            // Loop through the different variables
-            for (let current_plot of current_plots) {
-                if (Object.keys(current_plot.data).length == 0) {
-                    continue;
-                }
+			if (current_plots.length == 0) {
+				continue;
+			}
 
-                // Get label-name for the plot
-                switch (plot_name) {
-                    case get_variable_name(
-                        "flow_storage_discharge",
-                        selected_solution.version,
-                    ):
-                        current_plot.label =
-                            current_plot.label + " (discharge)";
-                        break;
-                    case get_variable_name(
-                        "flow_transport_in",
-                        selected_solution.version,
-                    ):
-                        current_plot.label =
-                            current_plot.label + " (transport in)";
-                        break;
-                    case get_variable_name(
-                        "flow_import",
-                        selected_solution.version,
-                    ):
-                        (current_plot.label = "Import"),
-                            selected_solution.version;
-                        break;
-                    case get_variable_name(
-                        "shed_demand",
-                        selected_solution.version,
-                    ):
-                        current_plot.label = "Shed Demand";
-                        break;
-                    case get_variable_name(
-                        "flow_storage_charge",
-                        selected_solution.version,
-                    ):
-                        current_plot.label = current_plot.label + " (charge)";
-                        break;
-                    case get_variable_name(
-                        "flow_transport_out",
-                        selected_solution.version,
-                    ):
-                        current_plot.label =
-                            current_plot.label + " (transport out)";
-                        break;
-                    case get_variable_name(
-                        "flow_export",
-                        selected_solution.version,
-                    ):
-                        current_plot.label = "Export";
-                        break;
-                    default:
-                        break;
-                }
+			// Loop through the different variables
+			for (let current_plot of current_plots) {
+				if (Object.keys(current_plot.data).length == 0) {
+					continue;
+				}
 
-                let plot_type = "line";
+				// Get label-name for the plot
+				switch (plot_name) {
+					case get_variable_name('flow_storage_discharge', selected_solution.version):
+						current_plot.label = current_plot.label + ' (discharge)';
+						break;
+					case get_variable_name('flow_transport_in', selected_solution.version):
+						current_plot.label = current_plot.label + ' (transport in)';
+						break;
+					case get_variable_name('flow_import', selected_solution.version):
+						(current_plot.label = 'Import'), selected_solution.version;
+						break;
+					case get_variable_name('shed_demand', selected_solution.version):
+						current_plot.label = 'Shed Demand';
+						break;
+					case get_variable_name('flow_storage_charge', selected_solution.version):
+						current_plot.label = current_plot.label + ' (charge)';
+						break;
+					case get_variable_name('flow_transport_out', selected_solution.version):
+						current_plot.label = current_plot.label + ' (transport out)';
+						break;
+					case get_variable_name('flow_export', selected_solution.version):
+						current_plot.label = 'Export';
+						break;
+					default:
+						break;
+				}
 
-                // If only one timestep is available, it should be a bar plot
-                if (Object.keys(current_plot.data).length == 1) {
-                    plot_type = "bar";
-                }
+				let plot_type = 'line';
 
-                // Demand is plotted in a different way than the other plots
-                if (plot_name == "demand") {
-                    current_plot.label = "Demand";
-                    current_plot.type = "line";
-                    current_plot.stack = "ownCustomStack";
-                    current_plot.fill = false;
-                    current_plot.borderColor = "black";
-                    current_plot.backgroundColor = "white";
-                    current_plot.borderWidth = 2;
-                    current_plot.stepped = true;
-                    if (Object.keys(current_plot.data).length == 1) {
-                        current_plot.pointRadius = 2;
-                    }
-                } else {
-                    current_plot.type = plot_type;
-                    current_plot.fill = "origin";
-                    current_plot.borderColor =
-                        defaultColors[i % defaultColors.length];
-                    current_plot.backgroundColor = defaultColors[
-                        i % defaultColors.length
-                    ]!.replace(")", ", 1)");
-                    current_plot.stepped = true;
-                    current_plot.cubicInterpolationMode = "monotone";
-                }
-                datasets.push(current_plot);
+				// If only one timestep is available, it should be a bar plot
+				if (Object.keys(current_plot.data).length == 1) {
+					plot_type = 'bar';
+				}
 
-                i++;
-            }
-        }
+				// Demand is plotted in a different way than the other plots
+				if (plot_name == 'demand') {
+					current_plot.label = 'Demand';
+					current_plot.type = 'line';
+					current_plot.stack = 'ownCustomStack';
+					current_plot.fill = false;
+					current_plot.borderColor = 'black';
+					current_plot.backgroundColor = 'white';
+					current_plot.borderWidth = 2;
+					current_plot.stepped = true;
+					if (Object.keys(current_plot.data).length == 1) {
+						current_plot.pointRadius = 2;
+					}
+				} else {
+					current_plot.type = plot_type;
+					current_plot.fill = 'origin';
+					current_plot.borderColor = defaultColors[i % defaultColors.length];
+					current_plot.backgroundColor = defaultColors[i % defaultColors.length]!.replace(
+						')',
+						', 1)'
+					);
+					current_plot.stepped = true;
+					current_plot.cubicInterpolationMode = 'monotone';
+				}
+				datasets.push(current_plot);
 
-        // Finalize plot-config
-        config.data.labels = Object.keys(datasets[0].data);
-        config.data.datasets = datasets;
-        config.options.scales.y.title.text = "Power [" + unit + "]";
+				i++;
+			}
+		}
 
-        fetching = false;
-        plot_ready = true;
-        await tick();
+		// Finalize plot-config
+		labels = Object.keys(datasets[0].data);
 
-        let solution_names = selected_solution!.solution_name.split(".");
+		fetching = false;
+		plot_ready = true;
+		await tick();
 
-        // Define the filename when downloading
-        plot_name = [
-            solution_names[solution_names?.length - 1],
-            selected_solution?.scenario_name,
-            "balance",
-            selected_carrier,
-            selected_node,
-            selected_year,
-        ].join("_");
-    }
+		let solution_names = selected_solution!.solution_name.split('.');
+
+		// Define the filename when downloading
+		plot_name = [
+			solution_names[solution_names?.length - 1],
+			selected_solution?.scenario_name,
+			'balance',
+			selected_carrier,
+			selected_node,
+			selected_year
+		].join('_');
+	}
 </script>
 
-<div class="row">
-    <div class="col">
-        <h2>The Energy Balance</h2>
-    </div>
+<h2>The Energy Balance</h2>
+<div class="position-relative">
+	<div class="filters">
+		<div class="accordion" id="accordionExample">
+			<div class="accordion-item solution-selection">
+				<h2 class="accordion-header">
+					<button
+						class="accordion-button"
+						type="button"
+						data-bs-toggle="collapse"
+						data-bs-target="#collapseOne"
+						aria-expanded="true"
+						aria-controls="collapseOne"
+					>
+						Solution Selection
+					</button>
+				</h2>
+				<div id="collapseOne" class="accordion-collapse collapse show">
+					<div class="accordion-body">
+						<SolutionFilter
+							bind:carriers
+							bind:nodes
+							bind:years
+							bind:selected_solution
+							bind:loading={solution_loading}
+							solution_selected={solution_changed}
+							enabled={!solution_loading && !fetching}
+						/>
+					</div>
+				</div>
+			</div>
+			{#if !solution_loading && selected_solution}
+				<div class="accordion-item">
+					<h2 class="accordion-header">
+						<button
+							class="accordion-button"
+							type="button"
+							data-bs-toggle="collapse"
+							data-bs-target="#collapseTwo"
+							aria-expanded="false"
+							aria-controls="collapseTwo"
+						>
+							Data selection
+						</button>
+					</h2>
+					<div id="collapseTwo" class="accordion-collapse collapse show">
+						<div class="accordion-body">
+							<div class="row">
+								<div class="col-6">
+									<h3>Year</h3>
+									<Dropdown
+										options={years}
+										bind:selected_option={selected_year}
+										selection_changed={data_changed}
+										enabled={!fetching && !solution_loading}
+									></Dropdown>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-6">
+									<h3>Node</h3>
+									<Dropdown
+										options={nodes}
+										bind:selected_option={selected_node}
+										selection_changed={data_changed}
+										enabled={!fetching && !solution_loading}
+									></Dropdown>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-6">
+									<h3>Carrier</h3>
+									<Dropdown
+										options={carriers}
+										bind:selected_option={selected_carrier}
+										selection_changed={data_changed}
+										enabled={!fetching && !solution_loading}
+									></Dropdown>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-6">
+									<h3>Smoothing Window Size</h3>
+									<Dropdown
+										options={window_sizes}
+										bind:selected_option={selected_window_size}
+										selection_changed={data_changed}
+										enabled={!fetching && !solution_loading}
+									></Dropdown>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			{/if}
+		</div>
+	</div>
 </div>
-<div class="row">
-    <div class="col position-relative">
-        <div class="filters">
-            <div class="accordion" id="accordionExample">
-                <div class="accordion-item solution-selection">
-                    <h2 class="accordion-header">
-                        <button
-                            class="accordion-button"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#collapseOne"
-                            aria-expanded="true"
-                            aria-controls="collapseOne"
-                        >
-                            Solution Selection
-                        </button>
-                    </h2>
-                    <div
-                        id="collapseOne"
-                        class="accordion-collapse collapse show"
-                        data-bs-parent="#accordionExample"
-                    >
-                        <div class="accordion-body">
-                            <SolutionFilter
-                                on:solution_selected={solution_changed}
-                                bind:carriers
-                                bind:nodes
-                                bind:years
-                                bind:selected_solution
-                                bind:loading={solution_loading}
-                                enabled={!solution_loading && !fetching}
-                            />
-                        </div>
-                    </div>
-                </div>
-                {#if !solution_loading && selected_solution}
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button
-                                class="accordion-button collapsed"
-                                type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#collapseTwo"
-                                aria-expanded="false"
-                                aria-controls="collapseTwo"
-                            >
-                                Data selection
-                            </button>
-                        </h2>
-                        <div
-                            id="collapseTwo"
-                            class="accordion-collapse collapse"
-                            data-bs-parent="#accordionExample"
-                        >
-                            <div class="accordion-body">
-                                <div class="row">
-                                    <div class="col-6">
-                                        <h3>Year</h3>
-                                        <Dropdown
-                                            bind:options={years}
-                                            bind:selected_option={selected_year}
-                                            on:selection-changed={data_changed}
-                                            enabled={!fetching &&
-                                                !solution_loading}
-                                        ></Dropdown>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <h3>Node</h3>
-                                        <Dropdown
-                                            bind:options={nodes}
-                                            bind:selected_option={selected_node}
-                                            on:selection-changed={data_changed}
-                                            enabled={!fetching &&
-                                                !solution_loading}
-                                        ></Dropdown>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <h3>Carrier</h3>
-                                        <Dropdown
-                                            bind:options={carriers}
-                                            bind:selected_option={selected_carrier}
-                                            on:selection-changed={data_changed}
-                                            enabled={!fetching &&
-                                                !solution_loading}
-                                        ></Dropdown>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-6">
-                                        <h3>Smoothing Window Size</h3>
-                                        <Dropdown
-                                            bind:options={window_sizes}
-                                            bind:selected_option={selected_window_size}
-                                            on:selection-changed={data_changed}
-                                            enabled={!fetching &&
-                                                !solution_loading}
-                                        ></Dropdown>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {/if}
-            </div>
-        </div>
-    </div>
+<div class="mt-4">
+	{#if fetching}
+		<div class="text-center">
+			<div class="spinner-border center" role="status">
+				<span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	{/if}
+	{#if !fetching && plot_ready}
+		<div style="position: relative;">
+			<BarPlot config={plot_config} {plot_name} zoom={true}></BarPlot>
+		</div>
+	{/if}
 </div>
-<div class="row">
-    <div class="col mt-4">
-        {#if fetching}
-            <div class="text-center">
-                <div class="spinner-border center" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        {/if}
-        {#if !fetching && plot_ready}
-            <div style="position: relative;">
-                <BarPlot zoom={true} bind:config bind:plot_name></BarPlot>
-            </div>
-        {/if}
-    </div>
-</div>
-
-<style>
-    .hidden {
-        opacity: 0;
-    }
-</style>

@@ -1,46 +1,51 @@
 <script lang="ts">
-	import type {
-		Solution,
-		SolutionDetail,
-		ActivatedSolution,
-		ScenarioDetail,
-	} from "$lib/types";
-	import { get_solutions, get_solution_detail } from "$lib/temple";
+	import type { Solution, SolutionDetail, ActivatedSolution, ScenarioDetail } from '$lib/types';
+	import { get_solutions, get_solution_detail } from '$lib/temple';
 
-	import { onMount, tick, createEventDispatcher } from "svelte";
-
-	const dispatch = createEventDispatcher<{
-		solution_selected: ActivatedSolution | null;
-	}>();
+	import { onMount } from 'svelte';
 
 	interface Levels {
 		[key: string]: string[];
 	}
 
 	let solution_list: Array<Solution> = [];
-	let levels: Levels = {};
-	let active_scenario: string;
-	let solution_detail: SolutionDetail | undefined = undefined;
+	let levels: Levels = $state({});
+	let active_scenario: string = $state('');
+	let solution_detail: SolutionDetail | undefined = $state(undefined);
 	let active_scenario_detail: ScenarioDetail | null = null;
 	let solution_names: string[][] = [];
-	let active_first_level: string;
+	let active_first_level: string = $state('');
 	let active_solution_name: string;
-	let active_second_level: string | null = null;
-	let second_levels: string[] = [];
+	let active_second_level: string | null = $state(null);
+	let second_levels: string[] = $state([]);
 
-	export let carriers: string[] = [];
-	export let nodes: string[] = [];
-	export let edges: string[] = [];
-	export let years: number[] = [];
-	export let selected_solution: ActivatedSolution | null;
-	export let loading: boolean = false;
-	export let enabled: boolean = true;
+	interface Props {
+		carriers?: string[];
+		nodes?: string[];
+		edges?: string[];
+		years?: number[];
+		selected_solution: ActivatedSolution | null;
+		loading?: boolean;
+		enabled?: boolean;
+		solution_selected: (selected_solution: ActivatedSolution | null) => void;
+	}
+
+	let {
+		carriers = $bindable([]),
+		nodes = $bindable([]),
+		edges = $bindable([]),
+		years = $bindable([]),
+		selected_solution = $bindable(),
+		loading = $bindable(false),
+		enabled = true,
+		solution_selected
+	}: Props = $props();
 
 	onMount(async function () {
 		solution_list = await get_solutions();
 		solution_names = [];
 		for (const solution of solution_list) {
-			let current_names = solution.name.split(".");
+			let current_names = solution.name.split('.');
 			solution_names.push(current_names);
 			if (!(current_names[0] in levels)) {
 				levels[current_names[0]] = [];
@@ -61,7 +66,7 @@
 	}
 
 	function second_level_changed() {
-		active_solution_name = active_first_level + "." + active_second_level;
+		active_solution_name = active_first_level + '.' + active_second_level;
 		update_solution_details();
 	}
 
@@ -75,8 +80,8 @@
 			dispatch_solution();
 		} else {
 			selected_solution = null;
-			active_scenario = "";
-			dispatch("solution_selected", null);
+			active_scenario = '';
+			solution_selected(null);
 		}
 		loading = false;
 	}
@@ -92,7 +97,7 @@
 			scenario_name: active_scenario,
 			detail: active_scenario_detail,
 			components: solution_detail.components,
-			version: solution_detail.version,
+			version: solution_detail.version
 		};
 
 		selected_solution = activated_solution;
@@ -101,29 +106,28 @@
 			return;
 		}
 
-		carriers = selected_solution.detail.system.set_carriers;
+		carriers = selected_solution.detail.system.set_carriers.slice();
 		nodes = selected_solution.detail.system.set_nodes;
 		edges = Object.keys(selected_solution.detail.edges);
-		let years_index = [
-			...Array(selected_solution.detail.system.optimized_years).keys(),
-		];
+		let years_index = [...Array(selected_solution.detail.system.optimized_years).keys()];
 		years = years_index.map(
 			(i) =>
 				i * selected_solution!.detail.system.interval_between_years +
-				selected_solution!.detail.system.reference_year,
+				selected_solution!.detail.system.reference_year
 		);
 
-		dispatch("solution_selected", activated_solution);
+		solution_selected(activated_solution);
 	}
 </script>
 
-<div class="row">
-	<div class="col">
+<div class="row align-items-end">
+	<div class="col-4">
 		<h3>Solution</h3>
 		<select
+			class="form-select"
 			bind:value={active_first_level}
-			on:change={() => first_level_changed()}
 			disabled={!enabled}
+			onchange={first_level_changed}
 		>
 			{#each Object.keys(levels) as solution}
 				<option value={solution}>
@@ -131,11 +135,15 @@
 				</option>
 			{/each}
 		</select>
-		{#if second_levels.length > 0}
+	</div>
+	{#if second_levels.length > 0}
+		<div class="col-4">
+			<h3>Subsolution</h3>
 			<select
+				class="form-select"
 				bind:value={active_second_level}
-				on:change={() => second_level_changed()}
 				disabled={!enabled}
+				onchange={second_level_changed}
 			>
 				{#each second_levels as solution}
 					<option value={solution}>
@@ -143,18 +151,17 @@
 					</option>
 				{/each}
 			</select>
-		{/if}
-	</div>
-</div>
+		</div>
+	{/if}
 
-{#if solution_detail != null && Object.keys(solution_detail.scenarios).length > 1}
-	<div class="row">
-		<div class="col">
+	{#if solution_detail != null && Object.keys(solution_detail.scenarios).length > 1}
+		<div class="col-4">
 			<h3>Scenario</h3>
 			<select
+				class="form-select"
 				bind:value={active_scenario}
-				on:change={() => dispatch_solution()}
 				disabled={!enabled}
+				onchange={dispatch_solution}
 			>
 				{#each Object.keys(solution_detail.scenarios) as scenario}
 					<option value={scenario}>
@@ -163,5 +170,5 @@
 				{/each}
 			</select>
 		</div>
-	</div>
-{/if}
+	{/if}
+</div>
