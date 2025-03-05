@@ -1,27 +1,34 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-    export let options: any[];
-    export let selected_option: any = options[0];
-    export let enabled: boolean = true;
-    let uniqueID = options.join("_");
+	interface Props {
+		options: any[];
+		selected_option?: any;
+		enabled?: boolean;
+		selection_changed: (selected_option: any) => void;
+	}
 
-    const dispatch = createEventDispatcher();
+	let {
+		options,
+		selected_option = $bindable(options[0]),
+		enabled = true,
+		selection_changed
+	}: Props = $props();
 
-    function update_selection() {
-        dispatch("selection-changed", selected_option);
-    }
+	function update_selection() {
+		selection_changed(selected_option);
+	}
 </script>
 
 <div class="dropdown">
-    <select
-        bind:value={selected_option}
-        on:change={() => update_selection()}
-        disabled={!enabled}
-    >
-        {#each options as option}
-            <option value={option}>
-                {option}
-            </option>
-        {/each}
-    </select>
+	<select
+		class="form-select"
+		bind:value={selected_option}
+		onchange={() => update_selection()}
+		disabled={!enabled}
+	>
+		{#each options as option}
+			<option value={option}>
+				{option}
+			</option>
+		{/each}
+	</select>
 </div>

@@ -1,71 +1,63 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-    import { onMount } from "svelte";
-    export let elements: any[];
-    export let selected_elements: any[];
-    export let enabled: boolean = true;
+	interface Props {
+		elements: any[];
+		selected_elements: any[];
+		enabled?: boolean;
+		selection_changed: (selected_elements: any[]) => void;
+	}
 
-    const dispatch = createEventDispatcher();
-    let id = "";
+	let {
+		elements,
+		selected_elements = $bindable(elements),
+		enabled = true,
+		selection_changed
+	}: Props = $props();
+	let id = $props.id();
 
-    let all_select: boolean = false;
-    // Values that are passed in as props
-    // are immediately available
+	let all_selected: boolean = $derived(selected_elements.length == elements.length);
 
-    function update_all() {
-        if (all_select) {
-            selected_elements = elements;
-        } else {
-            selected_elements = [];
-        }
+	function toggleAll() {
+		if (all_selected) {
+			selected_elements = [];
+		} else {
+			selected_elements = elements;
+		}
+		selection_changed(selected_elements);
+	}
 
-        update_all_checkbox();
-    }
-
-    function update_all_checkbox() {
-        all_select = selected_elements.length == elements.length;
-        dispatch("selection-changed", selected_elements);
-    }
-
-    onMount(() => {
-        selected_elements = elements;
-        id = Math.random().toString(16).slice(2);
-        update_all_checkbox();
-    });
-
-    $: () => {
-        update_all_checkbox();
-    };
+	function dispatchEvent() {
+		selection_changed(selected_elements);
+	}
 </script>
 
-<form>
-    <div class="form-check form-check-inline">
-        <input
-            class="form-check-input"
-            type="checkbox"
-            bind:checked={all_select}
-            on:change={update_all}
-            id={"all_checkbox_" + id}
-            disabled={!enabled}
-        />
-        <label class="form-check-label" for={"all_checkbox_" + id}>
-            Select all
-        </label>
-    </div>
-    {#each elements as element, i}
-        <div class="form-check form-check-inline">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                value={element}
-                bind:group={selected_elements}
-                id={element + "_checkbox_" + id}
-                on:change={update_all_checkbox}
-                disabled={!enabled}
-            />
-            <label class="form-check-label" for={element + "_checkbox"}>
-                {element}
-            </label>
-        </div>
-    {/each}
-</form>
+<div class="form-group">
+	<button
+		class="btn btn-outline-primary btn-sm"
+		style="min-width: 100px"
+		onclick={toggleAll}
+		id={`all_checkbox_${id}`}
+		disabled={!enabled}
+	>
+		{#if all_selected}
+			Deselect all
+		{:else}
+			Select all
+		{/if}
+	</button>
+	{#each elements as element, i}
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input"
+				type="checkbox"
+				value={element}
+				bind:group={selected_elements}
+				id={`${element}_checkbox_${id}`}
+				onchange={dispatchEvent}
+				disabled={!enabled}
+			/>
+			<label class="form-check-label" for={`${element}_checkbox_${id}`}>
+				{element}
+			</label>
+		</div>
+	{/each}
+</div>

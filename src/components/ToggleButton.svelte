@@ -1,29 +1,27 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
-    import { onMount } from "svelte";
+	interface Props {
+		value: boolean;
+		texts?: string[];
+		change: () => void;
+	}
 
-    export let value: boolean;
-    export let texts: string[] = ["on", "off"];
-    let id = "";
+	let { value = $bindable(), texts = ['on', 'off'], change }: Props = $props();
+	let id = $props.id();
 
-    onMount(() => {
-        id = Math.random().toString(16).slice(2);
-    });
-
-    const dispatch = createEventDispatcher();
+	function dispatchEvent() {
+		change();
+	}
 </script>
 
 <div class="toggle">
-    <input
-        type="checkbox"
-        class="btn-check"
-        id={"btn-check-outlined" + id}
-        bind:checked={value}
-        on:change={() => {
-            dispatch("change");
-        }}
-    />
-    <label class="btn btn-outline-primary btn-sm" for={"btn-check-outlined" + id}
-        >{value ? texts[0] : texts[1]}</label
-    >
+	<input
+		type="checkbox"
+		class="btn-check"
+		id={`btn-check-outlined-${id}`}
+		bind:checked={value}
+		onchange={dispatchEvent}
+	/>
+	<label class="btn btn-outline-primary btn-sm" for={`btn-check-outlined-${id}`}>
+		{value ? texts[0] : texts[1]}
+	</label>
 </div>
