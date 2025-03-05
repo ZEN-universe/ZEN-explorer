@@ -1,10 +1,5 @@
 <script lang="ts">
-	import { createBubbler } from 'svelte/legacy';
-
-	const bubble = createBubbler();
-	import { createEventDispatcher, onMount } from 'svelte';
-
-	const dispatch = createEventDispatcher();
+	import { onMount } from 'svelte';
 
 	interface Props {
 		isOpen?: boolean;
@@ -12,6 +7,10 @@
 		toggle?: ((e: Event) => void) | undefined;
 		external?: import('svelte').Snippet;
 		children?: import('svelte').Snippet;
+		open?: () => void;
+		opening?: () => void;
+		close?: () => void;
+		closing?: () => void;
 	}
 
 	let {
@@ -19,7 +18,11 @@
 		header = undefined,
 		toggle = undefined,
 		external,
-		children
+		children,
+		open = () => {},
+		opening = () => {},
+		close = () => {},
+		closing = () => {}
 	}: Props = $props();
 
 	let hasOpened = false;
@@ -55,7 +58,7 @@
 	}
 
 	function onModalOpened() {
-		dispatch('open');
+		open();
 		_removeEscListener = browserEvent(document, 'keydown', (event) => {
 			if (event instanceof KeyboardEvent && event.key && event.key === 'Escape') {
 				if (toggle) {
@@ -67,14 +70,14 @@
 	}
 
 	function onModalClosing() {
-		dispatch('closing');
+		closing();
 		if (_removeEscListener) {
 			_removeEscListener();
 		}
 	}
 
 	function onModalClosed() {
-		dispatch('close');
+		close();
 		if (_isMounted) {
 			hasOpened = false;
 		}
@@ -160,7 +163,7 @@
 				aria-labelledby="modal-1"
 				class="modal fade"
 				role="dialog"
-				onintrostart={() => dispatch('opening')}
+				onintrostart={opening}
 				onintroend={onModalOpened}
 				onoutrostart={onModalClosing}
 				onoutroend={onModalClosed}
@@ -185,13 +188,7 @@
 </div>
 
 {#if isOpen}
-	<div
-		role="presentation"
-		class="modal-backdrop fade"
-		in:backdropIn
-		out:backdropOut
-		onclick={bubble('click')}
-	></div>
+	<div role="presentation" class="modal-backdrop fade" in:backdropIn out:backdropOut></div>
 {/if}
 
 <style>

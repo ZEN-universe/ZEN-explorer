@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	interface Props {
 		options: any[];
 		selected_option?: any;
