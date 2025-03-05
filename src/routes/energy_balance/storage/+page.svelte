@@ -10,7 +10,7 @@
     import Papa from "papaparse";
     import { get_variable_name } from "$lib/variables";
     import ToggleButton from "../../../components/ToggleButton.svelte";
-    import type { ChartConfiguration } from "chart.js";
+    import type { ChartConfiguration, Point } from "chart.js";
 
     interface StringList {
         [key: string]: string[];
@@ -47,6 +47,9 @@
     let window_sizes = ["Hourly", "Daily", "Weekly", "Monthly"];
     let selected_window_size = "Hourly";
 
+    let level_plot_zoom: (min: number, max: number) => void;
+    let flow_plot_zoom: (min: number, max: number) => void;
+
     let plot_config: ChartConfiguration<"line", { x: string; y: number }[], string> = {
         counter: 1,
         type: "line",
@@ -70,7 +73,7 @@
                 },
                 y: {
                     type: "linear",
-                    stacked: false,
+                    stacked: true,
                     beginAtZero: true,
                     title: {
                         display: true,
@@ -85,6 +88,9 @@
                         enabled: true,
                         modifierKey: "ctrl",
                         mode: "x",
+                        onPanComplete: (event) => {
+                            flow_plot_zoom(event.chart.scales.x.min, event.chart.scales.x.max);
+                        },
                     },
                     zoom: {
                         drag: {
@@ -94,6 +100,12 @@
                             enabled: true,
                         },
                         mode: "x",
+                        onZoomComplete: (event) => {
+                            flow_plot_zoom(event.chart.scales.x.min, event.chart.scales.x.max);
+                        },
+                    },
+                    limits: {
+                        x: {minRange: 10}
                     },
                 },
             },
@@ -138,6 +150,9 @@
                         enabled: true,
                         modifierKey: "ctrl",
                         mode: "x",
+                        onPanComplete: (event) => {
+                            level_plot_zoom(event.chart.scales.x.min, event.chart.scales.x.max);
+                        },
                     },
                     zoom: {
                         drag: {
@@ -147,6 +162,12 @@
                             enabled: true,
                         },
                         mode: "x",
+                        onZoomComplete: (event) => {
+                            level_plot_zoom(event.chart.scales.x.min, event.chart.scales.x.max);
+                        },
+                    },
+                    limits: {
+                        x: {minRange: 10}
                     },
                 },
             },
@@ -407,10 +428,8 @@
             "_discharge",
         ).map((dataset) => {
             let data: { [key: string]: number } = {};
-            for (let i in Object.keys(dataset.data)) {
-                if (dataset.data[i] > 0) {
-                    data[i] = -dataset.data[i];
-                }
+            for (let i in dataset.data) {
+                data[i] = dataset.data[i] > 0 ? -dataset.data[i] : dataset.data[i];
             }
             return {
                 data,
@@ -430,10 +449,8 @@
             "_spillage",
         ).map((dataset) => {
             let data: { [key: string]: number } = {};
-            for (let i in Object.keys(dataset.data)) {
-                if (dataset.data[i] > 0) {
-                    data[i] = -dataset.data[i];
-                }
+            for (let i in dataset.data) {
+                data[i] = dataset.data[i] > 0 ? -dataset.data[i] : dataset.data[i];
             }
             return {
                 data,
@@ -719,9 +736,9 @@
             <div class="text-center">No data with this selection.</div>
         {:else}
             <!-- TODO: Sync zoom between these two plots -->
-            <BarPlot bind:config={plot_config} bind:plot_name zoom={true}
+            <BarPlot bind:config={plot_config} bind:plot_name zoom={true} bind:zoom_rect={level_plot_zoom}
             ></BarPlot>
-            <BarPlot bind:config={plot_config_flows} bind:plot_name={plot_name_flows} zoom={true}
+            <BarPlot bind:config={plot_config_flows} bind:plot_name={plot_name_flows} zoom={true} bind:zoom_rect={flow_plot_zoom}
             ></BarPlot>
         {/if}
     </div>

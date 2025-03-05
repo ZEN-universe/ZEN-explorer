@@ -7,6 +7,13 @@
     export let zoom = false;
     export let plot_name = "plot_data";
 
+    export function zoom_rect(min: number, max: number) {
+        if (chart == undefined || chart.canvas == null) {
+            return;
+        }
+        chart.zoomScale('x', { min, max });
+    }
+
     onMount(async () => {
         const zoomPlugin = (await import("chartjs-plugin-zoom")).default;
         Chart.register(zoomPlugin);
