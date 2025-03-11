@@ -149,7 +149,7 @@
 	}
 
 	/**
-	 * This function updates the avaible carriers for the current variable selection.
+	 * This function updates the available carriers for the current variable selection.
 	 */
 	function update_carriers() {
 		carriers = [];
@@ -176,7 +176,7 @@
 	}
 
 	/**
-	 * This function updates the avaible locations for the current variable selection.
+	 * This function updates the available locations for the current variable selection.
 	 */
 	function update_locations() {
 		locations = [];
@@ -201,21 +201,20 @@
 	 * This function returns the relevant technologies given the currently selected technology type
 	 */
 	function get_technologies_by_type() {
-		let ans: string[] = [];
+		if (!selected_solution || !selected_technology_type) {
+			return [];
+		}
 
 		switch (selected_technology_type) {
 			case 'conversion':
-				ans = selected_solution!.detail.system.set_conversion_technologies;
-				break;
+				return selected_solution.detail.system.set_conversion_technologies;
 			case 'storage':
-				ans = selected_solution!.detail.system.set_storage_technologies;
-				break;
+				return selected_solution.detail.system.set_storage_technologies;
 			case 'transport':
-				ans = selected_solution!.detail.system.set_transport_technologies;
-				break;
+				return selected_solution.detail.system.set_transport_technologies;
 		}
 
-		return ans;
+		return [];
 	}
 
 	/**
