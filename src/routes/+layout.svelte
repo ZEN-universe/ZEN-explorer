@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import { page } from '$app/stores';
+	import { PUBLIC_APP_NAME } from '$env/static/public';
+
 	interface Props {
 		children?: import('svelte').Snippet;
 	}
@@ -19,6 +21,10 @@
 		Storage: base + '/energy_balance/storage'
 	};
 </script>
+
+<svelte:head>
+	<title>{PUBLIC_APP_NAME}</title>
+</svelte:head>
 
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
 	<div class="container">
