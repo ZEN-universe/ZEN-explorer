@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { base } from '$app/paths';
 	import { page } from '$app/stores';
-	import { PUBLIC_APP_NAME } from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -23,7 +23,7 @@
 </script>
 
 <svelte:head>
-	<title>{PUBLIC_APP_NAME}</title>
+	<title>{env.PUBLIC_APP_NAME}</title>
 </svelte:head>
 
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
