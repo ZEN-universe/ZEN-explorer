@@ -29,7 +29,7 @@
 </script>
 
 <svelte:head>
-	<title>{env.PUBLIC_APP_NAME}</title>
+	<title>{env.PUBLIC_APP_NAME || 'ZEN Garden'}</title>
 </svelte:head>
 
 <nav class="navbar navbar-expand-lg bg-body-tertiary">

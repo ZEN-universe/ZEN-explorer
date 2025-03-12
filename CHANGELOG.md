@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3 (2025-03-12)
+
+- Add default app name.
+
 ## 0.4.2 (2025-03-12)
 
 - Import bootstrap inside `layout.svelte`.
