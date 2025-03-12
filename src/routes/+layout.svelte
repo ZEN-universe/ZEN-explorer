@@ -1,6 +1,10 @@
 <script lang="ts">
+	import 'bootstrap/dist/css/bootstrap.min.css';
+	import 'bootstrap-icons/font/bootstrap-icons.min.css';
+	import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+
 	import { base } from '$app/paths';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 	import { env } from '$env/dynamic/public';
 
 	interface Props {
@@ -20,6 +24,8 @@
 		Nodal: base + '/energy_balance/nodal',
 		Storage: base + '/energy_balance/storage'
 	};
+
+	let currentPage = $derived(page.url.pathname.slice(0, -1));
 </script>
 
 <svelte:head>
@@ -55,9 +61,7 @@
 					<ul class="dropdown-menu">
 						{#each Object.entries(transition_urls) as [title, url]}
 							<li>
-								<a class="dropdown-item {$page.url.pathname == url ? 'active' : ''}" href={url}
-									>{title}</a
-								>
+								<a class={['dropdown-item', currentPage == url && 'active']} href={url}>{title}</a>
 							</li>
 						{/each}
 					</ul>
@@ -75,9 +79,7 @@
 					<ul class="dropdown-menu">
 						{#each Object.entries(energy_balance_urls) as [title, url]}
 							<li>
-								<a class="dropdown-item {$page.url.pathname == url ? 'active' : ''}" href={url}
-									>{title}</a
-								>
+								<a class={['dropdown-item', currentPage == url && 'active']} href={url}>{title}</a>
 							</li>
 						{/each}
 					</ul>
