@@ -440,7 +440,7 @@
 			set_cost_carriers.add(row[combined_name]);
 		}
 
-		carriers = selected_solution!.detail.system.set_carriers;
+		carriers = selected_solution!.detail.system.set_carriers.slice();
 		cost_carriers = selected_solution!.detail.carriers_import
 			.concat(selected_solution!.detail.carriers_export)
 			.filter((i) => set_cost_carriers.has(i));
