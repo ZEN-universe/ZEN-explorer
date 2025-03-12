@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.4 (2025-03-12)
+
+- Set default title to "ZEN-garden Visualization".
+
 ## 0.4.3 (2025-03-12)
 
 - Add default app name.
