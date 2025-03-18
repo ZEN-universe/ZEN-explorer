@@ -167,25 +167,26 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
 		data_csv = years.substring(0, years.length - 1) + '\n' + data.substring(0, data.length - 1);
 	}
 
-	// Define header-transform-function that translates the years of index to actual years
-	function transform_year(h: string): string {
-		if (!isNaN(Number(h))) {
-			return String(Number(h) * step_year + start_year);
-		}
-		return h;
-	}
-
 	// Remove trailing new line if necessary
 	if (data_csv.slice(-1) == '\n') {
 		data_csv = data_csv.slice(0, -1);
 	}
 
+	// Define preprocess function that translates the years of index to actual years because the transform_headers visits the function twice and therefore does Number(h) * 2 step_year + 2 * start_year
+	function preprocessCSV(input: string): string {
+		let [header, ...lines] = input.split("\n");
+		let headers = header.split(",");
+
+		// Modify numeric headers
+		headers = headers.map(h => (!isNaN(Number(h)) ? String(Number(h) * step_year + start_year) : h));
+
+		return [headers.join(","), ...lines].join("\n");
+	}
 	// Parse CSV
-	let data: Papa.ParseResult<Row> = Papa.parse(data_csv, {
+	let data: Papa.ParseResult<Row> = Papa.parse(preprocessCSV(data_csv), {
 		delimiter: ',',
 		header: true,
-		newline: '\n',
-		transformHeader: transform_year
+		newline: '\n'
 	});
 
 	return data;
@@ -221,7 +222,6 @@ export async function get_component_total(
 	}
 
 	let component_data = await component_data_request.json();
-
 	let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv, start_year, step_year);
 	let unit: Papa.ParseResult<Row> | null = null;
 
