@@ -84,6 +84,9 @@
 						{/each}
 					</ul>
 				</li>
+				<li class="nav-item">
+					<a href="/map" class={['nav-link', currentPage == '/map' && 'active']}>The Map</a>
+				</li>
 			</ul>
 		</div>
 	</div>
