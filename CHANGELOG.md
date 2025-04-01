@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 (tbd)
+
+- Add map plot
+
+## 0.4.5 (2025-03-18)
+
+- Fix error if time series is empty
+- Fix that conversion to reference year happens twice
+
 ## 0.4.4 (2025-03-12)
 
 - Set default title to "ZEN-garden Visualization".

@@ -174,13 +174,15 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
 
 	// Define preprocess function that translates the years of index to actual years because the transform_headers visits the function twice and therefore does Number(h) * 2 step_year + 2 * start_year
 	function preprocessCSV(input: string): string {
-		let [header, ...lines] = input.split("\n");
-		let headers = header.split(",");
+		let [header, ...lines] = input.split('\n');
+		let headers = header.split(',');
 
 		// Modify numeric headers
-		headers = headers.map(h => (!isNaN(Number(h)) ? String(Number(h) * step_year + start_year) : h));
+		headers = headers.map((h) =>
+			!isNaN(Number(h)) ? String(Number(h) * step_year + start_year) : h
+		);
 
-		return [headers.join(","), ...lines].join("\n");
+		return [headers.join(','), ...lines].join('\n');
 	}
 	// Parse CSV
 	let data: Papa.ParseResult<Row> = Papa.parse(preprocessCSV(data_csv), {
