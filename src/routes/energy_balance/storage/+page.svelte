@@ -216,50 +216,50 @@
 				break;
 		}
 
-		let levelResponse = await get_full_ts(
-			selected_solution!.solution_name,
-			get_variable_name('storage_level'),
-			selected_solution!.scenario_name,
-			year_index,
-			window_size
-		);
+		const [levelResponse, chargeResponse, dischargeResponse, spillageResponse, inflowResponse] =
+			await Promise.all([
+				get_full_ts(
+					selected_solution!.solution_name,
+					get_variable_name('storage_level'),
+					selected_solution!.scenario_name,
+					year_index,
+					window_size
+				),
+				get_full_ts(
+					selected_solution!.solution_name,
+					get_variable_name('flow_storage_charge'),
+					selected_solution!.scenario_name,
+					year_index,
+					window_size
+				),
+				get_full_ts(
+					selected_solution!.solution_name,
+					get_variable_name('flow_storage_discharge'),
+					selected_solution!.scenario_name,
+					year_index,
+					window_size
+				),
+				get_full_ts(
+					selected_solution!.solution_name,
+					get_variable_name('flow_storage_spillage'),
+					selected_solution!.scenario_name,
+					year_index,
+					window_size
+				),
+				get_full_ts(
+					selected_solution!.solution_name,
+					get_variable_name('flow_storage_inflow'),
+					selected_solution!.scenario_name,
+					year_index,
+					window_size
+				)
+			]);
+
 		data = levelResponse.data;
 		unit = levelResponse.unit;
-
-		let chargeResponse = await get_full_ts(
-			selected_solution!.solution_name,
-			get_variable_name('flow_storage_charge'),
-			selected_solution!.scenario_name,
-			year_index,
-			window_size
-		);
 		chargeData = chargeResponse.data;
-
-		let dischargeResponse = await get_full_ts(
-			selected_solution!.solution_name,
-			get_variable_name('flow_storage_discharge'),
-			selected_solution!.scenario_name,
-			year_index,
-			window_size
-		);
 		dischargeData = dischargeResponse.data;
-
-		let spillageResponse = await get_full_ts(
-			selected_solution!.solution_name,
-			get_variable_name('flow_storage_spillage'),
-			selected_solution!.scenario_name,
-			year_index,
-			window_size
-		);
 		spillageData = spillageResponse.data;
-
-		let inflowResponse = await get_full_ts(
-			selected_solution!.solution_name,
-			get_variable_name('flow_storage_inflow'),
-			selected_solution!.scenario_name,
-			year_index,
-			window_size
-		);
 		inflowData = inflowResponse.data;
 	}
 
