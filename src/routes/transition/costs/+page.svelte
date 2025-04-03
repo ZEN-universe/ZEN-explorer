@@ -85,7 +85,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: 'Costs [' + get_unit() + ']'
+						text: `Costs [${get_unit()}]`
 					}
 				}
 			}

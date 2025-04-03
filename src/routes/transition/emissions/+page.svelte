@@ -57,7 +57,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: 'Emissions [' + get_unit() + ']'
+						text: `Emissions [${get_unit()}]`
 					}
 				}
 			}
