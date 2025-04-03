@@ -43,7 +43,6 @@
 
 	let datasets: any[] = $state([]);
 	let labels: string[] = $state([]);
-	let scaleYText: string = $state('');
 
 	let plot_config: ChartConfiguration<'bar'> = $derived({
 		type: 'bar',
@@ -62,7 +61,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: scaleYText
+						text: `${selected_variable} [${get_unit()}]`
 					}
 				}
 			}
@@ -304,9 +303,6 @@
 		);
 		datasets = filtered_data;
 		labels = selected_years.map((year) => year.toString());
-
-		// @ts-ignore
-		scaleYText = selected_variable + ' [' + get_unit() + ']';
 
 		let solution_names = selected_solution!.solution_name.split('.');
 		plot_name = [

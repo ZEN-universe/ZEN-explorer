@@ -80,7 +80,7 @@
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: 'Power [' + unit + ']'
+						text: `Power [${unit}]`
 					}
 				}
 			},

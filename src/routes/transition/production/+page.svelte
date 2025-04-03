@@ -48,7 +48,6 @@
 	let selected_aggregation = $state('node');
 
 	let labels: string[] = $state([]);
-	let scaleYText: string = $derived(selected_variable + ' [' + get_unit() + ']');
 
 	let plot_config: ChartConfiguration = $derived({
 		type: 'bar',
@@ -67,7 +66,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: scaleYText
+						text: `${selected_variable} [${get_unit()}]`
 					}
 				}
 			}
