@@ -26,7 +26,7 @@
 	let aggregation_options = $state(['technology', 'node']);
 	const normalisation_options = ['not_normalized', 'normalized'];
 	const storage_type_options = ['energy', 'power'];
-	let unit: Papa.ParseResult<Row> | null = null;
+	let units: { [carrier: string]: string } = $state({});
 	let selected_variable: string | null = $state(null);
 	let selected_carrier: string | null = $state(null);
 	let selected_storage_type = $state('energy');
@@ -43,7 +43,6 @@
 
 	let datasets: any[] = $state([]);
 	let labels: string[] = $state([]);
-	let scaleYText: string = $state('');
 
 	let plot_config: ChartConfiguration<'bar'> = $derived({
 		type: 'bar',
@@ -62,7 +61,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: scaleYText
+						text: `${selected_variable} [${technologies.length > 0 ? units[technologies[0]] : ''}]`
 					}
 				}
 			}
@@ -94,17 +93,21 @@
 			return;
 		}
 
-		get_component_total(
+		const fetched = await get_component_total(
 			selected_solution!.solution_name,
 			selected_variable,
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years
-		).then((fetched) => {
-			data = fetched.data;
-			unit = fetched.unit;
-			fetching = false;
-		});
+		);
+
+		data = fetched.data;
+
+		if (fetched.unit?.data) {
+			units = Object.fromEntries(fetched.unit.data.map((u) => [u.technology, u[0] || u.units]));
+		}
+
+		fetching = false;
 	}
 
 	/**
@@ -218,28 +221,6 @@
 	}
 
 	/**
-	 * This function returns the unit of the currently selected variable
-	 */
-	function get_unit() {
-		if (unit != null) {
-			for (const u of unit.data) {
-				if (!u.capacity_type) {
-					continue;
-				}
-
-				if (selected_technology_type == 'storage' && selected_storage_type != u.capacity_type) {
-					continue;
-				}
-
-				if (technologies[0] == u.technology) {
-					return u[0] || u['units'] || '';
-				}
-			}
-		}
-		return '';
-	}
-
-	/**
 	 * This function updates the available technologies depending on the currently selected carrier and resets the currently selected technologies.
 	 */
 	function update_technologies() {
@@ -303,9 +284,7 @@
 			selected_normalisation == 'normalized'
 		);
 		datasets = filtered_data;
-
-		// @ts-ignore
-		scaleYText = selected_variable + ' [' + get_unit() + ']';
+		labels = selected_years.map((year) => year.toString());
 
 		let solution_names = selected_solution!.solution_name.split('.');
 		plot_name = [

@@ -42,8 +42,8 @@
 	let years: number[] = $state([]);
 	let selected_year: number | null = $state(null);
 
-	let unit: string = '';
-	let plot_name = $state('');
+	let unit: string = $state('');
+	let plot_name: string = $state('');
 
 	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
 	let selected_window_size = $state('Hourly');
@@ -80,7 +80,7 @@
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: 'Power [' + unit + ']'
+						text: `Power [${unit}]`
 					}
 				}
 			},

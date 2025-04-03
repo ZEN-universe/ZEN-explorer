@@ -31,7 +31,7 @@
 	let locations: string[] = $state([]);
 	let technologies: string[] = $state([]);
 
-	let unit: Papa.ParseResult<Row> | null = null;
+	let units: {[carrier: string]: string} = $state({});
 
 	let selected_solution: ActivatedSolution | null = $state(null);
 	const selected_variable: string = 'storage_level';
@@ -56,6 +56,7 @@
 	let datasets: any[] = $state([]);
 	let flow_datasets: any[] = $state([]);
 	let labels: string[] = $state([]);
+	let unit: string = $derived(technologies.length > 0 ? units[technologies[0]] : '');
 
 	let plot_config: ChartConfiguration = $derived({
 		type: 'line',
@@ -82,7 +83,7 @@
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: `Storage Level [${get_unit()}]`
+						text: `Storage Level [${unit}]`
 					}
 				}
 			},
@@ -143,7 +144,7 @@
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: `Storage Flow [${get_unit()}]`
+						text: `Storage Flow [${unit}]`
 					}
 				}
 			},
@@ -216,50 +217,52 @@
 				break;
 		}
 
-		let levelResponse = await get_full_ts(
-			selected_solution!.solution_name,
-			get_variable_name('storage_level'),
-			selected_solution!.scenario_name,
-			year_index,
-			window_size
-		);
+		const [levelResponse, chargeResponse, dischargeResponse, spillageResponse, inflowResponse] =
+			await Promise.all([
+				get_full_ts(
+					selected_solution!.solution_name,
+					get_variable_name('storage_level'),
+					selected_solution!.scenario_name,
+					year_index,
+					window_size
+				),
+				get_full_ts(
+					selected_solution!.solution_name,
+					get_variable_name('flow_storage_charge'),
+					selected_solution!.scenario_name,
+					year_index,
+					window_size
+				),
+				get_full_ts(
+					selected_solution!.solution_name,
+					get_variable_name('flow_storage_discharge'),
+					selected_solution!.scenario_name,
+					year_index,
+					window_size
+				),
+				get_full_ts(
+					selected_solution!.solution_name,
+					get_variable_name('flow_storage_spillage'),
+					selected_solution!.scenario_name,
+					year_index,
+					window_size
+				),
+				get_full_ts(
+					selected_solution!.solution_name,
+					get_variable_name('flow_storage_inflow'),
+					selected_solution!.scenario_name,
+					year_index,
+					window_size
+				)
+			]);
+
 		data = levelResponse.data;
-		unit = levelResponse.unit;
-
-		let chargeResponse = await get_full_ts(
-			selected_solution!.solution_name,
-			get_variable_name('flow_storage_charge'),
-			selected_solution!.scenario_name,
-			year_index,
-			window_size
-		);
+		if (levelResponse.unit?.data) {
+			units = Object.fromEntries(levelResponse.unit.data.map((u) => [u.technology, u[0] || u.units]));
+		}
 		chargeData = chargeResponse.data;
-
-		let dischargeResponse = await get_full_ts(
-			selected_solution!.solution_name,
-			get_variable_name('flow_storage_discharge'),
-			selected_solution!.scenario_name,
-			year_index,
-			window_size
-		);
 		dischargeData = dischargeResponse.data;
-
-		let spillageResponse = await get_full_ts(
-			selected_solution!.solution_name,
-			get_variable_name('flow_storage_spillage'),
-			selected_solution!.scenario_name,
-			year_index,
-			window_size
-		);
 		spillageData = spillageResponse.data;
-
-		let inflowResponse = await get_full_ts(
-			selected_solution!.solution_name,
-			get_variable_name('flow_storage_inflow'),
-			selected_solution!.scenario_name,
-			year_index,
-			window_size
-		);
 		inflowData = inflowResponse.data;
 	}
 
@@ -307,13 +310,6 @@
 	function update_locations() {
 		locations = Array.from(new Set(data!.data.map((a) => a.node)));
 		selected_locations = locations;
-	}
-
-	/**
-	 * This function returns the unit of the currently selected variable
-	 */
-	function get_unit() {
-		return unit?.data[0][0] || unit?.data[0]['units'] || '';
 	}
 
 	/**
