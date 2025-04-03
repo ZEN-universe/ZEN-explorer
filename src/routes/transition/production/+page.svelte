@@ -26,7 +26,7 @@
 	});
 	const aggregation_options = ['technology', 'node'];
 	let filtered_data: any[] = $state([]);
-	let unit: Papa.ParseResult<any> | null = null;
+	let units: { [carrier: string]: string } = $state({});
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_variable: string | null = $state(null);
 	let selected_carrier: string | null = $state(null);
@@ -66,7 +66,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: `${selected_variable} [${get_unit()}]`
+						text: `${selected_variable} [${selected_carrier ? units[selected_carrier] : ''}]`
 					}
 				}
 			}
@@ -113,13 +113,6 @@
 	}
 
 	/**
-	 * This function returns the unit of the currently selected carrier
-	 */
-	function get_unit() {
-		return unit?.data[0][0] || unit?.data[0]['units'] || '';
-	}
-
-	/**
 	 * This function fetches the relevant data from the API server given the current selection
 	 */
 	async function fetch_data() {
@@ -147,9 +140,12 @@
 			return;
 		}
 		data = fetched.data;
-		unit = fetched.unit;
+
+		if (fetched.unit?.data) {
+			units = Object.fromEntries(fetched.unit.data.map((u) => [u.carrier, u[0] || u.units]));
+		}
+
 		fetching = false;
-		return;
 	}
 
 	/**

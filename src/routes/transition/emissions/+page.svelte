@@ -23,7 +23,7 @@
 	let selected_normalisation: string = $state('not_normalized');
 	let aggregation_options: string[] = $state([]);
 	let selected_locations: string[] = $state([]);
-	let unit: Papa.ParseResult<any> | null = null;
+	let units: { [carrier: string]: string } = $state({});
 	let filtered_data: any[] = $state([]);
 	let selected_variable: string | null = $state(null);
 	let selected_grouping: string | null = $state(null);
@@ -57,19 +57,12 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: `Emissions [${get_unit()}]`
+						text: `Emissions [${selected_carriers.length > 0 ? units[selected_carriers[0]] : ''}]`
 					}
 				}
 			}
 		}
 	});
-
-	/**
-	 * This function returns the unit string of the currently fetched unit data.
-	 */
-	function get_unit() {
-		return unit?.data[0][0] || unit?.data[0]['units'] || '';
-	}
 
 	/**
 	 * This function resets selected values of the form. It is called whenever the selected solution or the selected subdivision is changed.
@@ -167,7 +160,14 @@
 		carriers = [...set_carriers];
 		locations = [...set_locations];
 
-		unit = carbon_emissions_carrier.unit;
+		if (carbon_emissions_carrier.unit?.data) {
+			units = Object.fromEntries(
+				carbon_emissions_carrier.unit.data.map((unit) => {
+					return [unit.carrier, unit[0] || unit.units];
+				})
+			);
+		}
+
 		fetching = false;
 
 		update_filters();
@@ -215,17 +215,25 @@
 		}
 
 		// Get variable values
-		get_component_total(
+		const fetched = await get_component_total(
 			selected_solution!.solution_name,
 			variable_name,
 			selected_solution!.scenario_name,
 			selected_solution!.detail.system.reference_year,
 			selected_solution!.detail.system.interval_between_years
-		).then((fetched) => {
-			data = fetched.data;
-			unit = fetched.unit;
-			fetching = false;
-		});
+		);
+
+		data = fetched.data;
+
+		if (fetched.unit?.data) {
+			units = Object.fromEntries(
+				fetched.unit.data.map((unit) => {
+					return [unit.carrier, unit[0] || unit.units];
+				})
+			);
+		}
+
+		fetching = false;
 	}
 
 	/**
