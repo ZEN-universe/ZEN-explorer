@@ -1,0 +1,42 @@
+name: Bug Report
+description: File a bug report.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+      description: Describe the bug you encountered. Also explain what you expected to see.
+      placeholder: Tell us what you see!
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: URL of the page
+      description: Enter the URL of the page
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to recreate the bug
+      description: Describe the steps we must take to reproduce the bug.
+      placeholder: |
+        1. First, select ...
+        2. Then, do ...
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Paste screenshot from your clipboard into this field
+      placeholder: Show us what you see on your device
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: What browsers are you seeing the problem on?
+      multiple: true
+      options:
+        - Firefox
+        - Chrome
+        - Safari
+        - Microsoft Edge
