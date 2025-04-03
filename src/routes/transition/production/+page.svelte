@@ -47,7 +47,6 @@
 
 	let selected_aggregation = $state('node');
 
-	// let datasets: any[] = $state([]);
 	let labels: string[] = $state([]);
 	let scaleYText: string = $derived(selected_variable + ' [' + get_unit() + ']');
 
@@ -365,10 +364,7 @@
 			excluded_years,
 			selected_normalisation == 'normalized'
 		);
-
-		// Set data in plot config
-		// datasets = filtered_data;
-		// scaleYText = selected_variable + ' [' + get_unit() + ']';
+		labels = selected_years.map((year) => year.toString());
 
 		// Define filename of the plot when downloading.
 		let solution_names = selected_solution!.solution_name.split('.');

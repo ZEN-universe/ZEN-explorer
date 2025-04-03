@@ -303,6 +303,7 @@
 			selected_normalisation == 'normalized'
 		);
 		datasets = filtered_data;
+		labels = selected_years.map((year) => year.toString());
 
 		// @ts-ignore
 		scaleYText = selected_variable + ' [' + get_unit() + ']';
