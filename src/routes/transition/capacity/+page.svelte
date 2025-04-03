@@ -128,6 +128,11 @@
 	 */
 	function variable_changed() {
 		fetch_data();
+		reset_data_selection();
+		selected_technology_type = null;
+		selected_carrier = null;
+		filtered_data = null;
+		datasets = [];
 	}
 
 	/**
