@@ -41,6 +41,7 @@
 	const combined_name = 'Techology / Carrier';
 	const aggregation_options: string[] = [combined_name, 'Location'];
 	let selected_aggregation: string = $state(aggregation_options[1]);
+	let units: { [carrier: string]: string } = $state({});
 
 	let show_costs = $state({
 		capex: { title: 'Capex', show: true, subdivision: false },
@@ -85,7 +86,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: `Costs [${get_unit()}]`
+						text: `Costs [${conversion_technologies.length > 0 ? units[conversion_technologies[0]] : ''}]`
 					}
 				}
 			}
@@ -158,6 +159,10 @@
 		for (let i in fetched_opex.data!.data) {
 			fetched_opex.data!.data[i][combined_name] =
 				fetched_opex.data!.data[i][combined_name] + opex_suffix;
+		}
+
+		if (fetched_capex.unit?.data) {
+			units = Object.fromEntries(fetched_capex.unit.data.map((u) => [u.technology, u[0] || u.units]));
 		}
 
 		// Set available locations
@@ -295,14 +300,6 @@
 		// Update available locations
 		// locations = Array.from(set_locations);
 		fetching = false;
-	}
-
-	function get_unit() {
-		if (!fetched_capex || fetched_capex.unit === null) {
-			return '';
-		}
-
-		return fetched_capex.unit.data[0][0] || fetched_capex.unit.data[0]['units'] || '';
 	}
 
 	/**

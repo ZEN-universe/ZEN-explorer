@@ -31,7 +31,7 @@
 	let locations: string[] = $state([]);
 	let technologies: string[] = $state([]);
 
-	let unit: Papa.ParseResult<Row> | null = null;
+	let units: {[carrier: string]: string} = $state({});
 
 	let selected_solution: ActivatedSolution | null = $state(null);
 	const selected_variable: string = 'storage_level';
@@ -56,6 +56,7 @@
 	let datasets: any[] = $state([]);
 	let flow_datasets: any[] = $state([]);
 	let labels: string[] = $state([]);
+	let unit: string = $derived(technologies.length > 0 ? units[technologies[0]] : '');
 
 	let plot_config: ChartConfiguration = $derived({
 		type: 'line',
@@ -82,7 +83,7 @@
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: `Storage Level [${get_unit()}]`
+						text: `Storage Level [${unit}]`
 					}
 				}
 			},
@@ -143,7 +144,7 @@
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: `Storage Flow [${get_unit()}]`
+						text: `Storage Flow [${unit}]`
 					}
 				}
 			},
@@ -256,7 +257,9 @@
 			]);
 
 		data = levelResponse.data;
-		unit = levelResponse.unit;
+		if (levelResponse.unit?.data) {
+			units = Object.fromEntries(levelResponse.unit.data.map((u) => [u.technology, u[0] || u.units]));
+		}
 		chargeData = chargeResponse.data;
 		dischargeData = dischargeResponse.data;
 		spillageData = spillageResponse.data;
@@ -307,13 +310,6 @@
 	function update_locations() {
 		locations = Array.from(new Set(data!.data.map((a) => a.node)));
 		selected_locations = locations;
-	}
-
-	/**
-	 * This function returns the unit of the currently selected variable
-	 */
-	function get_unit() {
-		return unit?.data[0][0] || unit?.data[0]['units'] || '';
 	}
 
 	/**
