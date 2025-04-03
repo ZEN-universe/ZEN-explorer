@@ -31,7 +31,7 @@
 	let locations: string[] = $state([]);
 	let technologies: string[] = $state([]);
 
-	let units: {[carrier: string]: string} = $state({});
+	let units: { [carrier: string]: string } = $state({});
 
 	let selected_solution: ActivatedSolution | null = $state(null);
 	const selected_variable: string = 'storage_level';
@@ -258,7 +258,9 @@
 
 		data = levelResponse.data;
 		if (levelResponse.unit?.data) {
-			units = Object.fromEntries(levelResponse.unit.data.map((u) => [u.technology, u[0] || u.units]));
+			units = Object.fromEntries(
+				levelResponse.unit.data.map((u) => [u.technology, u[0] || u.units])
+			);
 		}
 		chargeData = chargeResponse.data;
 		dischargeData = dischargeResponse.data;
