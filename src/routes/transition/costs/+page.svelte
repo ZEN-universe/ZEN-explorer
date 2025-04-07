@@ -162,7 +162,9 @@
 		}
 
 		if (fetched_capex.unit?.data) {
-			units = Object.fromEntries(fetched_capex.unit.data.map((u) => [u.technology, u[0] || u.units]));
+			units = Object.fromEntries(
+				fetched_capex.unit.data.map((u) => [u.technology, u[0] || u.units])
+			);
 		}
 
 		// Set available locations

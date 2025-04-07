@@ -1,129 +1,301 @@
 <script lang="ts">
-	import { pie, arc } from 'd3-shape';
-	import { scaleOrdinal } from 'd3-scale';
-	import { geoMercator, geoPath } from 'd3-geo';
-	import { csv } from 'd3-fetch';
-	import { schemeCategory10 } from 'd3-scale-chromatic';
-	import { onMount } from 'svelte';
-	import { feature, mesh } from 'topojson-client';
-	import countries10m from './world.json'; // TODO: use a better world map
-	// import countries10m from 'world-atlas/countries-10m.json';
-	import type { DSVRowArray, DSVRowString, PieArcDatum } from 'd3';
-	import { _detectPlatform } from 'chart.js';
+	import Radio from '../../components/Radio.svelte';
+	import Dropdown from '../../components/Dropdown.svelte';
+	import SolutionFilter from '../../components/SolutionFilter.svelte';
+	import MapPlot from '../../components/MapPlot.svelte';
+	import { get_component_total } from '$lib/temple';
 
-	let width = $state(936);
-	let height = $state(500);
-	let radius = $state(30);
+	import type { MapPlotData } from '../../components/MapPlot.svelte';
+	import type { ActivatedSolution, Row } from '$lib/types';
 
-	let _projection = $derived(
-		geoMercator()
-			.center([20, 50])
-			.scale(650)
-			.translate([width / 2, height / 2])
-	);
+	let carriers: string[] = $state([]);
+	let years: number[] = $state([]);
+	let technologies: string[] = $state([]);
+	let technology_types: string[] = ['conversion', 'storage'];
+	const storage_type_options = ['energy', 'power'];
 
-	let _path = $derived(geoPath().projection(_projection));
-	let _arc = $derived(arc().innerRadius(0).outerRadius(radius));
+	let selected_solution: ActivatedSolution | null = $state(null);
+	let selected_technology_type: string = $state('conversion');
+	let selected_storage_type = $state('energy');
+	let selected_carrier: string | null = $state(null);
+	let selected_year: number | null = $state(null);
 
-	let _color = $derived(scaleOrdinal(schemeCategory10));
+	let solution_loading: boolean = $state(false);
+	let fetching: boolean = $state(false);
 
-	let land: string | null = $state(null);
-	let meshes: string | null = $state(null);
-	let pies: any | null = $state(null);
-	let lines: any | null = $state(null);
+	let fetched_data: Papa.ParseResult<Row> | null = $state(null);
+	let data: MapPlotData | null = $state(null);
+	let transport_data: MapPlotData | null = $state(null);
 
-	onMount(loadData);
+	async function fetch_data() {
+		if (!selected_solution) {
+			return;
+		}
 
-	async function loadData() {
-		const data: DSVRowArray<string> = await csv('/data.csv');
-		const world = countries10m as any;
+		fetching = true;
+		fetched_data = null;
 
-		const _pie = pie()
-			.sort(null)
-			.value((d: any) => d);
+		const response = await get_component_total(
+			selected_solution.solution_name,
+			'capacity',
+			selected_solution.scenario_name,
+			selected_solution.detail.system.reference_year,
+			selected_solution.detail.system.interval_between_years
+		);
 
-		land = _path(feature(world, world.objects.countries));
-		meshes = _path(mesh(world, world.objects.countries));
-		pies = data.map((d: DSVRowString) => {
-			const values = d.data.split('-').map((v: string) => parseInt(v));
-			const total = values.reduce((a: number, b: number) => a + b, 0);
-
-			return {
-				lat: parseInt(d.lat),
-				lon: parseInt(d.lon),
-				label: d.label,
-				total: total,
-				data: _pie(values).map((p: any, i: number) => {
-					return {
-						color: _color(i.toString()),
-						arc: arc()
-							.innerRadius(0)
-							.outerRadius(total / 4)(p)
-					};
-				})
-			};
-		});
-		lines = combinations(pies).map((p: any) => {
-			const start = [p[0].lon, p[0].lat];
-			const end = [p[1].lon, p[1].lat];
-			const width = Math.abs(p[0].total - p[1].total) / 16;
-			return { start, end, width };
-		});
+		fetched_data = response.data;
+		fetching = false;
 	}
 
-	function combinations(arr: any[]) {
-		return arr.flatMap((v, i) => arr.slice(i + 1).map((w) => [v, w]));
+	async function solution_changed() {
+		selected_carrier = null;
+		await fetch_data();
+		selected_year = years.length > 0 ? years[0] : null;
+		technology_type_changed();
 	}
 
-	function straightLine(start: [number, number], end: [number, number]) {
-		const [x1, y1] = _projection(start)!;
-		const [x2, y2] = _projection(end)!;
-		return `M${x1},${y1} L${x2},${y2}`;
+	function technology_type_changed() {
+		update_carriers();
+		update_technologies();
+		load_map_data();
+	}
+
+	function carrier_changed() {
+		update_technologies();
+		load_map_data();
+	}
+
+	function year_changed() {
+		load_map_data();
+	}
+
+	function update_carriers() {
+		carriers = [];
+		if (fetched_data === null || selected_technology_type === null) {
+			return;
+		}
+
+		// Get the technologies for the current technology type
+		let all_technologies: string[] = get_technologies_by_type();
+
+		// Add all the available carriers to the set of carriers for the current set of technologies
+		fetched_data.data.forEach((element) => {
+			let current_technology = element.technology;
+			let current_carrier = selected_solution!.detail.reference_carrier[current_technology];
+
+			if (!carriers.includes(current_carrier) && all_technologies.includes(element.technology)) {
+				carriers.push(current_carrier);
+			}
+		});
+
+		if ((selected_carrier == null || !carriers.includes(selected_carrier)) && carriers.length > 0) {
+			selected_carrier = carriers[0];
+		}
+	}
+
+	/**
+	 * This function updates the available technologies depending on the currently selected carrier and resets the currently selected technologies.
+	 */
+	function update_technologies() {
+		if (selected_technology_type === null) {
+			return;
+		}
+
+		technologies = get_technologies_by_type().filter(
+			(technology) => selected_solution?.detail.reference_carrier[technology] == selected_carrier
+		);
+	}
+
+	function get_technologies_by_type() {
+		if (!selected_solution || !selected_technology_type) {
+			return [];
+		}
+
+		switch (selected_technology_type) {
+			case 'conversion':
+				return selected_solution.detail.system.set_conversion_technologies;
+			case 'storage':
+				return selected_solution.detail.system.set_storage_technologies;
+			case 'transport':
+				return selected_solution.detail.system.set_transport_technologies;
+		}
+
+		return [];
+	}
+
+	function aggregateDataByNode(technologies: string[], filter_capacity_type: string | null = null) {
+		if (
+			!fetched_data ||
+			!selected_solution ||
+			!selected_technology_type ||
+			!selected_carrier ||
+			!selected_year
+		) {
+			return;
+		}
+
+		return fetched_data.data.reduce((acc: any, row) => {
+			if (
+				!technologies.includes(row.technology) ||
+				(filter_capacity_type != null && filter_capacity_type != row.capacity_type)
+			) {
+				return acc;
+			}
+
+			const node = row.location;
+
+			let list = acc[node] || [];
+			list.push({
+				technology: row.technology,
+				value: parseFloat(row[selected_year!])
+			});
+			acc[node] = list;
+			return acc;
+		}, {});
+	}
+
+	function load_map_data() {
+		if (
+			!fetched_data ||
+			!selected_solution ||
+			!selected_technology_type ||
+			!selected_carrier ||
+			!selected_year
+		) {
+			return;
+		}
+
+		data = aggregateDataByNode(
+			technologies,
+			selected_technology_type == 'storage' ? selected_storage_type : null
+		);
+
+		const transportTechnologies = selected_solution.detail.system.set_transport_technologies.filter(
+			(technology) => selected_solution!.detail.reference_carrier[technology] == selected_carrier
+		);
+		transport_data = aggregateDataByNode(transportTechnologies);
 	}
 </script>
 
 <h1>Map</h1>
 
-Filters
-
-<hr />
-
-<div>
-	<svg {width} {height}>
-		<g>
-			<path class="land" d={land} />
-			<path class="mesh" d={meshes} fill="none" stroke="white" stroke-width="1px" />
-		</g>
-		<g>
-			{#each lines as line}
-				<g class="line">
-					<path d={straightLine(line.start, line.end)} stroke="#123456" stroke-width={line.width} />
-				</g>
-			{/each}
-		</g>
-		<g>
-			{#each pies as pie}
-				<!-- <g class="line">
-					<path d={straightLine([pie.lon, pie.lat], [pie.lon + 3, pie.lat - 5])} stroke="#123456" stroke-width={pie.total / 16} />
-				</g> -->
-				<g class="pies" transform={`translate(${_projection([pie.lon, pie.lat])})`}>
-					<!-- <text y={-radius - 5} style="text-anchor: middle;">
-						{p.label}
-					</text> -->
-					{#each pie.data as d, i}
-						<path class="arc" d={d.arc} fill={d.color} />
-					{/each}
-				</g>
-			{/each}
-		</g>
-	</svg>
+<div class="z-1 position-relative">
+	<div class="filters">
+		<div class="accordion" id="accordionExample">
+			<div class="accordion-item solution-selection">
+				<h2 class="accordion-header">
+					<button
+						class="accordion-button"
+						type="button"
+						data-bs-toggle="collapse"
+						data-bs-target="#collapseOne"
+						aria-expanded="true"
+						aria-controls="collapseOne"
+					>
+						Solution Selection
+					</button>
+				</h2>
+				<div id="collapseOne" class="accordion-collapse collapse show">
+					<div class="accordion-body">
+						<SolutionFilter
+							bind:years
+							bind:selected_solution
+							bind:loading={solution_loading}
+							solution_selected={solution_changed}
+							enabled={!fetching && !solution_loading}
+						/>
+					</div>
+				</div>
+			</div>
+			{#if !solution_loading && selected_solution}
+				<div class="accordion-item variable-selection">
+					<h2 class="accordion-header">
+						<button
+							class="accordion-button"
+							type="button"
+							data-bs-toggle="collapse"
+							data-bs-target="#collapseTwo"
+							aria-expanded="false"
+							aria-controls="collapseTwo"
+						>
+							Variable Selection
+						</button>
+					</h2>
+					<div id="collapseTwo" class="accordion-collapse collapse show">
+						<div class="accordion-body">
+							<h3>Technology Type</h3>
+							<select
+								class="form-select"
+								bind:value={selected_technology_type}
+								onchange={technology_type_changed}
+								disabled={fetching || solution_loading}
+							>
+								{#each technology_types as technology_type}
+									<option value={technology_type}>
+										{technology_type}
+									</option>
+								{/each}
+							</select>
+							{#if selected_technology_type == 'storage'}
+								<Radio
+									options={storage_type_options}
+									bind:selected_option={selected_storage_type}
+									selection_changed={technology_type_changed}
+									enabled={!fetching && !solution_loading}
+								></Radio>
+							{/if}
+							{#if selected_technology_type != null && carriers.length > 0}
+								<h3>Carrier</h3>
+								<select
+									class="form-select"
+									bind:value={selected_carrier}
+									onchange={carrier_changed}
+									disabled={fetching || solution_loading}
+								>
+									{#each carriers as carrier}
+										<option value={carrier}>
+											{carrier}
+										</option>
+									{/each}
+									disabled={fetching || solution_loading}
+								</select>
+							{/if}
+						</div>
+					</div>
+				</div>
+				{#if fetched_data && selected_technology_type && selected_carrier}
+					<div class="accordion-item">
+						<h2 class="accordion-header">
+							<button
+								class="accordion-button"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#collapseThree"
+								aria-expanded="false"
+								aria-controls="collapseThree"
+							>
+								Data Selection
+							</button>
+						</h2>
+						<div id="collapseThree" class="accordion-collapse collapse show">
+							<div class="accordion-body">
+								<h3>Year</h3>
+								<Dropdown
+									bind:selected_option={selected_year}
+									options={years}
+									selection_changed={year_changed}
+								></Dropdown>
+							</div>
+						</div>
+					</div>
+				{/if}
+			{/if}
+		</div>
+	</div>
 </div>
 
-<style>
-	svg {
-		background: #91a9cf;
-	}
-	.land {
-		fill: #b3c497;
-	}
-</style>
+<div class="my-4">
+	{#if data && transport_data}
+		<MapPlot {data} edges={transport_data} />
+	{/if}
+</div>

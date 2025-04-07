@@ -61,13 +61,15 @@ export function group_data(
  *   technology: "natural_gas_storage"
  * }
  * @param dataset_filters - An object that defines which rows to include in the answer.
- * The attribute name defines the field_name of the provided data and the attribute value has to be a list of strings of the values to include in the answer. For example:
+ * The attribute name defines the field_name of the provided data and the attribute value
+ * has to be a list of strings of the values to include in the answer. For example:
  * {
  *  technology: ["natural_gas_storage", "battery"]
  * }
  * will include all rows that have the technology "natural_gas_storage" or "battery".
  * @param dataset_aggregations - An object that defines which rows to aggregate in the answer.
- * The attribute name defines the field_name of the provided data and the attribute valie has to be a list of strings of the values to include in the answer. For example:
+ * The attribute name defines the field_name of the provided data and the attribute value has
+ * to be a list of strings of the values to include in the answer. For example:
  * {
  *  node: ["CH", "DE"]
  * }
@@ -109,8 +111,8 @@ export function filter_and_aggregate_data(
 		}
 
 		// Same for the aggregations, if the row does not contain any of the aggregations we skip it.
-		for (let aggregate_key of Object.keys(dataset_aggregations)) {
-			if (!dataset_aggregations[aggregate_key].includes(row[aggregate_key])) {
+		for (let key of Object.keys(dataset_aggregations)) {
+			if (!dataset_aggregations[key].includes(row[key])) {
 				skip = true;
 				break;
 			}
@@ -127,7 +129,7 @@ export function filter_and_aggregate_data(
 			row_dataset_keys.push(row[key]);
 		}
 
-		// Define new label by concating all indices
+		// Define new label by concatenating all indices
 		let dataset_label = row_dataset_keys.join('_') + label_suffix;
 
 		// Initialize new row with all zeroes
