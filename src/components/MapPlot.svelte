@@ -1,18 +1,16 @@
 <script lang="ts">
-	import { pie, arc } from 'd3-shape';
+	import { pie as d3pie, arc as d3arc } from 'd3-shape';
 	import { scaleOrdinal } from 'd3-scale';
 	import { geoMercator, geoPath } from 'd3-geo';
 	import { schemeCategory10 } from 'd3-scale-chromatic';
 	import { pointer } from 'd3-selection';
 	import { feature, mesh } from 'topojson-client';
-	import countries10m from '../geojson/world.json'; // TODO: use a better world map
+	import countries10m from '../geojson/world.json';
+	// TODO: use a better world map
 	// import countries10m from 'world-atlas/countries-10m.json';
-	import { _detectPlatform } from 'chart.js';
-	import { polygonContains, type DSVRowArray, type DSVRowString } from 'd3';
-	import type { MultiPolygon, Polygon, Position } from 'geojson';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
 	import { onDestroy, onMount } from 'svelte';
-	import { get } from 'svelte/store';
+	import { fade } from 'svelte/transition';
 
 	export interface DataRow {
 		technology: string;
@@ -60,16 +58,15 @@
 	};
 
 	interface Props {
-		data: MapPlotData;
-		edges?: MapPlotData;
+		pieData: MapPlotData;
+		lineData?: MapPlotData;
 	}
-	let { data, edges = {} }: Props = $props();
+	let { pieData, lineData = {} }: Props = $props();
 
 	interface Pie {
-		lon: number;
-		lat: number;
+		x: number;
+		y: number;
 		label: string;
-		country: number;
 		total: number;
 		data: {
 			color: string;
@@ -79,44 +76,77 @@
 		}[];
 	}
 
+	interface Line {
+		label: string;
+		values: DataRow[];
+		start: [number, number];
+		end: [number, number];
+		width: number;
+	}
+
 	let svg: SVGSVGElement;
 	let tooltip: HTMLDivElement;
 
 	let width = $state(936);
-	let height = $state(500);
-	let maxRadius = $state(30);
-	let maxEdgeWidth = $state(8);
+	let height = $state(600);
 
-	let tooltipY = $state(0);
-	let tooltipYOffset = $state(0);
-	let tooltipX = $state(0);
-	let tooltipHeight = $derived(() => tooltip?.clientHeight || 0);
-	let tooltipOnTop = $derived(tooltipY - tooltipYOffset > tooltipHeight());
+	const minRadius = 5;
+	const maxRadius = 30;
+	const minLineWidth = 1;
+	const maxLineWidth = 8;
 
-	let selected_pie: Pie | null = $state(null);
+	let selectedPie: Pie | undefined = $state(undefined);
+	let selectedLines: Line[] = $state([]);
 
-	let _projection = $derived(
+	let tooltipX = $derived.by(() => {
+		if (selectedPie) return selectedPie.x;
+		else if (selectedLines.length > 0)
+			return 0.5 * (selectedLines[0].start[0] + selectedLines[0].end[0]);
+		return 0;
+	});
+	let tooltipY = $derived.by(() => {
+		if (selectedPie) return selectedPie.y;
+		else if (selectedLines.length > 0)
+			return 0.5 * (selectedLines[0].start[1] + selectedLines[0].end[1]);
+		return 0;
+	});
+	let tooltipYOffset = $derived.by(() => 5 + (selectedPie ? computeRadius(selectedPie.total) : 0));
+	let tooltipOnTop = $derived.by(() => tooltipY - tooltipYOffset > (tooltip?.clientHeight || 0));
+
+	let projection = $derived(
 		geoMercator()
 			.center([20, 51])
 			.scale(660)
 			.translate([width / 2, height / 2])
 	);
 
-	let _path = $derived(geoPath().projection(_projection));
-	const _color = scaleOrdinal(schemeCategory10);
-	const _pie = pie()
+	let computePath = $derived(geoPath().projection(projection));
+	const computeColor = scaleOrdinal(schemeCategory10);
+	const computePie = d3pie()
 		.sort(null)
 		.value((d: any) => d);
 
+	let minTotal = $derived(
+		Object.values(pieData).reduce((acc, values) => {
+			const total = values.reduce((acc, row) => acc + row.value, 0);
+			return Math.min(acc, total);
+		}, 0)
+	);
 	let maxTotal = $derived(
-		Object.entries(data).reduce((acc: number, [node, values]: [string, DataRow[]]) => {
-			const total = values.reduce((acc: number, row: DataRow) => acc + row.value, 0);
+		Object.values(pieData).reduce((acc, values) => {
+			const total = values.reduce((acc, row) => acc + row.value, 0);
 			return Math.max(acc, total);
 		}, 0)
 	);
+	let minEdge = $derived(
+		Object.values(lineData).reduce((acc, values) => {
+			const total = values.reduce((acc, row) => Math.max(acc, row.value), 0);
+			return Math.min(acc, total);
+		}, 0)
+	);
 	let maxEdge = $derived(
-		Object.entries(edges).reduce((acc: number, [node, values]: [string, DataRow[]]) => {
-			const total = values.reduce((acc: number, row: DataRow) => Math.max(acc, row.value), 0);
+		Object.values(lineData).reduce((acc, values) => {
+			const total = values.reduce((acc, row) => Math.max(acc, row.value), 0);
 			return Math.max(acc, total);
 		}, 0)
 	);
@@ -127,9 +157,9 @@
 			countries10m.objects.countries as GeometryCollection
 		)
 	);
-	let land: string | null = $derived(_path(countries));
+	let land: string | null = $derived(computePath(countries));
 	let meshes: string | null = $derived(
-		_path(
+		computePath(
 			mesh(
 				countries10m as unknown as Topology,
 				countries10m.objects.countries as GeometryCollection,
@@ -137,22 +167,22 @@
 			)
 		)
 	);
+
 	let pies: Pie[] = $derived(
-		Object.entries(data).map(([node, values]: [string, DataRow[]]) => {
+		Object.entries(pieData).map(([node, values]: [string, DataRow[]]) => {
 			const total = values.reduce((acc: number, row: DataRow) => acc + row.value, 0);
-			const _arc = arc().innerRadius(0).outerRadius(computeRadius(total));
-			const [lon, lat] = nodeCoords[node] || [40, 40];
+			const computeArc = d3arc().innerRadius(0).outerRadius(computeRadius(total));
+			const [x, y] = projection(nodeCoords[node] || [40, 40])!;
 
 			return {
-				lon: lon,
-				lat: lat,
+				x: x,
+				y: y,
 				label: node,
-				country: Number(getCountry([lon, lat])?.id || -1),
 				total: total,
-				data: _pie(values.map((d) => d.value)).map((p: any, i: number) => {
+				data: computePie(values.map((d) => d.value)).map((p: any, i: number) => {
 					return {
-						color: _color(i.toString()),
-						arc: _arc(p),
+						color: computeColor(values[i].technology),
+						arc: computeArc(p),
 						technology: values[i].technology,
 						value: p.data
 					};
@@ -160,14 +190,16 @@
 			};
 		})
 	);
-	let lines = $derived(
-		Object.entries(edges).map(([node, values]) => {
+	let lines: Line[] = $derived(
+		Object.entries(lineData).map(([node, values]) => {
 			const [a, b] = node.split('-');
 			const maxValue = values.reduce((acc: number, row: DataRow) => Math.max(acc, row.value), 0);
 			return {
-				start: nodeCoords[a] || [40, 40],
-				end: nodeCoords[b] || [40, 40],
-				width: maxEdgeWidth * Math.sqrt(maxValue / maxEdge)
+				label: node,
+				values: values,
+				start: projection(nodeCoords[a] || [40, 40])!,
+				end: projection(nodeCoords[b] || [40, 40])!,
+				width: computeEdgeWidth(maxValue)
 			};
 		})
 	);
@@ -181,27 +213,6 @@
 		window.removeEventListener('resize', onResize);
 	});
 
-	function straightLine(start: [number, number], end: [number, number]) {
-		const [x1, y1] = _projection(start)!;
-		const [x2, y2] = _projection(end)!;
-		return `M${x1},${y1} L${x2},${y2}`;
-	}
-
-	function getCountry(coord: [number, number]) {
-		return countries.features.find((f) => {
-			return (f.geometry as Polygon | MultiPolygon).coordinates.find((c1) => {
-				return (
-					polygonContains(c1 as [number, number][], coord) ||
-					c1.find((c2) => polygonContains(c2 as [number, number][], coord))
-				);
-			});
-		});
-	}
-
-	function computeRadius(total: number) {
-		return (total / maxTotal) * maxRadius;
-	}
-
 	function onResize() {
 		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
 		width = w;
@@ -209,21 +220,60 @@
 	}
 
 	function onMouseMove(event: MouseEvent) {
-		const pos = _projection.invert!(pointer(event));
-		if (!pos) return;
+		const pos = pointer(event);
+		const coords = projection.invert!(pos);
+		if (!coords) return;
 
-		const country = getCountry(pos);
-		if (!country) return;
-
-		const pie = pies.find((p) => p.country == country?.id);
-		selected_pie = pie || null;
-
-		if (pie) {
-			const [x, y] = _projection([pie.lon, pie.lat])!;
-			tooltipY = y;
-			tooltipX = x;
-			tooltipYOffset = computeRadius(pie.total) + 5;
+		selectedPie = findPie(pos);
+		if (selectedPie) {
+			selectedLines = [];
+			return;
 		}
+
+		selectedLines = filterLines(pos);
+	}
+
+	function findPie(pos: [number, number]) {
+		const [px, py] = pos;
+		return pies.find((pie) => {
+			const dx = px - pie.x;
+			const dy = py - pie.y;
+			return Math.sqrt(dx * dx + dy * dy) < computeRadius(pie.total);
+		});
+	}
+
+	function filterLines(pos: [number, number]) {
+		const [px, py] = pos;
+		return lines.filter((line) => {
+			let [x1, y1] = line.start!;
+			let [x2, y2] = line.end!;
+
+			const ax = px - x1;
+			const ay = py - y1;
+			const bx = x2 - x1;
+			const by = y2 - y1;
+
+			const adotb = ax * bx + ay * by;
+			const bSquared = Math.pow(bx, 2) + Math.pow(by, 2);
+			if (adotb < 0 || adotb > bSquared || bSquared < 1e-10) return false;
+
+			const distSquared = Math.pow(ax, 2) + Math.pow(ay, 2) - Math.pow(adotb, 2) / bSquared;
+			return 4 * distSquared < Math.pow(maxLineWidth, 2);
+		});
+	}
+
+	function computeEdgeWidth(total: number) {
+		return minLineWidth + ((total - minEdge) / (maxEdge - minEdge)) * (maxLineWidth - minLineWidth);
+	}
+
+	function computeRadius(total: number) {
+		return minRadius + ((total - minTotal) / (maxTotal - minTotal)) * (maxRadius - minRadius);
+	}
+
+	function straightLine(start: [number, number], end: [number, number]) {
+		const [x1, y1] = start;
+		const [x2, y2] = end;
+		return `M${x1},${y1} L${x2},${y2}`;
 	}
 
 	function stringify(value: string) {
@@ -248,7 +298,7 @@
 		</g>
 		<g>
 			{#each pies as pie}
-				<g class="pies" transform={`translate(${_projection([pie.lon, pie.lat])})`}>
+				<g class="pies" transform={`translate(${pie.x}, ${pie.y})`}>
 					{#each pie.data as d}
 						<path class="arc" d={d.arc} fill={d.color} />
 					{/each}
@@ -256,46 +306,58 @@
 			{/each}
 		</g>
 	</svg>
-	<div
-		class="position-absolute bg-black bg-opacity-75 text-white p-2 rounded fs-8 pe-none"
-		style:top={tooltipOnTop ? `${tooltipY - tooltipYOffset}px` : `${tooltipY + tooltipYOffset}px`}
-		style:left={`${tooltipX}px`}
-		style:transform={tooltipOnTop ? `translate(-50%, -100%)` : `translate(-50%, 0%)`}
-		style:opacity={selected_pie ? 1 : 0}
-		style:transition="opacity 0.3s"
-		bind:this={tooltip}
-	>
-		{#if tooltipOnTop}
-			<svg
-				class="position-absolute translate-middle-x opacity-75 start-50"
-				style:bottom="-5px"
-				width="10"
-				height="5"
-			>
-				<polygon points="0,0 10,0 5,5" fill="black" />
-			</svg>
-		{:else}
-			<svg
-				class="position-absolute translate-middle-x opacity-75 start-50"
-				style:top="-5px"
-				width="10"
-				height="5"
-			>
-				<polygon points="0,5 10,5 5,0" fill="black" />
-			</svg>
-		{/if}
-		{#if selected_pie}
-			<h5 class="fs-7 mb-0">{selected_pie.label}</h5>
-			{#each selected_pie.data as d}
-				<div>
-					<svg width="16" height="16">
-						<rect width="16" height="16" fill={d.color} />
-					</svg>
-					{stringify(d.technology)}: {d.value.toFixed(3)}
-				</div>
-			{/each}
-		{/if}
-	</div>
+	{#if selectedPie || selectedLines.length > 0}
+		<div
+			class="position-absolute bg-black bg-opacity-75 text-white py-2 rounded fs-8 pe-none"
+			style:top={tooltipOnTop ? `${tooltipY - tooltipYOffset}px` : `${tooltipY + tooltipYOffset}px`}
+			style:left={`${tooltipX}px`}
+			style:transform={tooltipOnTop ? `translate(-50%, -100%)` : `translate(-50%, 0%)`}
+			bind:this={tooltip}
+			transition:fade={{ duration: 300 }}
+		>
+			{#if tooltipOnTop}
+				<svg
+					class="position-absolute translate-middle-x opacity-75 start-50"
+					style:bottom="-5px"
+					width="10"
+					height="5"
+				>
+					<polygon points="0,0 10,0 5,5" fill="black" />
+				</svg>
+			{:else}
+				<svg
+					class="position-absolute translate-middle-x opacity-75 start-50"
+					style:top="-5px"
+					width="10"
+					height="5"
+				>
+					<polygon points="0,5 10,5 5,0" fill="black" />
+				</svg>
+			{/if}
+			{#if selectedPie}
+				<h5 class="fs-7 mb-0 px-2">{selectedPie.label}</h5>
+				{#each selectedPie.data as d}
+					<div class="px-2">
+						<svg width="16" height="16">
+							<rect width="16" height="16" fill={d.color} />
+						</svg>
+						{stringify(d.technology)}: {d.value.toFixed(3)}
+					</div>
+				{/each}
+			{:else if selectedLines.length > 0}
+				{#each selectedLines as line, i}
+					<div class={['px-2', i > 0 && 'border-top border-secondary mt-1 pt-1']}>
+						<h5 class="fs-7 mb-0">{line.label}</h5>
+						{#each line.values as d}
+							<div>
+								{stringify(d.technology)}: {d.value.toFixed(3)}
+							</div>
+						{/each}
+					</div>
+				{/each}
+			{/if}
+		</div>
+	{/if}
 </div>
 
 <style>

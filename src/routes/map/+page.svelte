@@ -296,6 +296,6 @@
 
 <div class="my-4">
 	{#if data && transport_data}
-		<MapPlot {data} edges={transport_data} />
+		<MapPlot pieData={data} lineData={transport_data} />
 	{/if}
 </div>
