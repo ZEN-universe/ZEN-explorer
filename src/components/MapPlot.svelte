@@ -24,8 +24,9 @@
 		pieData: MapPlotData;
 		lineData?: MapPlotData;
 		nodeCoords?: { [node: string]: [number, number] };
+		unit: string;
 	}
-	let { pieData, lineData = {}, nodeCoords = {} }: Props = $props();
+	let { pieData, lineData = {}, nodeCoords = {}, unit }: Props = $props();
 
 	interface Pie {
 		x: number;
@@ -75,7 +76,7 @@
 		return 0;
 	});
 	let tooltipYOffset = $derived.by(() => 5 + (selectedPie ? computeRadius(selectedPie.total) : 0));
-	let tooltipOnTop = $derived.by(() => tooltipY - tooltipYOffset > (tooltip?.clientHeight || 0));
+	let tooltipOnTop = $derived.by(() => tooltipY - tooltipYOffset > 180);
 
 	let projection = $derived(
 		geoMercator()
@@ -166,6 +167,13 @@
 				width: computeEdgeWidth(maxValue)
 			};
 		})
+	);
+
+	let technologies: string[] = $derived(
+		Object.values(pieData).reduce((acc: string[], values) => {
+			const techs = values.map((d) => d.technology);
+			return [...new Set([...acc, ...techs])];
+		}, [])
 	);
 
 	onMount(() => {
@@ -270,6 +278,17 @@
 			{/each}
 		</g>
 	</svg>
+	<div class="position-absolute bottom-0 end-0 m-2 p-2 bg-black bg-opacity-75 text-white">
+		<h5 class="visually-hidden">Legend</h5>
+		{#each technologies as t}
+			<div class="d-flex align-items-center">
+				<svg width="16" height="16" class="me-1">
+					<rect width="16" height="16" fill={computeColor(t)} />
+				</svg>
+				{stringify(t)}
+			</div>
+		{/each}
+	</div>
 	{#if selectedPie || selectedLines.length > 0}
 		<div
 			class="position-absolute bg-black bg-opacity-75 text-white py-2 rounded fs-8 pe-none"
@@ -306,8 +325,14 @@
 							<rect width="16" height="16" fill={d.color} />
 						</svg>
 						{stringify(d.technology)}: {d.value.toFixed(3)}
+						{unit}
 					</div>
 				{/each}
+				{#if selectedPie.data.length > 1}
+					<div class="px-2">
+						<strong>Total: {selectedPie.total.toFixed(3)} {unit}</strong>
+					</div>
+				{/if}
 			{:else if selectedLines.length > 0}
 				{#each selectedLines as line, i}
 					<div class={['px-2', i > 0 && 'border-top border-secondary mt-1 pt-1']}>
@@ -315,6 +340,7 @@
 						{#each line.values as d}
 							<div>
 								{stringify(d.technology)}: {d.value.toFixed(3)}
+								{unit}
 							</div>
 						{/each}
 					</div>

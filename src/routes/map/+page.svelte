@@ -27,6 +27,9 @@
 	let data: MapPlotData | null = $state(null);
 	let transport_data: MapPlotData | null = $state(null);
 
+	let units: { [key: string]: string } = $state({});
+	let unit: string = $derived(units[technologies[0]] || '');
+
 	let coords: { [key: string]: [number, number] } = $derived.by(() => {
 		if (selected_solution == null) {
 			return {};
@@ -54,6 +57,11 @@
 		);
 
 		fetched_data = response.data;
+
+		if (response.unit?.data) {
+			units = Object.fromEntries(response.unit.data.map((u) => [u.technology, u[0] || u.units]));
+		}
+
 		fetching = false;
 	}
 
@@ -133,7 +141,10 @@
 		return [];
 	}
 
-	function aggregateDataByNode(technologies: string[], filter_capacity_type: string | null = null) {
+	function aggregateDataByNode(
+		technologies: string[],
+		filter_capacity_type: string | null = null
+	): MapPlotData | null {
 		if (
 			!fetched_data ||
 			!selected_solution ||
@@ -141,25 +152,23 @@
 			!selected_carrier ||
 			!selected_year
 		) {
-			return;
+			return null;
 		}
 
 		return fetched_data.data.reduce((acc: any, row) => {
+			const { technology, capacity_type, location } = row;
+			const value = parseFloat(row[selected_year!]);
+
 			if (
-				!technologies.includes(row.technology) ||
-				(filter_capacity_type != null && filter_capacity_type != row.capacity_type)
+				!technologies.includes(technology) ||
+				(filter_capacity_type && filter_capacity_type !== capacity_type) ||
+				value < 1e-6
 			) {
 				return acc;
 			}
 
-			const node = row.location;
-
-			let list = acc[node] || [];
-			list.push({
-				technology: row.technology,
-				value: parseFloat(row[selected_year!])
-			});
-			acc[node] = list;
+			acc[location] = acc[location] || [];
+			acc[location].push({ technology, value });
 			return acc;
 		}, {});
 	}
@@ -306,6 +315,6 @@
 
 <div class="my-4">
 	{#if data && transport_data}
-		<MapPlot pieData={data} lineData={transport_data} nodeCoords={coords} />
+		<MapPlot pieData={data} lineData={transport_data} nodeCoords={coords} {unit} />
 	{/if}
 </div>
