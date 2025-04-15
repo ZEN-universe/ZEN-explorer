@@ -27,6 +27,16 @@
 	let data: MapPlotData | null = $state(null);
 	let transport_data: MapPlotData | null = $state(null);
 
+	let coords: { [key: string]: [number, number] } = $derived.by(() => {
+		if (selected_solution == null) {
+			return {};
+		}
+		return Object.entries(selected_solution.detail.system.coords).reduce(
+			(acc, [node, { lat, lon }]) => ({ ...acc, [node]: [lon, lat] }),
+			{}
+		);
+	});
+
 	async function fetch_data() {
 		if (!selected_solution) {
 			return;
@@ -296,6 +306,6 @@
 
 <div class="my-4">
 	{#if data && transport_data}
-		<MapPlot pieData={data} lineData={transport_data} />
+		<MapPlot pieData={data} lineData={transport_data} nodeCoords={coords} />
 	{/if}
 </div>
