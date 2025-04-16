@@ -1,16 +1,18 @@
 <script lang="ts">
-	import { pie as d3pie, arc as d3arc } from 'd3-shape';
-	import { scaleOrdinal } from 'd3-scale';
 	import { geoMercator, geoPath } from 'd3-geo';
+	import { scaleOrdinal } from 'd3-scale';
 	import { schemeCategory10 } from 'd3-scale-chromatic';
 	import { pointer } from 'd3-selection';
-	import { feature, mesh } from 'topojson-client';
-	import countries10m from '../geojson/world.json';
-	// TODO: use a better world map
-	// import countries10m from 'world-atlas/countries-10m.json';
-	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
-	import { onDestroy, onMount } from 'svelte';
+	import { pie as d3pie, arc as d3arc } from 'd3-shape';
+	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
+	import { feature, mesh } from 'topojson-client';
+	import type { ExtendedFeatureCollection } from 'd3-geo';
+	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
+
+	// import topology from '../geojson/world.json';
+	// import topology from 'world-atlas/countries-50m.json';
+	import topology from '../geojson/nuts_3.json';
 
 	export interface DataRow {
 		technology: string;
@@ -27,6 +29,89 @@
 		unit: string;
 	}
 	let { pieData, lineData = {}, nodeCoords = {}, unit }: Props = $props();
+
+	// SVG element
+	let svg: SVGSVGElement;
+
+	// Constants
+	const minRadius = 5;
+	const maxRadius = 30;
+	const minLineWidth = 1;
+	const maxLineWidth = 8;
+
+	// Map elements
+	let width = $state(936);
+	let height = $state(600);
+
+	let projection = $derived.by(() => {
+		const projection = geoMercator().translate([width / 2, height / 2]);
+
+		if (!nodeCoords || Object.keys(nodeCoords).length === 0) {
+			// Default projection for the world map
+			return projection.center([20, 51]).scale(660);
+		}
+
+		const featureCollection: ExtendedFeatureCollection = {
+			type: 'FeatureCollection',
+			features: Object.values(nodeCoords).map((coords) => ({
+				type: 'Feature',
+				geometry: {
+					type: 'Point',
+					coordinates: coords
+				},
+				properties: {}
+			}))
+		};
+
+		return geoMercator().fitExtent(
+			[
+				[maxRadius, maxRadius],
+				[width - maxRadius, height - maxRadius]
+			],
+			featureCollection
+		);
+	});
+	$inspect(projection.scale(), projection.translate(), projection.center());
+
+	let computePath = $derived(geoPath().projection(projection));
+	const computeColor = scaleOrdinal(schemeCategory10);
+	const computePie = d3pie()
+		.sort(null)
+		.value((d: any) => d);
+
+	let countries = $derived(
+		feature(topology as unknown as Topology, topology.objects.cntrg as GeometryCollection)
+	);
+	let land: string | null = $derived(computePath(countries));
+	let meshes: string | null = $derived(
+		computePath(
+			mesh(
+				topology as unknown as Topology,
+				topology.objects.nutsrg as GeometryCollection,
+				(a: GeometryObject, b: GeometryObject) => a !== b
+			)
+		)
+	);
+
+	// Data dependent values
+	let [minTotal, maxTotal] = $derived(
+		Object.values(pieData).reduce(
+			([accMin, accMax], values) => {
+				const total = values.reduce((acc, row) => acc + row.value, 0);
+				return [Math.min(accMin, total), Math.max(accMax, total)];
+			},
+			[10000, 0]
+		)
+	);
+	let [minEdge, maxEdge] = $derived(
+		Object.values(lineData).reduce(
+			([accMin, accMax], values) => {
+				const total = values.reduce((acc, row) => Math.max(acc, row.value), 0);
+				return [Math.min(accMin, total), Math.max(accMax, total)];
+			},
+			[10000, 0]
+		)
+	);
 
 	interface Pie {
 		x: number;
@@ -48,90 +133,6 @@
 		end: [number, number];
 		width: number;
 	}
-
-	let svg: SVGSVGElement;
-	let tooltip: HTMLDivElement;
-
-	let width = $state(936);
-	let height = $state(600);
-
-	const minRadius = 5;
-	const maxRadius = 30;
-	const minLineWidth = 1;
-	const maxLineWidth = 8;
-
-	let selectedPie: Pie | undefined = $state(undefined);
-	let selectedLines: Line[] = $state([]);
-
-	let tooltipX = $derived.by(() => {
-		if (selectedPie) return selectedPie.x;
-		else if (selectedLines.length > 0)
-			return 0.5 * (selectedLines[0].start[0] + selectedLines[0].end[0]);
-		return 0;
-	});
-	let tooltipY = $derived.by(() => {
-		if (selectedPie) return selectedPie.y;
-		else if (selectedLines.length > 0)
-			return 0.5 * (selectedLines[0].start[1] + selectedLines[0].end[1]);
-		return 0;
-	});
-	let tooltipYOffset = $derived.by(() => 5 + (selectedPie ? computeRadius(selectedPie.total) : 0));
-	let tooltipOnTop = $derived.by(() => tooltipY - tooltipYOffset > 180);
-
-	let projection = $derived(
-		geoMercator()
-			.center([20, 51])
-			.scale(660)
-			.translate([width / 2, height / 2])
-	);
-
-	let computePath = $derived(geoPath().projection(projection));
-	const computeColor = scaleOrdinal(schemeCategory10);
-	const computePie = d3pie()
-		.sort(null)
-		.value((d: any) => d);
-
-	let minTotal = $derived(
-		Object.values(pieData).reduce((acc, values) => {
-			const total = values.reduce((acc, row) => acc + row.value, 0);
-			return Math.min(acc, total);
-		}, 0)
-	);
-	let maxTotal = $derived(
-		Object.values(pieData).reduce((acc, values) => {
-			const total = values.reduce((acc, row) => acc + row.value, 0);
-			return Math.max(acc, total);
-		}, 0)
-	);
-	let minEdge = $derived(
-		Object.values(lineData).reduce((acc, values) => {
-			const total = values.reduce((acc, row) => Math.max(acc, row.value), 0);
-			return Math.min(acc, total);
-		}, 0)
-	);
-	let maxEdge = $derived(
-		Object.values(lineData).reduce((acc, values) => {
-			const total = values.reduce((acc, row) => Math.max(acc, row.value), 0);
-			return Math.max(acc, total);
-		}, 0)
-	);
-
-	let countries = $derived(
-		feature(
-			countries10m as unknown as Topology,
-			countries10m.objects.countries as GeometryCollection
-		)
-	);
-	let land: string | null = $derived(computePath(countries));
-	let meshes: string | null = $derived(
-		computePath(
-			mesh(
-				countries10m as unknown as Topology,
-				countries10m.objects.countries as GeometryCollection,
-				(a: GeometryObject, b: GeometryObject) => a !== b
-			)
-		)
-	);
 
 	let pies: Pie[] = $derived(
 		Object.entries(pieData).map(([node, values]: [string, DataRow[]]) => {
@@ -155,6 +156,7 @@
 			};
 		})
 	);
+
 	let lines: Line[] = $derived(
 		Object.entries(lineData).map(([node, values]) => {
 			const [a, b] = node.split('-');
@@ -176,16 +178,28 @@
 		}, [])
 	);
 
-	onMount(() => {
-		window.addEventListener('resize', onResize);
-		onResize();
-	});
+	// Tooltip
+	let selectedPie: Pie | undefined = $state(undefined);
+	let selectedLines: Line[] = $state([]);
 
-	onDestroy(() => {
-		window.removeEventListener('resize', onResize);
+	let tooltipX = $derived.by(() => {
+		if (selectedPie) return selectedPie.x;
+		else if (selectedLines.length > 0)
+			return 0.5 * (selectedLines[0].start[0] + selectedLines[0].end[0]);
+		return 0;
 	});
+	let tooltipY = $derived.by(() => {
+		if (selectedPie) return selectedPie.y;
+		else if (selectedLines.length > 0)
+			return 0.5 * (selectedLines[0].start[1] + selectedLines[0].end[1]);
+		return 0;
+	});
+	let tooltipYOffset = $derived.by(() => 5 + (selectedPie ? computeRadius(selectedPie.total) : 0));
+	let tooltipOnTop = $derived.by(() => tooltipY - tooltipYOffset > 180);
 
-	function onResize() {
+	onMount(handleSize);
+
+	function handleSize() {
 		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
 		width = w;
 		height = h;
@@ -234,12 +248,18 @@
 		});
 	}
 
-	function computeEdgeWidth(total: number) {
-		return minLineWidth + ((total - minEdge) / (maxEdge - minEdge)) * (maxLineWidth - minLineWidth);
+	function computeRadius(total: number) {
+		if (maxTotal == minTotal) {
+			return maxRadius;
+		}
+		return minRadius + ((total - minTotal) / (maxTotal - minTotal)) * (maxRadius - minRadius);
 	}
 
-	function computeRadius(total: number) {
-		return minRadius + ((total - minTotal) / (maxTotal - minTotal)) * (maxRadius - minRadius);
+	function computeEdgeWidth(total: number) {
+		if (maxEdge == minEdge) {
+			return maxLineWidth;
+		}
+		return minLineWidth + ((total - minEdge) / (maxEdge - minEdge)) * (maxLineWidth - minLineWidth);
 	}
 
 	function straightLine(start: [number, number], end: [number, number]) {
@@ -253,6 +273,8 @@
 		return res.charAt(0).toUpperCase() + res.slice(1);
 	}
 </script>
+
+<svelte:window on:resize={handleSize} />
 
 <div class="position-relative">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -295,7 +317,6 @@
 			style:top={tooltipOnTop ? `${tooltipY - tooltipYOffset}px` : `${tooltipY + tooltipYOffset}px`}
 			style:left={`${tooltipX}px`}
 			style:transform={tooltipOnTop ? `translate(-50%, -100%)` : `translate(-50%, 0%)`}
-			bind:this={tooltip}
 			transition:fade={{ duration: 300 }}
 		>
 			{#if tooltipOnTop}
