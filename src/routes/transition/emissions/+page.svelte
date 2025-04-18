@@ -177,13 +177,12 @@
 	 * Fetch the relevant data if subdivision is not activated.
 	 */
 	async function fetch_data() {
-		fetching = true;
-		await tick();
-
 		let variable_name = get_division_variable();
 		if (variable_name === null) {
 			return;
 		}
+
+		fetching = true;
 
 		// If annual emissions are selected, we want to add carbon_emissions_annual_limit and if cumulative is selected we add a constant carbon_emissions_budget
 		if (variable_name == get_variable_name('carbon_emissions_annual', selected_solution?.version)) {
@@ -236,6 +235,12 @@
 		fetching = false;
 	}
 
+	function update_cumulation() {
+		fetch_data();
+		update_filters(); // Reset all filters
+		update_plot_data();
+	}
+
 	/**
 	 * This function updates the possible values of the filters and updates the plot data once the filters have been updated.
 	 */
@@ -250,6 +255,7 @@
 		selected_technologies = technologies;
 		selected_locations = locations;
 		selected_aggregation = 'location';
+		selected_normalisation = 'not_normalized';
 
 		fetching = false;
 		update_plot_data();
@@ -389,7 +395,7 @@
 								<Radio
 									options={variables}
 									bind:selected_option={selected_variable}
-									selection_changed={fetch_data}
+									selection_changed={update_cumulation}
 									enabled={!fetching && !solution_loading}
 								></Radio>
 							{/if}
@@ -419,7 +425,7 @@
 											<Radio
 												options={aggregation_options}
 												bind:selected_option={selected_aggregation}
-												selection_changed={(_) => update_plot_data()}
+												selection_changed={update_plot_data}
 											></Radio>
 										</div>
 										<div class="col-6">
@@ -427,7 +433,7 @@
 											<Radio
 												options={normalisation_options}
 												bind:selected_option={selected_normalisation}
-												selection_changed={(_) => update_plot_data()}
+												selection_changed={update_plot_data}
 											></Radio>
 										</div>
 									</div>
@@ -437,9 +443,7 @@
 											<AllCheckbox
 												bind:selected_elements={selected_technologies}
 												elements={technologies}
-												selection_changed={() => {
-													update_plot_data();
-												}}
+												selection_changed={update_plot_data}
 											></AllCheckbox>
 										{/if}
 										{#if carriers.length > 0}
@@ -447,9 +451,7 @@
 											<AllCheckbox
 												bind:selected_elements={selected_carriers}
 												elements={carriers}
-												selection_changed={(e) => {
-													update_plot_data();
-												}}
+												selection_changed={update_plot_data}
 											></AllCheckbox>
 										{/if}
 									{:else}
@@ -457,9 +459,7 @@
 										<AllCheckbox
 											bind:selected_elements={selected_locations}
 											elements={locations}
-											selection_changed={(e) => {
-												update_plot_data();
-											}}
+											selection_changed={update_plot_data}
 										></AllCheckbox>
 									{/if}
 								{/if}
