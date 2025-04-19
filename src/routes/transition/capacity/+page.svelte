@@ -27,11 +27,11 @@
 	const normalisation_options = ['not_normalized', 'normalized'];
 	const storage_type_options = ['energy', 'power'];
 	let units: { [carrier: string]: string } = $state({});
-	let selected_variable: string | null = $state(null);
+	let selected_variable: string | null = $state('capacity');
 	let selected_carrier: string | null = $state(null);
 	let selected_storage_type = $state('energy');
 	let selected_aggregation = $state('technology');
-	let selected_technology_type: string | null = $state(null);
+	let selected_technology_type: string | null = $state('conversion');
 	let selected_technologies: string[] = $state([]);
 	let selected_years: number[] = $state([]);
 	let selected_locations: string[] = $state([]);
@@ -114,25 +114,30 @@
 	 * This function is called is called whenever the solution filter sends a change event.
 	 * It resets all the selected values of the form.
 	 */
-	function solution_changed() {
+	async function solution_changed() {
 		data = null;
-		selected_variable = null;
-		filtered_data = null;
-		selected_technology_type = null;
 		selected_carrier = null;
+		filtered_data = null;
+		await fetch_data();
+		update_carriers();
+		update_technologies();
+		update_locations();
+		reset_data_selection();
+		update_plot_data();
 	}
 
 	/**
 	 * This function is called, whenever the variable in the form is changed.
 	 * It will fetch the necessary data from the API.
 	 */
-	function variable_changed() {
-		fetch_data();
-		reset_data_selection();
-		selected_technology_type = null;
-		selected_carrier = null;
+	async function variable_changed() {
 		filtered_data = null;
 		datasets = [];
+		await fetch_data();
+		update_technologies();
+		update_locations();
+		reset_data_selection();
+		update_plot_data();
 	}
 
 	/**
@@ -269,6 +274,7 @@
 			dataset_selector['location'] = selected_locations;
 			datasets_aggregates['technology'] = selected_technologies;
 		} else {
+			// Case: selected_aggregation == 'node'
 			dataset_selector['technology'] = selected_technologies;
 			datasets_aggregates['location'] = selected_locations;
 		}
@@ -351,9 +357,7 @@
 							<select
 								class="form-select"
 								bind:value={selected_variable}
-								onchange={(e) => {
-									variable_changed();
-								}}
+								onchange={variable_changed}
 								disabled={fetching || solution_loading}
 							>
 								{#each variables as variable}
@@ -368,9 +372,7 @@
 								<select
 									class="form-select"
 									bind:value={selected_technology_type}
-									onchange={() => {
-										technology_type_changed();
-									}}
+									onchange={technology_type_changed}
 									disabled={fetching || solution_loading}
 								>
 									{#each technology_types as technology_type}
@@ -393,9 +395,7 @@
 								<select
 									class="form-select"
 									bind:value={selected_carrier}
-									onchange={() => {
-										carrier_changed();
-									}}
+									onchange={carrier_changed}
 									disabled={fetching || solution_loading}
 								>
 									{#each carriers as carrier}
@@ -431,7 +431,7 @@
 										<Radio
 											options={aggregation_options}
 											bind:selected_option={selected_aggregation}
-											selection_changed={(_) => update_plot_data()}
+											selection_changed={update_plot_data}
 										></Radio>
 									</div>
 									<div class="col-6">
@@ -439,37 +439,31 @@
 										<Radio
 											options={normalisation_options}
 											bind:selected_option={selected_normalisation}
-											selection_changed={(_) => update_plot_data()}
+											selection_changed={update_plot_data}
 										></Radio>
 									</div>
 								</div>
 								{#if selected_aggregation == 'technology'}
 									<h3>Technology</h3>
 									<AllCheckbox
-										selected_elements={selected_technologies}
+										bind:selected_elements={selected_technologies}
 										elements={technologies}
-										selection_changed={() => {
-											update_plot_data();
-										}}
+										selection_changed={update_plot_data}
 									></AllCheckbox>
 								{:else}
 									<h3>Node</h3>
 									<AllCheckbox
-										selected_elements={selected_locations}
+										bind:selected_elements={selected_locations}
 										elements={locations}
-										selection_changed={(e) => {
-											update_plot_data();
-										}}
+										selection_changed={update_plot_data}
 									></AllCheckbox>
 								{/if}
 
 								<h3>Year</h3>
 								<AllCheckbox
-									selected_elements={selected_years}
+									bind:selected_elements={selected_years}
 									elements={years}
-									selection_changed={(e) => {
-										update_plot_data();
-									}}
+									selection_changed={update_plot_data}
 								></AllCheckbox>
 							</div>
 						</div>
