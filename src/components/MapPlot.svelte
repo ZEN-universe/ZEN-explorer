@@ -2,18 +2,14 @@
 	import { geoMercator, geoPath } from 'd3-geo';
 	import { scaleOrdinal } from 'd3-scale';
 	import { schemeCategory10 } from 'd3-scale-chromatic';
-	import { pointer } from 'd3-selection';
+	import { pointer, select } from 'd3-selection';
 	import { pie as d3pie, arc as d3arc } from 'd3-shape';
+	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3-zoom';
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
-	import type {
-		GeometryCollection,
-		GeometryObject,
-		MultiPolygon,
-		Topology
-	} from 'topojson-specification';
+	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
 
 	let topology: Topology | null = $state(null);
 	$effect(() => {
@@ -57,36 +53,60 @@
 	// Map elements
 	let width = $state(936);
 	let height = $state(800);
+	let zoomScale = $state(1);
+	let zoomX = $state(0);
+	let zoomY = $state(0);
 
-	let projection = $derived.by(() => {
+	let initialProjection = $derived.by(() => {
+		let projection;
 		if (!nodeCoords || Object.keys(nodeCoords).length === 0) {
 			// Default projection for the world map
-			// return geoMercator().translate([width / 2, height / 2]);
-			return geoMercator()
-				.center([11, 49])
-				.scale(660)
-				.translate([width / 2, height / 2]);
+			return {
+				scale: 1100,
+				translateX: 400,
+				translateY: 1500
+			};
 		}
 
+		const usedNodes = new Set(
+			Object.keys(pieData).concat(Object.keys(lineData).flatMap((d) => d.split('-')))
+		);
 		const featureCollection: ExtendedFeatureCollection = {
 			type: 'FeatureCollection',
-			features: Object.values(nodeCoords).map((coords) => ({
-				type: 'Feature',
-				geometry: {
-					type: 'Point',
-					coordinates: coords
-				},
-				properties: {}
-			}))
+			features: Object.entries(nodeCoords)
+				.filter(([key, _]) => usedNodes.has(key))
+				.map(([_, coords]) => ({
+					type: 'Feature',
+					geometry: {
+						type: 'Point',
+						coordinates: coords
+					},
+					properties: {}
+				}))
 		};
+		const padding = 1.5 * maxRadius;
 
-		return geoMercator().fitExtent(
+		projection = geoMercator().fitExtent(
 			[
-				[maxRadius, maxRadius],
-				[width - maxRadius, height - maxRadius]
+				[padding, padding],
+				[width - padding, height - padding]
 			],
 			featureCollection
 		);
+
+		return {
+			scale: projection.scale(),
+			translateX: projection.translate()[0],
+			translateY: projection.translate()[1]
+		};
+	});
+	let projection = $derived.by(() => {
+		return geoMercator()
+			.translate([
+				initialProjection.translateX * zoomScale + zoomX,
+				initialProjection.translateY * zoomScale + zoomY
+			])
+			.scale(initialProjection.scale * zoomScale);
 	});
 
 	let computePath = $derived(geoPath().projection(projection));
@@ -121,6 +141,29 @@
 			)
 		);
 	});
+
+	// Zoom
+	let zoom = $derived(d3zoom().on('zoom', onZoom));
+	onMount(() => {
+		if (!svg) return;
+		select(svg)
+			.call(zoom as any)
+			.call(zoom.transform as any, zoomIdentity);
+	});
+
+	function onZoom(event: D3ZoomEvent<SVGSVGElement, unknown>) {
+		const { transform } = event;
+		zoomScale = transform.k;
+		zoomX = transform.x;
+		zoomY = transform.y;
+	}
+
+	export function resetZoom() {
+		zoomScale = 1;
+		zoomX = 0;
+		zoomY = 0;
+		select(svg).call(zoom.transform as any, zoomIdentity);
+	}
 
 	// Data dependent values
 	let [minTotal, maxTotal] = $derived(
@@ -208,22 +251,20 @@
 	);
 
 	// Tooltip
-	let selectedPie: Pie | undefined = $state(undefined);
-	let selectedLines: Line[] = $state([]);
+	let activePie: Pie | undefined = $state(undefined);
+	let activeLines: Line[] = $state([]);
 
 	let tooltipX = $derived.by(() => {
-		if (selectedPie) return selectedPie.x;
-		else if (selectedLines.length > 0)
-			return 0.5 * (selectedLines[0].start[0] + selectedLines[0].end[0]);
+		if (activePie) return activePie.x;
+		else if (activeLines.length > 0) return 0.5 * (activeLines[0].start[0] + activeLines[0].end[0]);
 		return 0;
 	});
 	let tooltipY = $derived.by(() => {
-		if (selectedPie) return selectedPie.y;
-		else if (selectedLines.length > 0)
-			return 0.5 * (selectedLines[0].start[1] + selectedLines[0].end[1]);
+		if (activePie) return activePie.y;
+		else if (activeLines.length > 0) return 0.5 * (activeLines[0].start[1] + activeLines[0].end[1]);
 		return 0;
 	});
-	let tooltipYOffset = $derived.by(() => 5 + (selectedPie ? computeRadius(selectedPie.total) : 0));
+	let tooltipYOffset = $derived.by(() => 5 + (activePie ? computeRadius(activePie.total) : 0));
 	let tooltipOnTop = $derived.by(() => tooltipY - tooltipYOffset > 180);
 
 	onMount(handleSize);
@@ -239,13 +280,13 @@
 		const coords = projection.invert!(pos);
 		if (!coords) return;
 
-		selectedPie = findPie(pos);
-		if (selectedPie) {
-			selectedLines = [];
+		activePie = findPie(pos);
+		if (activePie) {
+			activeLines = [];
 			return;
 		}
 
-		selectedLines = filterLines(pos);
+		activeLines = filterLines(pos);
 	}
 
 	function findPie(pos: [number, number]) {
@@ -312,12 +353,11 @@
 			<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Loading...</text>
 		{:else}
 			<g>
-				<path class="land" d={land} fill="#b3c497" />
+				<path d={land} fill="#b3c497" />
 				{#if regions != null}
-					<path class="mesh" d={regions} fill="none" stroke="#d3d3d3" stroke-width="1px" />
+					<path d={regions} fill="none" stroke="#d3d3d3" stroke-width="1px" />
 				{/if}
 				<path
-					class="mesh"
 					d={countries}
 					fill="none"
 					stroke="white"
@@ -326,9 +366,7 @@
 			</g>
 			<g>
 				{#each lines as line}
-					<g class="line">
-						<path d={straightLine(line.start, line.end)} stroke="#666" stroke-width={line.width} />
-					</g>
+					<path d={straightLine(line.start, line.end)} stroke="#666" stroke-width={line.width} />
 				{/each}
 			</g>
 			<g>
@@ -355,7 +393,15 @@
 			{/each}
 		</div>
 	{/if}
-	{#if selectedPie || selectedLines.length > 0}
+	{#if topology}
+		<div class="position-absolute top-0 end-0 m-2">
+			<button class="btn btn-secondary" onclick={resetZoom}>
+				<i class="bi bi-house"></i>
+				<div class="visually-hidden">Reset zoom</div>
+			</button>
+		</div>
+	{/if}
+	{#if activePie || activeLines.length > 0}
 		<div
 			class="position-absolute bg-black bg-opacity-75 text-white py-2 rounded fs-8 pe-none"
 			style:top={tooltipOnTop ? `${tooltipY - tooltipYOffset}px` : `${tooltipY + tooltipYOffset}px`}
@@ -382,9 +428,9 @@
 					<polygon points="0,5 10,5 5,0" fill="black" />
 				</svg>
 			{/if}
-			{#if selectedPie}
-				<h5 class="fs-7 mb-0 px-2">{selectedPie.label}</h5>
-				{#each selectedPie.data as d}
+			{#if activePie}
+				<h5 class="fs-7 mb-0 px-2">{activePie.label}</h5>
+				{#each activePie.data as d}
 					<div class="px-2">
 						<svg width="16" height="16">
 							<rect width="16" height="16" fill={d.color} />
@@ -393,13 +439,13 @@
 						{unit}
 					</div>
 				{/each}
-				{#if selectedPie.data.length > 1}
+				{#if activePie.data.length > 1}
 					<div class="px-2">
-						<strong>Total: {selectedPie.total.toFixed(3)} {unit}</strong>
+						<strong>Total: {activePie.total.toFixed(3)} {unit}</strong>
 					</div>
 				{/if}
-			{:else if selectedLines.length > 0}
-				{#each selectedLines as line, i}
+			{:else if activeLines.length > 0}
+				{#each activeLines as line, i}
 					<div class={['px-2', i > 0 && 'border-top border-secondary mt-1 pt-1']}>
 						<h5 class="fs-7 mb-0">{line.label}</h5>
 						{#each line.values as d}

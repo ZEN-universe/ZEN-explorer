@@ -4,21 +4,26 @@
 	import SolutionFilter from '../../components/SolutionFilter.svelte';
 	import MapPlot from '../../components/MapPlot.svelte';
 	import { get_component_total } from '$lib/temple';
+	import { availableMaps } from '$lib/constants';
 
 	import type { MapPlotData } from '../../components/MapPlot.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
+
+	let plot: MapPlot | null;
 
 	let carriers: string[] = $state([]);
 	let years: number[] = $state([]);
 	let technologies: string[] = $state([]);
 	let technology_types: string[] = ['conversion', 'storage'];
 	const storage_type_options = ['energy', 'power'];
+	const maps: string[] = availableMaps;
 
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_technology_type: string = $state('conversion');
 	let selected_storage_type = $state('energy');
 	let selected_carrier: string | null = $state(null);
 	let selected_year: number | null = $state(null);
+	let selected_map: string | null = $state('nuts-1');
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
@@ -70,6 +75,7 @@
 		await fetch_data();
 		selected_year = years.length > 0 ? years[0] : null;
 		technology_type_changed();
+		plot?.resetZoom();
 	}
 
 	function technology_type_changed() {
@@ -304,6 +310,8 @@
 									options={years}
 									selection_changed={year_changed}
 								></Dropdown>
+								<h3>Map</h3>
+								<Dropdown bind:selected_option={selected_map} options={maps}></Dropdown>
 							</div>
 						</div>
 					</div>
@@ -315,6 +323,13 @@
 
 <div class="my-4">
 	{#if data && transport_data}
-		<MapPlot pieData={data} lineData={transport_data} nodeCoords={coords} {unit} />
+		<MapPlot
+			bind:this={plot}
+			pieData={data}
+			lineData={transport_data}
+			nodeCoords={coords}
+			{unit}
+			map={selected_map}
+		/>
 	{/if}
 </div>
