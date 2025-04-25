@@ -8,11 +8,25 @@
 	import { fade } from 'svelte/transition';
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
-	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
+	import type {
+		GeometryCollection,
+		GeometryObject,
+		MultiPolygon,
+		Topology
+	} from 'topojson-specification';
 
-	// import topology from '../geojson/world.json';
-	// import topology from 'world-atlas/countries-50m.json';
-	import topology from '../geojson/nuts_3.json';
+	let topology: Topology | null = $state(null);
+	$effect(() => {
+		if (!map) return;
+
+		import(`../topojson/${map}.json`)
+			.then((response) => {
+				topology = response.default;
+			})
+			.catch((err) => {
+				console.error(`Error loading topology for ${map}:`, err);
+			});
+	});
 
 	export interface DataRow {
 		technology: string;
@@ -27,8 +41,9 @@
 		lineData?: MapPlotData;
 		nodeCoords?: { [node: string]: [number, number] };
 		unit: string;
+		map: string | null;
 	}
-	let { pieData, lineData = {}, nodeCoords = {}, unit }: Props = $props();
+	let { pieData, lineData = {}, nodeCoords = {}, unit, map }: Props = $props();
 
 	// SVG element
 	let svg: SVGSVGElement;
@@ -41,14 +56,16 @@
 
 	// Map elements
 	let width = $state(936);
-	let height = $state(600);
+	let height = $state(800);
 
 	let projection = $derived.by(() => {
-		const projection = geoMercator().translate([width / 2, height / 2]);
-
 		if (!nodeCoords || Object.keys(nodeCoords).length === 0) {
 			// Default projection for the world map
-			return projection.center([20, 51]).scale(660);
+			// return geoMercator().translate([width / 2, height / 2]);
+			return geoMercator()
+				.center([11, 49])
+				.scale(660)
+				.translate([width / 2, height / 2]);
 		}
 
 		const featureCollection: ExtendedFeatureCollection = {
@@ -71,7 +88,6 @@
 			featureCollection
 		);
 	});
-	$inspect(projection.scale(), projection.translate(), projection.center());
 
 	let computePath = $derived(geoPath().projection(projection));
 	const computeColor = scaleOrdinal(schemeCategory10);
@@ -79,19 +95,32 @@
 		.sort(null)
 		.value((d: any) => d);
 
-	let countries = $derived(
-		feature(topology as unknown as Topology, topology.objects.cntrg as GeometryCollection)
-	);
-	let land: string | null = $derived(computePath(countries));
-	let meshes: string | null = $derived(
-		computePath(
+	let land: string | null = $derived.by(() => {
+		if (!topology) return null;
+		return computePath(
+			feature(topology as unknown as Topology, topology.objects.land as GeometryCollection)
+		);
+	});
+	let countries: string | null = $derived.by(() => {
+		if (!topology) return null;
+		return computePath(
 			mesh(
 				topology as unknown as Topology,
-				topology.objects.nutsrg as GeometryCollection,
+				topology.objects.countries as GeometryCollection,
 				(a: GeometryObject, b: GeometryObject) => a !== b
 			)
-		)
-	);
+		);
+	});
+	let regions: string | null = $derived.by(() => {
+		if (!topology || !('regions' in topology.objects)) return null;
+		return computePath(
+			mesh(
+				topology as unknown as Topology,
+				topology.objects.regions as GeometryCollection,
+				(a: GeometryObject, b: GeometryObject) => a !== b
+			)
+		);
+	});
 
 	// Data dependent values
 	let [minTotal, maxTotal] = $derived(
@@ -278,39 +307,54 @@
 
 <div class="position-relative">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<svg class="map" {width} {height} bind:this={svg} onmousemove={onMouseMove}>
-		<g>
-			<path class="land" d={land} />
-			<path class="mesh" d={meshes} fill="none" stroke="white" stroke-width="1px" />
-		</g>
-		<g>
-			{#each lines as line}
-				<g class="line">
-					<path d={straightLine(line.start, line.end)} stroke="#666" stroke-width={line.width} />
-				</g>
-			{/each}
-		</g>
-		<g>
-			{#each pies as pie}
-				<g class="pies" transform={`translate(${pie.x}, ${pie.y})`}>
-					{#each pie.data as d}
-						<path class="arc" d={d.arc} fill={d.color} />
-					{/each}
-				</g>
-			{/each}
-		</g>
+	<svg {width} {height} bind:this={svg} onmousemove={onMouseMove} style:background="#91a9cf">
+		{#if !topology}
+			<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Loading...</text>
+		{:else}
+			<g>
+				<path class="land" d={land} fill="#b3c497" />
+				{#if regions != null}
+					<path class="mesh" d={regions} fill="none" stroke="#d3d3d3" stroke-width="1px" />
+				{/if}
+				<path
+					class="mesh"
+					d={countries}
+					fill="none"
+					stroke="white"
+					stroke-width={regions == null ? '1px' : '2px'}
+				/>
+			</g>
+			<g>
+				{#each lines as line}
+					<g class="line">
+						<path d={straightLine(line.start, line.end)} stroke="#666" stroke-width={line.width} />
+					</g>
+				{/each}
+			</g>
+			<g>
+				{#each pies as pie}
+					<g class="pies" transform={`translate(${pie.x}, ${pie.y})`}>
+						{#each pie.data as d}
+							<path class="arc" d={d.arc} fill={d.color} />
+						{/each}
+					</g>
+				{/each}
+			</g>
+		{/if}
 	</svg>
-	<div class="position-absolute bottom-0 end-0 m-2 p-2 bg-black bg-opacity-75 text-white">
-		<h5 class="visually-hidden">Legend</h5>
-		{#each technologies as t}
-			<div class="d-flex align-items-center">
-				<svg width="16" height="16" class="me-1">
-					<rect width="16" height="16" fill={computeColor(t)} />
-				</svg>
-				{stringify(t)}
-			</div>
-		{/each}
-	</div>
+	{#if technologies.length > 0}
+		<div class="position-absolute bottom-0 end-0 m-2 p-2 bg-black bg-opacity-75 text-white">
+			<h5 class="visually-hidden">Legend</h5>
+			{#each technologies as t}
+				<div class="d-flex align-items-center">
+					<svg width="16" height="16" class="me-1">
+						<rect width="16" height="16" fill={computeColor(t)} />
+					</svg>
+					{stringify(t)}
+				</div>
+			{/each}
+		</div>
+	{/if}
 	{#if selectedPie || selectedLines.length > 0}
 		<div
 			class="position-absolute bg-black bg-opacity-75 text-white py-2 rounded fs-8 pe-none"
@@ -372,12 +416,6 @@
 </div>
 
 <style>
-	.map {
-		background: #91a9cf;
-	}
-	.land {
-		fill: #b3c497;
-	}
 	.fs-7 {
 		font-size: 0.875rem;
 	}
