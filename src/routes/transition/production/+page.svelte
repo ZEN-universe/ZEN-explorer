@@ -12,7 +12,7 @@
 	import { get_variable_name } from '$lib/variables';
 	import type { ChartConfiguration } from 'chart.js';
 
-	let data: Papa.ParseResult<any> | null = null;
+	let data: Papa.ParseResult<any> | null = $state(null);
 	let carriers: string[] = $state([]);
 	let nodes: string[] = $state([]);
 	let edges: string[] = $state([]);
@@ -28,12 +28,12 @@
 	let filtered_data: any[] = $state([]);
 	let units: { [carrier: string]: string } = $state({});
 	let selected_solution: ActivatedSolution | null = $state(null);
-	let selected_variable: string | null = $state(null);
+	let selected_variable: string | null = $state('conversion');
+	let selected_subvariable: string | null = $state('input');
 	let selected_carrier: string | null = $state(null);
 	let technologies: string[] = $state([]);
 	let selected_technologies: string[] = $state([]);
 	let selected_locations: string[] = $state([]);
-	let selected_subvariable: string | null = $state(null);
 	let selected_years: number[] = $state([]);
 	const normalisation_options = ['not_normalized', 'normalized'];
 	let selected_normalisation: string = $state('not_normalized');
@@ -90,7 +90,7 @@
 	 */
 	function reset_data_selection() {
 		selected_years = years;
-		selected_locations = nodes;
+		selected_locations = locations;
 		selected_technologies = technologies;
 	}
 
@@ -152,30 +152,12 @@
 	 * This function updates the available carriers depending on the current selection and resets the data selection.
 	 */
 	function update_carriers() {
-		if (data == null) {
-			carriers = [];
-			return;
-		}
-
-		if (selected_solution == null) {
+		if (data == null || selected_solution == null) {
 			carriers = [];
 			return;
 		}
 
 		filtered_data = [];
-		selected_carrier = '';
-
-		let possible_technologies = new Set(data!.data.map((d) => d.technology));
-
-		let possible_carriers = [
-			...new Set(
-				[...possible_technologies].map((d) => selected_solution?.detail.reference_carrier[d])
-			)
-		];
-
-		if (selected_variable == 'import_export') {
-			possible_carriers = [...new Set(data!.data.map((d) => d.carrier))];
-		}
 
 		switch (selected_variable) {
 			case get_variable_name('import_export', selected_solution?.version):
@@ -186,23 +168,33 @@
 				}
 				break;
 			case get_variable_name('conversion', selected_solution?.version):
-				let relevant_carriers = selected_solution!.detail.carriers_output;
+				let relevant_carriers;
 				if (selected_subvariable == 'input') {
 					relevant_carriers = selected_solution!.detail.carriers_input;
-				}
-				carriers = [];
-
-				for (const i in relevant_carriers) {
-					carriers = [...new Set([...carriers, ...relevant_carriers[i]])];
+				} else {
+					relevant_carriers = selected_solution!.detail.carriers_output;
 				}
 
+				carriers = Array.from(new Set(Object.values(relevant_carriers).flat()));
 				break;
 			default:
 				carriers = selected_solution!.detail.system.set_carriers;
 		}
 
-		carriers = carriers.filter((d) => possible_carriers.includes(d));
-		if (carriers.length == 1) {
+		let possible_carriers = null;
+		if (selected_variable == 'import_export') {
+			possible_carriers = Array.from(new Set(data.data.map((d) => d.carrier)));
+		} else if (selected_variable != get_variable_name('conversion', selected_solution?.version)) {
+			possible_carriers = Array.from(
+				new Set(data.data.map((d) => selected_solution?.detail.reference_carrier[d.technology]))
+			);
+		}
+
+		if (possible_carriers != null) {
+			carriers = carriers.filter((d) => possible_carriers.includes(d));
+		}
+
+		if ((carriers.length >= 1 && !selected_carrier) || !carriers.includes(selected_carrier!)) {
 			selected_carrier = carriers[0];
 		}
 
@@ -268,10 +260,12 @@
 	 * This function updates the available locations to select.
 	 */
 	function update_locations() {
-		locations = nodes;
 		if (selected_variable == 'transport') {
 			locations = edges;
+		} else {
+			locations = nodes;
 		}
+		selected_locations = locations;
 
 		reset_data_selection();
 	}
@@ -306,7 +300,7 @@
 
 		// If the selected aggregation is technology, include all available nodes and vice versa
 		if (selected_aggregation == 'technology') {
-			selected_locations = nodes;
+			selected_locations = locations;
 		} else {
 			selected_technologies = technologies;
 		}
@@ -334,14 +328,12 @@
 		if (selected_variable == 'import_export') {
 			dataset_selector[location_name] = selected_locations;
 			datasets_aggregates['carrier'] = [selected_carrier!];
+		} else if (selected_aggregation == 'technology') {
+			dataset_selector[location_name] = selected_locations;
+			datasets_aggregates['technology'] = selected_technologies;
 		} else {
-			if (selected_aggregation == 'technology') {
-				dataset_selector[location_name] = selected_locations;
-				datasets_aggregates['technology'] = selected_technologies;
-			} else {
-				dataset_selector['technology'] = selected_technologies;
-				datasets_aggregates[location_name] = selected_locations;
-			}
+			dataset_selector['technology'] = selected_technologies;
+			datasets_aggregates[location_name] = selected_locations;
 		}
 
 		// Filter years
@@ -370,6 +362,8 @@
 			selected_carrier
 		].join('_');
 	}
+	$inspect('locations', locations);
+	$inspect('selected_locations', selected_locations);
 </script>
 
 <h2>Production</h2>
@@ -437,12 +431,12 @@
 									</option>
 								{/each}
 							</select>
-							{#if variables && selected_variable && variables[selected_variable] != null}
+							{#if variables && selected_variable && variables[selected_variable].length > 0}
 								<h3>Subvariable</h3>
 								<Radio
 									options={variables[selected_variable]}
 									bind:selected_option={selected_subvariable}
-									selection_changed={(_) => refetch()}
+									selection_changed={refetch}
 									enabled={!solution_loading && !fetching}
 								></Radio>
 							{/if}
@@ -491,7 +485,7 @@
 										<Radio
 											options={aggregation_options}
 											bind:selected_option={selected_aggregation}
-											selection_changed={(_) => update_data()}
+											selection_changed={update_data}
 											enabled={!solution_loading && !fetching}
 										></Radio>
 									</div>
@@ -501,7 +495,7 @@
 									<Radio
 										options={normalisation_options}
 										bind:selected_option={selected_normalisation}
-										selection_changed={(_) => update_data()}
+										selection_changed={update_data}
 										enabled={!solution_loading && !fetching}
 									></Radio>
 								</div>
@@ -512,9 +506,7 @@
 									bind:selected_elements={selected_technologies}
 									elements={technologies}
 									enabled={!solution_loading && !fetching}
-									selection_changed={() => {
-										update_data();
-									}}
+									selection_changed={update_data}
 								></AllCheckbox>
 							{:else}
 								<h3>Node</h3>
@@ -522,9 +514,7 @@
 									bind:selected_elements={selected_locations}
 									elements={locations}
 									enabled={!solution_loading && !fetching}
-									selection_changed={(e) => {
-										update_data();
-									}}
+									selection_changed={update_data}
 								></AllCheckbox>
 							{/if}
 							<h3>Year</h3>
@@ -532,9 +522,7 @@
 								bind:selected_elements={selected_years}
 								elements={years}
 								enabled={!solution_loading && !fetching}
-								selection_changed={(e) => {
-									update_data();
-								}}
+								selection_changed={update_data}
 							></AllCheckbox>
 						</div>
 					</div>
