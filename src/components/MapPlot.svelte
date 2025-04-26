@@ -58,8 +58,12 @@
 	let zoomY = $state(0);
 
 	let initialProjection = $derived.by(() => {
-		let projection;
-		if (!nodeCoords || Object.keys(nodeCoords).length === 0) {
+		const usedNodes = new Set(
+			Object.keys(pieData).concat(Object.keys(lineData).flatMap((d) => d.split('-')))
+		);
+		const filteredNodeCoords = Object.entries(nodeCoords).filter(([key, _]) => usedNodes.has(key));
+
+		if (!nodeCoords || filteredNodeCoords.length == 0) {
 			// Default projection for the world map
 			return {
 				scale: 1100,
@@ -68,25 +72,19 @@
 			};
 		}
 
-		const usedNodes = new Set(
-			Object.keys(pieData).concat(Object.keys(lineData).flatMap((d) => d.split('-')))
-		);
 		const featureCollection: ExtendedFeatureCollection = {
 			type: 'FeatureCollection',
-			features: Object.entries(nodeCoords)
-				.filter(([key, _]) => usedNodes.has(key))
-				.map(([_, coords]) => ({
-					type: 'Feature',
-					geometry: {
-						type: 'Point',
-						coordinates: coords
-					},
-					properties: {}
-				}))
+			features: filteredNodeCoords.map(([_, coords]) => ({
+				type: 'Feature',
+				geometry: {
+					type: 'Point',
+					coordinates: coords
+				},
+				properties: {}
+			}))
 		};
 		const padding = 1.5 * maxRadius;
-
-		projection = geoMercator().fitExtent(
+		const projection = geoMercator().fitExtent(
 			[
 				[padding, padding],
 				[width - padding, height - padding]
@@ -143,7 +141,7 @@
 	});
 
 	// Zoom
-	let zoom = $derived(d3zoom().on('zoom', onZoom));
+	let zoom = $derived(d3zoom().filter(shouldHandleZoom).on('zoom', onZoom));
 	onMount(() => {
 		if (!svg) return;
 		select(svg)
@@ -151,12 +149,78 @@
 			.call(zoom.transform as any, zoomIdentity);
 	});
 
+	function shouldHandleZoom(event: MouseEvent | WheelEvent) {
+		// Ignore right-click, since that should open the context menu
+		// and ctrl + left-click, since that is used for drag-to-zoom.
+		// Exception for pinch-to-zoom, which is sent as a wheel+ctrlKey event.
+		return event.button == 0 && !(event.ctrlKey && event.button === 0) && !(event.ctrlKey && event.type !== 'wheel');
+	}
+
 	function onZoom(event: D3ZoomEvent<SVGSVGElement, unknown>) {
 		const { transform } = event;
 		zoomScale = transform.k;
 		zoomX = transform.x;
 		zoomY = transform.y;
 	}
+
+	let drawRectangle = $state(false);
+	let startPos = $state([0, 0]);
+	let endPos = $state([0, 0]);
+
+	function startZoomRectangle(event: MouseEvent) {
+		console.log('startZoomRectangle', pointer(event, svg));
+		
+		if (event.button !== 0) return; // Only left mouse button
+		drawRectangle = true;
+		startPos = pointer(event, svg);
+		endPos = startPos;
+	}
+	
+	function moveZoomRectangle(event: MouseEvent) {
+		if (!drawRectangle) return;
+		// console.log('moveZoomRectangle', event);
+		endPos = pointer(event, svg);
+	}
+
+	function cancelZoomRectangle() {
+		drawRectangle = false;
+	}
+	
+	function endZoomRectangle(event: MouseEvent) {
+		console.log('endZoomRectangle', event);
+		
+		if (!drawRectangle) return;
+		drawRectangle = false;
+		
+		// Calculate the rectangle bounds and dimensions
+		const endPos = pointer(event, svg);
+		const [startX, startY] = startPos;
+		const [endX, endY] = endPos;
+		const x = Math.min(startX, endX);
+		const y = Math.min(startY, endY);
+		const rectWidth = Math.abs(startX - endX);
+		const rectHeight = Math.abs(startY - endY);
+		if (rectWidth === 0 || rectHeight === 0) return;
+
+		// Calculate the scale as the minimal ratio of the rectangle dimensions to the SVG dimensions
+		const scaleX = width / rectWidth;
+		const scaleY = height / rectHeight;
+		const scale = Math.min(scaleX, scaleY);
+		
+		// Calculate the translation to center the rectangle in the SVG
+		const centerX = x + rectWidth / 2;
+		const centerY = y + rectHeight / 2;
+		const translateX = width / 2 - centerX * scale;
+		const translateY = height / 2 - centerY * scale;
+		
+		// Apply the zoom transformation
+		const selection = select(svg as Element);
+		zoom.transform(selection, zoomIdentity.translate(translateX, translateY).scale(zoomScale * scale));
+	}
+	
+	// $inspect('rectPos', startPos, endPos);
+	$inspect('zoomScale', zoomScale);
+	$inspect('zoomPos', zoomX, zoomY);
 
 	export function resetZoom() {
 		zoomScale = 1;
@@ -275,7 +339,7 @@
 		height = h;
 	}
 
-	function onMouseMove(event: MouseEvent) {
+	function updateActiveElements(event: MouseEvent) {
 		const pos = pointer(event);
 		const coords = projection.invert!(pos);
 		if (!coords) return;
@@ -348,7 +412,10 @@
 
 <div class="position-relative">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<svg {width} {height} bind:this={svg} onmousemove={onMouseMove} style:background="#91a9cf">
+	<svg {width} {height} bind:this={svg} onmousemove={(event) => {
+		updateActiveElements(event);
+		moveZoomRectangle(event);
+	}} onmousedown={startZoomRectangle} onmouseup={endZoomRectangle} onmouseleave={cancelZoomRectangle} style:background="#91a9cf">
 		{#if !topology}
 			<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Loading...</text>
 		{:else}
@@ -379,9 +446,20 @@
 				{/each}
 			</g>
 		{/if}
+		{#if drawRectangle}
+			<rect
+				x={Math.min(startPos[0], endPos[0])}
+				y={Math.min(startPos[1], endPos[1])}
+				width={Math.abs(startPos[0] - endPos[0])}
+				height={Math.abs(startPos[1] - endPos[1])}
+				stroke="black"
+				stroke-width="1"
+				fill="rgba(255, 255, 255, 0.5)"
+			/>
+		{/if}
 	</svg>
 	{#if technologies.length > 0}
-		<div class="position-absolute bottom-0 end-0 m-2 p-2 bg-black bg-opacity-75 text-white">
+		<div class="position-absolute bottom-0 end-0 m-2 p-2 bg-black bg-opacity-75 text-white pe-none">
 			<h5 class="visually-hidden">Legend</h5>
 			{#each technologies as t}
 				<div class="d-flex align-items-center">
