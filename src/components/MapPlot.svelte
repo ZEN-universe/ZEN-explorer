@@ -153,7 +153,11 @@
 		// Ignore right-click, since that should open the context menu
 		// and ctrl + left-click, since that is used for drag-to-zoom.
 		// Exception for pinch-to-zoom, which is sent as a wheel+ctrlKey event.
-		return event.button == 0 && !(event.ctrlKey && event.button === 0) && !(event.ctrlKey && event.type !== 'wheel');
+		return (
+			event.button == 0 &&
+			!(event.ctrlKey && event.button === 0) &&
+			!(event.ctrlKey && event.type !== 'wheel')
+		);
 	}
 
 	function onZoom(event: D3ZoomEvent<SVGSVGElement, unknown>) {
@@ -168,36 +172,26 @@
 	let endPos = $state([0, 0]);
 
 	function startZoomRectangle(event: MouseEvent) {
-		console.log('startZoomRectangle', pointer(event, svg));
-		
 		if (event.button !== 0) return; // Only left mouse button
 		drawRectangle = true;
 		startPos = pointer(event, svg);
 		endPos = startPos;
 	}
-	
+
 	function moveZoomRectangle(event: MouseEvent) {
 		if (!drawRectangle) return;
 		// console.log('moveZoomRectangle', event);
 		endPos = pointer(event, svg);
 	}
 
-	function cancelZoomRectangle() {
-		drawRectangle = false;
-	}
-	
 	function endZoomRectangle(event: MouseEvent) {
-		console.log('endZoomRectangle', event);
-		
 		if (!drawRectangle) return;
 		drawRectangle = false;
-		
-		// Calculate the rectangle bounds and dimensions
+
+		// Calculate the rectangle's width and height
 		const endPos = pointer(event, svg);
 		const [startX, startY] = startPos;
 		const [endX, endY] = endPos;
-		const x = Math.min(startX, endX);
-		const y = Math.min(startY, endY);
 		const rectWidth = Math.abs(startX - endX);
 		const rectHeight = Math.abs(startY - endY);
 		if (rectWidth === 0 || rectHeight === 0) return;
@@ -206,21 +200,24 @@
 		const scaleX = width / rectWidth;
 		const scaleY = height / rectHeight;
 		const scale = Math.min(scaleX, scaleY);
-		
+
 		// Calculate the translation to center the rectangle in the SVG
-		const centerX = x + rectWidth / 2;
-		const centerY = y + rectHeight / 2;
-		const translateX = width / 2 - centerX * scale;
-		const translateY = height / 2 - centerY * scale;
-		
+		const x = Math.min(startX, endX) + rectWidth / 2;
+		const y = Math.min(startY, endY) + rectHeight / 2;
+		const translateX = (zoomX - x) * scale + width / 2;
+		const translateY = (zoomY - y) * scale + height / 2;
+
 		// Apply the zoom transformation
 		const selection = select(svg as Element);
-		zoom.transform(selection, zoomIdentity.translate(translateX, translateY).scale(zoomScale * scale));
+		zoom.transform(
+			selection,
+			zoomIdentity.translate(translateX, translateY).scale(zoomScale * scale)
+		);
 	}
-	
-	// $inspect('rectPos', startPos, endPos);
-	$inspect('zoomScale', zoomScale);
-	$inspect('zoomPos', zoomX, zoomY);
+
+	function cancelZoomRectangle() {
+		drawRectangle = false;
+	}
 
 	export function resetZoom() {
 		zoomScale = 1;
@@ -365,6 +362,13 @@
 	function filterLines(pos: [number, number]) {
 		const [px, py] = pos;
 		return lines.filter((line) => {
+			// Check if the given position is within the line segment
+			// using the distance from point to line segment formula
+			// Let a be the start point, b be the end point, and p be the point
+			// The distance from p to the line segment ab is given by:
+			// dist(a, b, p) = |p-a|² - ((p-a) x (b-a))² / |b-a|²
+			// where x is the dot product and | | is the euclidean length of the vector
+
 			let [x1, y1] = line.start!;
 			let [x2, y2] = line.end!;
 
@@ -375,6 +379,8 @@
 
 			const adotb = ax * bx + ay * by;
 			const bSquared = Math.pow(bx, 2) + Math.pow(by, 2);
+			// Abort if the projection of p is outside the line segment,
+			// i.e. if adotb is not in [0, bSquared], or if the line segment is too small
 			if (adotb < 0 || adotb > bSquared || bSquared < 1e-10) return false;
 
 			const distSquared = Math.pow(ax, 2) + Math.pow(ay, 2) - Math.pow(adotb, 2) / bSquared;
@@ -412,10 +418,19 @@
 
 <div class="position-relative">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<svg {width} {height} bind:this={svg} onmousemove={(event) => {
-		updateActiveElements(event);
-		moveZoomRectangle(event);
-	}} onmousedown={startZoomRectangle} onmouseup={endZoomRectangle} onmouseleave={cancelZoomRectangle} style:background="#91a9cf">
+	<svg
+		{width}
+		{height}
+		bind:this={svg}
+		onmousemove={(event) => {
+			updateActiveElements(event);
+			moveZoomRectangle(event);
+		}}
+		onmousedown={startZoomRectangle}
+		onmouseup={endZoomRectangle}
+		onmouseleave={cancelZoomRectangle}
+		style:background="#91a9cf"
+	>
 		{#if !topology}
 			<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Loading...</text>
 		{:else}
