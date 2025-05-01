@@ -70,6 +70,17 @@
 				translateX: 400,
 				translateY: 1500
 			};
+		} else if (filteredNodeCoords.length == 1) {
+			// Single node projection
+			const tempProjection = geoMercator()
+				.scale(800)
+				.translate([0, 0]);
+			const point = tempProjection(filteredNodeCoords[0][1])!;
+			return {
+				scale: tempProjection.scale(),
+				translateX: width / 2 - point[0],
+				translateY: height / 2 - point[1]
+			};
 		}
 
 		const featureCollection: ExtendedFeatureCollection = {

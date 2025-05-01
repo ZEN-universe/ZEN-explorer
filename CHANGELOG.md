@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1 (2025-05-01)
+
+- [Map] Fix initial projection when there is only a single node.
+
 ## 0.5.0 (2025-05-01)
 
 - Add map plot.
