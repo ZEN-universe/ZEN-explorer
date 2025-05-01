@@ -1,8 +1,12 @@
 # Changelog
 
-## 0.5.0 (tbd)
+## 0.5.0 (2025-05-01)
 
-- Add map plot
+- Add map plot.
+- [Capacity] Fix node, technology, and year selection.
+- [Production] Fix selection of carriers.
+- [Emissions] Reset filters when cumulation is changed.
+- [Costs] Keep accordions open by default.
 
 ## 0.4.5 (2025-03-18)
 
