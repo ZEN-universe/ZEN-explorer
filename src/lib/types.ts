@@ -43,6 +43,7 @@ export interface System {
 	unaggregated_time_steps_per_year: number;
 	use_rolling_horizon: boolean;
 	years_in_rolling_horizon: number;
+	coords: { [node: string]: { lon: number; lat: number } };
 }
 
 export interface ReferenceCarrier {

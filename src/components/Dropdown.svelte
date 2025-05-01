@@ -3,7 +3,7 @@
 		options: any[];
 		selected_option?: any;
 		enabled?: boolean;
-		selection_changed: (selected_option: any) => void;
+		selection_changed?: (selected_option: any) => void;
 	}
 
 	let {
@@ -14,7 +14,7 @@
 	}: Props = $props();
 
 	function update_selection() {
-		selection_changed(selected_option);
+		selection_changed && selection_changed(selected_option);
 	}
 </script>
 

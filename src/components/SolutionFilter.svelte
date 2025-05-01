@@ -24,6 +24,7 @@
 		nodes?: string[];
 		edges?: string[];
 		years?: number[];
+		coords?: { [key: string]: { lon: number; lat: number } };
 		selected_solution: ActivatedSolution | null;
 		loading?: boolean;
 		enabled?: boolean;

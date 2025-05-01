@@ -21,9 +21,9 @@
 		<div class="quarter quarter3">
 			<p class="content">The Energy System</p>
 		</div>
-		<div class="quarter quarter4">
+		<a class="quarter active quarter4" href="/map">
 			<p class="content">The Map</p>
-		</div>
+		</a>
 		<div class="logo">
 			<img alt="The project logo" src={logo} />
 		</div>
@@ -82,13 +82,13 @@
 		height: 50%;
 		transition: opacity 0.2s;
 		cursor: pointer;
-		border: solid 0.5px rgba(0, 0, 0, 0.5);
+		border: 1px solid rgba(0, 0, 0, 0.5);
 		font-weight: bold;
-		font-size: 18px;
+		font-size: 20px;
 	}
 
 	.quarter:hover.active {
-		opacity: 0.5;
+		opacity: 0.7;
 	}
 
 	.content {
@@ -103,8 +103,10 @@
 		top: 0;
 		left: 0;
 		color: rgb(255, 0, 0);
-		background-color: rgba(255, 0, 0, 0.5);
+		background-color: rgba(255, 0, 0, 0.3);
 		border-radius: 100% 0 0 0;
+		border-top: 2px solid black;
+		border-left: 2px solid black;
 	}
 
 	.quarter1 .content {
@@ -115,8 +117,10 @@
 		top: 0;
 		right: 0;
 		color: rgb(0, 164, 0);
-		background-color: rgba(0, 164, 0, 0.5);
+		background-color: rgba(0, 164, 0, 0.3);
 		border-radius: 0 100% 0 0;
+		border-top: 2px solid black;
+		border-right: 2px solid black;
 	}
 
 	.quarter2 .content {
@@ -130,6 +134,8 @@
 		color: rgba(0, 0, 255, 0.2);
 		background-color: rgba(0, 0, 255, 0.1);
 		border-radius: 0 0 0 100%;
+		border-bottom: 2px solid black;
+		border-left: 2px solid black;
 	}
 
 	.quarter3 .content {
@@ -137,12 +143,13 @@
 	}
 
 	.quarter4 {
-		cursor: default;
 		bottom: 0;
 		right: 0;
-		color: rgba(120, 120, 0, 0.2);
-		background-color: rgba(120, 120, 0, 0.1);
+		color: rgb(120, 120, 0);
+		background-color: rgba(120, 120, 0, 0.3);
 		border-radius: 0 0 100% 0;
+		border-bottom: 2px solid black;
+		border-right: 2px solid black;
 	}
 
 	.quarter4 .content {
