@@ -522,7 +522,7 @@
 				<div class="accordion-item">
 					<h2 class="accordion-header">
 						<button
-							class="accordion-button collapsed"
+							class="accordion-button"
 							type="button"
 							data-bs-toggle="collapse"
 							data-bs-target="#collapseCost"
@@ -534,7 +534,7 @@
 					</h2>
 					<div
 						id="collapseCost"
-						class="accordion-collapse collapse"
+						class="accordion-collapse collapse show"
 						data-bs-parent="#accordionExample"
 					>
 						<div class="accordion-body">
@@ -557,7 +557,7 @@
 				<div class="accordion-item">
 					<h2 class="accordion-header">
 						<button
-							class="accordion-button collapsed"
+							class="accordion-button"
 							type="button"
 							data-bs-toggle="collapse"
 							data-bs-target="#collapseTwo"
@@ -569,7 +569,7 @@
 					</h2>
 					<div
 						id="collapseTwo"
-						class="accordion-collapse collapse"
+						class="accordion-collapse collapse show"
 						data-bs-parent="#accordionExample"
 					>
 						<div class="accordion-body">
@@ -630,7 +630,7 @@
 				<div class="accordion-item">
 					<h2 class="accordion-header">
 						<button
-							class="accordion-button collapsed"
+							class="accordion-button"
 							type="button"
 							data-bs-toggle="collapse"
 							data-bs-target="#collapseThree"
@@ -642,7 +642,7 @@
 					</h2>
 					<div
 						id="collapseThree"
-						class="accordion-collapse collapse"
+						class="accordion-collapse collapse show"
 						data-bs-parent="#accordionExample"
 					>
 						<div class="accordion-body">
