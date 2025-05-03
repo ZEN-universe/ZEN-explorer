@@ -8,6 +8,8 @@
 	import { tick } from 'svelte';
 	import { get_variable_name } from '$lib/variables';
 	import type { ChartConfiguration, ChartDataset } from 'chart.js';
+	import Filters from '../../../components/Filters.svelte';
+	import FilterSection from '../../../components/FilterSection.svelte';
 
 	var defaultColors = [
 		'rgb(75, 192, 192)',
@@ -320,103 +322,67 @@
 </script>
 
 <h2>The Energy Balance</h2>
-<div class="position-relative">
-	<div class="filters">
-		<div class="accordion" id="accordionExample">
-			<div class="accordion-item solution-selection">
-				<h2 class="accordion-header">
-					<button
-						class="accordion-button"
-						type="button"
-						data-bs-toggle="collapse"
-						data-bs-target="#collapseOne"
-						aria-expanded="true"
-						aria-controls="collapseOne"
-					>
-						Solution Selection
-					</button>
-				</h2>
-				<div id="collapseOne" class="accordion-collapse collapse show">
-					<div class="accordion-body">
-						<SolutionFilter
-							bind:carriers
-							bind:nodes
-							bind:years
-							bind:selected_solution
-							bind:loading={solution_loading}
-							solution_selected={solution_changed}
-							enabled={!solution_loading && !fetching}
-						/>
-					</div>
+<Filters>
+	<FilterSection title="Solution Selection">
+		<SolutionFilter
+			bind:carriers
+			bind:nodes
+			bind:years
+			bind:selected_solution
+			bind:loading={solution_loading}
+			solution_selected={solution_changed}
+			enabled={!solution_loading && !fetching}
+		/>
+	</FilterSection>
+	{#if !solution_loading && selected_solution}
+		<FilterSection title="Data Selection">
+			<div class="row">
+				<div class="col-6">
+					<Dropdown
+						label="Year"
+						options={years}
+						bind:value={selected_year}
+						disabled={fetching || solution_loading}
+						onUpdate={data_changed}
+					></Dropdown>
 				</div>
 			</div>
-			{#if !solution_loading && selected_solution}
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseTwo"
-							aria-expanded="false"
-							aria-controls="collapseTwo"
-						>
-							Data selection
-						</button>
-					</h2>
-					<div id="collapseTwo" class="accordion-collapse collapse show">
-						<div class="accordion-body">
-							<div class="row">
-								<div class="col-6">
-									<h3>Year</h3>
-									<Dropdown
-										options={years}
-										bind:selected_option={selected_year}
-										selection_changed={data_changed}
-										enabled={!fetching && !solution_loading}
-									></Dropdown>
-								</div>
-							</div>
-							<div class="row">
-								<div class="col-6">
-									<h3>Node</h3>
-									<Dropdown
-										options={nodes}
-										bind:selected_option={selected_node}
-										selection_changed={data_changed}
-										enabled={!fetching && !solution_loading}
-									></Dropdown>
-								</div>
-							</div>
-							<div class="row">
-								<div class="col-6">
-									<h3>Carrier</h3>
-									<Dropdown
-										options={carriers}
-										bind:selected_option={selected_carrier}
-										selection_changed={data_changed}
-										enabled={!fetching && !solution_loading}
-									></Dropdown>
-								</div>
-							</div>
-							<div class="row">
-								<div class="col-6">
-									<h3>Smoothing Window Size</h3>
-									<Dropdown
-										options={window_sizes}
-										bind:selected_option={selected_window_size}
-										selection_changed={data_changed}
-										enabled={!fetching && !solution_loading}
-									></Dropdown>
-								</div>
-							</div>
-						</div>
-					</div>
+			<div class="row">
+				<div class="col-6">
+					<Dropdown
+						label="Node"
+						options={nodes}
+						bind:value={selected_node}
+						disabled={fetching || solution_loading}
+						onUpdate={data_changed}
+					></Dropdown>
 				</div>
-			{/if}
-		</div>
-	</div>
-</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<Dropdown
+						label="Carrier"
+						options={carriers}
+						bind:value={selected_carrier}
+						disabled={fetching || solution_loading}
+						onUpdate={data_changed}
+					></Dropdown>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-6">
+					<Dropdown
+						label="Smoothing Window Size"
+						options={window_sizes}
+						bind:value={selected_window_size}
+						disabled={fetching || solution_loading}
+						onUpdate={data_changed}
+					></Dropdown>
+				</div>
+			</div>
+		</FilterSection>
+	{/if}
+</Filters>
 <div class="mt-4">
 	{#if fetching}
 		<div class="text-center">

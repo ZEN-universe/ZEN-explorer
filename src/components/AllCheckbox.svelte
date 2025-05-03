@@ -1,44 +1,46 @@
 <script lang="ts">
 	interface Props {
+		label: string;
 		elements: any[];
-		selected_elements: any[];
-		enabled?: boolean;
-		selection_changed: (selected_elements: any[]) => void;
+		value: any[];
+		disabled?: boolean;
+		onUpdate: (value: any[]) => void;
 	}
 
 	let {
+		label,
 		elements,
-		selected_elements = $bindable(elements),
-		enabled = true,
-		selection_changed
+		value = $bindable(elements),
+		disabled = false,
+		onUpdate
 	}: Props = $props();
 	let id = $props.id();
 
-	let all_selected: boolean = $derived(selected_elements.length == elements.length);
+	let areAllSelected: boolean = $derived(value.length == elements.length);
 
 	function toggleAll() {
-		if (all_selected) {
-			selected_elements = [];
+		if (areAllSelected) {
+			value = [];
 		} else {
-			selected_elements = elements;
+			value = elements;
 		}
-		selection_changed(selected_elements);
+		onUpdate(value);
 	}
 
 	function dispatchEvent() {
-		selection_changed(selected_elements);
+		onUpdate(value);
 	}
 </script>
 
+<div class="h3">{label}</div>
 <div class="form-group">
 	<button
 		class="btn btn-outline-primary btn-sm"
-		style="min-width: 100px"
+		style:min-width="100px"
+		{disabled}
 		onclick={toggleAll}
-		id={`all_checkbox_${id}`}
-		disabled={!enabled}
 	>
-		{#if all_selected}
+		{#if areAllSelected}
 			Deselect all
 		{:else}
 			Select all
@@ -48,14 +50,14 @@
 		<div class="form-check form-check-inline">
 			<input
 				class="form-check-input"
+				id={`${element}Checkbox${id}`}
 				type="checkbox"
 				value={element}
-				bind:group={selected_elements}
-				id={`${element}_checkbox_${id}`}
+				bind:group={value}
+				{disabled}
 				onchange={dispatchEvent}
-				disabled={!enabled}
 			/>
-			<label class="form-check-label" for={`${element}_checkbox_${id}`}>
+			<label class="form-check-label" for={`${element}Checkbox${id}`}>
 				{element}
 			</label>
 		</div>

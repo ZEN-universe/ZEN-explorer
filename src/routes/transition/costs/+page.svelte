@@ -11,6 +11,8 @@
 	import { tick } from 'svelte';
 	import BarPlot from '../../../components/BarPlot.svelte';
 	import type { ChartConfiguration } from 'chart.js';
+	import Filters from '../../../components/Filters.svelte';
+	import FilterSection from '../../../components/FilterSection.svelte';
 
 	let carriers: string[] = $state([]);
 	let nodes: string[] = $state([]);
@@ -484,203 +486,116 @@
 
 <h2>Costs</h2>
 
-<div class="z-1 position-relative">
-	<div class="filters">
-		<div class="accordion" id="accordionExample">
-			<div class="accordion-item solution-selection">
-				<h2 class="accordion-header">
-					<button
-						class="accordion-button"
-						type="button"
-						data-bs-toggle="collapse"
-						data-bs-target="#collapseOne"
-						aria-expanded="true"
-						aria-controls="collapseOne"
-					>
-						Solution Selection
-					</button>
-				</h2>
-				<div
-					id="collapseOne"
-					class="accordion-collapse collapse show"
-					data-bs-parent="#accordionExample"
-				>
-					<div class="accordion-body">
-						<SolutionFilter
-							bind:carriers
-							bind:nodes
-							bind:years
-							bind:selected_solution
-							bind:loading={solution_loading}
-							solution_selected={solution_changed}
-							enabled={!solution_loading && !fetching}
-						/>
-					</div>
+<Filters>
+	<FilterSection title="Solution Selection">
+		<SolutionFilter
+			bind:carriers
+			bind:nodes
+			bind:years
+			bind:selected_solution
+			bind:loading={solution_loading}
+			solution_selected={solution_changed}
+			enabled={!solution_loading && !fetching}
+		/>
+	</FilterSection>
+	{#if !fetching && !solution_loading && fetched_capex && selected_solution != null}
+		<FilterSection title="Cost Selection">
+			{#each Object.keys(show_costs) as key}
+				<div class="d-flex">
+					<h4>{show_costs[key].title} :</h4>
+					<ToggleButton bind:value={show_costs[key].show} change={update_plot_data}></ToggleButton>
+
+					{#if show_costs[key].show && key != 'carbon_emission'}
+						Subdivision
+						<ToggleButton bind:value={show_costs[key].subdivision} change={update_plot_data}
+						></ToggleButton>
+					{/if}
+				</div>
+			{/each}
+		</FilterSection>
+		<FilterSection title="Normalisation">
+			<h3>Technologies (for Capex/Opex)</h3>
+			{#if transport_technologies.length > 0}
+				<AllCheckbox
+					label="Transport"
+					bind:value={selected_transport_technologies}
+					elements={transport_technologies}
+					onUpdate={() => {
+						update_plot_data();
+					}}
+				></AllCheckbox>
+			{/if}
+			{#if storage_technologies.length > 0}
+				<AllCheckbox
+					label="Storage"
+					bind:value={selected_storage_technologies}
+					elements={storage_technologies}
+					onUpdate={() => {
+						update_plot_data();
+					}}
+				></AllCheckbox>
+			{/if}
+			{#if conversion_technologies.length > 0}
+				<AllCheckbox
+					label="Conversion"
+					bind:value={selected_conversion_technologies}
+					elements={conversion_technologies}
+					onUpdate={() => {
+						update_plot_data();
+					}}
+				></AllCheckbox>
+			{/if}
+			{#if cost_carriers.length > 0}
+				<AllCheckbox
+					label="Cost of Carrier"
+					bind:value={selected_cost_carriers}
+					elements={cost_carriers}
+					onUpdate={() => {
+						update_plot_data();
+					}}
+				></AllCheckbox>
+			{/if}
+			{#if demand_carriers.length > 0}
+				<AllCheckbox
+					label="Shed Demand"
+					bind:value={selected_demand_carriers}
+					elements={demand_carriers}
+					onUpdate={() => {
+						update_plot_data();
+					}}
+				></AllCheckbox>
+			{/if}
+		</FilterSection>
+		<FilterSection title="Data Selection">
+			<div class="row">
+				<div class="col-6">
+					<Radio
+						label="Aggregation"
+						options={aggregation_options}
+						bind:value={selected_aggregation}
+						onUpdate={(_) => update_plot_data()}
+					></Radio>
 				</div>
 			</div>
-			{#if !fetching && !solution_loading && fetched_capex && selected_solution != null}
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseCost"
-							aria-expanded="false"
-							aria-controls="collapseCost"
-						>
-							Cost selection
-						</button>
-					</h2>
-					<div
-						id="collapseCost"
-						class="accordion-collapse collapse show"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							{#each Object.keys(show_costs) as key}
-								<div class="d-flex">
-									<h4>{show_costs[key].title} :</h4>
-									<ToggleButton bind:value={show_costs[key].show} change={update_plot_data}
-									></ToggleButton>
-
-									{#if show_costs[key].show && key != 'carbon_emission'}
-										Subdivision
-										<ToggleButton bind:value={show_costs[key].subdivision} change={update_plot_data}
-										></ToggleButton>
-									{/if}
-								</div>
-							{/each}
-						</div>
-					</div>
-				</div>
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseTwo"
-							aria-expanded="false"
-							aria-controls="collapseTwo"
-						>
-							Technology and Carrier Selection
-						</button>
-					</h2>
-					<div
-						id="collapseTwo"
-						class="accordion-collapse collapse show"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							<h3>Technologies (for Capex/Opex)</h3>
-							{#if transport_technologies.length > 0}
-								<h4>Transport</h4>
-								<AllCheckbox
-									bind:selected_elements={selected_transport_technologies}
-									elements={transport_technologies}
-									selection_changed={() => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							{/if}
-							{#if storage_technologies.length > 0}
-								<h4>Storage</h4>
-								<AllCheckbox
-									bind:selected_elements={selected_storage_technologies}
-									elements={storage_technologies}
-									selection_changed={() => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							{/if}
-							{#if conversion_technologies.length > 0}
-								<h4>Conversion</h4>
-								<AllCheckbox
-									bind:selected_elements={selected_conversion_technologies}
-									elements={conversion_technologies}
-									selection_changed={() => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							{/if}
-							{#if cost_carriers.length > 0}
-								<h3>Cost of Carrier</h3>
-								<AllCheckbox
-									bind:selected_elements={selected_cost_carriers}
-									elements={cost_carriers}
-									selection_changed={() => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							{/if}
-							{#if demand_carriers.length > 0}
-								<h3>Shed Demand</h3>
-								<AllCheckbox
-									bind:selected_elements={selected_demand_carriers}
-									elements={demand_carriers}
-									selection_changed={() => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							{/if}
-						</div>
-					</div>
-				</div>
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseThree"
-							aria-expanded="false"
-							aria-controls="collapseThree"
-						>
-							Data Selection
-						</button>
-					</h2>
-					<div
-						id="collapseThree"
-						class="accordion-collapse collapse show"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							<div class="accordion-body">
-								<div class="row">
-									<div class="col-6">
-										<h3>Aggregation</h3>
-										<Radio
-											options={aggregation_options}
-											bind:selected_option={selected_aggregation}
-											selection_changed={(_) => update_plot_data()}
-										></Radio>
-									</div>
-								</div>
-								{#if selected_aggregation == aggregation_options[1]}
-									<h3>Location</h3>
-									<AllCheckbox
-										bind:selected_elements={selected_locations}
-										elements={locations}
-										selection_changed={(_) => update_plot_data()}
-									></AllCheckbox>
-								{/if}
-								{#if selected_years}
-									<h3>Year</h3>
-									<AllCheckbox
-										bind:selected_elements={selected_years}
-										elements={years}
-										selection_changed={(_) => update_plot_data()}
-									></AllCheckbox>
-								{/if}
-							</div>
-						</div>
-					</div>
-				</div>
+			{#if selected_aggregation == aggregation_options[1]}
+				<AllCheckbox
+					label="Location"
+					bind:value={selected_locations}
+					elements={locations}
+					onUpdate={(_) => update_plot_data()}
+				></AllCheckbox>
 			{/if}
-		</div>
-	</div>
-</div>
+			{#if selected_years}
+				<AllCheckbox
+					label="Year"
+					bind:value={selected_years}
+					elements={years}
+					onUpdate={(_) => update_plot_data()}
+				></AllCheckbox>
+			{/if}
+		</FilterSection>
+	{/if}
+</Filters>
 <div class="mt-4">
 	{#if solution_loading || fetching}
 		<div class="text-center">
