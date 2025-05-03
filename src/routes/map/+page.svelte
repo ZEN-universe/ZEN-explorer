@@ -9,7 +9,7 @@
 	import type { MapPlotData } from '../../components/MapPlot.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 
-	let plot: MapPlot | null;
+	let plot = $state<MapPlot>();
 
 	let carriers: string[] = $state([]);
 	let years: number[] = $state([]);

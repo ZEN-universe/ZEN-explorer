@@ -50,8 +50,8 @@
 	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
 	let selected_window_size = $state('Hourly');
 
-	let level_plot: BarPlot;
-	let flow_plot: BarPlot;
+	let level_plot = $state<BarPlot>();
+	let flow_plot = $state<BarPlot>();
 
 	let datasets: any[] = $state([]);
 	let flow_datasets: any[] = $state([]);
@@ -95,7 +95,7 @@
 						modifierKey: 'ctrl',
 						mode: 'x',
 						onPanComplete: (event) => {
-							flow_plot.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
+							flow_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
 						}
 					},
 					zoom: {
@@ -107,7 +107,7 @@
 						},
 						mode: 'x',
 						onZoomComplete: (event) => {
-							flow_plot.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
+							flow_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
 						}
 					},
 					limits: {
@@ -156,7 +156,7 @@
 						modifierKey: 'ctrl',
 						mode: 'x',
 						onPanComplete: (event) => {
-							level_plot.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
+							level_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
 						}
 					},
 					zoom: {
@@ -168,7 +168,7 @@
 						},
 						mode: 'x',
 						onZoomComplete: (event) => {
-							level_plot.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
+							level_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
 						}
 					},
 					limits: {
