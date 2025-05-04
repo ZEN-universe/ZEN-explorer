@@ -8,6 +8,7 @@
 	import { tick } from 'svelte';
 	import { get_variable_name } from '$lib/variables';
 	import type { ChartConfiguration, ChartDataset } from 'chart.js';
+	import { lab } from 'd3';
 
 	var defaultColors = [
 		'rgb(75, 192, 192)',
@@ -45,7 +46,10 @@
 	let unit: string = $state('');
 	let plot_name: string = $state('');
 
-	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
+	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'].map((size) => ({
+		label: size,
+		value: size
+	}));
 	let selected_window_size = $state('Hourly');
 
 	interface StringList {
@@ -370,7 +374,10 @@
 								<div class="col-6">
 									<h3>Year</h3>
 									<Dropdown
-										options={years}
+										options={years.map((year) => ({
+											label: year.toString(),
+											value: year.toString()
+										}))}
 										bind:selected_option={selected_year}
 										selection_changed={data_changed}
 										enabled={!fetching && !solution_loading}
@@ -381,7 +388,7 @@
 								<div class="col-6">
 									<h3>Node</h3>
 									<Dropdown
-										options={nodes}
+										options={nodes.map((node) => ({ label: node, value: node }))}
 										bind:selected_option={selected_node}
 										selection_changed={data_changed}
 										enabled={!fetching && !solution_loading}
@@ -392,7 +399,7 @@
 								<div class="col-6">
 									<h3>Carrier</h3>
 									<Dropdown
-										options={carriers}
+										options={carriers.map((carrier) => ({ label: carrier, value: carrier }))}
 										bind:selected_option={selected_carrier}
 										selection_changed={data_changed}
 										enabled={!fetching && !solution_loading}

@@ -1,6 +1,6 @@
 <script lang="ts">
 	interface Props {
-		options: any[];
+		options: { label: string; value: string }[];
 		selected_option?: any;
 		enabled?: boolean;
 		selection_changed?: (selected_option: any) => void;
@@ -8,7 +8,7 @@
 
 	let {
 		options,
-		selected_option = $bindable(options[0]),
+		selected_option = $bindable(options.length > 0 ? options[0].value : undefined),
 		enabled = true,
 		selection_changed
 	}: Props = $props();
@@ -26,8 +26,8 @@
 		disabled={!enabled}
 	>
 		{#each options as option}
-			<option value={option}>
-				{option}
+			<option value={option.value}>
+				{option.label}
 			</option>
 		{/each}
 	</select>

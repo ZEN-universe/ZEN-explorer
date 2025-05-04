@@ -7,7 +7,7 @@
 # Commands to recreate the world and NUTS files
 default: all clean
 all: world nuts
-world: src/topojson/world-1.json src/topojson/world-2.json src/topojson/world-3.json
+world: src/topojson/world-3.json
 nuts: src/topojson/nuts-1.json src/topojson/nuts-2.json src/topojson/nuts-3.json
 clean:
 	rm -f world-*.zip world-*.shp world-*.ndjson world-*.json nuts-*.json combined-*.json

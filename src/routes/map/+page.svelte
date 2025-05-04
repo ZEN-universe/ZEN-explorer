@@ -16,13 +16,13 @@
 	let technologies: string[] = $state([]);
 	let technology_types: string[] = ['conversion', 'storage'];
 	const storage_type_options = ['energy', 'power'];
-	const maps: string[] = availableMaps;
+	const maps: { label: string; value: string }[] = availableMaps;
 
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_technology_type: string = $state('conversion');
 	let selected_storage_type = $state('energy');
 	let selected_carrier: string | null = $state(null);
-	let selected_year: number | null = $state(null);
+	let selected_year: string | null = $state(null);
 	let selected_map: string | null = $state('nuts-1');
 
 	let solution_loading: boolean = $state(false);
@@ -73,7 +73,7 @@
 	async function solution_changed() {
 		selected_carrier = null;
 		await fetch_data();
-		selected_year = years.length > 0 ? years[0] : null;
+		selected_year = years.length > 0 ? years[0].toString() : null;
 		technology_type_changed();
 		plot?.resetZoom();
 	}
@@ -307,7 +307,10 @@
 								<h3>Year</h3>
 								<Dropdown
 									bind:selected_option={selected_year}
-									options={years}
+									options={years.map((year) => ({
+										label: year.toString(),
+										value: year.toString()
+									}))}
 									selection_changed={year_changed}
 								></Dropdown>
 								<h3>Map</h3>
