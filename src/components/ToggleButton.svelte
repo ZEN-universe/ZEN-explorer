@@ -13,15 +13,16 @@
 	}
 </script>
 
-<div class="toggle">
+<div class="form-check form-switch">
 	<input
+		class="form-check-input"
 		type="checkbox"
-		class="btn-check"
-		id={`btn-check-outlined-${id}`}
+		role="switch"
+		id={`switch-check-${id}`}
 		bind:checked={value}
 		onchange={dispatchEvent}
 	/>
-	<label class="btn btn-outline-primary btn-sm" for={`btn-check-outlined-${id}`}>
+	<label class="form-check-label" for={`switch-check-${id}`}>
 		{value ? texts[0] : texts[1]}
 	</label>
 </div>

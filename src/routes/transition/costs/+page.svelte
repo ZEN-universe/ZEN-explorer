@@ -14,60 +14,62 @@
 	import Filters from '../../../components/Filters.svelte';
 	import FilterSection from '../../../components/FilterSection.svelte';
 
-	let carriers: string[] = $state([]);
-	let nodes: string[] = $state([]);
-	let years: number[] = $state([]);
-	let locations: string[] = $state([]);
-	let selected_locations: string[] = $state([]);
-	let selected_solution: ActivatedSolution | null = $state(null);
-	let selected_years: number[] = $state([]);
-	let selected_normalisation: string = 'not_normalized';
-	let selected_cost_carriers: string[] = $state([]);
-	let selected_demand_carriers: string[] = $state([]);
-	let solution_loading: boolean = $state(false);
-	let fetching: boolean = $state(false);
-	let transport_technologies: string[] = $state([]);
-	let selected_transport_technologies: string[] = $state([]);
-	let storage_technologies: string[] = $state([]);
-	let selected_storage_technologies: string[] = $state([]);
-	let conversion_technologies: string[] = $state([]);
-	let selected_conversion_technologies: string[] = $state([]);
-	let grouped_data: Row[] | undefined;
-	let fetched_cost_carbon: ComponentTotal;
-	let fetched_cost_carrier: ComponentTotal;
-	let fetched_capex: ComponentTotal | undefined = $state();
-	let fetched_opex: ComponentTotal;
-	let fetched_cost_shed_demand: ComponentTotal;
-	let cost_carriers: string[] = $state([]);
-	let demand_carriers: string[] = $state([]);
 	const combined_name = 'Techology / Carrier';
-	const aggregation_options: string[] = [combined_name, 'Location'];
-	let selected_aggregation: string = $state(aggregation_options[1]);
-	let units: { [carrier: string]: string } = $state({});
-
-	let show_costs = $state({
-		capex: { title: 'Capex', show: true, subdivision: false },
-		opex: { title: 'Opex', show: true, subdivision: false },
-		carrier: { title: 'Carrier', show: true, subdivision: false },
-		shed_demand: { title: 'Shed Demand', show: true, subdivision: false },
-		carbon_emission: {
-			title: 'Carbon Emissions',
-			show: true,
-			subdivision: false
-		}
-	});
-
 	const capex_suffix = ' (Capex)';
 	const opex_suffix = ' (Opex)';
 	const capex_label = 'Capex';
 	const opex_label = 'Opex';
 	const carrier_label = 'Carrier';
 	const shed_demand_label = 'Shed Demand';
-	let plot_name = $state('plot');
 
-	interface StringList {
-		[key: string]: string[];
-	}
+	let carriers: string[] = $state([]);
+	let nodes: string[] = $state([]);
+	let years: number[] = $state([]);
+	let locations: string[] = $state([]);
+	let transport_technologies: string[] = $state([]);
+	let storage_technologies: string[] = $state([]);
+	let conversion_technologies: string[] = $state([]);
+	const aggregation_options: string[] = [combined_name, 'Location'];
+
+	let selected_locations: string[] = $state([]);
+	let selected_solution: ActivatedSolution | null = $state(null);
+	let selected_years: number[] = $state([]);
+	let selected_normalisation: string = 'not_normalized';
+	let selected_cost_carriers: string[] = $state([]);
+	let selected_demand_carriers: string[] = $state([]);
+	let selected_transport_technologies: string[] = $state([]);
+	let selected_storage_technologies: string[] = $state([]);
+	let selected_conversion_technologies: string[] = $state([]);
+	let selected_aggregation: string = $state(aggregation_options[1]);
+
+	let solution_loading: boolean = $state(false);
+	let fetching: boolean = $state(false);
+
+	let grouped_data: Row[] | undefined;
+	let fetched_cost_carbon: ComponentTotal;
+	let fetched_cost_carrier: ComponentTotal;
+	let fetched_capex: ComponentTotal | undefined = $state();
+	let fetched_opex: ComponentTotal;
+	let fetched_cost_shed_demand: ComponentTotal;
+	let units: { [carrier: string]: string } = $state({});
+
+	let cost_carriers: string[] = $state([]);
+	let demand_carriers: string[] = $state([]);
+
+	let show_costs: { [name: string]: { title: string; show: boolean; subdivision: boolean } } =
+		$state({
+			capex: { title: 'Capex', show: true, subdivision: false },
+			opex: { title: 'Opex', show: true, subdivision: false },
+			carrier: { title: 'Carrier', show: true, subdivision: false },
+			shed_demand: { title: 'Shed Demand', show: true, subdivision: false },
+			carbon_emission: {
+				title: 'Carbon Emissions',
+				show: true,
+				subdivision: false
+			}
+		});
+
+	let plot_name = $state('plot');
 
 	// Define initial plot config
 	let filtered_data: any[] = $state([]);
@@ -95,6 +97,10 @@
 		}
 	});
 
+	interface StringList {
+		[key: string]: string[];
+	}
+
 	/**
 	 * This funciton fetches all necessary cost-data  given the currently selected solution.
 	 */
@@ -103,47 +109,51 @@
 			return;
 		}
 		fetching = true;
-		await tick();
 
-		fetched_capex = await get_component_total(
-			selected_solution!.solution_name,
-			get_variable_name('capex_yearly', selected_solution.version),
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
+		const [res_capex, res_opex, res_cost_carbon, res_cost_carrier, res_cost_shed_demand] =
+			await Promise.all([
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name('capex_yearly', selected_solution.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				),
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name('opex_yearly', selected_solution.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				),
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name('cost_carbon_emissions_total', selected_solution.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				),
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name('cost_carrier', selected_solution.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				),
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name('cost_shed_demand', selected_solution.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				)
+			]);
 
-		fetched_opex = await get_component_total(
-			selected_solution!.solution_name,
-			get_variable_name('opex_yearly', selected_solution.version),
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
-
-		fetched_cost_carbon = await get_component_total(
-			selected_solution!.solution_name,
-			get_variable_name('cost_carbon_emissions_total', selected_solution.version),
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
-
-		fetched_cost_carrier = await get_component_total(
-			selected_solution!.solution_name,
-			get_variable_name('cost_carrier', selected_solution.version),
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
-
-		fetched_cost_shed_demand = await get_component_total(
-			selected_solution!.solution_name,
-			get_variable_name('cost_shed_demand', selected_solution.version),
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
+		fetched_capex = res_capex;
+		fetched_opex = res_opex;
+		fetched_cost_carbon = res_cost_carbon;
+		fetched_cost_carrier = res_cost_carrier;
+		fetched_cost_shed_demand = res_cost_shed_demand;
 
 		// "Standardize" all series names
 		rename_field(fetched_cost_carrier.data!, 'node', 'location');
@@ -203,7 +213,7 @@
 			if (show_costs.capex.subdivision) {
 				grouped_data! = grouped_data!.concat(fetched_capex.data!.data);
 			} else {
-				let new_data = filter_and_aggregate_data(
+				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					fetched_capex.data!.data,
 					{ location: selected_locations },
 					{ [combined_name]: all_selected_carriers_technologies },
@@ -223,7 +233,7 @@
 			if (show_costs.opex.subdivision) {
 				grouped_data! = grouped_data!.concat(fetched_opex.data!.data);
 			} else {
-				let new_data = filter_and_aggregate_data(
+				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					fetched_opex.data!.data,
 					{ location: selected_locations },
 					{
@@ -245,7 +255,7 @@
 				grouped_data! = grouped_data!.concat(filtered_cost_carrier!.data);
 			} else {
 				let comb = {};
-				let new_data = filter_and_aggregate_data(
+				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					filtered_cost_carrier!.data,
 					{ location: selected_locations },
 					{ [combined_name]: all_selected_carriers_technologies },
@@ -265,8 +275,7 @@
 			if (show_costs.shed_demand.subdivision) {
 				grouped_data! = grouped_data!.concat(filtered_fetched_cost_shed_demand!.data);
 			} else {
-				let comb = {};
-				let new_data = filter_and_aggregate_data(
+				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					filtered_fetched_cost_shed_demand!.data,
 					{ location: selected_locations },
 					{ [combined_name]: all_selected_carriers_technologies },
@@ -290,7 +299,7 @@
 
 		// TODO: Find out when and why this actually was used
 		// Currently, this just removes labels once they are unselected, except if none are remaining.
-		let set_locations = new Set<string>();
+		// let set_locations = new Set<string>();
 
 		// Filter undefined datasets
 		// grouped_data! = grouped_data!.filter((e) => {
@@ -501,14 +510,19 @@
 	{#if !fetching && !solution_loading && fetched_capex && selected_solution != null}
 		<FilterSection title="Cost Selection">
 			{#each Object.keys(show_costs) as key}
-				<div class="d-flex">
-					<h4>{show_costs[key].title} :</h4>
-					<ToggleButton bind:value={show_costs[key].show} change={update_plot_data}></ToggleButton>
+				<div class="row mb-2">
+					<div class="col-6 col-md-3"><h3>{show_costs[key].title}</h3></div>
+					<div class="col-4 col-md-2">
+						<ToggleButton bind:value={show_costs[key].show} change={update_plot_data}
+						></ToggleButton>
+					</div>
 
 					{#if show_costs[key].show && key != 'carbon_emission'}
-						Subdivision
-						<ToggleButton bind:value={show_costs[key].subdivision} change={update_plot_data}
-						></ToggleButton>
+						<div class="col-6 col-md-2">Subdivision:</div>
+						<div class="col-4 col-md-2">
+							<ToggleButton bind:value={show_costs[key].subdivision} change={update_plot_data}
+							></ToggleButton>
+						</div>
 					{/if}
 				</div>
 			{/each}
