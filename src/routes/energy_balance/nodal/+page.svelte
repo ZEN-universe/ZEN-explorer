@@ -41,7 +41,7 @@
 	let selected_carrier: string | null = $state(null);
 
 	let years: number[] = $state([]);
-	let selected_year: number | null = $state(null);
+	let selected_year: string | null = $state(null);
 
 	let unit: string = $state('');
 	let plot_name: string = $state('');
@@ -124,7 +124,7 @@
 
 		selected_node = nodes[0];
 		selected_carrier = carriers[0];
-		selected_year = years[0];
+		selected_year = years.length > 0 ? years[0].toString() : null;
 		plot_ready = false;
 
 		await data_changed();
