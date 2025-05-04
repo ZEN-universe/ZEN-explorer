@@ -72,9 +72,7 @@
 			};
 		} else if (filteredNodeCoords.length == 1) {
 			// Single node projection
-			const tempProjection = geoMercator()
-				.scale(800)
-				.translate([0, 0]);
+			const tempProjection = geoMercator().scale(800).translate([0, 0]);
 			const point = tempProjection(filteredNodeCoords[0][1])!;
 			return {
 				scale: tempProjection.scale(),

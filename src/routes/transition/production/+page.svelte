@@ -7,48 +7,63 @@
 
 	import Radio from '../../../components/Radio.svelte';
 	import { get_component_total } from '$lib/temple';
-	import { tick } from 'svelte';
 	import Papa from 'papaparse';
 	import { get_variable_name } from '$lib/variables';
 	import type { ChartConfiguration } from 'chart.js';
+	import Filters from '../../../components/Filters.svelte';
+	import FilterSection from '../../../components/FilterSection.svelte';
+	import Dropdown from '../../../components/Dropdown.svelte';
+	import ToggleButton from '../../../components/ToggleButton.svelte';
 
+	// Data
 	let data: Papa.ParseResult<any> | null = $state(null);
+	let filtered_data: any[] = $state([]);
+	let units: { [carrier: string]: string } = $state({});
+
+	// Filter options
+	// let variables: { [key: string]: string[] } = $state({
+	// 	conversion: ['input', 'output'],
+	// 	storage: ['charge', 'discharge'],
+	// 	transport: [],
+	// 	import_export: ['import', 'export']
+	// });
 	let carriers: string[] = $state([]);
+	let technologies: string[] = $state([]);
+	const aggregation_options = ['technology', 'node'];
+	const normalisation_options = ['not_normalized', 'normalized'];
 	let nodes: string[] = $state([]);
 	let edges: string[] = $state([]);
 	let locations: string[] = $state([]);
 	let years: number[] = $state([]);
-	let variables: { [key: string]: string[] } = $state({
-		conversion: ['input', 'output'],
-		storage: ['charge', 'discharge'],
-		transport: [],
-		import_export: ['import', 'export']
-	});
-	const aggregation_options = ['technology', 'node'];
-	let filtered_data: any[] = $state([]);
-	let units: { [carrier: string]: string } = $state({});
+
+	// Variables
+	let variables: { [key: string]: { title: string; show: boolean; subdivision: boolean } } = $state(
+		{
+			conversion: { title: 'Conversion', show: true, subdivision: true },
+			storage: { title: 'Storage', show: true, subdivision: true },
+			transport: { title: 'Transport', show: true, subdivision: false },
+			import_export: { title: 'Import/Export', show: true, subdivision: false }
+		}
+	);
+
+	// Selected values
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_variable: string | null = $state('conversion');
 	let selected_subvariable: string | null = $state('input');
 	let selected_carrier: string | null = $state(null);
-	let technologies: string[] = $state([]);
 	let selected_technologies: string[] = $state([]);
 	let selected_locations: string[] = $state([]);
 	let selected_years: number[] = $state([]);
-	const normalisation_options = ['not_normalized', 'normalized'];
+	let selected_aggregation = $state('node');
 	let selected_normalisation: string = $state('not_normalized');
+
+	// States
 	let solution_loading: boolean = $state(false);
 	let fetching = $state(false);
 	let plot_name = $state('plot');
 
-	interface StringList {
-		[key: string]: string[];
-	}
-
-	let selected_aggregation = $state('node');
-
+	// Plot config
 	let labels: string[] = $state([]);
-
 	let plot_config: ChartConfiguration = $derived({
 		type: 'bar',
 		data: { datasets: filtered_data, labels: labels },
@@ -73,16 +88,21 @@
 		}
 	});
 
+	// Data types
+	interface StringList {
+		[key: string]: string[];
+	}
+
 	/**
 	 * This function refetches the data from the API and then updates the carriers, technologies, locations and the plot.
 	 */
-	function refetch() {
-		fetch_data().then(() => {
-			update_carriers();
-			update_technologies();
-			update_locations();
-			update_data();
-		});
+	async function refetch() {
+		await fetch_data();
+
+		update_carriers();
+		update_technologies();
+		update_locations();
+		update_data();
 	}
 
 	/**
@@ -270,25 +290,25 @@
 		reset_data_selection();
 	}
 
-	/**
-	 * This function is being called whenever the selected variable is changed.
-	 * It resets the form according to the selected variable.
-	 */
-	function updated_variable() {
-		filtered_data = [];
+	// /**
+	//  * This function is being called whenever the selected variable is changed.
+	//  * It resets the form according to the selected variable.
+	//  */
+	// function updated_variable() {
+	// 	filtered_data = [];
 
-		if (selected_variable == null) {
-			return;
-		}
+	// 	if (selected_variable == null) {
+	// 		return;
+	// 	}
 
-		if (variables[selected_variable] != null) {
-			selected_subvariable = variables[selected_variable]![0];
-		}
+	// 	if (variables[selected_variable] != null) {
+	// 		selected_subvariable = variables[selected_variable]![0];
+	// 	}
 
-		if (selected_variable == 'import_export') {
-			selected_aggregation = 'technology';
-		}
-	}
+	// 	if (selected_variable == 'import_export') {
+	// 		selected_aggregation = 'technology';
+	// 	}
+	// }
 
 	/**
 	 * This function updates the plot data according to the current form selection.
@@ -362,175 +382,112 @@
 			selected_carrier
 		].join('_');
 	}
-	$inspect('locations', locations);
-	$inspect('selected_locations', selected_locations);
 </script>
 
 <h2>Production</h2>
-<div class="z-1 position-relative">
-	<div class="filters">
-		<div class="accordion" id="accordionExample">
-			<div class="accordion-item solution-selection">
-				<h2 class="accordion-header">
-					<button
-						class="accordion-button"
-						type="button"
-						data-bs-toggle="collapse"
-						data-bs-target="#collapseOne"
-						aria-expanded="true"
-						aria-controls="collapseOne"
-					>
-						Solution Selection
-					</button>
-				</h2>
-				<div id="collapseOne" class="accordion-collapse collapse show">
-					<div class="accordion-body">
-						<SolutionFilter
-							bind:carriers
-							bind:nodes
-							bind:years
-							bind:selected_solution
-							bind:edges
-							bind:loading={solution_loading}
-							solution_selected={refetch}
-							enabled={!solution_loading && !fetching}
-						/>
+<Filters>
+	<FilterSection title="Solution Selection">
+		<SolutionFilter
+			bind:carriers
+			bind:nodes
+			bind:years
+			bind:selected_solution
+			bind:edges
+			bind:loading={solution_loading}
+			solution_selected={refetch}
+			enabled={!solution_loading && !fetching}
+		/>
+	</FilterSection>
+	{#if !solution_loading && selected_solution}
+		<FilterSection title="Carrier Selection">
+			{#if carriers.length > 0}
+				<Dropdown
+					label="Carrier"
+					options={carriers}
+					bind:value={selected_carrier}
+					disabled={solution_loading || fetching}
+					onUpdate={() => {
+						update_technologies();
+						update_data();
+					}}
+				></Dropdown>
+			{/if}
+		</FilterSection>
+		<FilterSection title="Production Component Selection">
+			{#each Object.keys(variables) as key}
+				<div class="row">
+					<div class="col-6 col-md-3"><h3>{variables[key].title}</h3></div>
+					<div class="col-4 col-md-2">
+						<ToggleButton bind:value={variables[key].show} change={update_data}></ToggleButton>
 					</div>
-				</div>
-			</div>
 
-			{#if !solution_loading && selected_solution}
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseTwo"
-							aria-expanded="false"
-							aria-controls="collapseTwo"
-						>
-							Variable Selection
-						</button>
-					</h2>
-					<div id="collapseTwo" class="accordion-collapse collapse show">
-						<div class="accordion-body">
-							<h3>Variable</h3>
-							<select
-								class="form-select"
-								bind:value={selected_variable}
+					{#if variables[key].show && key != 'carbon_emission'}
+						<div class="col-6 col-md-2">Subdivision:</div>
+						<div class="col-4 col-md-2">
+							<ToggleButton bind:value={variables[key].subdivision} change={update_data}
+							></ToggleButton>
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</FilterSection>
+		<FilterSection title="Technology Selection">
+			<h3>Conversion</h3>
+			<h3>Storage</h3>
+			<h3>Transport</h3>
+		</FilterSection>
+		{#if !fetching && selected_carrier && (technologies.length > 0 || selected_variable == 'import_export')}
+			<FilterSection title="Data Selection">
+				<div class="row">
+					{#if selected_variable != 'import_export'}
+						<div class="col-6">
+							<Radio
+								label="Aggregation"
+								options={aggregation_options}
+								bind:value={selected_aggregation}
 								disabled={solution_loading || fetching}
-								onchange={() => {
-									updated_variable();
-									refetch();
-								}}
-							>
-								{#each Object.entries(variables) as [variable, subvalues]}
-									<option value={variable}>
-										{variable}
-									</option>
-								{/each}
-							</select>
-							{#if variables && selected_variable && variables[selected_variable].length > 0}
-								<h3>Subvariable</h3>
-								<Radio
-									options={variables[selected_variable]}
-									bind:selected_option={selected_subvariable}
-									selection_changed={refetch}
-									enabled={!solution_loading && !fetching}
-								></Radio>
-							{/if}
-							{#if selected_variable != null && carriers.length > 0}
-								<h3>Carrier</h3>
-								<select
-									class="form-select"
-									bind:value={selected_carrier}
-									onchange={() => {
-										update_technologies();
-										update_data();
-									}}
-									disabled={solution_loading || fetching}
-								>
-									{#each carriers as carrier}
-										<option value={carrier}>
-											{carrier}
-										</option>
-									{/each}
-								</select>
-							{/if}
+								onUpdate={update_data}
+							></Radio>
 						</div>
+					{/if}
+					<div class="col-6">
+						<Radio
+							label="Normalisation"
+							options={normalisation_options}
+							bind:value={selected_normalisation}
+							disabled={solution_loading || fetching}
+							onUpdate={update_data}
+						></Radio>
 					</div>
 				</div>
-			{/if}
-			{#if !fetching && selected_carrier && (technologies.length > 0 || selected_variable == 'import_export')}
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseThree"
-							aria-expanded="false"
-							aria-controls="collapseThree"
-						>
-							Data Selection
-						</button>
-					</h2>
-					<div id="collapseThree" class="accordion-collapse collapse show">
-						<div class="accordion-body">
-							<div class="row">
-								{#if selected_variable != 'import_export'}
-									<div class="col-6">
-										<h3>Aggregation</h3>
-										<Radio
-											options={aggregation_options}
-											bind:selected_option={selected_aggregation}
-											selection_changed={update_data}
-											enabled={!solution_loading && !fetching}
-										></Radio>
-									</div>
-								{/if}
-								<div class="col-6">
-									<h3>Normalisation</h3>
-									<Radio
-										options={normalisation_options}
-										bind:selected_option={selected_normalisation}
-										selection_changed={update_data}
-										enabled={!solution_loading && !fetching}
-									></Radio>
-								</div>
-							</div>
-							{#if selected_aggregation == 'technology'}
-								<h3>Technology</h3>
-								<AllCheckbox
-									bind:selected_elements={selected_technologies}
-									elements={technologies}
-									enabled={!solution_loading && !fetching}
-									selection_changed={update_data}
-								></AllCheckbox>
-							{:else}
-								<h3>Node</h3>
-								<AllCheckbox
-									bind:selected_elements={selected_locations}
-									elements={locations}
-									enabled={!solution_loading && !fetching}
-									selection_changed={update_data}
-								></AllCheckbox>
-							{/if}
-							<h3>Year</h3>
-							<AllCheckbox
-								bind:selected_elements={selected_years}
-								elements={years}
-								enabled={!solution_loading && !fetching}
-								selection_changed={update_data}
-							></AllCheckbox>
-						</div>
-					</div>
-				</div>
-			{/if}
-		</div>
-	</div>
-</div>
+				{#if selected_aggregation == 'technology'}
+					<AllCheckbox
+						label="Technology"
+						bind:value={selected_technologies}
+						elements={technologies}
+						disabled={solution_loading || fetching}
+						onUpdate={update_data}
+					></AllCheckbox>
+				{:else}
+					<AllCheckbox
+						label="Node"
+						bind:value={selected_locations}
+						elements={locations}
+						disabled={solution_loading || fetching}
+						onUpdate={update_data}
+					></AllCheckbox>
+				{/if}
+				<AllCheckbox
+					label="Year"
+					bind:value={selected_years}
+					elements={years}
+					disabled={solution_loading || fetching}
+					onUpdate={update_data}
+				></AllCheckbox>
+			</FilterSection>
+		{/if}
+	{/if}
+</Filters>
 <div class="mt-4">
 	{#if solution_loading || fetching}
 		<div class="text-center">

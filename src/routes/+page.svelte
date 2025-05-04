@@ -8,7 +8,13 @@
 </script>
 
 <div class="d-flex justify-content-center">
-	<div class="menu mt-5" style="width: {logo_size}; height: {logo_size}">
+	<div
+		class="menu mt-5"
+		style:width={logo_size}
+		style:height={logo_size}
+		style:min-width="320px"
+		style:min-height="320px"
+	>
 		<button class="quarter active quarter1" onclick={() => (links_active = !links_active)}>
 			<p class="content">The Transition Pathway</p>
 		</button>
