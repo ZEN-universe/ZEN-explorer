@@ -23,7 +23,7 @@
 	let selected_storage_type = $state('energy');
 	let selected_carrier: string | null = $state(null);
 	let selected_year: string | null = $state(null);
-	let selected_map: string | null = $state('nuts-1');
+	let selected_map: string | null = $state('world-3');
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
@@ -33,7 +33,10 @@
 	let transport_data: MapPlotData | null = $state(null);
 
 	let units: { [key: string]: string } = $state({});
-	let unit: string = $derived(units[technologies[0]] || '');
+	let unit: string = $derived.by(() => {
+		const capacity_type = selected_technology_type == 'storage' ? selected_storage_type : 'power';
+		return units[technologies[0] + '_' + capacity_type] || '';
+	});
 
 	let coords: { [key: string]: [number, number] } = $derived.by(() => {
 		if (selected_solution == null) {
@@ -64,7 +67,9 @@
 		fetched_data = response.data;
 
 		if (response.unit?.data) {
-			units = Object.fromEntries(response.unit.data.map((u) => [u.technology, u[0] || u.units]));
+			units = Object.fromEntries(
+				response.unit.data.map((u) => [u.technology + '_' + u.capacity_type, u[0] || u.units])
+			);
 		}
 
 		fetching = false;

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased yet
+
+- [Map] and [Capacity]: Fix unit for storage with capacity type energy or power.
+
 ## 0.5.2 (2025-05-04)
 
 - [Map] Label map selection.

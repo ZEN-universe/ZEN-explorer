@@ -26,7 +26,6 @@
 	let aggregation_options = $state(['technology', 'node']);
 	const normalisation_options = ['not_normalized', 'normalized'];
 	const storage_type_options = ['energy', 'power'];
-	let units: { [carrier: string]: string } = $state({});
 	let selected_variable: string | null = $state('capacity');
 	let selected_carrier: string | null = $state(null);
 	let selected_storage_type = $state('energy');
@@ -43,6 +42,12 @@
 
 	let datasets: any[] = $state([]);
 	let labels: string[] = $state([]);
+
+	let units: { [carrier: string]: string } = $state({});
+	let unit: string = $derived.by(() => {
+		const capacity_type = selected_technology_type == 'storage' ? selected_storage_type : 'power';
+		return units[technologies[0] + '_' + capacity_type] || '';
+	});
 
 	let plot_config: ChartConfiguration<'bar'> = $derived({
 		type: 'bar',
@@ -61,7 +66,7 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: `${selected_variable} [${technologies.length > 0 ? units[technologies[0]] : ''}]`
+						text: `${selected_variable} [${unit}]`
 					}
 				}
 			}
@@ -104,7 +109,9 @@
 		data = fetched.data;
 
 		if (fetched.unit?.data) {
-			units = Object.fromEntries(fetched.unit.data.map((u) => [u.technology, u[0] || u.units]));
+			units = Object.fromEntries(
+				fetched.unit.data.map((u) => [u.technology + '_' + u.capacity_type, u[0] || u.units])
+			);
 		}
 
 		fetching = false;
