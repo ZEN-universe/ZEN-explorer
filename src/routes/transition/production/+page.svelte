@@ -119,7 +119,7 @@
 		fetching = true;
 		data = null;
 		let variable_name = get_local_variable();
-		if (variable_name === null) {
+		if (variable_name === null || selected_solution === null) {
 			fetching = false;
 			return;
 		}

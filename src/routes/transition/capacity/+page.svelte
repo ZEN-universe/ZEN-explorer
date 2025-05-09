@@ -93,7 +93,7 @@
 		data = null;
 		await tick();
 
-		if (selected_variable === null) {
+		if (selected_variable === null || selected_solution === null) {
 			fetching = false;
 			return;
 		}
@@ -199,9 +199,13 @@
 	 * This function updates the available locations for the current variable selection.
 	 */
 	function update_locations() {
+		if (data === null) {
+			return;
+		}
+
 		locations = [];
 
-		data!.data.forEach((element) => {
+		data.data.forEach((element) => {
 			let current_technology = element.technology;
 			let current_carrier = selected_solution!.detail.reference_carrier[current_technology];
 

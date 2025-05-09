@@ -7,6 +7,7 @@
 - [Map] Compute maxRadius across all years.
 - [Map] Set default map to "Countries".
 - [Map] Always show all carriers for transport technologies.
+- [Capacity] and [Production] Fix bug when loading solutions with scenarios.
 
 ## 0.5.2 (2025-05-04)
 
