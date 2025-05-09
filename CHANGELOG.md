@@ -3,6 +3,9 @@
 ## Unreleased yet
 
 - [Map] and [Capacity]: Fix unit for storage with capacity type energy or power.
+- [Map] Set min width for tooltip
+- [Map] Compute maxRadius across all years.
+- [Map] Set default map to "Countries".
 
 ## 0.5.2 (2025-05-04)
 

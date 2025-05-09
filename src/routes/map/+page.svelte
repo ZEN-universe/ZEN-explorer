@@ -28,9 +28,13 @@
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
+	interface AggergatedData {
+		[location: string]: { technology: string; years: number[] }[];
+	}
+	
 	let fetched_data: Papa.ParseResult<Row> | null = $state(null);
-	let data: MapPlotData | null = $state(null);
-	let transport_data: MapPlotData | null = $state(null);
+	let data: AggergatedData | null = $state(null);
+	let transport_data: AggergatedData | null = $state(null);
 
 	let units: { [key: string]: string } = $state({});
 	let unit: string = $derived.by(() => {
@@ -152,34 +156,36 @@
 		return [];
 	}
 
-	function aggregateDataByNode(
-		technologies: string[],
-		filter_capacity_type: string | null = null
-	): MapPlotData | null {
+	function aggregateDataByNode(technologies: string[], filter_capacity_type: string | null = null) {
 		if (
 			!fetched_data ||
 			!selected_solution ||
 			!selected_technology_type ||
-			!selected_carrier ||
-			!selected_year
+			!selected_carrier
 		) {
 			return null;
 		}
 
 		return fetched_data.data.reduce((acc: any, row) => {
 			const { technology, capacity_type, location } = row;
-			const value = parseFloat(row[selected_year!]);
 
 			if (
 				!technologies.includes(technology) ||
-				(filter_capacity_type && filter_capacity_type !== capacity_type) ||
-				value < 1e-6
+				(filter_capacity_type && filter_capacity_type !== capacity_type)
 			) {
 				return acc;
 			}
 
+			const years = Object.entries(row)
+				.filter(([key, _]) => !isNaN(parseInt(key)))
+				.map(([_, value]) => parseFloat(value));
+
+			if (years.length === 0) {
+				return acc;
+			}
+
 			acc[location] = acc[location] || [];
-			acc[location].push({ technology, value });
+			acc[location].push({ technology, years: years });
 			return acc;
 		}, {});
 	}
@@ -189,8 +195,7 @@
 			!fetched_data ||
 			!selected_solution ||
 			!selected_technology_type ||
-			!selected_carrier ||
-			!selected_year
+			!selected_carrier
 		) {
 			return;
 		}
@@ -205,6 +210,72 @@
 		);
 		transport_data = aggregateDataByNode(transportTechnologies);
 	}
+
+	let pieData: MapPlotData | null = $derived.by(() => {
+		if (!data || selected_year == null) {
+			return null;
+		}
+
+		const index = years.findIndex((year) => year.toString() === selected_year);
+		const entries = Object.entries(data).map(([location, data]) => {
+			const mappedData = data
+				.map((d) => ({ technology: d.technology, value: d.years[index] }))
+				.filter((d) => d.value > 1e-6);
+			return [location, mappedData];
+		}).filter(([_location, data]) => data.length > 0);
+		return Object.fromEntries(entries);
+	});
+
+	let lineData: MapPlotData | null = $derived.by(() => {
+		if (!transport_data || selected_year == null) {
+			return null;
+		}
+
+		const index = years.findIndex((year) => year.toString() === selected_year);
+		const entries = Object.entries(transport_data).map(([location, data]) => {
+			return [location, data.map((d) => ({ technology: d.technology, value: d.years[index] }))];
+		});
+		return Object.fromEntries(entries);
+	});
+
+	let [minTotal, maxTotal] = $derived.by(() => {
+		if (!data) {
+			return [0, 0];
+		}
+		return Object.values(data).reduce(([accMin, accMax], values) => {
+			const years = values.reduce((acc: number[] | null, { years }) => {
+				if (!acc) return [...years];
+				return acc.map((value, i) => value + (years[i] || 0));
+			}, null);
+			
+			if (years == null) {
+				return [accMin, accMax];
+			}
+			
+			const total = years.reduce((acc, val) => Math.max(acc, val), 0);
+			return [Math.min(accMin, total), Math.max(accMax, total)]
+		}, [Number.MAX_SAFE_INTEGER, 0]);
+	});
+
+	let [minEdge, maxEdge] = $derived.by(() => {
+		if (!transport_data) {
+			return [0, 0];
+		}
+
+		return Object.values(transport_data).reduce(([accMin, accMax], values) => {
+			const years = values.reduce((acc: number[] | null, { years }) => {
+				if (!acc) return [...years];
+				return acc.map((value, i) => value + (years[i] || 0));
+			}, null);
+			
+			if (years == null) {
+				return [accMin, accMax];
+			}
+			
+			const total = years.reduce((acc, val) => Math.max(acc, val), 0);
+			return [Math.min(accMin, total), Math.max(accMax, total)]
+		}, [Number.MAX_SAFE_INTEGER, 0]);
+	});
 </script>
 
 <h1>Map</h1>
@@ -330,11 +401,15 @@
 </div>
 
 <div class="my-4">
-	{#if data && transport_data}
+	{#if pieData && lineData}
 		<MapPlot
 			bind:this={plot}
-			pieData={data}
-			lineData={transport_data}
+			{pieData}
+			{lineData}
+			{minTotal}
+			{maxTotal}
+			{minEdge}
+			{maxEdge}
 			nodeCoords={coords}
 			{unit}
 			map={selected_map}
