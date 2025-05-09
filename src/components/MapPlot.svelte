@@ -43,7 +43,17 @@
 		minEdge: number;
 		maxEdge: number;
 	}
-	let { pieData, lineData = {}, nodeCoords = {}, unit, map, minTotal, maxTotal, minEdge, maxEdge }: Props = $props();
+	let {
+		pieData,
+		lineData = {},
+		nodeCoords = {},
+		unit,
+		map,
+		minTotal,
+		maxTotal,
+		minEdge,
+		maxEdge
+	}: Props = $props();
 
 	// SVG element
 	let svg: SVGSVGElement;

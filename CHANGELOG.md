@@ -6,6 +6,7 @@
 - [Map] Set min width for tooltip
 - [Map] Compute maxRadius across all years.
 - [Map] Set default map to "Countries".
+- [Map] Always show all carriers for transport technologies.
 
 ## 0.5.2 (2025-05-04)
 

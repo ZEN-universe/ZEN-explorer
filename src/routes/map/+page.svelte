@@ -31,7 +31,7 @@
 	interface AggergatedData {
 		[location: string]: { technology: string; years: number[] }[];
 	}
-	
+
 	let fetched_data: Papa.ParseResult<Row> | null = $state(null);
 	let data: AggergatedData | null = $state(null);
 	let transport_data: AggergatedData | null = $state(null);
@@ -104,12 +104,14 @@
 
 	function update_carriers() {
 		carriers = [];
-		if (fetched_data === null || selected_technology_type === null) {
+		if (fetched_data === null || selected_technology_type === null || selected_solution === null) {
 			return;
 		}
 
-		// Get the technologies for the current technology type
-		let all_technologies: string[] = get_technologies_by_type();
+		// Get the technologies for the current technology type and all transport technologies
+		let all_technologies: string[] = get_technologies_by_type().concat(
+			selected_solution.detail.system.set_transport_technologies
+		);
 
 		// Add all the available carriers to the set of carriers for the current set of technologies
 		fetched_data.data.forEach((element) => {
@@ -157,12 +159,7 @@
 	}
 
 	function aggregateDataByNode(technologies: string[], filter_capacity_type: string | null = null) {
-		if (
-			!fetched_data ||
-			!selected_solution ||
-			!selected_technology_type ||
-			!selected_carrier
-		) {
+		if (!fetched_data || !selected_solution || !selected_technology_type || !selected_carrier) {
 			return null;
 		}
 
@@ -191,12 +188,7 @@
 	}
 
 	function load_map_data() {
-		if (
-			!fetched_data ||
-			!selected_solution ||
-			!selected_technology_type ||
-			!selected_carrier
-		) {
+		if (!fetched_data || !selected_solution || !selected_technology_type || !selected_carrier) {
 			return;
 		}
 
@@ -217,12 +209,14 @@
 		}
 
 		const index = years.findIndex((year) => year.toString() === selected_year);
-		const entries = Object.entries(data).map(([location, data]) => {
-			const mappedData = data
-				.map((d) => ({ technology: d.technology, value: d.years[index] }))
-				.filter((d) => d.value > 1e-6);
-			return [location, mappedData];
-		}).filter(([_location, data]) => data.length > 0);
+		const entries = Object.entries(data)
+			.map(([location, data]) => {
+				const mappedData = data
+					.map((d) => ({ technology: d.technology, value: d.years[index] }))
+					.filter((d) => d.value > 1e-6);
+				return [location, mappedData];
+			})
+			.filter(([_location, data]) => data.length > 0);
 		return Object.fromEntries(entries);
 	});
 
@@ -242,19 +236,22 @@
 		if (!data) {
 			return [0, 0];
 		}
-		return Object.values(data).reduce(([accMin, accMax], values) => {
-			const years = values.reduce((acc: number[] | null, { years }) => {
-				if (!acc) return [...years];
-				return acc.map((value, i) => value + (years[i] || 0));
-			}, null);
-			
-			if (years == null) {
-				return [accMin, accMax];
-			}
-			
-			const total = years.reduce((acc, val) => Math.max(acc, val), 0);
-			return [Math.min(accMin, total), Math.max(accMax, total)]
-		}, [Number.MAX_SAFE_INTEGER, 0]);
+		return Object.values(data).reduce(
+			([accMin, accMax], values) => {
+				const years = values.reduce((acc: number[] | null, { years }) => {
+					if (!acc) return [...years];
+					return acc.map((value, i) => value + (years[i] || 0));
+				}, null);
+
+				if (years == null) {
+					return [accMin, accMax];
+				}
+
+				const total = years.reduce((acc, val) => Math.max(acc, val), 0);
+				return [Math.min(accMin, total), Math.max(accMax, total)];
+			},
+			[Number.MAX_SAFE_INTEGER, 0]
+		);
 	});
 
 	let [minEdge, maxEdge] = $derived.by(() => {
@@ -262,19 +259,22 @@
 			return [0, 0];
 		}
 
-		return Object.values(transport_data).reduce(([accMin, accMax], values) => {
-			const years = values.reduce((acc: number[] | null, { years }) => {
-				if (!acc) return [...years];
-				return acc.map((value, i) => value + (years[i] || 0));
-			}, null);
-			
-			if (years == null) {
-				return [accMin, accMax];
-			}
-			
-			const total = years.reduce((acc, val) => Math.max(acc, val), 0);
-			return [Math.min(accMin, total), Math.max(accMax, total)]
-		}, [Number.MAX_SAFE_INTEGER, 0]);
+		return Object.values(transport_data).reduce(
+			([accMin, accMax], values) => {
+				const years = values.reduce((acc: number[] | null, { years }) => {
+					if (!acc) return [...years];
+					return acc.map((value, i) => value + (years[i] || 0));
+				}, null);
+
+				if (years == null) {
+					return [accMin, accMax];
+				}
+
+				const total = years.reduce((acc, val) => Math.max(acc, val), 0);
+				return [Math.min(accMin, total), Math.max(accMax, total)];
+			},
+			[Number.MAX_SAFE_INTEGER, 0]
+		);
 	});
 </script>
 
