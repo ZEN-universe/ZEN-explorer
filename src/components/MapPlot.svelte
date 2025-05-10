@@ -38,15 +38,29 @@
 		nodeCoords?: { [node: string]: [number, number] };
 		unit: string;
 		map: string | null;
+		minTotal: number;
+		maxTotal: number;
+		minEdge: number;
+		maxEdge: number;
 	}
-	let { pieData, lineData = {}, nodeCoords = {}, unit, map }: Props = $props();
+	let {
+		pieData,
+		lineData = {},
+		nodeCoords = {},
+		unit,
+		map,
+		minTotal,
+		maxTotal,
+		minEdge,
+		maxEdge
+	}: Props = $props();
 
 	// SVG element
 	let svg: SVGSVGElement;
 
 	// Constants
-	const minRadius = 5;
-	const maxRadius = 30;
+	const minRadius = 7;
+	const maxRadius = 40;
 	const minLineWidth = 1;
 	const maxLineWidth = 8;
 
@@ -236,25 +250,6 @@
 	}
 
 	// Data dependent values
-	let [minTotal, maxTotal] = $derived(
-		Object.values(pieData).reduce(
-			([accMin, accMax], values) => {
-				const total = values.reduce((acc, row) => acc + row.value, 0);
-				return [Math.min(accMin, total), Math.max(accMax, total)];
-			},
-			[10000, 0]
-		)
-	);
-	let [minEdge, maxEdge] = $derived(
-		Object.values(lineData).reduce(
-			([accMin, accMax], values) => {
-				const total = values.reduce((acc, row) => Math.max(acc, row.value), 0);
-				return [Math.min(accMin, total), Math.max(accMax, total)];
-			},
-			[10000, 0]
-		)
-	);
-
 	interface Pie {
 		x: number;
 		y: number;
@@ -321,8 +316,14 @@
 	);
 
 	// Tooltip
-	let activePie: Pie | undefined = $state(undefined);
-	let activeLines: Line[] = $state([]);
+	let cursorPos: [number, number] = $state([0, 0]);
+	let activePie: Pie | undefined = $derived.by(() => {
+		return findPie(cursorPos);
+	});
+	let activeLines: Line[] = $derived.by(() => {
+		if (activePie) return [];
+		return filterLines(cursorPos);
+	});
 
 	let tooltipX = $derived.by(() => {
 		if (activePie) return activePie.x;
@@ -337,26 +338,8 @@
 	let tooltipYOffset = $derived.by(() => 5 + (activePie ? computeRadius(activePie.total) : 0));
 	let tooltipOnTop = $derived.by(() => tooltipY - tooltipYOffset > 180);
 
-	onMount(handleSize);
-
-	function handleSize() {
-		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
-		width = w;
-		height = h;
-	}
-
 	function updateActiveElements(event: MouseEvent) {
-		const pos = pointer(event);
-		const coords = projection.invert!(pos);
-		if (!coords) return;
-
-		activePie = findPie(pos);
-		if (activePie) {
-			activeLines = [];
-			return;
-		}
-
-		activeLines = filterLines(pos);
+		cursorPos = pointer(event);
 	}
 
 	function findPie(pos: [number, number]) {
@@ -395,6 +378,14 @@
 			const distSquared = Math.pow(ax, 2) + Math.pow(ay, 2) - Math.pow(adotb, 2) / bSquared;
 			return 4 * distSquared < Math.pow(maxLineWidth, 2);
 		});
+	}
+
+	onMount(handleSize);
+
+	function handleSize() {
+		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
+		width = w;
+		height = h;
 	}
 
 	function computeRadius(total: number) {
@@ -482,6 +473,7 @@
 			/>
 		{/if}
 	</svg>
+	<!-- Legend -->
 	{#if technologies.length > 0}
 		<div class="position-absolute bottom-0 end-0 m-2 p-2 bg-black bg-opacity-75 text-white pe-none">
 			<h5 class="visually-hidden">Legend</h5>
@@ -495,6 +487,7 @@
 			{/each}
 		</div>
 	{/if}
+	<!-- Reset zoom button -->
 	{#if topology}
 		<div class="position-absolute top-0 end-0 m-2">
 			<button class="btn btn-secondary" onclick={resetZoom}>
@@ -503,12 +496,14 @@
 			</button>
 		</div>
 	{/if}
+	<!-- Tooltip -->
 	{#if activePie || activeLines.length > 0}
 		<div
 			class="position-absolute bg-black bg-opacity-75 text-white py-2 rounded fs-8 pe-none"
 			style:top={tooltipOnTop ? `${tooltipY - tooltipYOffset}px` : `${tooltipY + tooltipYOffset}px`}
 			style:left={`${tooltipX}px`}
 			style:transform={tooltipOnTop ? `translate(-50%, -100%)` : `translate(-50%, 0%)`}
+			style:min-width="200px"
 			transition:fade={{ duration: 300 }}
 		>
 			{#if tooltipOnTop}

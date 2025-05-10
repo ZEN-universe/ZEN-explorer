@@ -90,7 +90,7 @@
 		if (subdivision) {
 			return get_variable_name('carbon_emissions_carrier', selected_solution?.version);
 		} else {
-			if (selected_variable == variables[0]) {
+			if (selected_variable == 'Annual') {
 				return get_variable_name('carbon_emissions_annual', selected_solution?.version);
 			} else {
 				return get_variable_name('carbon_emissions_cumulative', selected_solution?.version);
@@ -238,8 +238,8 @@
 		fetching = false;
 	}
 
-	function update_cumulation() {
-		fetch_data();
+	async function update_cumulation() {
+		await fetch_data();
 		update_filters(); // Reset all filters
 		update_plot_data();
 	}
@@ -314,7 +314,7 @@
 
 			if (filtered_limit_data.length > 0) {
 				filtered_limit_data[0].label =
-					selected_variable == variables[0] ? 'Annual Emissions Limit' : 'Carbon Emissions Budget';
+					selected_variable == 'Annual' ? 'Annual Emissions Limit' : 'Carbon Emissions Budget';
 				filtered_limit_data[0].type = 'line';
 				filtered_data = filtered_data.concat(filtered_limit_data);
 			}

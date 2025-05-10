@@ -139,7 +139,7 @@
 		fetching = true;
 		data = null;
 		let variable_name = get_local_variable();
-		if (variable_name === null) {
+		if (variable_name === null || selected_solution === null) {
 			fetching = false;
 			return;
 		}
@@ -403,7 +403,10 @@
 			{#if carriers.length > 0}
 				<Dropdown
 					label="Carrier"
-					options={carriers}
+					options={carriers.map((carrier) => ({
+						label: carrier,
+						value: carrier
+					}))}
 					bind:value={selected_carrier}
 					disabled={solution_loading || fetching}
 					onUpdate={() => {

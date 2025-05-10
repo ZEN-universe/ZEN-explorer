@@ -18,24 +18,31 @@
 	let technologies: string[] = $state([]);
 	let technology_types: string[] = ['conversion', 'storage'];
 	const storage_type_options = ['energy', 'power'];
-	const maps: string[] = availableMaps;
+	const maps: { label: string; value: string }[] = availableMaps;
 
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_technology_type: string = $state('conversion');
 	let selected_storage_type = $state('energy');
 	let selected_carrier: string | null = $state(null);
-	let selected_year: number | null = $state(null);
-	let selected_map: string | null = $state('nuts-1');
+	let selected_year: string | null = $state(null);
+	let selected_map: string | null = $state('world-3');
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
+	interface AggergatedData {
+		[location: string]: { technology: string; years: number[] }[];
+	}
+
 	let fetched_data: Papa.ParseResult<Row> | null = $state(null);
-	let data: MapPlotData | null = $state(null);
-	let transport_data: MapPlotData | null = $state(null);
+	let data: AggergatedData | null = $state(null);
+	let transport_data: AggergatedData | null = $state(null);
 
 	let units: { [key: string]: string } = $state({});
-	let unit: string = $derived(units[technologies[0]] || '');
+	let unit: string = $derived.by(() => {
+		const capacity_type = selected_technology_type == 'storage' ? selected_storage_type : 'power';
+		return units[technologies[0] + '_' + capacity_type] || '';
+	});
 
 	let coords: { [key: string]: [number, number] } = $derived.by(() => {
 		if (selected_solution == null) {
@@ -66,7 +73,9 @@
 		fetched_data = response.data;
 
 		if (response.unit?.data) {
-			units = Object.fromEntries(response.unit.data.map((u) => [u.technology, u[0] || u.units]));
+			units = Object.fromEntries(
+				response.unit.data.map((u) => [u.technology + '_' + u.capacity_type, u[0] || u.units])
+			);
 		}
 
 		fetching = false;
@@ -75,7 +84,7 @@
 	async function solution_changed() {
 		selected_carrier = null;
 		await fetch_data();
-		selected_year = years.length > 0 ? years[0] : null;
+		selected_year = years.length > 0 ? years[0].toString() : null;
 		technology_type_changed();
 		plot?.resetZoom();
 	}
@@ -97,12 +106,14 @@
 
 	function update_carriers() {
 		carriers = [];
-		if (fetched_data === null || selected_technology_type === null) {
+		if (fetched_data === null || selected_technology_type === null || selected_solution === null) {
 			return;
 		}
 
-		// Get the technologies for the current technology type
-		let all_technologies: string[] = get_technologies_by_type();
+		// Get the technologies for the current technology type and all transport technologies
+		let all_technologies: string[] = get_technologies_by_type().concat(
+			selected_solution.detail.system.set_transport_technologies
+		);
 
 		// Add all the available carriers to the set of carriers for the current set of technologies
 		fetched_data.data.forEach((element) => {
@@ -149,46 +160,37 @@
 		return [];
 	}
 
-	function aggregateDataByNode(
-		technologies: string[],
-		filter_capacity_type: string | null = null
-	): MapPlotData | null {
-		if (
-			!fetched_data ||
-			!selected_solution ||
-			!selected_technology_type ||
-			!selected_carrier ||
-			!selected_year
-		) {
+	function aggregateDataByNode(technologies: string[], filter_capacity_type: string | null = null) {
+		if (!fetched_data || !selected_solution || !selected_technology_type || !selected_carrier) {
 			return null;
 		}
 
 		return fetched_data.data.reduce((acc: any, row) => {
 			const { technology, capacity_type, location } = row;
-			const value = parseFloat(row[selected_year!]);
 
 			if (
 				!technologies.includes(technology) ||
-				(filter_capacity_type && filter_capacity_type !== capacity_type) ||
-				value < 1e-6
+				(filter_capacity_type && filter_capacity_type !== capacity_type)
 			) {
 				return acc;
 			}
 
+			const years = Object.entries(row)
+				.filter(([key, _]) => !isNaN(parseInt(key)))
+				.map(([_, value]) => parseFloat(value));
+
+			if (years.length === 0) {
+				return acc;
+			}
+
 			acc[location] = acc[location] || [];
-			acc[location].push({ technology, value });
+			acc[location].push({ technology, years: years });
 			return acc;
 		}, {});
 	}
 
 	function load_map_data() {
-		if (
-			!fetched_data ||
-			!selected_solution ||
-			!selected_technology_type ||
-			!selected_carrier ||
-			!selected_year
-		) {
+		if (!fetched_data || !selected_solution || !selected_technology_type || !selected_carrier) {
 			return;
 		}
 
@@ -202,6 +204,80 @@
 		);
 		transport_data = aggregateDataByNode(transportTechnologies);
 	}
+
+	let pieData: MapPlotData | null = $derived.by(() => {
+		if (!data || selected_year == null) {
+			return null;
+		}
+
+		const index = years.findIndex((year) => year.toString() === selected_year);
+		const entries = Object.entries(data)
+			.map(([location, data]) => {
+				const mappedData = data
+					.map((d) => ({ technology: d.technology, value: d.years[index] }))
+					.filter((d) => d.value > 1e-6);
+				return [location, mappedData];
+			})
+			.filter(([_location, data]) => data.length > 0);
+		return Object.fromEntries(entries);
+	});
+
+	let lineData: MapPlotData | null = $derived.by(() => {
+		if (!transport_data || selected_year == null) {
+			return null;
+		}
+
+		const index = years.findIndex((year) => year.toString() === selected_year);
+		const entries = Object.entries(transport_data).map(([location, data]) => {
+			return [location, data.map((d) => ({ technology: d.technology, value: d.years[index] }))];
+		});
+		return Object.fromEntries(entries);
+	});
+
+	let [minTotal, maxTotal] = $derived.by(() => {
+		if (!data) {
+			return [0, 0];
+		}
+		return Object.values(data).reduce(
+			([accMin, accMax], values) => {
+				const years = values.reduce((acc: number[] | null, { years }) => {
+					if (!acc) return [...years];
+					return acc.map((value, i) => value + (years[i] || 0));
+				}, null);
+
+				if (years == null) {
+					return [accMin, accMax];
+				}
+
+				const total = years.reduce((acc, val) => Math.max(acc, val), 0);
+				return [Math.min(accMin, total), Math.max(accMax, total)];
+			},
+			[Number.MAX_SAFE_INTEGER, 0]
+		);
+	});
+
+	let [minEdge, maxEdge] = $derived.by(() => {
+		if (!transport_data) {
+			return [0, 0];
+		}
+
+		return Object.values(transport_data).reduce(
+			([accMin, accMax], values) => {
+				const years = values.reduce((acc: number[] | null, { years }) => {
+					if (!acc) return [...years];
+					return acc.map((value, i) => value + (years[i] || 0));
+				}, null);
+
+				if (years == null) {
+					return [accMin, accMax];
+				}
+
+				const total = years.reduce((acc, val) => Math.max(acc, val), 0);
+				return [Math.min(accMin, total), Math.max(accMax, total)];
+			},
+			[Number.MAX_SAFE_INTEGER, 0]
+		);
+	});
 </script>
 
 <h1>Map</h1>
@@ -220,7 +296,10 @@
 		<FilterSection title="Variable Selection">
 			<Dropdown
 				label="Technology Type"
-				options={technology_types}
+				options={technology_types.map((type) => ({
+					label: type,
+					value: type
+				}))}
 				bind:value={selected_technology_type}
 				disabled={fetching || solution_loading}
 				onUpdate={technology_type_changed}
@@ -237,7 +316,10 @@
 			{#if selected_technology_type != null && carriers.length > 0}
 				<Dropdown
 					label="Carrier"
-					options={carriers}
+					options={carriers.map((carrier) => ({
+						label: carrier,
+						value: carrier
+					}))}
 					bind:value={selected_carrier}
 					disabled={fetching || solution_loading}
 					onUpdate={carrier_changed}
@@ -246,7 +328,10 @@
 		</FilterSection>
 		{#if fetched_data && selected_technology_type && selected_carrier}
 			<FilterSection title="Data Selection">
-				<Dropdown label="Year" bind:value={selected_year} options={years} onUpdate={year_changed}
+				<Dropdown label="Year" bind:value={selected_year} options={years.map((year) => ({
+					label: year.toString(),
+					value: year.toString()
+				}))} onUpdate={year_changed}
 				></Dropdown>
 				<Dropdown label="Map" bind:value={selected_map} options={maps}></Dropdown>
 			</FilterSection>
@@ -255,11 +340,15 @@
 </Filters>
 
 <div class="my-4">
-	{#if data && transport_data}
+	{#if pieData && lineData}
 		<MapPlot
 			bind:this={plot}
-			pieData={data}
-			lineData={transport_data}
+			{pieData}
+			{lineData}
+			{minTotal}
+			{maxTotal}
+			{minEdge}
+			{maxEdge}
 			nodeCoords={coords}
 			{unit}
 			map={selected_map}

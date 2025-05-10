@@ -8,6 +8,7 @@
 	import { tick } from 'svelte';
 	import { get_variable_name } from '$lib/variables';
 	import type { ChartConfiguration, ChartDataset } from 'chart.js';
+	import { lab } from 'd3';
 	import Filters from '../../../components/Filters.svelte';
 	import FilterSection from '../../../components/FilterSection.svelte';
 
@@ -42,12 +43,15 @@
 	let selected_carrier: string | null = $state(null);
 
 	let years: number[] = $state([]);
-	let selected_year: number | null = $state(null);
+	let selected_year: string | null = $state(null);
 
 	let unit: string = $state('');
 	let plot_name: string = $state('');
 
-	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
+	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'].map((size) => ({
+		label: size,
+		value: size
+	}));
 	let selected_window_size = $state('Hourly');
 
 	interface StringList {
@@ -122,7 +126,7 @@
 
 		selected_node = nodes[0];
 		selected_carrier = carriers[0];
-		selected_year = years[0];
+		selected_year = years.length > 0 ? years[0].toString() : null;
 		plot_ready = false;
 
 		await data_changed();
@@ -340,7 +344,10 @@
 				<div class="col-6">
 					<Dropdown
 						label="Year"
-						options={years}
+						options={years.map((year) => ({
+							label: year.toString(),
+							value: year.toString()
+						}))}
 						bind:value={selected_year}
 						disabled={fetching || solution_loading}
 						onUpdate={data_changed}
@@ -351,7 +358,7 @@
 				<div class="col-6">
 					<Dropdown
 						label="Node"
-						options={nodes}
+						options={nodes.map((node) => ({ label: node, value: node }))}
 						bind:value={selected_node}
 						disabled={fetching || solution_loading}
 						onUpdate={data_changed}
@@ -362,7 +369,7 @@
 				<div class="col-6">
 					<Dropdown
 						label="Carrier"
-						options={carriers}
+						options={carriers.map((carrier) => ({ label: carrier, value: carrier }))}
 						bind:value={selected_carrier}
 						disabled={fetching || solution_loading}
 						onUpdate={data_changed}

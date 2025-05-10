@@ -47,9 +47,12 @@
 	let plot_name_flows: string = $state('');
 	let subdivision: boolean = $state(true);
 	let years: number[] = $state([]);
-	let selected_year: number = $state(0);
+	let selected_year: string = $state('');
 
-	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
+	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'].map((size) => ({
+		label: size,
+		value: size
+	}));
 	let selected_window_size = $state('Hourly');
 
 	let level_plot = $state<BarPlot>();
@@ -201,7 +204,7 @@
 		}
 		// Calculate index of year
 		let year_index = Math.floor(
-			(selected_year - selected_solution.detail.system.reference_year) /
+			(parseInt(selected_year) - selected_solution.detail.system.reference_year) /
 				selected_solution.detail.system.interval_between_years
 		);
 
@@ -280,7 +283,7 @@
 		}
 
 		fetching = true;
-		selected_year = years[0];
+		selected_year = years.length > 0 ? years[0].toString() : '';
 
 		await fetch_data();
 
@@ -582,7 +585,10 @@
 				></Dropdown>
 				<Dropdown
 					label="Year"
-					options={years}
+					options={years.map((year) => ({
+						label: year.toString(),
+						value: year.toString()
+					}))}
 					bind:value={selected_year}
 					onUpdate={data_changed}
 					disabled={fetching || solution_loading}

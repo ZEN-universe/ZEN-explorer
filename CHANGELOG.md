@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased yet
+
+- [Map] and [Capacity]: Fix unit for storage with capacity type energy or power.
+- [Map] Set min width for tooltip
+- [Map] Compute maxRadius across all years.
+- [Map] Set default map to "Countries".
+- [Map] Always show all carriers for transport technologies.
+- [Capacity] and [Production] Fix bug when loading solutions with scenarios.
+
+## 0.5.2 (2025-05-04)
+
+- [Map] Label map selection.
+- [Map] Remove `world-1.json` and `world-2.json`.
+
 ## 0.5.1 (2025-05-01)
 
 - [Map] Fix initial projection when there is only a single node.

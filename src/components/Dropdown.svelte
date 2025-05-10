@@ -1,7 +1,7 @@
 <script lang="ts">
 	interface Props {
 		label: string;
-		options: any[];
+		options: { label: string; value: string }[];
 		value?: any;
 		disabled?: boolean;
 		onUpdate?: (value: any) => void;
@@ -10,7 +10,7 @@
 	let {
 		label,
 		options,
-		value = $bindable(options[0]),
+		value = $bindable(options.length > 0 ? options[0].value : undefined),
 		disabled = false,
 		onUpdate
 	}: Props = $props();
@@ -24,8 +24,8 @@
 <div class="dropdown">
 	<select class="form-select" bind:value onchange={() => update_selection()} {disabled}>
 		{#each options as option}
-			<option value={option}>
-				{option}
+			<option value={option.value}>
+				{option.label}
 			</option>
 		{/each}
 	</select>
