@@ -6,7 +6,7 @@
 
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { get_full_ts } from '$lib/temple';
-	import { filter_and_aggregate_data } from '$lib/utils';
+	import { filter_and_aggregate_data, stringify } from '$lib/utils';
 	import Papa from 'papaparse';
 	import { get_variable_name } from '$lib/variables';
 	import ToggleButton from '../../../components/ToggleButton.svelte';
@@ -570,7 +570,7 @@
 			bind:loading={solution_loading}
 			bind:years
 			solution_selected={solution_changed}
-			enabled={!fetching && !solution_loading}
+			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>
 	{#if !solution_loading && selected_solution}
@@ -578,7 +578,10 @@
 			{#if carriers.length > 0}
 				<Dropdown
 					label="Carrier"
-					options={carriers}
+					options={carriers.map((carrier) => ({
+						label: stringify(carrier),
+						value: carrier
+					}))}
 					bind:value={selected_carrier}
 					disabled={fetching || solution_loading}
 					onUpdate={data_changed}

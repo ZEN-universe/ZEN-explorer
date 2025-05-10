@@ -8,6 +8,7 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { feature, mesh } from 'topojson-client';
+	import { stringify } from '$lib/utils';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
 
@@ -406,11 +407,6 @@
 		const [x1, y1] = start;
 		const [x2, y2] = end;
 		return `M${x1},${y1} L${x2},${y2}`;
-	}
-
-	function stringify(value: string) {
-		let res = value.replace(/_/g, ' ');
-		return res.charAt(0).toUpperCase() + res.slice(1);
 	}
 </script>
 

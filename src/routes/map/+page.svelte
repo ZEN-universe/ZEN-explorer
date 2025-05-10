@@ -289,7 +289,7 @@
 			bind:selected_solution
 			bind:loading={solution_loading}
 			solution_selected={solution_changed}
-			enabled={!fetching && !solution_loading}
+			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>
 	{#if !solution_loading && selected_solution}
@@ -310,7 +310,7 @@
 					options={storage_type_options}
 					bind:value={selected_storage_type}
 					onUpdate={technology_type_changed}
-					disabled={!fetching && !solution_loading}
+					disabled={fetching || solution_loading}
 				></Radio>
 			{/if}
 			{#if selected_technology_type != null && carriers.length > 0}

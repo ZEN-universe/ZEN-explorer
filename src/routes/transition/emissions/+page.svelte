@@ -343,7 +343,7 @@
 				reset_subsection();
 				selected_years = years;
 			}}
-			enabled={!solution_loading && !fetching}
+			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>
 	{#if !solution_loading && selected_solution}

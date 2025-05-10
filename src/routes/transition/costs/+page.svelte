@@ -504,7 +504,7 @@
 			bind:selected_solution
 			bind:loading={solution_loading}
 			solution_selected={solution_changed}
-			enabled={!solution_loading && !fetching}
+			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>
 	{#if !fetching && !solution_loading && fetched_capex && selected_solution != null}

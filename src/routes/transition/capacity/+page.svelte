@@ -5,7 +5,7 @@
 	import BarPlot from '../../../components/BarPlot.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { get_component_total } from '$lib/temple';
-	import { filter_and_aggregate_data } from '$lib/utils';
+	import { filter_and_aggregate_data, stringify } from '$lib/utils';
 	import { tick } from 'svelte';
 	import Papa from 'papaparse';
 	import type { ChartConfiguration } from 'chart.js';
@@ -330,7 +330,7 @@
 			bind:selected_solution
 			bind:loading={solution_loading}
 			solution_selected={solution_changed}
-			enabled={!fetching && !solution_loading}
+			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>
 	{#if !solution_loading && selected_solution}
@@ -352,7 +352,10 @@
 			{#if selected_variable != null}
 				<Dropdown
 					label="Technology Type"
-					options={technology_types}
+					options={technology_types.map((type) => ({
+						label: stringify(type),
+						value: type
+					}))}
 					bind:value={selected_technology_type}
 					disabled={fetching || solution_loading}
 					onUpdate={technology_type_changed}
@@ -363,14 +366,17 @@
 						options={storage_type_options}
 						bind:value={selected_storage_type}
 						onUpdate={technology_type_changed}
-						disabled={!fetching && !solution_loading}
+						disabled={fetching || solution_loading}
 					></Radio>
 				{/if}
 			{/if}
 			{#if selected_technology_type != null && carriers.length > 0}
 				<Dropdown
 					label="Carrier"
-					options={carriers}
+					options={carriers.map((carrier) => ({
+						label: stringify(carrier),
+						value: carrier
+					}))}
 					bind:value={selected_carrier}
 					disabled={fetching || solution_loading}
 					onUpdate={carrier_changed}

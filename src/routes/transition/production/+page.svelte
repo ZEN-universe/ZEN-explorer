@@ -2,7 +2,7 @@
 	import SolutionFilter from '../../../components/SolutionFilter.svelte';
 	import AllCheckbox from '../../../components/AllCheckbox.svelte';
 	import type { ActivatedSolution } from '$lib/types';
-	import { filter_and_aggregate_data } from '$lib/utils';
+	import { filter_and_aggregate_data, stringify } from '$lib/utils';
 	import BarPlot from '../../../components/BarPlot.svelte';
 
 	import Radio from '../../../components/Radio.svelte';
@@ -395,7 +395,7 @@
 			bind:edges
 			bind:loading={solution_loading}
 			solution_selected={refetch}
-			enabled={!solution_loading && !fetching}
+			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>
 	{#if !solution_loading && selected_solution}
@@ -404,7 +404,7 @@
 				<Dropdown
 					label="Carrier"
 					options={carriers.map((carrier) => ({
-						label: carrier,
+						label: stringify(carrier),
 						value: carrier
 					}))}
 					bind:value={selected_carrier}

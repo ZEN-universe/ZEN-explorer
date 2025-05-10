@@ -2,8 +2,9 @@
 	import type { Solution, SolutionDetail, ActivatedSolution } from '$lib/types';
 	import { get_solutions, get_solution_detail } from '$lib/temple';
 	import { onMount } from 'svelte';
-	import { page } from '$app/state';
 	import { replaceState } from '$app/navigation';
+	import { stringify } from '$lib/utils';
+	import { build_url, get_url_param } from '$lib/url_params';
 
 	interface Props {
 		carriers?: string[];
@@ -12,7 +13,7 @@
 		years?: number[];
 		selected_solution: ActivatedSolution | null;
 		loading?: boolean;
-		enabled?: boolean;
+		disabled?: boolean;
 		solution_selected: (selected_solution: ActivatedSolution | null) => void;
 	}
 
@@ -23,7 +24,7 @@
 		years = $bindable([]),
 		selected_solution = $bindable(),
 		loading = $bindable(false),
-		enabled = true,
+		disabled = true,
 		solution_selected
 	}: Props = $props();
 
@@ -54,9 +55,9 @@
 	onMount(async function () {
 		solutionList = await get_solutions();
 
-		activeFirstLevel = page.url.searchParams.get('solution')?.split('.')[0] || '';
-		activeSecondLevel = page.url.searchParams.get('solution')?.split('.')[1] || '';
-		activeScenario = page.url.searchParams.get('scenario') || '';
+		activeFirstLevel = get_url_param('solution')?.split('.')[0] || '';
+		activeSecondLevel = get_url_param('solution')?.split('.')[1] || '';
+		activeScenario = get_url_param('scenario') || '';
 		update_solution_details();
 	});
 
@@ -103,11 +104,11 @@
 		};
 
 		replaceState(
-			`?solution=${selected_solution.solution_name}&scenario=${selected_solution.scenario_name}`,
-			{
-				solution_name: selected_solution.solution_name,
-				scenario_name: selected_solution.scenario_name
-			}
+			build_url({
+				solution: selected_solution.solution_name,
+				scenario: selected_solution.scenario_name
+			}),
+			{}
 		);
 
 		carriers = selected_solution.detail.system.set_carriers.slice();
@@ -129,12 +130,12 @@
 		<select
 			class="form-select"
 			bind:value={activeFirstLevel}
-			disabled={!enabled}
+			{disabled}
 			onchange={first_level_changed}
 		>
 			{#each firstLevels as solution}
 				<option value={solution}>
-					{solution}
+					{stringify(solution)}
 				</option>
 			{/each}
 		</select>
@@ -145,12 +146,12 @@
 			<select
 				class="form-select"
 				bind:value={activeSecondLevel}
-				disabled={!enabled}
+				{disabled}
 				onchange={second_level_changed}
 			>
 				{#each secondLevels as solution}
 					<option value={solution}>
-						{solution}
+						{stringify(solution)}
 					</option>
 				{/each}
 			</select>
@@ -163,7 +164,7 @@
 			<select
 				class="form-select"
 				bind:value={activeScenario}
-				disabled={!enabled}
+				disabled={!disabled}
 				onchange={dispatch_event}
 			>
 				{#each Object.keys(solutionDetail.scenarios) as scenario}
