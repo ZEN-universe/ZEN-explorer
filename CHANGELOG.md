@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased yet
+## 0.5.4 (2025-05-13)
 
 - [Map] and [Capacity]: Fix unit for storage with capacity type energy or power.
 - [Map] Set min width for tooltip
@@ -8,6 +8,10 @@
 - [Map] Set default map to "Countries".
 - [Map] Always show all carriers for transport technologies.
 - [Capacity] and [Production] Fix bug when loading solutions with scenarios.
+
+## 0.5.3 (2025-05-04)
+
+- [Nodal] Fix year selection.
 
 ## 0.5.2 (2025-05-04)
 
