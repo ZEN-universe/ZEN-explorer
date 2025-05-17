@@ -186,3 +186,16 @@ export function filter_and_aggregate_data(
 
 	return ans_datasets;
 }
+
+/**
+ * Takes a string and replaces all underscores with spaces and capitalizes the first letter.
+ * @param value string to be formatted
+ * @returns formatted string
+ * @example
+ * // Input: "hello_world"
+ * // Output: "Hello world"
+ */
+export function stringify(value: string) {
+	let res = value.replace(/_/g, ' ');
+	return res.charAt(0).toUpperCase() + res.slice(1);
+}

@@ -34,7 +34,7 @@ export async function get_solutions(): Promise<Solution[]> {
  * @param solution Name of the solution
  * @returns Promise with the SolutionDetail API Server.
  */
-export async function get_solution_detail(solution: string): Promise<SolutionDetail | undefined> {
+export async function get_solution_detail(solution: string): Promise<SolutionDetail> {
 	const url = env.PUBLIC_TEMPLE_URL + `solutions/get_detail/${solution}`;
 	let solution_detail_request = await fetch(url, { cache: 'no-store' });
 

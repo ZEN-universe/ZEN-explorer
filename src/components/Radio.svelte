@@ -1,35 +1,37 @@
 <script lang="ts">
 	interface Props {
+		label: string;
 		options: any[];
-		selected_option?: any;
-		enabled?: boolean;
-		selection_changed: (selected_option: any) => void;
+		value?: any;
+		disabled?: boolean;
+		onUpdate: (selected_option: any) => void;
 	}
 
 	let {
+		label,
 		options,
-		selected_option = $bindable(options[0]),
-		enabled = true,
-		selection_changed
+		value = $bindable(options[0]),
+		disabled = false,
+		onUpdate
 	}: Props = $props();
-	let uniqueID = options.join('_');
 
-	function update_selection() {
-		selection_changed(selected_option);
+	function updateSelection() {
+		onUpdate(value);
 	}
 </script>
 
-<div role="radiogroup" id={`group-${uniqueID}`}>
-	{#each options as option, i}
-		<div class="form-check">
+<h3>{label}</h3>
+<div role="radiogroup">
+	{#each options as option}
+		<div class="form-check form-check-inline">
 			<input
 				class="form-check-input"
-				type="radio"
 				id={'radio-' + option}
-				bind:group={selected_option}
-				onchange={update_selection}
+				type="radio"
+				bind:group={value}
 				value={option}
-				disabled={!enabled}
+				{disabled}
+				onchange={updateSelection}
 			/>
 			<label class="form-check-label" for={'radio-' + option}>
 				{option}
