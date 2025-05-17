@@ -6,7 +6,7 @@
 
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { get_full_ts } from '$lib/temple';
-	import { filter_and_aggregate_data, stringify } from '$lib/utils';
+	import { filter_and_aggregate_data } from '$lib/utils';
 	import Papa from 'papaparse';
 	import { get_variable_name } from '$lib/variables';
 	import ToggleButton from '../../../components/ToggleButton.svelte';
@@ -119,6 +119,11 @@
 						x: { minRange: 10 }
 					}
 				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x',
 			}
 		}
 	});
@@ -180,6 +185,11 @@
 						x: { minRange: 10 }
 					}
 				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x',
 			}
 		}
 	});
@@ -579,7 +589,7 @@
 				<Dropdown
 					label="Carrier"
 					options={carriers.map((carrier) => ({
-						label: stringify(carrier),
+						label: carrier,
 						value: carrier
 					}))}
 					bind:value={selected_carrier}

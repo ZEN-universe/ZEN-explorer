@@ -8,7 +8,6 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { feature, mesh } from 'topojson-client';
-	import { stringify } from '$lib/utils';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
 
@@ -478,7 +477,7 @@
 					<svg width="16" height="16" class="me-1">
 						<rect width="16" height="16" fill={computeColor(t)} />
 					</svg>
-					{stringify(t)}
+					{t}
 				</div>
 			{/each}
 		</div>
@@ -528,7 +527,7 @@
 						<svg width="16" height="16">
 							<rect width="16" height="16" fill={d.color} />
 						</svg>
-						{stringify(d.technology)}: {d.value.toFixed(3)}
+						{d.technology}: {d.value.toFixed(3)}
 						{unit}
 					</div>
 				{/each}
@@ -543,7 +542,7 @@
 						<h5 class="fs-7 mb-0">{line.label}</h5>
 						{#each line.values as d}
 							<div>
-								{stringify(d.technology)}: {d.value.toFixed(3)}
+								{d.technology}: {d.value.toFixed(3)}
 								{unit}
 							</div>
 						{/each}

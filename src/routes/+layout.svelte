@@ -6,7 +6,7 @@
 	import { base } from '$app/paths';
 	import { page } from '$app/state';
 	import { env } from '$env/dynamic/public';
-	import { add_current_solution_to_url } from '$lib/url_params';
+	import { add_current_solution_to_url } from '$lib/url_params.svelte';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -62,7 +62,10 @@
 					<ul class="dropdown-menu">
 						{#each Object.entries(transition_urls) as [title, url]}
 							<li>
-								<a class={['dropdown-item', currentPage == url && 'active']} href={add_current_solution_to_url(url)}>{title}</a>
+								<a
+									class={['dropdown-item', currentPage == url && 'active']}
+									href={add_current_solution_to_url(url)}>{title}</a
+								>
 							</li>
 						{/each}
 					</ul>
@@ -80,13 +83,19 @@
 					<ul class="dropdown-menu">
 						{#each Object.entries(energy_balance_urls) as [title, url]}
 							<li>
-								<a class={['dropdown-item', currentPage == url && 'active']} href={add_current_solution_to_url(url)}>{title}</a>
+								<a
+									class={['dropdown-item', currentPage == url && 'active']}
+									href={add_current_solution_to_url(url)}>{title}</a
+								>
 							</li>
 						{/each}
 					</ul>
 				</li>
 				<li class="nav-item">
-					<a href={add_current_solution_to_url("/map")} class={['nav-link', currentPage == '/map' && 'active']}>The Map</a>
+					<a
+						href={add_current_solution_to_url('/map')}
+						class={['nav-link', currentPage == '/map' && 'active']}>The Map</a
+					>
 				</li>
 			</ul>
 		</div>

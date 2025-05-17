@@ -328,10 +328,14 @@
 		</FilterSection>
 		{#if fetched_data && selected_technology_type && selected_carrier}
 			<FilterSection title="Data Selection">
-				<Dropdown label="Year" bind:value={selected_year} options={years.map((year) => ({
-					label: year.toString(),
-					value: year.toString()
-				}))} onUpdate={year_changed}
+				<Dropdown
+					label="Year"
+					bind:value={selected_year}
+					options={years.map((year) => ({
+						label: year.toString(),
+						value: year.toString()
+					}))}
+					onUpdate={year_changed}
 				></Dropdown>
 				<Dropdown label="Map" bind:value={selected_map} options={maps}></Dropdown>
 			</FilterSection>

@@ -2,9 +2,7 @@
 	import type { Solution, SolutionDetail, ActivatedSolution } from '$lib/types';
 	import { get_solutions, get_solution_detail } from '$lib/temple';
 	import { onMount } from 'svelte';
-	import { replaceState } from '$app/navigation';
-	import { stringify } from '$lib/utils';
-	import { build_url, get_url_param } from '$lib/url_params';
+	import { get_url_param, replace_url_params } from '$lib/url_params.svelte';
 
 	interface Props {
 		carriers?: string[];
@@ -103,13 +101,10 @@
 			version: solutionDetail.version
 		};
 
-		replaceState(
-			build_url({
-				solution: selected_solution.solution_name,
-				scenario: selected_solution.scenario_name
-			}),
-			{}
-		);
+		replace_url_params({
+			solution: selected_solution.solution_name,
+			scenario: selected_solution.scenario_name
+		});
 
 		carriers = selected_solution.detail.system.set_carriers.slice();
 		nodes = selected_solution.detail.system.set_nodes;
@@ -135,7 +130,7 @@
 		>
 			{#each firstLevels as solution}
 				<option value={solution}>
-					{stringify(solution)}
+					{solution}
 				</option>
 			{/each}
 		</select>
@@ -151,7 +146,7 @@
 			>
 				{#each secondLevels as solution}
 					<option value={solution}>
-						{stringify(solution)}
+						{solution}
 					</option>
 				{/each}
 			</select>

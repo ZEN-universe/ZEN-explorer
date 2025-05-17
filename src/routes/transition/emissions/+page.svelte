@@ -63,6 +63,11 @@
 						text: `Emissions [${selected_carriers.length > 0 ? units[selected_carriers[0]] : ''}]`
 					}
 				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x',
 			}
 		}
 	});

@@ -1,22 +1,23 @@
 <script lang="ts">
 	import SolutionFilter from '../../../components/SolutionFilter.svelte';
 	import AllCheckbox from '../../../components/AllCheckbox.svelte';
-	import type { ActivatedSolution } from '$lib/types';
-	import { filter_and_aggregate_data, stringify } from '$lib/utils';
+	import type { ActivatedSolution, Dataset } from '$lib/types';
+	import { filter_and_aggregate_data } from '$lib/utils';
 	import BarPlot from '../../../components/BarPlot.svelte';
 
 	import Radio from '../../../components/Radio.svelte';
 	import { get_component_total } from '$lib/temple';
 	import Papa from 'papaparse';
 	import { get_variable_name } from '$lib/variables';
-	import type { ChartConfiguration } from 'chart.js';
+	import type { ChartConfiguration, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import Filters from '../../../components/Filters.svelte';
 	import FilterSection from '../../../components/FilterSection.svelte';
 	import Dropdown from '../../../components/Dropdown.svelte';
 	import ToggleButton from '../../../components/ToggleButton.svelte';
 
 	// Data
-	let data: Papa.ParseResult<any> | null = $state(null);
+	// let data: {[module: string]: Papa.ParseResult<any>} | null = $state(null);
+	let data: Papa.ParseResult<any>[] | null = $state(null);
 	let filtered_data: any[] = $state([]);
 	let units: { [carrier: string]: string } = $state({});
 
@@ -29,29 +30,90 @@
 	// });
 	let carriers: string[] = $state([]);
 	let technologies: string[] = $state([]);
-	const aggregation_options = ['technology', 'node'];
+	// const aggregation_options = ['technology', 'node'];
 	const normalisation_options = ['not_normalized', 'normalized'];
 	let nodes: string[] = $state([]);
 	let edges: string[] = $state([]);
 	let locations: string[] = $state([]);
 	let years: number[] = $state([]);
 
+	let conversion_technologies: string[] = $state([]);
+	let storage_technologies: string[] = $state([]);
+	let transport_technologies: string[] = $state([]);
+
 	// Variables
-	let variables: { [key: string]: { title: string; show: boolean; subdivision: boolean } } = $state(
-		{
-			conversion: { title: 'Conversion', show: true, subdivision: true },
-			storage: { title: 'Storage', show: true, subdivision: true },
-			transport: { title: 'Transport', show: true, subdivision: false },
-			import_export: { title: 'Import/Export', show: true, subdivision: false }
+	let variables: {
+		[key: string]: {
+			title: string;
+			show: boolean;
+			subdivision: boolean;
+			show_subdivision: boolean;
+			positive: string;
+			positive_label: string;
+			positive_suffix?: string;
+			negative: string;
+			negative_label: string;
+			negative_suffix?: string;
+		};
+	} = $state({
+		conversion: {
+			title: 'Conversion',
+			show: true,
+			subdivision: false,
+			show_subdivision: true,
+			positive: 'flow_conversion_output',
+			positive_label: 'Conversion output',
+			negative: 'flow_conversion_input',
+			negative_label: 'Conversion input',
+		},
+		storage: {
+			title: 'Storage',
+			show: true,
+			subdivision: false,
+			show_subdivision: true,
+			positive: 'flow_storage_discharge',
+			positive_label: 'Storage discharge',
+			positive_suffix: ' (discharge)',
+			negative: 'flow_storage_charge',
+			negative_label: 'Storage charge',
+			negative_suffix: ' (charge)',
+		},
+		import_export: {
+			title: 'Import/Export',
+			show: true,
+			subdivision: false,
+			show_subdivision: false,
+			positive: 'flow_import',
+			positive_label: 'Import',
+			negative: 'flow_export',
+			negative_label: 'Export'
+		},
+		demand: {
+			title: 'Demand/Shed Demand',
+			show: true,
+			subdivision: false,
+			show_subdivision: false,
+			positive: 'shed_demand',
+			positive_label: 'Shed Demand',
+			negative: 'demand',
+			negative_label: 'Demand'
 		}
-	);
+	});
 
 	// Selected values
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_variable: string | null = $state('conversion');
 	let selected_subvariable: string | null = $state('input');
 	let selected_carrier: string | null = $state(null);
-	let selected_technologies: string[] = $state([]);
+	// let selected_technologies: string[] = $state([]);
+	let selected_conversion_technologies: string[] = $state([]);
+	let selected_storage_technologies: string[] = $state([]);
+	// let selected_transport_technologies: string[] = $state([]);
+	let selected_technologies = $derived.by(() => [
+		...selected_conversion_technologies,
+		...selected_storage_technologies,
+		...transport_technologies
+	]);
 	let selected_locations: string[] = $state([]);
 	let selected_years: number[] = $state([]);
 	let selected_aggregation = $state('node');
@@ -64,6 +126,7 @@
 
 	// Plot config
 	let labels: string[] = $state([]);
+	let unit = $derived(selected_carrier ? units[selected_carrier] : '');
 	let plot_config: ChartConfiguration = $derived({
 		type: 'bar',
 		data: { datasets: filtered_data, labels: labels },
@@ -81,9 +144,22 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: `${selected_variable} [${selected_carrier ? units[selected_carrier] : ''}]`
+						text: `${selected_variable} [${unit}]`
 					}
 				}
+			},
+			plugins: {
+				tooltip: {
+					callbacks: {
+						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+							`${item.dataset.label}: ${item.formattedValue} ${unit}`
+					}
+				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x'
 			}
 		}
 	});
@@ -111,7 +187,7 @@
 	function reset_data_selection() {
 		selected_years = years;
 		selected_locations = locations;
-		selected_technologies = technologies;
+		// selected_technologies = technologies;
 	}
 
 	/**
@@ -144,27 +220,59 @@
 			return;
 		}
 
-		// Get the versioned name of the variable
-		variable_name = get_variable_name(variable_name, selected_solution?.version);
-
-		// Fetch the data
-		let fetched = await get_component_total(
-			selected_solution!.solution_name,
-			variable_name,
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
-
-		if (fetched.data === null) {
-			return;
+		const promises = [];
+		for (const key in variables) {
+			// Fetch the data
+			if (variables[key].positive) {
+				promises.push(
+					get_component_total(
+						selected_solution!.solution_name,
+						get_variable_name(variables[key].positive, selected_solution?.version),
+						selected_solution!.scenario_name,
+						selected_solution!.detail.system.reference_year,
+						selected_solution!.detail.system.interval_between_years
+					)
+				);
+			}
+			if (variables[key].negative) {
+				promises.push(
+					get_component_total(
+						selected_solution!.solution_name,
+						get_variable_name(variables[key].negative, selected_solution?.version),
+						selected_solution!.scenario_name,
+						selected_solution!.detail.system.reference_year,
+						selected_solution!.detail.system.interval_between_years
+					)
+				);
+			}
 		}
-		data = fetched.data;
 
-		if (fetched.unit?.data) {
-			units = Object.fromEntries(fetched.unit.data.map((u) => [u.carrier, u[0] || u.units]));
+		const responses = await Promise.all(promises);
+
+		if (responses[0].unit?.data) {
+			units = Object.fromEntries(responses[0].unit.data.map((u) => [u.carrier, u[0] || u.units]));
 		}
 
+		// const tmp_data: {[module: string]: Papa.ParseResult<any>} = {};
+		const tmp_data: Papa.ParseResult<any>[] = [];
+		for (const key in variables) {
+			if (variables[key].positive) {
+				const fetched = responses.shift();
+				if (fetched && fetched.data !== null) {
+					// tmp_data[variables[key].positive] = fetched.data;
+					tmp_data.push(fetched.data);
+				}
+			}
+			if (variables[key].negative) {
+				const fetched = responses.shift();
+				if (fetched && fetched?.data !== null) {
+					// tmp_data[variables[key].negative] = fetched.data;
+					tmp_data.push(fetched.data);
+				}
+			}
+		}
+		
+		data = tmp_data;
 		fetching = false;
 	}
 
@@ -201,79 +309,121 @@
 				carriers = selected_solution!.detail.system.set_carriers;
 		}
 
-		let possible_carriers = null;
-		if (selected_variable == 'import_export') {
-			possible_carriers = Array.from(new Set(data.data.map((d) => d.carrier)));
-		} else if (selected_variable != get_variable_name('conversion', selected_solution?.version)) {
-			possible_carriers = Array.from(
-				new Set(data.data.map((d) => selected_solution?.detail.reference_carrier[d.technology]))
-			);
-		}
-
-		if (possible_carriers != null) {
-			carriers = carriers.filter((d) => possible_carriers.includes(d));
-		}
-
 		if ((carriers.length >= 1 && !selected_carrier) || !carriers.includes(selected_carrier!)) {
-			selected_carrier = carriers[0];
+			selected_carrier = carriers[3];
 		}
 
 		reset_data_selection();
 	}
+	
+	// let conversion_technologies = $derived.by(() => {
+	// 	if (!selected_solution) return [];
+	// 	return selected_solution.detail.system.set_conversion_technologies.filter((t) => selected_solution?.detail.reference_carrier[t] == selected_carrier);
+	// });
+	// let storage_technologies = $derived.by(() => {
+	// 	if (!selected_solution) return [];
+	// 	return selected_solution.detail.system.set_storage_technologies.filter((t) => selected_solution?.detail.reference_carrier[t] == selected_carrier);
+	// });
+	// let transport_technologies = $derived.by(() => {
+	// 	if (!selected_solution) return [];
+	// 	return selected_solution.detail.system.set_transport_technologies.filter((t) => selected_solution?.detail.reference_carrier[t] == selected_carrier);
+	// });
+
+	// $effect(() => {
+	// 	conversion_technologies;
+	// 	untrack(() => {
+	// 		selected_conversion_technologies = conversion_technologies;
+	// 	});
+	// });
+	// $effect(() => {
+	// 	storage_technologies;
+	// 	untrack(() => {
+	// 		selected_storage_technologies = storage_technologies;
+	// 	});
+	// });
+	// $effect(() => {
+	// 	transport_technologies;
+	// 	untrack(() => {
+	// 		selected_transport_technologies = transport_technologies;
+	// 	});
+	// });
 
 	/**
 	 * This function updates the available technologies given the currently selected solution and variable.
 	 */
 	function update_technologies() {
-		filtered_data = [];
-
-		if (selected_variable == null) {
+		if (selected_solution == null) {
+			conversion_technologies = [];
+			storage_technologies = [];
+			transport_technologies = [];
 			return;
 		}
-		if (selected_carrier == null) {
-			return;
-		}
+		// conversion_technologies = selected_solution.detail.system.set_conversion_technologies.filter(
+		// 	(t) => selected_solution?.detail.reference_carrier[t] == selected_carrier
+		// );
+		conversion_technologies = Array.from(new Set(
+			Object.keys(selected_solution!.detail.carriers_input).concat(
+				Object.keys(selected_solution!.detail.carriers_output)
+			).filter((t) => selected_carrier && t.includes(selected_carrier))
+		));
+		storage_technologies = selected_solution.detail.system.set_storage_technologies.filter(
+			(t) => selected_solution?.detail.reference_carrier[t] == selected_carrier
+		);
+		transport_technologies = selected_solution.detail.system.set_transport_technologies.filter(
+			(t) => selected_solution?.detail.reference_carrier[t] == selected_carrier
+		);
+		selected_conversion_technologies = conversion_technologies;
+		selected_storage_technologies = storage_technologies;
 
-		technologies = selected_solution?.detail.system.set_technologies.slice() ?? [];
+		// filtered_data = [];
 
-		switch (selected_variable) {
-			case 'conversion':
-				technologies = [];
-				let relevant_carriers = selected_solution!.detail.carriers_input;
-				if (selected_subvariable == 'output') {
-					relevant_carriers = selected_solution!.detail.carriers_output;
-				}
-				for (const technology in relevant_carriers) {
-					if (relevant_carriers[technology].includes(selected_carrier)) {
-						technologies.push(technology);
-					}
-				}
-				break;
-			case 'storage':
-				technologies =
-					selected_solution?.detail.system.set_storage_technologies.filter(
-						(technology) =>
-							selected_solution?.detail.reference_carrier[technology] == selected_carrier
-					) ?? [];
+		// if (selected_variable == null) {
+		// 	return;
+		// }
+		// if (selected_carrier == null) {
+		// 	return;
+		// }
 
-				break;
-			case 'transport':
-				technologies =
-					selected_solution?.detail.system.set_transport_technologies.filter(
-						(technology) =>
-							selected_solution?.detail.reference_carrier[technology] == selected_carrier
-					) ?? [];
-				break;
-			case 'import_export':
-				technologies = [];
-				break;
-		}
+		// technologies = selected_solution?.detail.system.set_technologies.slice() ?? [];
 
-		if (technologies.length == 1) {
-			selected_technologies = [technologies[0]];
-		}
+		// switch (selected_variable) {
+		// 	case 'conversion':
+		// 		technologies = [];
+		// 		let relevant_carriers = selected_solution!.detail.carriers_input;
+		// 		if (selected_subvariable == 'output') {
+		// 			relevant_carriers = selected_solution!.detail.carriers_output;
+		// 		}
+		// 		for (const technology in relevant_carriers) {
+		// 			if (relevant_carriers[technology].includes(selected_carrier)) {
+		// 				technologies.push(technology);
+		// 			}
+		// 		}
+		// 		break;
+		// 	case 'storage':
+		// 		technologies =
+		// 			selected_solution?.detail.system.set_storage_technologies.filter(
+		// 				(technology) =>
+		// 					selected_solution?.detail.reference_carrier[technology] == selected_carrier
+		// 			) ?? [];
 
-		reset_data_selection();
+		// 		break;
+		// 	case 'transport':
+		// 		technologies =
+		// 			selected_solution?.detail.system.set_transport_technologies.filter(
+		// 				(technology) =>
+		// 					selected_solution?.detail.reference_carrier[technology] == selected_carrier
+		// 			) ?? [];
+		// 		break;
+		// 	case 'import_export':
+		// 		technologies = [];
+		// 		break;
+		// }
+
+		// if (technologies.length == 1) {
+		// 	selected_technologies = [technologies[0]];
+		// }
+
+		// reset_data_selection();
 	}
 
 	/**
@@ -290,47 +440,28 @@
 		reset_data_selection();
 	}
 
-	// /**
-	//  * This function is being called whenever the selected variable is changed.
-	//  * It resets the form according to the selected variable.
-	//  */
-	// function updated_variable() {
-	// 	filtered_data = [];
-
-	// 	if (selected_variable == null) {
-	// 		return;
-	// 	}
-
-	// 	if (variables[selected_variable] != null) {
-	// 		selected_subvariable = variables[selected_variable]![0];
-	// 	}
-
-	// 	if (selected_variable == 'import_export') {
-	// 		selected_aggregation = 'technology';
-	// 	}
-	// }
-
 	/**
 	 * This function updates the plot data according to the current form selection.
 	 */
 	function update_data() {
-		if (selected_variable == 'import_export') {
-			selected_aggregation = 'node';
-		}
+		// if (selected_variable == 'import_export') {
+		// 	selected_aggregation = 'node';
+		// }
 
 		// If the selected aggregation is technology, include all available nodes and vice versa
-		if (selected_aggregation == 'technology') {
-			selected_locations = locations;
-		} else {
-			selected_technologies = technologies;
-		}
+		// if (selected_aggregation == 'technology') {
+		// 	selected_locations = locations;
+		// } else {
+		// 	// selected_technologies = technologies;
+		// }
 
 		// Check if there is data to plot
 		if (
 			selected_locations.length == 0 ||
 			selected_years.length == 0 ||
-			(selected_technologies.length == 0 && selected_variable != 'import_export') ||
-			!data
+			// (selected_technologies.length == 0 && selected_variable != 'import_export') ||
+			!data ||
+			data.length == 0
 		) {
 			filtered_data = [];
 			return;
@@ -340,37 +471,120 @@
 		let datasets_aggregates: StringList = {};
 		let location_name = 'node';
 
-		if (selected_variable == 'transport') {
-			location_name = 'edge';
-		}
+		// if (selected_variable == 'transport') {
+		// 	location_name = 'edge';
+		// }
 
 		// Define which series should be aggregated and which should be shown separately, depending on the selected aggregation and variable.
-		if (selected_variable == 'import_export') {
-			dataset_selector[location_name] = selected_locations;
-			datasets_aggregates['carrier'] = [selected_carrier!];
-		} else if (selected_aggregation == 'technology') {
-			dataset_selector[location_name] = selected_locations;
-			datasets_aggregates['technology'] = selected_technologies;
-		} else {
-			dataset_selector['technology'] = selected_technologies;
-			datasets_aggregates[location_name] = selected_locations;
-		}
+		// if (selected_variable == 'import_export') {
+		// 	dataset_selector[location_name] = selected_locations;
+		// 	datasets_aggregates['carrier'] = [selected_carrier!];
+		// } else if (selected_aggregation == 'technology') {
+		// 	dataset_selector[location_name] = selected_locations;
+		// 	datasets_aggregates['technology'] = selected_technologies;
+		// } else {
+		// 	dataset_selector['technology'] = selected_technologies;
+		// 	datasets_aggregates[location_name] = selected_locations;
+		// }
 
 		// Filter years
 		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
-		let filtered_result = data.data.filter(
-			(a) => a.carrier === undefined || a.carrier == selected_carrier
-		);
+		// let filtered_result = data.data.filter(
+		// 	(a) => a.carrier === undefined || a.carrier == selected_carrier
+		// );
 
-		// Aggregate data
-		filtered_data = filter_and_aggregate_data(
-			filtered_result,
-			dataset_selector,
-			datasets_aggregates,
-			excluded_years,
-			selected_normalisation == 'normalized'
-		);
+		// // Aggregate data
+		// filtered_data = filter_and_aggregate_data(
+		// 	filtered_result,
+		// 	dataset_selector,
+		// 	datasets_aggregates,
+		// 	excluded_years,
+		// 	selected_normalisation == 'normalized'
+		// );
+
+		let counter = 0;
+		filtered_data = Object.keys(variables).flatMap((key, i) => {
+			if (!variables[key].show || !data) {
+				return null;
+			}
+			const variable = variables[key];
+			// if (selected_aggregation == 'technology') {
+				// dataset_selector[location_name] = selected_locations;
+				// datasets_aggregates['technology'] = [...selected_technologies, variable.title];
+			// } else {
+			// console.log('variable', $state.snapshot(variable));
+
+			dataset_selector = { technology: [...selected_technologies, variable.title] };
+			datasets_aggregates[location_name] = selected_locations;
+			// }
+			// if (variable.subdivision) {
+			// 	dataset_selector['technology'] = selected_technologies;
+			// } else {
+			// 	dataset_selector[location_name] = selected_locations;
+			// }
+			// datasets_aggregates[location_name] = selected_locations;
+			// datasets_aggregates['technology'] = selected_technologies;
+
+			let filteredPos: Dataset[] = [];
+			if (variable.positive) {
+				const filtered_result = group_data(
+					data[2 * i].data.filter((a) => a.carrier === undefined || a.carrier == selected_carrier),
+					variable,
+					selected_technologies
+				);
+				// console.log('filtered_result', filtered_result);
+
+				filteredPos = filter_and_aggregate_data(
+					filtered_result,
+					dataset_selector,
+					datasets_aggregates,
+					excluded_years,
+					selected_normalisation == 'normalized',
+					undefined,
+					variable.positive_suffix || ''
+				);
+				if (!variable.subdivision && filteredPos.length > 0) {
+					filteredPos[0].label = variable.positive_label;
+				}
+			}
+
+			let filteredNeg: Dataset[] = [];
+			if (variable.negative) {
+				const filtered_result = group_data(
+					data[2 * i + 1].data.filter(
+						(a) => a.carrier === undefined || a.carrier == selected_carrier
+					),
+					variable,
+					selected_technologies
+				);
+				filteredNeg = filter_and_aggregate_data(
+					filtered_result,
+					dataset_selector,
+					datasets_aggregates,
+					excluded_years,
+					selected_normalisation == 'normalized',
+					undefined,
+					variable.negative_suffix || ''
+				).map((d) => {
+					return {
+						...d,
+						data: Object.fromEntries(Object.entries(d.data).map(([k, e]) => [k, -e]))
+					};
+				});
+				if (!variable.subdivision && filteredNeg.length > 0) {
+					filteredNeg[0].label = variable.negative_label;
+				}
+			}
+
+			// console.log('filteredPos', filteredPos);
+			// console.log('filteredNeg', filteredNeg);
+
+			// console.log();
+
+			return [...filteredPos, ...filteredNeg];
+		});
+
 		labels = selected_years.map((year) => year.toString());
 
 		// Define filename of the plot when downloading.
@@ -381,6 +595,52 @@
 			get_variable_name(get_local_variable()!, selected_solution?.version),
 			selected_carrier
 		].join('_');
+	}
+	// $inspect('filtered_data', filtered_data);
+
+	function group_data(data: any, variable: any, technologies: string[] = []) {
+		if (variable.text == 'Storage') console.log($state.snapshot(variable));
+		if (variable.text == 'Storage') console.log('data[counter++].data', $state.snapshot(data));
+
+		if (variable.subdivision) {
+			return data;
+		}
+
+		// Aggregate all data with the same node
+		const aggregated_data = Object.entries(
+			data.reduce(
+				(
+					acc: { [node: string]: { technology: string; data: { [year: string]: number } } },
+					curr: any
+				) => {
+					const node = curr['node'];
+					const technology = curr['technology'];
+					if (!technologies.includes(technology)) {
+						return acc;
+					}
+					let values = Object.fromEntries(
+						Object.entries(curr)
+							.filter(([key]) => !isNaN(Number(key)))
+							.map(([key, value]) => [key, Number(value)])
+					);
+
+					acc[node] = acc[node] || { technology: variable.title, data: {} };
+					acc[node].data = Object.fromEntries(
+						Object.entries(values).map(([key, value]) => {
+							return [key, (value || 0) + (acc[node].data[key] || 0)];
+						})
+					);
+					return acc;
+				},
+				{}
+			)
+		).map(([node, value]: any) => ({
+			...value.data,
+			technology: value.technology,
+			node: node
+		}));
+		if (variable.text == 'Storage') console.log('aggregated_data', aggregated_data);
+		return aggregated_data;
 	}
 </script>
 
@@ -404,7 +664,7 @@
 				<Dropdown
 					label="Carrier"
 					options={carriers.map((carrier) => ({
-						label: stringify(carrier),
+						label: carrier,
 						value: carrier
 					}))}
 					bind:value={selected_carrier}
@@ -418,13 +678,13 @@
 		</FilterSection>
 		<FilterSection title="Production Component Selection">
 			{#each Object.keys(variables) as key}
-				<div class="row">
-					<div class="col-6 col-md-3"><h3>{variables[key].title}</h3></div>
+				<div class="row align-items-baseline">
+					<div class="col-6 col-md-4"><h3>{variables[key].title}</h3></div>
 					<div class="col-4 col-md-2">
 						<ToggleButton bind:value={variables[key].show} change={update_data}></ToggleButton>
 					</div>
 
-					{#if variables[key].show && key != 'carbon_emission'}
+					{#if variables[key].show && variables[key].show_subdivision}
 						<div class="col-6 col-md-2">Subdivision:</div>
 						<div class="col-4 col-md-2">
 							<ToggleButton bind:value={variables[key].subdivision} change={update_data}
@@ -435,14 +695,25 @@
 			{/each}
 		</FilterSection>
 		<FilterSection title="Technology Selection">
-			<h3>Conversion</h3>
-			<h3>Storage</h3>
-			<h3>Transport</h3>
+			<AllCheckbox
+				label="Conversion"
+				bind:value={selected_conversion_technologies}
+				elements={conversion_technologies}
+				disabled={solution_loading || fetching}
+				onUpdate={update_data}
+			></AllCheckbox>
+			<AllCheckbox
+				label="Storage"
+				bind:value={selected_storage_technologies}
+				elements={storage_technologies}
+				disabled={solution_loading || fetching}
+				onUpdate={update_data}
+			></AllCheckbox>
 		</FilterSection>
-		{#if !fetching && selected_carrier && (technologies.length > 0 || selected_variable == 'import_export')}
+		{#if !fetching && selected_carrier != null}
 			<FilterSection title="Data Selection">
-				<div class="row">
-					{#if selected_variable != 'import_export'}
+				<!-- <div class="row"> -->
+					<!-- {#if selected_variable != 'import_export'}
 						<div class="col-6">
 							<Radio
 								label="Aggregation"
@@ -452,8 +723,8 @@
 								onUpdate={update_data}
 							></Radio>
 						</div>
-					{/if}
-					<div class="col-6">
+					{/if} -->
+					<!-- <div class="col-6"> -->
 						<Radio
 							label="Normalisation"
 							options={normalisation_options}
@@ -461,8 +732,8 @@
 							disabled={solution_loading || fetching}
 							onUpdate={update_data}
 						></Radio>
-					</div>
-				</div>
+					<!-- </div> -->
+				<!-- </div> -->
 				{#if selected_aggregation == 'technology'}
 					<AllCheckbox
 						label="Technology"
@@ -502,8 +773,6 @@
 		<div></div>
 	{:else if filtered_data == null}
 		<div></div>
-	{:else if technologies.length == 0 && selected_variable != 'import_export'}
-		<div class="text-center">No technologies with this selection.</div>
 	{:else if carriers.length == 0}
 		<div class="text-center">No carriers with this selection.</div>
 	{:else if filtered_data.length == 0}

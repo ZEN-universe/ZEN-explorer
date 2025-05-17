@@ -8,7 +8,6 @@
 	import { tick } from 'svelte';
 	import { get_variable_name } from '$lib/variables';
 	import type { ChartConfiguration, ChartDataset } from 'chart.js';
-	import { lab } from 'd3';
 	import Filters from '../../../components/Filters.svelte';
 	import FilterSection from '../../../components/FilterSection.svelte';
 
@@ -108,6 +107,11 @@
 						mode: 'x'
 					}
 				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x',
 			}
 		}
 	});
@@ -153,7 +157,7 @@
 
 		// Calculate index of year
 		let year_index = Math.floor(
-			(selected_year - selected_solution.detail.system.reference_year) /
+			(Number(selected_year) - selected_solution.detail.system.reference_year) /
 				selected_solution.detail.system.interval_between_years
 		);
 

@@ -5,7 +5,7 @@
 	import BarPlot from '../../../components/BarPlot.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { get_component_total } from '$lib/temple';
-	import { filter_and_aggregate_data, stringify } from '$lib/utils';
+	import { filter_and_aggregate_data } from '$lib/utils';
 	import { tick } from 'svelte';
 	import Papa from 'papaparse';
 	import type { ChartConfiguration } from 'chart.js';
@@ -72,6 +72,11 @@
 						text: `${selected_variable} [${unit}]`
 					}
 				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x',
 			}
 		}
 	});
@@ -353,7 +358,7 @@
 				<Dropdown
 					label="Technology Type"
 					options={technology_types.map((type) => ({
-						label: stringify(type),
+						label: type,
 						value: type
 					}))}
 					bind:value={selected_technology_type}
@@ -374,7 +379,7 @@
 				<Dropdown
 					label="Carrier"
 					options={carriers.map((carrier) => ({
-						label: stringify(carrier),
+						label: carrier,
 						value: carrier
 					}))}
 					bind:value={selected_carrier}

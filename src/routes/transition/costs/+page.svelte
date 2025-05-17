@@ -93,6 +93,11 @@
 						text: `Costs [${conversion_technologies.length > 0 ? units[conversion_technologies[0]] : ''}]`
 					}
 				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x',
 			}
 		}
 	});
@@ -213,6 +218,11 @@
 			if (show_costs.capex.subdivision) {
 				grouped_data! = grouped_data!.concat(fetched_capex.data!.data);
 			} else {
+				console.log('Capex:', $state.snapshot(fetched_capex.data!.data));
+				console.log('datasets_filters:', { location: selected_locations });
+				console.log('datasets_aggregates:', {
+					[combined_name]: all_selected_carriers_technologies
+				});
 				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					fetched_capex.data!.data,
 					{ location: selected_locations },
@@ -220,11 +230,13 @@
 					[],
 					false
 				);
+				console.log('Capex new data:', new_data);
 				for (let i in new_data) {
 					new_data[i].data['location'] = new_data[i].label;
 					new_data[i].data[combined_name] = capex_label;
 					grouped_data.push(new_data[i].data);
 				}
+				console.log('Capex grouped:', grouped_data);
 			}
 		}
 
@@ -236,9 +248,7 @@
 				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					fetched_opex.data!.data,
 					{ location: selected_locations },
-					{
-						[combined_name]: all_selected_carriers_technologies
-					},
+					{ [combined_name]: all_selected_carriers_technologies },
 					[],
 					false
 				);
@@ -254,7 +264,6 @@
 			if (show_costs.carrier.subdivision) {
 				grouped_data! = grouped_data!.concat(filtered_cost_carrier!.data);
 			} else {
-				let comb = {};
 				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					filtered_cost_carrier!.data,
 					{ location: selected_locations },
@@ -262,7 +271,6 @@
 					[],
 					false
 				);
-
 				for (let i in new_data) {
 					new_data[i].data['location'] = new_data[i].label;
 					new_data[i].data[combined_name] = carrier_label;
