@@ -2,6 +2,11 @@
 
 ## 0.5.5 (2025-05-20)
 
+- [Production] Fix bug when unselecting a production component.
+- [Production] Show all relevant carriers.
+
+## 0.5.5 (2025-05-20)
+
 - [Production] Restructure plot to show all variables simultaneously.
 - Add URL parameters to keep the selected solutions across page reloads.
 - [Map] Use max edge value in the min/maxEdge computation.

@@ -265,29 +265,13 @@
 			return;
 		}
 
-		filtered_data = [];
-
-		switch (selected_variable) {
-			case get_variable_name('import_export', selected_solution?.version):
-				if (selected_subvariable == 'import') {
-					carriers = selected_solution!.detail.carriers_import;
-				} else {
-					carriers = selected_solution!.detail.carriers_export;
-				}
-				break;
-			case get_variable_name('conversion', selected_solution?.version):
-				let relevant_carriers;
-				if (selected_subvariable == 'input') {
-					relevant_carriers = selected_solution!.detail.carriers_input;
-				} else {
-					relevant_carriers = selected_solution!.detail.carriers_output;
-				}
-
-				carriers = remove_duplicates(Object.values(relevant_carriers).flat());
-				break;
-			default:
-				carriers = selected_solution!.detail.system.set_carriers;
-		}
+		carriers = remove_duplicates([
+			...selected_solution!.detail.carriers_import,
+			...selected_solution!.detail.carriers_export,
+			...Object.values(selected_solution!.detail.carriers_input).flat(),
+			...Object.values(selected_solution!.detail.carriers_output).flat(),
+			...selected_solution!.detail.system.set_carriers
+		]).sort();
 
 		if ((carriers.length >= 1 && !selected_carrier) || !carriers.includes(selected_carrier!)) {
 			selected_carrier = carriers[0];
@@ -395,7 +379,7 @@
 
 		filtered_data = variables.flatMap((variable, i) => {
 			if (!variable.show || !data) {
-				return null;
+				return [];
 			}
 			dataset_selector = { technology: [...selected_technologies, variable.title] };
 			datasets_aggregates[location_name] = selected_locations;
