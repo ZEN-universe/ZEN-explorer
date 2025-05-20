@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.8 (2025-05-20)
+
+- [Production] Choose unit based on units from the demand component.
+
 ## 0.5.5 (2025-05-20)
 
 - [Production] Fix bug when unselecting a production component.
