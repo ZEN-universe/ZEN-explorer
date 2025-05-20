@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.5 (2025-05-20)
+
+- [Production] Restructure plot to show all variables simultaneously.
+- Add URL parameters to keep the selected solutions across page reloads.
+- [Map] Use max edge value in the min/maxEdge computation.
+
 ## 0.5.4 (2025-05-13)
 
 - [Map] and [Capacity]: Fix unit for storage with capacity type energy or power.
