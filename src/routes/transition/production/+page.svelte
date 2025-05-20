@@ -265,13 +265,7 @@
 			return;
 		}
 
-		carriers = remove_duplicates([
-			...selected_solution!.detail.carriers_import,
-			...selected_solution!.detail.carriers_export,
-			...Object.values(selected_solution!.detail.carriers_input).flat(),
-			...Object.values(selected_solution!.detail.carriers_output).flat(),
-			...selected_solution!.detail.system.set_carriers
-		]).sort();
+		carriers = selected_solution.detail.system.set_carriers.sort();
 
 		if ((carriers.length >= 1 && !selected_carrier) || !carriers.includes(selected_carrier!)) {
 			selected_carrier = carriers[0];
@@ -493,7 +487,6 @@
 <Filters>
 	<FilterSection title="Solution Selection">
 		<SolutionFilter
-			bind:carriers
 			bind:nodes
 			bind:years
 			bind:selected_solution
