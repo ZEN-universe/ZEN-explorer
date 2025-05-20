@@ -11,61 +11,65 @@
 	import { tick } from 'svelte';
 	import BarPlot from '../../../components/BarPlot.svelte';
 	import type { ChartConfiguration } from 'chart.js';
+	import Filters from '../../../components/Filters.svelte';
+	import FilterSection from '../../../components/FilterSection.svelte';
 
-	let carriers: string[] = $state([]);
-	let nodes: string[] = $state([]);
-	let years: number[] = $state([]);
-	let locations: string[] = $state([]);
-	let selected_locations: string[] = $state([]);
-	let selected_solution: ActivatedSolution | null = $state(null);
-	let selected_years: number[] = $state([]);
-	let selected_normalisation: string = 'not_normalized';
-	let selected_cost_carriers: string[] = $state([]);
-	let selected_demand_carriers: string[] = $state([]);
-	let solution_loading: boolean = $state(false);
-	let fetching: boolean = $state(false);
-	let transport_technologies: string[] = $state([]);
-	let selected_transport_technologies: string[] = $state([]);
-	let storage_technologies: string[] = $state([]);
-	let selected_storage_technologies: string[] = $state([]);
-	let conversion_technologies: string[] = $state([]);
-	let selected_conversion_technologies: string[] = $state([]);
-	let grouped_data: Row[] | undefined;
-	let fetched_cost_carbon: ComponentTotal;
-	let fetched_cost_carrier: ComponentTotal;
-	let fetched_capex: ComponentTotal | undefined = $state();
-	let fetched_opex: ComponentTotal;
-	let fetched_cost_shed_demand: ComponentTotal;
-	let cost_carriers: string[] = $state([]);
-	let demand_carriers: string[] = $state([]);
 	const combined_name = 'Techology / Carrier';
-	const aggregation_options: string[] = [combined_name, 'Location'];
-	let selected_aggregation: string = $state(aggregation_options[1]);
-	let units: { [carrier: string]: string } = $state({});
-
-	let show_costs = $state({
-		capex: { title: 'Capex', show: true, subdivision: false },
-		opex: { title: 'Opex', show: true, subdivision: false },
-		carrier: { title: 'Carrier', show: true, subdivision: false },
-		shed_demand: { title: 'Shed Demand', show: true, subdivision: false },
-		carbon_emission: {
-			title: 'Carbon Emissions',
-			show: true,
-			subdivision: false
-		}
-	});
-
 	const capex_suffix = ' (Capex)';
 	const opex_suffix = ' (Opex)';
 	const capex_label = 'Capex';
 	const opex_label = 'Opex';
 	const carrier_label = 'Carrier';
 	const shed_demand_label = 'Shed Demand';
-	let plot_name = $state('plot');
 
-	interface StringList {
-		[key: string]: string[];
-	}
+	let carriers: string[] = $state([]);
+	let nodes: string[] = $state([]);
+	let years: number[] = $state([]);
+	let locations: string[] = $state([]);
+	let transport_technologies: string[] = $state([]);
+	let storage_technologies: string[] = $state([]);
+	let conversion_technologies: string[] = $state([]);
+	const aggregation_options: string[] = [combined_name, 'Location'];
+
+	let selected_locations: string[] = $state([]);
+	let selected_solution: ActivatedSolution | null = $state(null);
+	let selected_years: number[] = $state([]);
+	let selected_normalisation: string = 'not_normalized';
+	let selected_cost_carriers: string[] = $state([]);
+	let selected_demand_carriers: string[] = $state([]);
+	let selected_transport_technologies: string[] = $state([]);
+	let selected_storage_technologies: string[] = $state([]);
+	let selected_conversion_technologies: string[] = $state([]);
+	let selected_aggregation: string = $state(aggregation_options[1]);
+
+	let solution_loading: boolean = $state(false);
+	let fetching: boolean = $state(false);
+
+	let grouped_data: Row[] | undefined;
+	let fetched_cost_carbon: ComponentTotal;
+	let fetched_cost_carrier: ComponentTotal;
+	let fetched_capex: ComponentTotal | undefined = $state();
+	let fetched_opex: ComponentTotal;
+	let fetched_cost_shed_demand: ComponentTotal;
+	let units: { [carrier: string]: string } = $state({});
+
+	let cost_carriers: string[] = $state([]);
+	let demand_carriers: string[] = $state([]);
+
+	let show_costs: { [name: string]: { title: string; show: boolean; subdivision: boolean } } =
+		$state({
+			capex: { title: 'Capex', show: true, subdivision: false },
+			opex: { title: 'Opex', show: true, subdivision: false },
+			carrier: { title: 'Carrier', show: true, subdivision: false },
+			shed_demand: { title: 'Shed Demand', show: true, subdivision: false },
+			carbon_emission: {
+				title: 'Carbon Emissions',
+				show: true,
+				subdivision: false
+			}
+		});
+
+	let plot_name = $state('plot');
 
 	// Define initial plot config
 	let filtered_data: any[] = $state([]);
@@ -89,9 +93,18 @@
 						text: `Costs [${conversion_technologies.length > 0 ? units[conversion_technologies[0]] : ''}]`
 					}
 				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x',
 			}
 		}
 	});
+
+	interface StringList {
+		[key: string]: string[];
+	}
 
 	/**
 	 * This funciton fetches all necessary cost-data  given the currently selected solution.
@@ -101,47 +114,51 @@
 			return;
 		}
 		fetching = true;
-		await tick();
 
-		fetched_capex = await get_component_total(
-			selected_solution!.solution_name,
-			get_variable_name('capex_yearly', selected_solution.version),
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
+		const [res_capex, res_opex, res_cost_carbon, res_cost_carrier, res_cost_shed_demand] =
+			await Promise.all([
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name('capex_yearly', selected_solution.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				),
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name('opex_yearly', selected_solution.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				),
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name('cost_carbon_emissions_total', selected_solution.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				),
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name('cost_carrier', selected_solution.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				),
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name('cost_shed_demand', selected_solution.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				)
+			]);
 
-		fetched_opex = await get_component_total(
-			selected_solution!.solution_name,
-			get_variable_name('opex_yearly', selected_solution.version),
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
-
-		fetched_cost_carbon = await get_component_total(
-			selected_solution!.solution_name,
-			get_variable_name('cost_carbon_emissions_total', selected_solution.version),
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
-
-		fetched_cost_carrier = await get_component_total(
-			selected_solution!.solution_name,
-			get_variable_name('cost_carrier', selected_solution.version),
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
-
-		fetched_cost_shed_demand = await get_component_total(
-			selected_solution!.solution_name,
-			get_variable_name('cost_shed_demand', selected_solution.version),
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
-		);
+		fetched_capex = res_capex;
+		fetched_opex = res_opex;
+		fetched_cost_carbon = res_cost_carbon;
+		fetched_cost_carrier = res_cost_carrier;
+		fetched_cost_shed_demand = res_cost_shed_demand;
 
 		// "Standardize" all series names
 		rename_field(fetched_cost_carrier.data!, 'node', 'location');
@@ -201,18 +218,25 @@
 			if (show_costs.capex.subdivision) {
 				grouped_data! = grouped_data!.concat(fetched_capex.data!.data);
 			} else {
-				let new_data = filter_and_aggregate_data(
+				console.log('Capex:', $state.snapshot(fetched_capex.data!.data));
+				console.log('datasets_filters:', { location: selected_locations });
+				console.log('datasets_aggregates:', {
+					[combined_name]: all_selected_carriers_technologies
+				});
+				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					fetched_capex.data!.data,
 					{ location: selected_locations },
 					{ [combined_name]: all_selected_carriers_technologies },
 					[],
 					false
 				);
+				console.log('Capex new data:', new_data);
 				for (let i in new_data) {
 					new_data[i].data['location'] = new_data[i].label;
 					new_data[i].data[combined_name] = capex_label;
 					grouped_data.push(new_data[i].data);
 				}
+				console.log('Capex grouped:', grouped_data);
 			}
 		}
 
@@ -221,12 +245,10 @@
 			if (show_costs.opex.subdivision) {
 				grouped_data! = grouped_data!.concat(fetched_opex.data!.data);
 			} else {
-				let new_data = filter_and_aggregate_data(
+				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					fetched_opex.data!.data,
 					{ location: selected_locations },
-					{
-						[combined_name]: all_selected_carriers_technologies
-					},
+					{ [combined_name]: all_selected_carriers_technologies },
 					[],
 					false
 				);
@@ -242,15 +264,13 @@
 			if (show_costs.carrier.subdivision) {
 				grouped_data! = grouped_data!.concat(filtered_cost_carrier!.data);
 			} else {
-				let comb = {};
-				let new_data = filter_and_aggregate_data(
+				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					filtered_cost_carrier!.data,
 					{ location: selected_locations },
 					{ [combined_name]: all_selected_carriers_technologies },
 					[],
 					false
 				);
-
 				for (let i in new_data) {
 					new_data[i].data['location'] = new_data[i].label;
 					new_data[i].data[combined_name] = carrier_label;
@@ -263,8 +283,7 @@
 			if (show_costs.shed_demand.subdivision) {
 				grouped_data! = grouped_data!.concat(filtered_fetched_cost_shed_demand!.data);
 			} else {
-				let comb = {};
-				let new_data = filter_and_aggregate_data(
+				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					filtered_fetched_cost_shed_demand!.data,
 					{ location: selected_locations },
 					{ [combined_name]: all_selected_carriers_technologies },
@@ -288,7 +307,7 @@
 
 		// TODO: Find out when and why this actually was used
 		// Currently, this just removes labels once they are unselected, except if none are remaining.
-		let set_locations = new Set<string>();
+		// let set_locations = new Set<string>();
 
 		// Filter undefined datasets
 		// grouped_data! = grouped_data!.filter((e) => {
@@ -484,203 +503,121 @@
 
 <h2>Costs</h2>
 
-<div class="z-1 position-relative">
-	<div class="filters">
-		<div class="accordion" id="accordionExample">
-			<div class="accordion-item solution-selection">
-				<h2 class="accordion-header">
-					<button
-						class="accordion-button"
-						type="button"
-						data-bs-toggle="collapse"
-						data-bs-target="#collapseOne"
-						aria-expanded="true"
-						aria-controls="collapseOne"
-					>
-						Solution Selection
-					</button>
-				</h2>
-				<div
-					id="collapseOne"
-					class="accordion-collapse collapse show"
-					data-bs-parent="#accordionExample"
-				>
-					<div class="accordion-body">
-						<SolutionFilter
-							bind:carriers
-							bind:nodes
-							bind:years
-							bind:selected_solution
-							bind:loading={solution_loading}
-							solution_selected={solution_changed}
-							enabled={!solution_loading && !fetching}
-						/>
+<Filters>
+	<FilterSection title="Solution Selection">
+		<SolutionFilter
+			bind:carriers
+			bind:nodes
+			bind:years
+			bind:selected_solution
+			bind:loading={solution_loading}
+			solution_selected={solution_changed}
+			disabled={fetching || solution_loading}
+		/>
+	</FilterSection>
+	{#if !fetching && !solution_loading && fetched_capex && selected_solution != null}
+		<FilterSection title="Cost Selection">
+			{#each Object.keys(show_costs) as key}
+				<div class="row mb-2">
+					<div class="col-6 col-md-3"><h3>{show_costs[key].title}</h3></div>
+					<div class="col-4 col-md-2">
+						<ToggleButton bind:value={show_costs[key].show} change={update_plot_data}
+						></ToggleButton>
 					</div>
+
+					{#if show_costs[key].show && key != 'carbon_emission'}
+						<div class="col-6 col-md-2">Subdivision:</div>
+						<div class="col-4 col-md-2">
+							<ToggleButton bind:value={show_costs[key].subdivision} change={update_plot_data}
+							></ToggleButton>
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</FilterSection>
+		<FilterSection title="Normalisation">
+			<h3>Technologies (for Capex/Opex)</h3>
+			{#if transport_technologies.length > 0}
+				<AllCheckbox
+					label="Transport"
+					bind:value={selected_transport_technologies}
+					elements={transport_technologies}
+					onUpdate={() => {
+						update_plot_data();
+					}}
+				></AllCheckbox>
+			{/if}
+			{#if storage_technologies.length > 0}
+				<AllCheckbox
+					label="Storage"
+					bind:value={selected_storage_technologies}
+					elements={storage_technologies}
+					onUpdate={() => {
+						update_plot_data();
+					}}
+				></AllCheckbox>
+			{/if}
+			{#if conversion_technologies.length > 0}
+				<AllCheckbox
+					label="Conversion"
+					bind:value={selected_conversion_technologies}
+					elements={conversion_technologies}
+					onUpdate={() => {
+						update_plot_data();
+					}}
+				></AllCheckbox>
+			{/if}
+			{#if cost_carriers.length > 0}
+				<AllCheckbox
+					label="Cost of Carrier"
+					bind:value={selected_cost_carriers}
+					elements={cost_carriers}
+					onUpdate={() => {
+						update_plot_data();
+					}}
+				></AllCheckbox>
+			{/if}
+			{#if demand_carriers.length > 0}
+				<AllCheckbox
+					label="Shed Demand"
+					bind:value={selected_demand_carriers}
+					elements={demand_carriers}
+					onUpdate={() => {
+						update_plot_data();
+					}}
+				></AllCheckbox>
+			{/if}
+		</FilterSection>
+		<FilterSection title="Data Selection">
+			<div class="row">
+				<div class="col-6">
+					<Radio
+						label="Aggregation"
+						options={aggregation_options}
+						bind:value={selected_aggregation}
+						onUpdate={(_) => update_plot_data()}
+					></Radio>
 				</div>
 			</div>
-			{#if !fetching && !solution_loading && fetched_capex && selected_solution != null}
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseCost"
-							aria-expanded="false"
-							aria-controls="collapseCost"
-						>
-							Cost selection
-						</button>
-					</h2>
-					<div
-						id="collapseCost"
-						class="accordion-collapse collapse show"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							{#each Object.keys(show_costs) as key}
-								<div class="d-flex">
-									<h4>{show_costs[key].title} :</h4>
-									<ToggleButton bind:value={show_costs[key].show} change={update_plot_data}
-									></ToggleButton>
-
-									{#if show_costs[key].show && key != 'carbon_emission'}
-										Subdivision
-										<ToggleButton bind:value={show_costs[key].subdivision} change={update_plot_data}
-										></ToggleButton>
-									{/if}
-								</div>
-							{/each}
-						</div>
-					</div>
-				</div>
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseTwo"
-							aria-expanded="false"
-							aria-controls="collapseTwo"
-						>
-							Technology and Carrier Selection
-						</button>
-					</h2>
-					<div
-						id="collapseTwo"
-						class="accordion-collapse collapse show"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							<h3>Technologies (for Capex/Opex)</h3>
-							{#if transport_technologies.length > 0}
-								<h4>Transport</h4>
-								<AllCheckbox
-									bind:selected_elements={selected_transport_technologies}
-									elements={transport_technologies}
-									selection_changed={() => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							{/if}
-							{#if storage_technologies.length > 0}
-								<h4>Storage</h4>
-								<AllCheckbox
-									bind:selected_elements={selected_storage_technologies}
-									elements={storage_technologies}
-									selection_changed={() => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							{/if}
-							{#if conversion_technologies.length > 0}
-								<h4>Conversion</h4>
-								<AllCheckbox
-									bind:selected_elements={selected_conversion_technologies}
-									elements={conversion_technologies}
-									selection_changed={() => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							{/if}
-							{#if cost_carriers.length > 0}
-								<h3>Cost of Carrier</h3>
-								<AllCheckbox
-									bind:selected_elements={selected_cost_carriers}
-									elements={cost_carriers}
-									selection_changed={() => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							{/if}
-							{#if demand_carriers.length > 0}
-								<h3>Shed Demand</h3>
-								<AllCheckbox
-									bind:selected_elements={selected_demand_carriers}
-									elements={demand_carriers}
-									selection_changed={() => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							{/if}
-						</div>
-					</div>
-				</div>
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseThree"
-							aria-expanded="false"
-							aria-controls="collapseThree"
-						>
-							Data Selection
-						</button>
-					</h2>
-					<div
-						id="collapseThree"
-						class="accordion-collapse collapse show"
-						data-bs-parent="#accordionExample"
-					>
-						<div class="accordion-body">
-							<div class="accordion-body">
-								<div class="row">
-									<div class="col-6">
-										<h3>Aggregation</h3>
-										<Radio
-											options={aggregation_options}
-											bind:selected_option={selected_aggregation}
-											selection_changed={(_) => update_plot_data()}
-										></Radio>
-									</div>
-								</div>
-								{#if selected_aggregation == aggregation_options[1]}
-									<h3>Location</h3>
-									<AllCheckbox
-										bind:selected_elements={selected_locations}
-										elements={locations}
-										selection_changed={(_) => update_plot_data()}
-									></AllCheckbox>
-								{/if}
-								{#if selected_years}
-									<h3>Year</h3>
-									<AllCheckbox
-										bind:selected_elements={selected_years}
-										elements={years}
-										selection_changed={(_) => update_plot_data()}
-									></AllCheckbox>
-								{/if}
-							</div>
-						</div>
-					</div>
-				</div>
+			{#if selected_aggregation == aggregation_options[1]}
+				<AllCheckbox
+					label="Location"
+					bind:value={selected_locations}
+					elements={locations}
+					onUpdate={(_) => update_plot_data()}
+				></AllCheckbox>
 			{/if}
-		</div>
-	</div>
-</div>
+			{#if selected_years}
+				<AllCheckbox
+					label="Year"
+					bind:value={selected_years}
+					elements={years}
+					onUpdate={(_) => update_plot_data()}
+				></AllCheckbox>
+			{/if}
+		</FilterSection>
+	{/if}
+</Filters>
 <div class="mt-4">
 	{#if solution_loading || fetching}
 		<div class="text-center">

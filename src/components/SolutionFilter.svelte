@@ -1,33 +1,18 @@
 <script lang="ts">
-	import type { Solution, SolutionDetail, ActivatedSolution, ScenarioDetail } from '$lib/types';
+	import type { Solution, SolutionDetail, ActivatedSolution } from '$lib/types';
 	import { get_solutions, get_solution_detail } from '$lib/temple';
-
 	import { onMount } from 'svelte';
-
-	interface Levels {
-		[key: string]: string[];
-	}
-
-	let solution_list: Array<Solution> = [];
-	let levels: Levels = $state({});
-	let active_scenario: string = $state('');
-	let solution_detail: SolutionDetail | undefined = $state(undefined);
-	let active_scenario_detail: ScenarioDetail | null = null;
-	let solution_names: string[][] = [];
-	let active_first_level: string = $state('');
-	let active_solution_name: string;
-	let active_second_level: string | null = $state(null);
-	let second_levels: string[] = $state([]);
+	import { get_url_param, replace_url_params } from '$lib/url_params.svelte';
+	import { remove_duplicates } from '$lib/utils';
 
 	interface Props {
 		carriers?: string[];
 		nodes?: string[];
 		edges?: string[];
 		years?: number[];
-		coords?: { [key: string]: { lon: number; lat: number } };
 		selected_solution: ActivatedSolution | null;
 		loading?: boolean;
-		enabled?: boolean;
+		disabled?: boolean;
 		solution_selected: (selected_solution: ActivatedSolution | null) => void;
 	}
 
@@ -38,86 +23,102 @@
 		years = $bindable([]),
 		selected_solution = $bindable(),
 		loading = $bindable(false),
-		enabled = true,
+		disabled = true,
 		solution_selected
 	}: Props = $props();
 
-	onMount(async function () {
-		solution_list = await get_solutions();
-		solution_names = [];
-		for (const solution of solution_list) {
-			let current_names = solution.name.split('.');
-			solution_names.push(current_names);
-			if (!(current_names[0] in levels)) {
-				levels[current_names[0]] = [];
-			}
+	let solutionList: Array<Solution> = $state([]);
+	let solutionDetail: SolutionDetail | null = $state(null);
 
-			if (current_names.length > 1) {
-				levels[current_names[0]].push(current_names[1]);
-			}
+	let activeFirstLevel: string = $state('');
+	let activeSecondLevel: string = $state('');
+	let activeScenario: string = $state('');
+
+	let firstLevels: string[] = $derived(
+		remove_duplicates(solutionList.map((solution) => solution.name.split('.')[0]))
+	);
+	let secondLevels: string[] = $derived(
+		solutionList
+			.filter((solution) => solution.name.startsWith(activeFirstLevel))
+			.map((solution) => solution.name.split('.')[1] || null)
+			.filter((solution) => solution != null)
+	);
+	let activeSolutionName: string | null = $derived.by(() => {
+		if (secondLevels.length == 0) {
+			return activeFirstLevel || null;
+		} else {
+			return activeSecondLevel ? activeFirstLevel + '.' + activeSecondLevel : null;
 		}
 	});
+
+	onMount(async function () {
+		solutionList = await get_solutions();
+
+		activeFirstLevel = get_url_param('solution')?.split('.')[0] || '';
+		activeSecondLevel = get_url_param('solution')?.split('.')[1] || '';
+		activeScenario = get_url_param('scenario') || '';
+		update_solution_details();
+	});
+
 	function first_level_changed() {
-		second_levels = levels[active_first_level];
-		active_second_level = null;
-		if (second_levels.length == 0) {
-			active_solution_name = active_first_level;
-			update_solution_details();
-		}
+		activeSecondLevel = '';
+		activeScenario = '';
+		solutionDetail = null;
+		update_solution_details();
 	}
 
 	function second_level_changed() {
-		active_solution_name = active_first_level + '.' + active_second_level;
+		activeScenario = '';
 		update_solution_details();
 	}
 
 	async function update_solution_details() {
+		if (activeSolutionName == null) {
+			selected_solution = null;
+			return;
+		}
+
 		loading = true;
+		solutionDetail = await get_solution_detail(activeSolutionName);
 
-		solution_detail = await get_solution_detail(active_solution_name);
-
-		if (Object.keys(solution_detail!.scenarios).length == 1) {
-			active_scenario = Object.keys(solution_detail!.scenarios)[0];
-			dispatch_solution();
+		if (Object.keys(solutionDetail.scenarios).length == 1) {
+			activeScenario = Object.keys(solutionDetail.scenarios)[0];
+			dispatch_event();
 		} else {
 			selected_solution = null;
-			active_scenario = '';
-			solution_selected(null);
 		}
+
 		loading = false;
 	}
 
-	async function dispatch_solution() {
-		if (solution_detail == null) {
+	function dispatch_event() {
+		if (solutionDetail == null || activeSolutionName == null) {
 			return;
 		}
-		active_scenario_detail = solution_detail!.scenarios[active_scenario];
 
-		let activated_solution: ActivatedSolution = {
-			solution_name: active_solution_name,
-			scenario_name: active_scenario,
-			detail: active_scenario_detail,
-			components: solution_detail.components,
-			version: solution_detail.version
+		selected_solution = {
+			solution_name: activeSolutionName,
+			scenario_name: activeScenario,
+			detail: solutionDetail!.scenarios[activeScenario],
+			components: solutionDetail.components,
+			version: solutionDetail.version
 		};
 
-		selected_solution = activated_solution;
-
-		if (selected_solution == null) {
-			return;
-		}
+		replace_url_params({
+			solution: selected_solution.solution_name,
+			scenario: selected_solution.scenario_name
+		});
 
 		carriers = selected_solution.detail.system.set_carriers.slice();
 		nodes = selected_solution.detail.system.set_nodes;
 		edges = Object.keys(selected_solution.detail.edges);
-		let years_index = [...Array(selected_solution.detail.system.optimized_years).keys()];
-		years = years_index.map(
+		years = [...Array(selected_solution.detail.system.optimized_years).keys()].map(
 			(i) =>
 				i * selected_solution!.detail.system.interval_between_years +
 				selected_solution!.detail.system.reference_year
 		);
 
-		solution_selected(activated_solution);
+		solution_selected(selected_solution);
 	}
 </script>
 
@@ -126,27 +127,27 @@
 		<h3>Solution</h3>
 		<select
 			class="form-select"
-			bind:value={active_first_level}
-			disabled={!enabled}
+			bind:value={activeFirstLevel}
+			{disabled}
 			onchange={first_level_changed}
 		>
-			{#each Object.keys(levels) as solution}
+			{#each firstLevels as solution}
 				<option value={solution}>
 					{solution}
 				</option>
 			{/each}
 		</select>
 	</div>
-	{#if second_levels.length > 0}
+	{#if secondLevels.length > 0}
 		<div class="col-4">
 			<h3>Subsolution</h3>
 			<select
 				class="form-select"
-				bind:value={active_second_level}
-				disabled={!enabled}
+				bind:value={activeSecondLevel}
+				{disabled}
 				onchange={second_level_changed}
 			>
-				{#each second_levels as solution}
+				{#each secondLevels as solution}
 					<option value={solution}>
 						{solution}
 					</option>
@@ -155,16 +156,16 @@
 		</div>
 	{/if}
 
-	{#if solution_detail != null && Object.keys(solution_detail.scenarios).length > 1}
+	{#if solutionDetail && Object.keys(solutionDetail.scenarios).length > 1}
 		<div class="col-4">
 			<h3>Scenario</h3>
 			<select
 				class="form-select"
-				bind:value={active_scenario}
-				disabled={!enabled}
-				onchange={dispatch_solution}
+				bind:value={activeScenario}
+				{disabled}
+				onchange={dispatch_event}
 			>
-				{#each Object.keys(solution_detail.scenarios) as scenario}
+				{#each Object.keys(solutionDetail.scenarios) as scenario}
 					<option value={scenario}>
 						{scenario}
 					</option>

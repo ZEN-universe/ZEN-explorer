@@ -9,6 +9,9 @@
 	import BarPlot from '../../../components/BarPlot.svelte';
 	import { get_variable_name } from '$lib/variables';
 	import type { ChartConfiguration } from 'chart.js';
+	import Filters from '../../../components/Filters.svelte';
+	import FilterSection from '../../../components/FilterSection.svelte';
+	import Checkbox from '../../../components/Checkbox.svelte';
 
 	let data: Papa.ParseResult<any> | null;
 	let limit_data: Papa.ParseResult<any> | null;
@@ -60,6 +63,11 @@
 						text: `Emissions [${selected_carriers.length > 0 ? units[selected_carriers[0]] : ''}]`
 					}
 				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x',
 			}
 		}
 	});
@@ -328,155 +336,101 @@
 
 <h2>Emissions</h2>
 
-<div class="z-1 position-relative">
-	<div class="filters">
-		<div class="accordion" id="accordionExample">
-			<div class="accordion-item solution-selection">
-				<h2 class="accordion-header">
-					<button
-						class="accordion-button"
-						type="button"
-						data-bs-toggle="collapse"
-						data-bs-target="#collapseOne"
-						aria-expanded="true"
-						aria-controls="collapseOne"
-					>
-						Solution Selection
-					</button>
-				</h2>
-				<div id="collapseOne" class="accordion-collapse collapse show">
-					<div class="accordion-body">
-						<SolutionFilter
-							bind:carriers
-							bind:nodes
-							bind:years
-							bind:selected_solution
-							bind:loading={solution_loading}
-							solution_selected={() => {
-								reset_subsection();
-								selected_years = years;
-							}}
-							enabled={!solution_loading && !fetching}
-						/>
+<Filters>
+	<FilterSection title="Solution Selection">
+		<SolutionFilter
+			bind:carriers
+			bind:nodes
+			bind:years
+			bind:selected_solution
+			bind:loading={solution_loading}
+			solution_selected={() => {
+				reset_subsection();
+				selected_years = years;
+			}}
+			disabled={fetching || solution_loading}
+		/>
+	</FilterSection>
+	{#if !solution_loading && selected_solution}
+		<FilterSection title="Variable Selection">
+			<Checkbox
+				label="Subdivision"
+				bind:value={subdivision}
+				disabled={fetching || solution_loading}
+				onUpdate={reset_subsection}
+			></Checkbox>
+			{#if !subdivision}
+				<Radio
+					label="Cumulation"
+					options={variables}
+					bind:value={selected_variable}
+					onUpdate={update_cumulation}
+					disabled={fetching || solution_loading}
+				></Radio>
+			{/if}
+		</FilterSection>
+	{/if}
+	{#if !solution_loading && selected_solution && !fetching && (selected_variable || selected_grouping)}
+		<FilterSection title="Data Selection">
+			{#if subdivision}
+				<div class="row">
+					<div class="col-6">
+						<Radio
+							label="Aggregation"
+							options={aggregation_options}
+							bind:value={selected_aggregation}
+							onUpdate={update_plot_data}
+						></Radio>
+					</div>
+					<div class="col-6">
+						<Radio
+							label="Normalisation"
+							options={normalisation_options}
+							bind:value={selected_normalisation}
+							onUpdate={update_plot_data}
+						></Radio>
 					</div>
 				</div>
-			</div>
-			{#if !solution_loading && selected_solution}
-				<div class="accordion-item">
-					<h2 class="accordion-header">
-						<button
-							class="accordion-button"
-							type="button"
-							data-bs-toggle="collapse"
-							data-bs-target="#collapseTwo"
-							aria-expanded="false"
-							aria-controls="collapseTwo"
-						>
-							Variable Selection
-						</button>
-					</h2>
-					<div id="collapseTwo" class="accordion-collapse collapse show">
-						<div class="accordion-body">
-							<h3>Subdivision</h3>
-							<input
-								type="checkbox"
-								class="btn-check"
-								id="btn-check-outlined"
-								autocomplete="off"
-								bind:checked={subdivision}
-								onchange={reset_subsection}
-								disabled={fetching || solution_loading}
-							/>
-							<label class="btn btn-outline-primary" for="btn-check-outlined"
-								>{subdivision ? 'on' : 'off'}</label
-							><br />
-							{#if !subdivision}
-								<h3>Cumulation</h3>
-								<Radio
-									options={variables}
-									bind:selected_option={selected_variable}
-									selection_changed={update_cumulation}
-									enabled={!fetching && !solution_loading}
-								></Radio>
-							{/if}
-						</div>
-					</div>
-				</div>
-				{#if !fetching && (selected_variable || selected_grouping)}
-					<div class="accordion-item">
-						<h2 class="accordion-header">
-							<button
-								class="accordion-button"
-								type="button"
-								data-bs-toggle="collapse"
-								data-bs-target="#collapseThree"
-								aria-expanded="false"
-								aria-controls="collapseThree"
-							>
-								Data Selection
-							</button>
-						</h2>
-						<div id="collapseThree" class="accordion-collapse collapse show">
-							<div class="accordion-body">
-								{#if subdivision}
-									<div class="row">
-										<div class="col-6">
-											<h3>Aggregation</h3>
-											<Radio
-												options={aggregation_options}
-												bind:selected_option={selected_aggregation}
-												selection_changed={update_plot_data}
-											></Radio>
-										</div>
-										<div class="col-6">
-											<h3>Normalisation</h3>
-											<Radio
-												options={normalisation_options}
-												bind:selected_option={selected_normalisation}
-												selection_changed={update_plot_data}
-											></Radio>
-										</div>
-									</div>
-									{#if selected_aggregation != 'location'}
-										{#if technologies.length > 0}
-											<h3>Technology</h3>
-											<AllCheckbox
-												bind:selected_elements={selected_technologies}
-												elements={technologies}
-												selection_changed={update_plot_data}
-											></AllCheckbox>
-										{/if}
-										{#if carriers.length > 0}
-											<h3>Carrier</h3>
-											<AllCheckbox
-												bind:selected_elements={selected_carriers}
-												elements={carriers}
-												selection_changed={update_plot_data}
-											></AllCheckbox>
-										{/if}
-									{:else}
-										<h3>Location</h3>
-										<AllCheckbox
-											bind:selected_elements={selected_locations}
-											elements={locations}
-											selection_changed={update_plot_data}
-										></AllCheckbox>
-									{/if}
-								{/if}
-								<h3>Year</h3>
-								<AllCheckbox
-									bind:selected_elements={selected_years}
-									elements={years}
-									selection_changed={(e) => {
-										update_plot_data();
-									}}
-								></AllCheckbox>
-							</div>
-						</div>
-					</div>
+				{#if selected_aggregation != 'location'}
+					{#if technologies.length > 0}
+						<AllCheckbox
+							label="Technology"
+							bind:value={selected_technologies}
+							elements={technologies}
+							onUpdate={update_plot_data}
+						></AllCheckbox>
+					{/if}
+					{#if carriers.length > 0}
+						<AllCheckbox
+							label="Carrier"
+							bind:value={selected_carriers}
+							elements={carriers}
+							onUpdate={update_plot_data}
+						></AllCheckbox>
+					{/if}
+				{:else}
+					<AllCheckbox
+						label="Location"
+						bind:value={selected_locations}
+						elements={locations}
+						onUpdate={update_plot_data}
+					></AllCheckbox>
 				{/if}
 			{/if}
-		</div>
+			<AllCheckbox
+				label="Year"
+				bind:value={selected_years}
+				elements={years}
+				onUpdate={(e) => {
+					update_plot_data();
+				}}
+			></AllCheckbox>
+		</FilterSection>
+	{/if}
+</Filters>
+<div class="z-1 position-relative">
+	<div class="filters">
+		<div class="accordion" id="accordionExample"></div>
 	</div>
 </div>
 <div class="mt-4">
