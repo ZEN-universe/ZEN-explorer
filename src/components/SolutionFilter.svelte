@@ -159,12 +159,7 @@
 	{#if solutionDetail && Object.keys(solutionDetail.scenarios).length > 1}
 		<div class="col-4">
 			<h3>Scenario</h3>
-			<select
-				class="form-select"
-				bind:value={activeScenario}
-				{disabled}
-				onchange={dispatch_event}
-			>
+			<select class="form-select" bind:value={activeScenario} {disabled} onchange={dispatch_event}>
 				{#each Object.keys(solutionDetail.scenarios) as scenario}
 					<option value={scenario}>
 						{scenario}

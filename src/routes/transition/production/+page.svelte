@@ -18,7 +18,6 @@
 	// Data
 	let data: (Papa.ParseResult<any> | null)[] | null = $state(null);
 	let filtered_data: any[] = $state([]);
-	let units: Row[] = $state([]);
 
 	// Filter options
 	let carriers: string[] = $state([]);
@@ -118,8 +117,8 @@
 	let fetching = $state(false);
 	let plot_name = $state('plot');
 
-	// Plot config
-	let labels: string[] = $state([]);
+	// Units
+	let units: Row[] = $state([]);
 	let unit = $derived.by(() => {
 		let row = null;
 		if (selected_technologies.length > 0) {
@@ -129,8 +128,11 @@
 			row = units.find((u) => u.carrier == selected_carrier);
 		}
 		if (!row) return '';
-		return row[0] || row.unit || '';
+		return row[0] || row.units || '';
 	});
+
+	// Plot config
+	let labels: string[] = $state([]);
 	let plot_config: ChartConfiguration = $derived({
 		type: 'bar',
 		data: { datasets: filtered_data, labels: labels },

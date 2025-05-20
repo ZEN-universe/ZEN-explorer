@@ -265,7 +265,7 @@
 			([accMin, accMax], values) => {
 				const years = values.reduce((acc: number[] | null, { years }) => {
 					if (!acc) return [...years];
-					return acc.map((value, i) => Math.max(value, (years[i] || 0)));
+					return acc.map((value, i) => Math.max(value, years[i] || 0));
 				}, null);
 
 				if (years == null) {

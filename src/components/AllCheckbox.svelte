@@ -35,9 +35,7 @@
 <div class="h3">{label}</div>
 <div class="form-group">
 	{#if elements.length == 0}
-		<div class="text-muted">
-			No elements available to select.
-		</div>
+		<div class="text-muted">No elements available to select.</div>
 	{:else}
 		<button
 			class="btn btn-outline-primary btn-sm"

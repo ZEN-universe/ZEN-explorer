@@ -67,7 +67,7 @@
 			interaction: {
 				intersect: false,
 				mode: 'nearest',
-				axis: 'x',
+				axis: 'x'
 			}
 		}
 	});

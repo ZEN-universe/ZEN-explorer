@@ -123,7 +123,7 @@
 			interaction: {
 				intersect: false,
 				mode: 'nearest',
-				axis: 'x',
+				axis: 'x'
 			}
 		}
 	});
@@ -189,7 +189,7 @@
 			interaction: {
 				intersect: false,
 				mode: 'nearest',
-				axis: 'x',
+				axis: 'x'
 			}
 		}
 	});
