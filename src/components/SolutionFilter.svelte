@@ -3,6 +3,7 @@
 	import { get_solutions, get_solution_detail } from '$lib/temple';
 	import { onMount } from 'svelte';
 	import { get_url_param, replace_url_params } from '$lib/url_params.svelte';
+	import { remove_duplicates } from '$lib/utils';
 
 	interface Props {
 		carriers?: string[];
@@ -34,7 +35,7 @@
 	let activeScenario: string = $state('');
 
 	let firstLevels: string[] = $derived(
-		Array.from(new Set(solutionList.map((solution) => solution.name.split('.')[0])))
+		remove_duplicates(solutionList.map((solution) => solution.name.split('.')[0]))
 	);
 	let secondLevels: string[] = $derived(
 		solutionList
@@ -61,6 +62,8 @@
 
 	function first_level_changed() {
 		activeSecondLevel = '';
+		activeScenario = '';
+		solutionDetail = null;
 		update_solution_details();
 	}
 
@@ -159,7 +162,7 @@
 			<select
 				class="form-select"
 				bind:value={activeScenario}
-				disabled={!disabled}
+				{disabled}
 				onchange={dispatch_event}
 			>
 				{#each Object.keys(solutionDetail.scenarios) as scenario}

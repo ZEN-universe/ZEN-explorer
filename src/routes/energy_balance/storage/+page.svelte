@@ -6,7 +6,7 @@
 
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { get_full_ts } from '$lib/temple';
-	import { filter_and_aggregate_data } from '$lib/utils';
+	import { filter_and_aggregate_data, remove_duplicates } from '$lib/utils';
 	import Papa from 'papaparse';
 	import { get_variable_name } from '$lib/variables';
 	import ToggleButton from '../../../components/ToggleButton.svelte';
@@ -325,12 +325,12 @@
 	 * This function updates the avaible locations for the current variable selection.
 	 */
 	function update_locations() {
-		locations = Array.from(new Set(data!.data.map((a) => a.node)));
+		locations = remove_duplicates(data!.data.map((a) => a.node));
 		selected_locations = locations;
 	}
 
 	/**
-	 * This function updates the avaible carriers for the current variable selection.
+	 * This function updates the available carriers for the current variable selection.
 	 */
 	function update_carriers() {
 		carriers = [];
@@ -357,7 +357,7 @@
 	 * This function updates the available technologies depending on the currently selected carrier and resets the currently selected technologies.
 	 */
 	function update_technologies() {
-		let all_technologies = Array.from(new Set(data!.data.map((a: any) => a.technology)));
+		let all_technologies = remove_duplicates(data!.data.map((a: any) => a.technology));
 
 		technologies = all_technologies.filter(
 			(technology) => selected_solution?.detail.reference_carrier[technology] == selected_carrier

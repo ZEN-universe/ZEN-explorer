@@ -199,3 +199,12 @@ export function stringify(value: string) {
 	let res = value.replace(/_/g, ' ');
 	return res.charAt(0).toUpperCase() + res.slice(1);
 }
+
+/**
+ * Remove duplicates from an array
+ * @param array array to be filtered
+ * @returns filtered array
+ */
+export function remove_duplicates<T>(array: T[]): T[] {
+	return Array.from(new Set(array));
+}
