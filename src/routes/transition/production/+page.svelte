@@ -121,15 +121,13 @@
 	let units: Row[] = $state([]);
 	let unit = $derived.by(() => {
 		let row = null;
-		if (selected_technologies.length > 0) {
-			row = units.find((u) => u.technology == selected_technologies[0]);
-		}
 		if (!row && selected_carrier) {
 			row = units.find((u) => u.carrier == selected_carrier);
 		}
 		if (!row) return '';
 		return row[0] || row.units || '';
 	});
+	const indexOfDemandResponse = 7;
 
 	// Plot config
 	let labels: string[] = $state([]);
@@ -247,8 +245,8 @@
 
 		const responses = await Promise.all(promises);
 
-		if (responses[0]?.unit?.data) {
-			units = responses[0].unit.data;
+		if (responses[indexOfDemandResponse]?.unit?.data) {
+			units = responses[indexOfDemandResponse].unit.data;
 		}
 
 		data = responses.map((response) => {
