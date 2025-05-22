@@ -3,115 +3,221 @@
 	import AllCheckbox from '../../../components/AllCheckbox.svelte';
 	import Radio from '../../../components/Radio.svelte';
 	import BarPlot from '../../../components/BarPlot.svelte';
-	import type { ActivatedSolution, Row } from '$lib/types';
-	import { get_component_total } from '$lib/temple';
-	import { filter_and_aggregate_data } from '$lib/utils';
-	import { tick } from 'svelte';
-	import Papa from 'papaparse';
-	import type { ChartConfiguration } from 'chart.js';
 	import Filters from '../../../components/Filters.svelte';
 	import FilterSection from '../../../components/FilterSection.svelte';
 	import Dropdown from '../../../components/Dropdown.svelte';
+	import { get_component_total } from '$lib/temple';
+	import { filter_and_aggregate_data, remove_duplicates } from '$lib/utils';
+	import Papa from 'papaparse';
+	import type { ActivatedSolution, Row } from '$lib/types';
+	import type { ChartOptions, ChartDataset } from 'chart.js';
 
 	interface StringList {
 		[key: string]: string[];
 	}
 
-	let technology_types: string[] = ['conversion', 'storage', 'transport'];
 	let data: Papa.ParseResult<Row> | null = $state(null);
-	let filtered_data: any[] | null = $state(null);
-	let variables: string[] = ['capacity', 'capacity_addition'];
-	let carriers: string[] = $state([]);
-	let locations: string[] = $state([]);
-	let years: number[] = $state([]);
-	let technologies: string[] = $state([]);
-	let selected_solution: ActivatedSolution | null = $state(null);
-	let aggregation_options = $state(['technology', 'node']);
-	const normalisation_options = ['not_normalized', 'normalized'];
+
+	const variables: string[] = ['capacity', 'capacity_addition'];
+	const technology_types: string[] = ['conversion', 'storage', 'transport'];
 	const storage_type_options = ['energy', 'power'];
+	const aggregation_options = ['technology', 'node'];
+	const normalisation_options = ['not_normalized', 'normalized'];
+	let years: number[] = $state([]);
+
+	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_variable: string | null = $state('capacity');
-	let selected_carrier: string | null = $state(null);
-	let selected_storage_type = $state('energy');
-	let selected_aggregation = $state('technology');
 	let selected_technology_type: string | null = $state('conversion');
+	let selected_storage_type = $state('energy');
+	let selected_carrier: string | null = $state(null);
+	let selected_aggregation = $state('technology');
+	let selected_normalisation: string = $state('not_normalized');
+	let selected_locations: string[] = $state([]);
 	let selected_technologies: string[] = $state([]);
 	let selected_years: number[] = $state([]);
-	let selected_locations: string[] = $state([]);
-	let selected_normalisation: string = $state('not_normalized');
+
 	let solution_loading: boolean = $state(false);
-
 	let fetching: boolean = $state(false);
-	let plot_name: string = $state('');
 
-	let datasets: any[] = $state([]);
-	let labels: string[] = $state([]);
-
+	// Units
 	let units: { [carrier: string]: string } = $state({});
 	let unit: string = $derived.by(() => {
 		const capacity_type = selected_technology_type == 'storage' ? selected_storage_type : 'power';
 		return units[technologies[0] + '_' + capacity_type] || '';
 	});
 
-	let plot_config: ChartConfiguration<'bar'> = $derived({
-		type: 'bar',
-		data: { datasets: datasets, labels: labels },
-		options: {
-			responsive: true,
-			scales: {
-				x: {
-					stacked: true,
-					title: {
-						display: true,
-						text: 'Year'
-					}
-				},
-				y: {
-					stacked: true,
-					title: {
-						display: true,
-						text: `${selected_variable} [${unit}]`
-					}
+	// Plot config
+	let labels: string[] = $derived(selected_years.map((year) => year.toString()));
+	let plot_options: ChartOptions<'bar'> = $derived({
+		responsive: true,
+		scales: {
+			x: {
+				stacked: true,
+				title: {
+					display: true,
+					text: 'Year'
 				}
 			},
-			interaction: {
-				intersect: false,
-				mode: 'nearest',
-				axis: 'x'
+			y: {
+				stacked: true,
+				title: {
+					display: true,
+					text: `${selected_variable} [${unit}]`
+				}
 			}
+		},
+		interaction: {
+			intersect: false,
+			mode: 'nearest',
+			axis: 'x'
 		}
+	});
+	let plot_name: string = $derived.by(() => {
+		if (selected_solution == null) {
+			return '';
+		}
+		return [
+			selected_solution.solution_name.split('.').pop(),
+			selected_solution.scenario_name,
+			selected_variable,
+			selected_technology_type,
+			selected_carrier
+		].join('_');
+	});
+
+	// Filter options
+	let carriers: string[] = $derived.by(() => {
+		if (data === null || selected_solution === null) {
+			return [];
+		}
+
+		let carriers: string[] = [];
+		data.data.forEach((element) => {
+			let current_technology = element.technology;
+			let current_carrier = selected_solution!.detail.reference_carrier[current_technology];
+
+			if (!carriers.includes(current_carrier) && all_technologies.includes(element.technology)) {
+				carriers.push(current_carrier);
+			}
+		});
+
+		return carriers;
+	});
+
+	let all_technologies: string[] = $derived.by(() => {
+		if (!selected_solution || !selected_technology_type) {
+			return [];
+		}
+
+		const key = {
+			conversion: 'set_conversion_technologies',
+			storage: 'set_storage_technologies',
+			transport: 'set_transport_technologies'
+		}[selected_technology_type] as keyof typeof selected_solution.detail.system;
+		return (selected_solution.detail.system[key] || []) as string[];
+	});
+
+	let technologies: string[] = $derived.by(() => {
+		if (selected_solution === null || selected_technology_type === null) {
+			return [];
+		}
+
+		return all_technologies.filter(
+			(technology) => selected_solution?.detail.reference_carrier[technology] == selected_carrier
+		);
+	});
+
+	let locations: string[] = $derived.by(() => {
+		if (data === null) {
+			return [];
+		}
+
+		return remove_duplicates(data.data.filter((element) => technologies.includes(element.technology)).map((element) => element.location));
+	});
+	
+	// Effects for filter options
+	$effect(() => {
+		carriers;
+		console.log("update selected carriers");
+		
+		// Update the carriers whenever the data or selected_solution changes
+		if (selected_carrier == null || !carriers.includes(selected_carrier)) {
+			selected_carrier = carriers.length > 0 ? carriers[0] : null;
+		}
+	});
+	
+	$effect(() => {
+		// Update the selected technologies whenever the technologies array changes
+		selected_technologies = technologies;
+	});
+	
+	$effect(() => {
+		// Update the selected locations whenever the locations array changes
+		selected_locations = locations;
 	});
 
 	/**
-	 * This function sets all the necessary variables back to the initial state in order to reset the plot.
-	 *
+	 * Reset all selected variables to their defaults
 	 */
 	function reset_data_selection() {
+		selected_aggregation = 'node';
 		selected_normalisation = 'not_normalized';
 		selected_locations = locations;
 		selected_technologies = technologies;
 		selected_years = years;
-		selected_aggregation = 'node';
 	}
 
 	/**
-	 * This function fetches the data from the api of the selected values in the form
+	 * This function is called is called whenever the solution filter sends a change event.
+	 * It resets all the selected values of the form.
+	 */
+	async function on_solution_changed() {
+		selected_carrier = null;
+		reset_data_selection();
+		await fetch_data();
+	}
+
+	/**
+	 * This function is called, whenever the variable in the form is changed.
+	 * It will fetch the necessary data from the API.
+	 */
+	async function on_variable_changed() {
+		reset_data_selection();
+		await fetch_data();
+	}
+
+	/**
+	 * This function is called, when the technology type is changed. It updates all the necessary values for further selection in the form.
+	 */
+	function on_technology_type_changed() {
+		reset_data_selection();
+	}
+
+	/**
+	 * This function is called, when the carrier is changed. It updates all the necessary values for further selection in the form.
+	 */
+	function on_carrier_changed() {
+		reset_data_selection();
+	}
+
+	/**
+	 * Fetch data from the API of the selected values in the form
 	 */
 	async function fetch_data() {
-		fetching = true;
-		data = null;
-		await tick();
-
 		if (selected_variable === null || selected_solution === null) {
-			fetching = false;
+			data = null;
 			return;
 		}
 
+		fetching = true;
+		data = null;
+
 		const fetched = await get_component_total(
-			selected_solution!.solution_name,
+			selected_solution.solution_name,
 			selected_variable,
-			selected_solution!.scenario_name,
-			selected_solution!.detail.system.reference_year,
-			selected_solution!.detail.system.interval_between_years
+			selected_solution.scenario_name,
+			selected_solution.detail.system.reference_year,
+			selected_solution.detail.system.interval_between_years
 		);
 
 		data = fetched.data;
@@ -125,156 +231,8 @@
 		fetching = false;
 	}
 
-	/**
-	 * This function is called is called whenever the solution filter sends a change event.
-	 * It resets all the selected values of the form.
-	 */
-	async function solution_changed() {
-		data = null;
-		selected_carrier = null;
-		filtered_data = null;
-		await fetch_data();
-		update_carriers();
-		update_technologies();
-		update_locations();
-		reset_data_selection();
-		update_plot_data();
-	}
 
-	/**
-	 * This function is called, whenever the variable in the form is changed.
-	 * It will fetch the necessary data from the API.
-	 */
-	async function variable_changed() {
-		filtered_data = null;
-		datasets = [];
-		await fetch_data();
-		update_technologies();
-		update_locations();
-		reset_data_selection();
-		update_plot_data();
-	}
-
-	/**
-	 * This function is called, when the technology type is changed. It updates all the necessary values for further selection in the form.
-	 */
-	function technology_type_changed() {
-		update_carriers();
-		update_technologies();
-		update_locations();
-		reset_data_selection();
-		update_plot_data();
-	}
-
-	/**
-	 * This function is called, when the carrier is changed. It updates all the necessary values for further selection in the form.
-	 */
-	function carrier_changed() {
-		update_technologies();
-		update_locations();
-		reset_data_selection();
-		update_plot_data();
-	}
-
-	/**
-	 * This function updates the available carriers for the current variable selection.
-	 */
-	function update_carriers() {
-		carriers = [];
-		if (data === null || selected_technology_type === null) {
-			return;
-		}
-
-		// Get the technologies for the current technology type
-		let all_technologies: string[] = get_technologies_by_type();
-
-		// Add all the available carriers to the set of carriers for the current set of technologies
-		data.data.forEach((element) => {
-			let current_technology = element.technology;
-			let current_carrier = selected_solution!.detail.reference_carrier[current_technology];
-
-			if (!carriers.includes(current_carrier) && all_technologies.includes(element.technology)) {
-				carriers.push(current_carrier);
-			}
-		});
-
-		if (carriers.length > 0) {
-			selected_carrier = carriers[0];
-		}
-	}
-
-	/**
-	 * This function updates the available locations for the current variable selection.
-	 */
-	function update_locations() {
-		if (data === null) {
-			return;
-		}
-
-		locations = [];
-
-		data.data.forEach((element) => {
-			let current_technology = element.technology;
-			let current_carrier = selected_solution!.detail.reference_carrier[current_technology];
-
-			if (technologies.includes(element.technology) && !locations.includes(element.location)) {
-				locations.push(element.location);
-			}
-
-			if (!carriers.includes(current_carrier) && technologies.includes(element.technology)) {
-				carriers.push(current_carrier);
-			}
-		});
-
-		selected_locations = locations;
-	}
-
-	/**
-	 * This function returns the relevant technologies given the currently selected technology type
-	 */
-	function get_technologies_by_type() {
-		if (!selected_solution || !selected_technology_type) {
-			return [];
-		}
-
-		switch (selected_technology_type) {
-			case 'conversion':
-				return selected_solution.detail.system.set_conversion_technologies;
-			case 'storage':
-				return selected_solution.detail.system.set_storage_technologies;
-			case 'transport':
-				return selected_solution.detail.system.set_transport_technologies;
-		}
-
-		return [];
-	}
-
-	/**
-	 * This function updates the available technologies depending on the currently selected carrier and resets the currently selected technologies.
-	 */
-	function update_technologies() {
-		if (selected_technology_type === null) {
-			return;
-		}
-
-		let all_technologies = get_technologies_by_type();
-
-		technologies = all_technologies.filter(
-			(technology) => selected_solution?.detail.reference_carrier[technology] == selected_carrier
-		);
-		selected_technologies = technologies;
-	}
-
-	/**
-	 * This function updates the data for the plot depending on the currently selected values.
-	 */
-	function update_plot_data() {
-		if (selected_aggregation == 'technology') {
-			selected_locations = locations;
-		} else {
-			selected_technologies = technologies;
-		}
-
+	let datasets: ChartDataset<'bar'>[] = $derived.by(() => {
 		if (
 			selected_variable == null ||
 			selected_locations.length == 0 ||
@@ -282,8 +240,7 @@
 			selected_technologies.length == 0 ||
 			data === null
 		) {
-			filtered_data = null;
-			return;
+			return [];
 		}
 
 		let dataset_selector: StringList = {};
@@ -306,54 +263,39 @@
 
 		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
-		filtered_data = filter_and_aggregate_data(
+		return filter_and_aggregate_data(
 			data.data,
 			dataset_selector,
 			datasets_aggregates,
 			excluded_years,
 			selected_normalisation == 'normalized'
-		);
-		datasets = filtered_data;
-		labels = selected_years.map((year) => year.toString());
-
-		let solution_names = selected_solution!.solution_name.split('.');
-		plot_name = [
-			solution_names[solution_names?.length - 1],
-			selected_solution?.scenario_name,
-			selected_variable,
-			selected_technology_type,
-			selected_carrier
-		].join('_');
-	}
+		) as unknown as ChartDataset<'bar'>[];
+	})
 </script>
 
-<h2>Capacity</h2>
+<h1 class="mt-2 mb-4">The Transition Pathway &ndash; Capacity</h1>
 <Filters>
 	<FilterSection title="Solution Selection">
 		<SolutionFilter
-			bind:years
 			bind:selected_solution
 			bind:loading={solution_loading}
-			solution_selected={solution_changed}
+			bind:years
+			solution_selected={on_solution_changed}
 			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>
 	{#if !solution_loading && selected_solution}
 		<FilterSection title="Variable Selection">
-			<h3>Variable</h3>
-			<select
-				class="form-select"
+			<Dropdown
+				label="Variable"
+				options={variables.map((variable) => ({
+					label: variable,
+					value: variable
+				}))}
 				bind:value={selected_variable}
-				onchange={variable_changed}
 				disabled={fetching || solution_loading}
-			>
-				{#each variables as variable}
-					<option value={variable}>
-						{variable}
-					</option>
-				{/each}
-			</select>
-
+				onUpdate={on_variable_changed}
+			></Dropdown>
 			{#if selected_variable != null}
 				<Dropdown
 					label="Technology Type"
@@ -363,14 +305,14 @@
 					}))}
 					bind:value={selected_technology_type}
 					disabled={fetching || solution_loading}
-					onUpdate={technology_type_changed}
+					onUpdate={on_technology_type_changed}
 				></Dropdown>
 				{#if selected_technology_type == 'storage'}
 					<Radio
 						label=""
 						options={storage_type_options}
 						bind:value={selected_storage_type}
-						onUpdate={technology_type_changed}
+						onUpdate={on_technology_type_changed}
 						disabled={fetching || solution_loading}
 					></Radio>
 				{/if}
@@ -384,50 +326,39 @@
 					}))}
 					bind:value={selected_carrier}
 					disabled={fetching || solution_loading}
-					onUpdate={carrier_changed}
+					onUpdate={on_carrier_changed}
 				></Dropdown>
 			{/if}
 		</FilterSection>
 		{#if data && selected_technology_type && selected_carrier && technologies.length > 0 && locations.length > 0}
 			<FilterSection title="Data Selection">
-				<div class="row">
-					<div class="col-6">
-						<Radio
-							label="Aggregation"
-							options={aggregation_options}
-							bind:value={selected_aggregation}
-							onUpdate={update_plot_data}
-						></Radio>
-					</div>
-					<div class="col-6">
-						<Radio
-							label="Normalisation"
-							options={normalisation_options}
-							bind:value={selected_normalisation}
-							onUpdate={update_plot_data}
-						></Radio>
-					</div>
-				</div>
+				<Radio
+					label="Aggregation"
+					options={aggregation_options}
+					bind:value={selected_aggregation}
+				></Radio>
+				<Radio
+					label="Normalisation"
+					options={normalisation_options}
+					bind:value={selected_normalisation}
+				></Radio>
 				{#if selected_aggregation == 'technology'}
 					<AllCheckbox
 						label="Technology"
 						bind:value={selected_technologies}
 						elements={technologies}
-						onUpdate={update_plot_data}
 					></AllCheckbox>
 				{:else}
 					<AllCheckbox
 						label="Node"
 						bind:value={selected_locations}
 						elements={locations}
-						onUpdate={update_plot_data}
 					></AllCheckbox>
 				{/if}
 				<AllCheckbox
 					label="Year"
 					bind:value={selected_years}
 					elements={years}
-					onUpdate={update_plot_data}
 				></AllCheckbox>
 			</FilterSection>
 		{/if}
@@ -446,13 +377,11 @@
 		<div class="text-center">No carriers with this selection.</div>
 	{:else if selected_solution == null}
 		<div class="text-center">No solution selected.</div>
-	{:else if filtered_data == null}
-		<div class="text-center">No data with this selection.</div>
 	{:else if locations.length == 0}
 		<div class="text-center">No locations with this selection.</div>
-	{:else if filtered_data.length == 0}
+	{:else if datasets.length == 0}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot config={plot_config} {plot_name}></BarPlot>
+		<BarPlot type='bar' {datasets} {labels} options={plot_options} {plot_name}></BarPlot>
 	{/if}
 </div>

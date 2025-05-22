@@ -1,32 +1,61 @@
 <script lang="ts">
-	import Chart, { type ChartConfiguration } from 'chart.js/auto';
+	import Chart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
 	import Modal from './Modal.svelte';
 	import { onDestroy } from 'svelte';
+	import type {
+		ChartDataset,
+		ChartOptions,
+		ChartType,
+		Plugin
+	} from 'chart.js/auto';
 
 	Chart.register(zoomPlugin);
 
 	interface Props {
-		config: ChartConfiguration;
+		type: ChartType;
+		labels: string[];
+		datasets: ChartDataset<ChartType>[];
+		options?: ChartOptions<ChartType>;
+		plugins?: Plugin<ChartType>[];
 		zoom?: boolean;
 		plot_name?: string;
 		zoom_rect?: (min: number, max: number) => void;
 	}
 
-	let { config, zoom = false, plot_name = 'plot_data' }: Props = $props();
+	let {
+		type,
+		labels,
+		datasets,
+		options,
+		plugins = [],
+		zoom = false,
+		plot_name = 'plot_data'
+	}: Props = $props();
 	let chart: Chart | undefined = undefined;
 
 	const handleChart: Action<HTMLCanvasElement> = (element) => {
-		if (element == null) return;
-
-		chart = new Chart(element, config);
+		chart = new Chart(element, {
+			type: type,
+			data: {
+				labels: labels,
+				datasets: datasets
+			},
+			options: options,
+			plugins: plugins,
+		});
 
 		$effect(() => {
-			if (chart !== undefined) {
-				chart.destroy();
+			if (chart == undefined || chart.canvas == null) {
+				return;
 			}
-			chart = new Chart(element, config);
+			chart.data = {
+				labels: labels,
+				datasets: datasets
+			};
+			Object.assign(chart.options, options);
+			chart.update();
 		});
 	};
 
@@ -53,15 +82,15 @@
 
 		let labels: String[] = [];
 		const n_data = 1;
-		for (let i of config.data.datasets) {
+		for (let i of datasets) {
 			labels.push(i.label != undefined ? i.label : '');
 		}
 
 		csvContent += 'timestep,' + labels.join(',') + '\r\n';
 
-		for (let timestep of Object.keys(config.data.datasets[0].data)) {
+		for (let timestep of Object.keys(datasets[0].data)) {
 			csvContent += timestep;
-			for (const dataset of config.data.datasets) {
+			for (const dataset of datasets) {
 				// @ts-ignore
 				csvContent += ',' + dataset.data[timestep];
 			}
@@ -71,7 +100,7 @@
 		var link = document.createElement('a');
 		link.setAttribute('href', encodedUri);
 		link.setAttribute('download', plot_name);
-		document.body.appendChild(link); // Required for FF
+		document.body.appendChild(link); // Required for Firefox
 
 		link.click();
 	}
@@ -109,7 +138,7 @@
 			<div class="visually-hidden">Download CSV Data</div>
 		</button>
 	</div>
-	<canvas use:handleChart id="myChart"></canvas>
+	<canvas id="myChart" use:handleChart></canvas>
 </div>
 
 <style>

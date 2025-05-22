@@ -4,7 +4,7 @@
 		elements: any[];
 		value: any[];
 		disabled?: boolean;
-		onUpdate: (value: any[]) => void;
+		onUpdate?: (value: any[]) => void;
 	}
 
 	let {
@@ -12,7 +12,7 @@
 		elements,
 		value = $bindable(elements),
 		disabled = false,
-		onUpdate
+		onUpdate = () => {}
 	}: Props = $props();
 	let id = $props.id();
 
@@ -32,14 +32,14 @@
 	}
 </script>
 
-<div class="h3">{label}</div>
-<div class="form-group">
-	{#if elements.length == 0}
-		<div class="text-muted">No elements available to select.</div>
-	{:else}
+<div class="row mb-2">
+	<div class="col-sm-3 d-flex justify-content-between">
+		<label for={'checkbox' + id} class="form-label fw-medium fs-4">
+			{label}
+		</label>
+		<div>
 		<button
-			class="btn btn-outline-primary btn-sm"
-			style:min-width="100px"
+			class="btn btn-outline-primary btn-sm align-self-baseline px-3"
 			{disabled}
 			onclick={toggleAll}
 		>
@@ -49,21 +49,29 @@
 				Select all
 			{/if}
 		</button>
-		{#each elements as element, i}
-			<div class="form-check form-check-inline">
-				<input
-					class="form-check-input"
-					id={`${element}Checkbox${id}`}
-					type="checkbox"
-					value={element}
-					bind:group={value}
-					{disabled}
-					onchange={dispatchEvent}
-				/>
-				<label class="form-check-label" for={`${element}Checkbox${id}`}>
-					{element}
-				</label>
-			</div>
-		{/each}
-	{/if}
+		</div>
+	</div>
+
+	<div class="col-sm-9 form-group">
+		{#if elements.length == 0}
+			<div class="text-muted">No elements available to select.</div>
+		{:else}
+			{#each elements as element, i}
+				<div class="form-check form-check-inline">
+					<input
+						class="form-check-input"
+						id={`${element}Checkbox${id}`}
+						type="checkbox"
+						value={element}
+						bind:group={value}
+						{disabled}
+						onchange={dispatchEvent}
+					/>
+					<label class="form-check-label" for={`${element}Checkbox${id}`}>
+						{element}
+					</label>
+				</div>
+			{/each}
+		{/if}
+	</div>
 </div>

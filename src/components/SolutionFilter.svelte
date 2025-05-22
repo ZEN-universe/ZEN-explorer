@@ -122,10 +122,13 @@
 	}
 </script>
 
-<div class="row align-items-end">
-	<div class="col-4">
-		<h3>Solution</h3>
+<div class="row mb-2">
+	<div class="col-sm-3">
+		<label for="solution-first" class="form-label fw-medium fs-4">Solution</label>
+	</div>
+	<div class="col-sm-9">
 		<select
+			id="solution-first"
 			class="form-select"
 			bind:value={activeFirstLevel}
 			{disabled}
@@ -138,10 +141,15 @@
 			{/each}
 		</select>
 	</div>
-	{#if secondLevels.length > 0}
-		<div class="col-4">
-			<h3>Subsolution</h3>
+</div>
+{#if secondLevels.length > 0}
+	<div class="row mb-2">
+		<div class="col-sm-3">
+			<label for="solution-second" class="form-label fw-medium fs-4">Subsolution</label>
+		</div>
+		<div class="col-sm-9">
 			<select
+				id="solution-second"
 				class="form-select"
 				bind:value={activeSecondLevel}
 				{disabled}
@@ -154,12 +162,22 @@
 				{/each}
 			</select>
 		</div>
-	{/if}
+	</div>
+{/if}
 
-	{#if solutionDetail && Object.keys(solutionDetail.scenarios).length > 1}
-		<div class="col-4">
-			<h3>Scenario</h3>
-			<select class="form-select" bind:value={activeScenario} {disabled} onchange={dispatch_event}>
+{#if solutionDetail && Object.keys(solutionDetail.scenarios).length > 1}
+	<div class="row mb-2">
+		<div class="col-sm-3">
+			<label for="solution-scenario" class="form-label fw-medium fs-4">Scenario</label>
+		</div>
+		<div class="col-sm-9">
+			<select
+				id="solution-scenario"
+				class="form-select"
+				bind:value={activeScenario}
+				{disabled}
+				onchange={dispatch_event}
+			>
 				{#each Object.keys(solutionDetail.scenarios) as scenario}
 					<option value={scenario}>
 						{scenario}
@@ -167,5 +185,5 @@
 				{/each}
 			</select>
 		</div>
-	{/if}
-</div>
+	</div>
+{/if}
