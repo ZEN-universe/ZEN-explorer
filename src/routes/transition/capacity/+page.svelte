@@ -7,10 +7,12 @@
 	import FilterSection from '../../../components/FilterSection.svelte';
 	import Dropdown from '../../../components/Dropdown.svelte';
 	import { get_component_total } from '$lib/temple';
-	import { filter_and_aggregate_data, remove_duplicates } from '$lib/utils';
-	import Papa from 'papaparse';
+	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import type { ActivatedSolution, Row } from '$lib/types';
+	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 	import type { ChartOptions, ChartDataset } from 'chart.js';
+	import Papa from 'papaparse';
+	import { onMount, tick } from 'svelte';
 
 	interface StringList {
 		[key: string]: string[];
@@ -21,7 +23,7 @@
 	const variables: string[] = ['capacity', 'capacity_addition'];
 	const technology_types: string[] = ['conversion', 'storage', 'transport'];
 	const storage_type_options = ['energy', 'power'];
-	const aggregation_options = ['technology', 'node'];
+	const aggregation_options = ['node', 'technology'];
 	const normalisation_options = ['not_normalized', 'normalized'];
 	let years: number[] = $state([]);
 
@@ -132,28 +134,57 @@
 			return [];
 		}
 
-		return remove_duplicates(data.data.filter((element) => technologies.includes(element.technology)).map((element) => element.location));
+		return remove_duplicates(
+			data.data
+				.filter((element) => technologies.includes(element.technology))
+				.map((element) => element.location)
+		);
 	});
-	
+
 	// Effects for filter options
 	$effect(() => {
 		carriers;
-		console.log("update selected carriers");
-		
+
 		// Update the carriers whenever the data or selected_solution changes
 		if (selected_carrier == null || !carriers.includes(selected_carrier)) {
 			selected_carrier = carriers.length > 0 ? carriers[0] : null;
 		}
 	});
-	
+
 	$effect(() => {
 		// Update the selected technologies whenever the technologies array changes
 		selected_technologies = technologies;
 	});
-	
+
 	$effect(() => {
 		// Update the selected locations whenever the locations array changes
 		selected_locations = locations;
+	});
+
+	// Store parts of the selected variables in the URL
+	onMount(() => {
+		selected_variable = get_url_param('variable') || selected_variable;
+		selected_technology_type = get_url_param('technology_type') || selected_technology_type;
+		selected_storage_type = get_url_param('storage_type') || selected_storage_type;
+		selected_carrier = get_url_param('carrier') || selected_carrier;
+	});
+
+	$effect(() => {
+		// Triggers
+		selected_variable;
+		selected_technology_type;
+		selected_storage_type;
+		selected_carrier;
+
+		// Wait for router to be initialized
+		tick().then(() => {
+			update_url_params({
+				variable: selected_variable,
+				technology_type: selected_technology_type,
+				storage_type: selected_storage_type,
+				carrier: selected_carrier
+			});
+		});
 	});
 
 	/**
@@ -231,7 +262,6 @@
 		fetching = false;
 	}
 
-
 	let datasets: ChartDataset<'bar'>[] = $derived.by(() => {
 		if (
 			selected_variable == null ||
@@ -270,7 +300,7 @@
 			excluded_years,
 			selected_normalisation == 'normalized'
 		) as unknown as ChartDataset<'bar'>[];
-	})
+	});
 </script>
 
 <h1 class="mt-2 mb-4">The Transition Pathway &ndash; Capacity</h1>
@@ -288,10 +318,7 @@
 		<FilterSection title="Variable Selection">
 			<Dropdown
 				label="Variable"
-				options={variables.map((variable) => ({
-					label: variable,
-					value: variable
-				}))}
+				options={to_options(variables)}
 				bind:value={selected_variable}
 				disabled={fetching || solution_loading}
 				onUpdate={on_variable_changed}
@@ -299,10 +326,7 @@
 			{#if selected_variable != null}
 				<Dropdown
 					label="Technology Type"
-					options={technology_types.map((type) => ({
-						label: type,
-						value: type
-					}))}
+					options={to_options(technology_types)}
 					bind:value={selected_technology_type}
 					disabled={fetching || solution_loading}
 					onUpdate={on_technology_type_changed}
@@ -320,10 +344,7 @@
 			{#if selected_technology_type != null && carriers.length > 0}
 				<Dropdown
 					label="Carrier"
-					options={carriers.map((carrier) => ({
-						label: carrier,
-						value: carrier
-					}))}
+					options={to_options(carriers)}
 					bind:value={selected_carrier}
 					disabled={fetching || solution_loading}
 					onUpdate={on_carrier_changed}
@@ -332,10 +353,7 @@
 		</FilterSection>
 		{#if data && selected_technology_type && selected_carrier && technologies.length > 0 && locations.length > 0}
 			<FilterSection title="Data Selection">
-				<Radio
-					label="Aggregation"
-					options={aggregation_options}
-					bind:value={selected_aggregation}
+				<Radio label="Aggregation" options={aggregation_options} bind:value={selected_aggregation}
 				></Radio>
 				<Radio
 					label="Normalisation"
@@ -343,23 +361,13 @@
 					bind:value={selected_normalisation}
 				></Radio>
 				{#if selected_aggregation == 'technology'}
-					<AllCheckbox
-						label="Technology"
-						bind:value={selected_technologies}
-						elements={technologies}
+					<AllCheckbox label="Technology" bind:value={selected_technologies} elements={technologies}
 					></AllCheckbox>
 				{:else}
-					<AllCheckbox
-						label="Node"
-						bind:value={selected_locations}
-						elements={locations}
+					<AllCheckbox label="Node" bind:value={selected_locations} elements={locations}
 					></AllCheckbox>
 				{/if}
-				<AllCheckbox
-					label="Year"
-					bind:value={selected_years}
-					elements={years}
-				></AllCheckbox>
+				<AllCheckbox label="Year" bind:value={selected_years} elements={years}></AllCheckbox>
 			</FilterSection>
 		{/if}
 	{/if}
@@ -382,6 +390,6 @@
 	{:else if datasets.length == 0}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot type='bar' {datasets} {labels} options={plot_options} {plot_name}></BarPlot>
+		<BarPlot type="bar" {datasets} {labels} options={plot_options} {plot_name}></BarPlot>
 	{/if}
 </div>

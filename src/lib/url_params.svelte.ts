@@ -2,7 +2,7 @@ import { replaceState } from '$app/navigation';
 import { page } from '$app/state';
 
 interface URLParams {
-	[key: string]: string;
+	[key: string]: string | null;
 }
 
 let urlParams: URLParams = $state({});
@@ -37,7 +37,7 @@ export function add_current_solution_to_url(url?: string): string {
 	);
 }
 
-export function replace_url_params(params: URLParams): void {
+export function update_url_params(params: URLParams): void {
 	replaceState(build_url(params), {});
 	urlParams = { ...urlParams, ...params };
 }

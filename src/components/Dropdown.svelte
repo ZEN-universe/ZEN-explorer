@@ -2,7 +2,7 @@
 	interface Props {
 		label: string;
 		options: { label: string; value: string }[];
-		value?: any;
+		value?: string | null;
 		disabled?: boolean;
 		onUpdate?: (value: any) => void;
 	}

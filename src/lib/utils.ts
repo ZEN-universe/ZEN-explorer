@@ -208,3 +208,10 @@ export function stringify(value: string) {
 export function remove_duplicates<T>(array: T[]): T[] {
 	return Array.from(new Set(array));
 }
+
+export function to_options(arr: string[]): { value: string; label: string }[] {
+	return arr.map((item) => ({
+		value: item,
+		label: item
+	}));
+}

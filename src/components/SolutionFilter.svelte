@@ -2,7 +2,7 @@
 	import type { Solution, SolutionDetail, ActivatedSolution } from '$lib/types';
 	import { get_solutions, get_solution_detail } from '$lib/temple';
 	import { onMount } from 'svelte';
-	import { get_url_param, replace_url_params } from '$lib/url_params.svelte';
+	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 	import { remove_duplicates } from '$lib/utils';
 
 	interface Props {
@@ -104,9 +104,9 @@
 			version: solutionDetail.version
 		};
 
-		replace_url_params({
+		update_url_params({
 			solution: selected_solution.solution_name,
-			scenario: selected_solution.scenario_name
+			scenario: Object.keys(solutionDetail.scenarios).length > 1 ? selected_solution.scenario_name : null
 		});
 
 		carriers = selected_solution.detail.system.set_carriers.slice();
