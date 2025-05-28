@@ -16,6 +16,7 @@
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
+	import FilterRow from '$components/FilterRow.svelte';
 
 	interface StringList {
 		[key: string]: string[];
@@ -322,46 +323,69 @@
 	</FilterSection>
 	{#if !solution_loading && selected_solution}
 		<FilterSection title="Variable Selection">
-			<Dropdown
-				label="Variable"
-				options={to_options(variables)}
-				bind:value={selected_variable}
-				disabled={fetching || solution_loading}
-				onUpdate={on_variable_changed}
-			></Dropdown>
-			{#if selected_variable != null}
-				<Dropdown
-					label="Technology Type"
-					options={to_options(technology_types)}
-					bind:value={selected_technology_type}
-					disabled={fetching || solution_loading}
-					onUpdate={on_technology_type_changed}
-				></Dropdown>
-				{#if selected_technology_type == 'storage'}
-					<Radio
-						label=""
-						options={to_options(storage_type_options)}
-						bind:value={selected_storage_type}
-						onUpdate={on_technology_type_changed}
+			<FilterRow label="Variable">
+				{#snippet content(formId)}
+					<Dropdown
+						{formId}
+						options={to_options(variables)}
+						bind:value={selected_variable}
 						disabled={fetching || solution_loading}
-					></Radio>
+						onUpdate={on_variable_changed}
+					></Dropdown>
+				{/snippet}
+			</FilterRow>
+			{#if selected_variable != null}
+				<FilterRow label="Technology Type">
+					{#snippet content(formId)}
+						<Dropdown
+							{formId}
+							options={to_options(technology_types)}
+							bind:value={selected_technology_type}
+							disabled={fetching || solution_loading}
+							onUpdate={on_technology_type_changed}
+						></Dropdown>
+					{/snippet}
+				</FilterRow>
+				{#if selected_technology_type == 'storage'}
+					<FilterRow label="">
+						{#snippet content(formId)}
+							<Radio
+								{formId}
+								options={to_options(storage_type_options)}
+								bind:value={selected_storage_type}
+								onUpdate={on_technology_type_changed}
+								disabled={fetching || solution_loading}
+							></Radio>
+						{/snippet}
+					</FilterRow>
 				{/if}
 			{/if}
 			{#if selected_technology_type != null && carriers.length > 0}
-				<Dropdown
-					label="Carrier"
-					options={to_options(carriers)}
-					bind:value={selected_carrier}
-					disabled={fetching || solution_loading}
-					onUpdate={on_carrier_changed}
-				></Dropdown>
+				<FilterRow label="Carrier">
+					{#snippet content(formId)}
+						<Dropdown
+							{formId}
+							options={to_options(carriers)}
+							bind:value={selected_carrier}
+							disabled={fetching || solution_loading}
+							onUpdate={on_carrier_changed}
+						></Dropdown>
+					{/snippet}
+				</FilterRow>
 			{/if}
 		</FilterSection>
 		{#if data && selected_technology_type && selected_carrier && technologies.length > 0 && locations.length > 0}
 			<FilterSection title="Data Selection">
-				<Radio label="Aggregation" options={aggregation_options} bind:value={selected_aggregation}
-				></Radio>
-				<ToggleButton label="Normalization" bind:value={selected_normalization}></ToggleButton>
+				<FilterRow label="Aggregation">
+					{#snippet content(formId)}
+						<Radio {formId} options={aggregation_options} bind:value={selected_aggregation}></Radio>
+					{/snippet}
+				</FilterRow>
+				<FilterRow label="Normalization">
+					{#snippet content(formId)}
+						<ToggleButton {formId} bind:value={selected_normalization}></ToggleButton>
+					{/snippet}
+				</FilterRow>
 				{#if selected_aggregation == 'technology'}
 					<AllCheckbox label="Technology" bind:value={selected_technologies} elements={technologies}
 					></AllCheckbox>

@@ -218,11 +218,6 @@
 			if (show_costs.capex.subdivision) {
 				grouped_data! = grouped_data!.concat(fetched_capex.data!.data);
 			} else {
-				console.log('Capex:', $state.snapshot(fetched_capex.data!.data));
-				console.log('datasets_filters:', { location: selected_locations });
-				console.log('datasets_aggregates:', {
-					[combined_name]: all_selected_carriers_technologies
-				});
 				let new_data: { label: string; data: any; type: string }[] = filter_and_aggregate_data(
 					fetched_capex.data!.data,
 					{ location: selected_locations },
@@ -230,13 +225,11 @@
 					[],
 					false
 				);
-				console.log('Capex new data:', new_data);
 				for (let i in new_data) {
 					new_data[i].data['location'] = new_data[i].label;
 					new_data[i].data[combined_name] = capex_label;
 					grouped_data.push(new_data[i].data);
 				}
-				console.log('Capex grouped:', grouped_data);
 			}
 		}
 

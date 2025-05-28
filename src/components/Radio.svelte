@@ -1,6 +1,6 @@
 <script lang="ts">
 	interface Props {
-		label: string;
+		formId: string;
 		options: { value: string; label: string }[];
 		value?: any;
 		disabled?: boolean;
@@ -8,7 +8,7 @@
 	}
 
 	let {
-		label,
+		formId,
 		options,
 		value = $bindable(options[0]),
 		disabled = false,
@@ -20,28 +20,21 @@
 	}
 </script>
 
-<div class="row mb-2">
-	<div class="col-sm-3">
-		<label for={'radio' + label} class="form-label fw-medium fs-4">
-			{label}
-		</label>
-	</div>
-	<div class="col-sm-9" role="radiogroup">
-		{#each options as option}
-			<div class="form-check form-check-inline">
-				<input
-					class="form-check-input"
-					id={'radio-' + option.value}
-					type="radio"
-					bind:group={value}
-					value={option.value}
-					{disabled}
-					onchange={updateSelection}
-				/>
-				<label class="form-check-label" for={'radio-' + option.value}>
-					{option.label}
-				</label>
-			</div>
-		{/each}
-	</div>
+<div role="radiogroup">
+	{#each options as option}
+		<div class="form-check form-check-inline">
+			<input
+				class="form-check-input"
+				id={'radio-' + option.value}
+				type="radio"
+				bind:group={value}
+				value={option.value}
+				{disabled}
+				onchange={updateSelection}
+			/>
+			<label class="form-check-label" for={'radio-' + option.value}>
+				{option.label}
+			</label>
+		</div>
+	{/each}
 </div>

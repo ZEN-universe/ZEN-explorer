@@ -4,6 +4,7 @@
 	import { onMount } from 'svelte';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 	import { remove_duplicates } from '$lib/utils';
+	import FilterRow from './FilterRow.svelte';
 
 	interface Props {
 		carriers?: string[];
@@ -123,13 +124,10 @@
 	}
 </script>
 
-<div class="row mb-2">
-	<div class="col-sm-3">
-		<label for="solution-first" class="form-label fw-medium fs-4">Solution</label>
-	</div>
-	<div class="col-sm-9">
+<FilterRow label="Solution">
+	{#snippet content(id)}
 		<select
-			id="solution-first"
+			{id}
 			class="form-select"
 			bind:value={activeFirstLevel}
 			{disabled}
@@ -141,16 +139,13 @@
 				</option>
 			{/each}
 		</select>
-	</div>
-</div>
+	{/snippet}
+</FilterRow>
 {#if secondLevels.length > 0}
-	<div class="row mb-2">
-		<div class="col-sm-3">
-			<label for="solution-second" class="form-label fw-medium fs-4">Subsolution</label>
-		</div>
-		<div class="col-sm-9">
+	<FilterRow label="Subsolution">
+		{#snippet content(id)}
 			<select
-				id="solution-second"
+				{id}
 				class="form-select"
 				bind:value={activeSecondLevel}
 				{disabled}
@@ -162,29 +157,26 @@
 					</option>
 				{/each}
 			</select>
-		</div>
-	</div>
+		{/snippet}
+	</FilterRow>
 {/if}
 
 {#if solutionDetail && Object.keys(solutionDetail.scenarios).length > 1}
-	<div class="row mb-2">
-		<div class="col-sm-3">
-			<label for="solution-scenario" class="form-label fw-medium fs-4">Scenario</label>
-		</div>
-		<div class="col-sm-9">
+	<FilterRow label="Secnario">
+		{#snippet content(id)}
 			<select
-				id="solution-scenario"
+				{id}
 				class="form-select"
 				bind:value={activeScenario}
 				{disabled}
 				onchange={dispatch_event}
 			>
-				{#each Object.keys(solutionDetail.scenarios) as scenario}
+				{#each Object.keys(solutionDetail?.scenarios || []) as scenario}
 					<option value={scenario}>
 						{scenario}
 					</option>
 				{/each}
 			</select>
-		</div>
-	</div>
+		{/snippet}
+	</FilterRow>
 {/if}

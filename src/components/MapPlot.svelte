@@ -203,7 +203,6 @@
 
 	function moveZoomRectangle(event: MouseEvent) {
 		if (!drawRectangle) return;
-		// console.log('moveZoomRectangle', event);
 		endPos = pointer(event, svg);
 	}
 

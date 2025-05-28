@@ -14,7 +14,7 @@
 		disabled = false,
 		onUpdate = () => {}
 	}: Props = $props();
-	let id = $props.id();
+	let id: string = $props.id();
 
 	let areAllSelected: boolean = $derived(value.length == elements.length);
 

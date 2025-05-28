@@ -1,7 +1,7 @@
 import { replaceState } from '$app/navigation';
 import { page } from '$app/state';
 
-interface URLParams {
+export interface URLParams {
 	[key: string]: string | null;
 }
 
