@@ -471,6 +471,7 @@
 		for (const row of fetched_cost_shed_demand.data!.data) {
 			set_demand_carriers.add(row[combined_name]);
 		}
+		// TODO: Get the carriers from the available datasets (loaded in fetch_data)
 		demand_carriers = selected_solution!.detail.carriers_demand.filter((i) =>
 			set_demand_carriers.has(i)
 		);

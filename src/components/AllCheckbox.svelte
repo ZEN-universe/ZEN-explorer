@@ -38,17 +38,17 @@
 			{label}
 		</label>
 		<div>
-		<button
-			class="btn btn-outline-primary btn-sm align-self-baseline px-3"
-			{disabled}
-			onclick={toggleAll}
-		>
-			{#if areAllSelected}
-				Deselect all
-			{:else}
-				Select all
-			{/if}
-		</button>
+			<button
+				class="btn btn-outline-primary btn-sm align-self-baseline px-3"
+				{disabled}
+				onclick={toggleAll}
+			>
+				{#if areAllSelected}
+					Deselect all
+				{:else}
+					Select all
+				{/if}
+			</button>
 		</div>
 	</div>
 

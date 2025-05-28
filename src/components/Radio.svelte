@@ -1,7 +1,7 @@
 <script lang="ts">
 	interface Props {
 		label: string;
-		options: any[];
+		options: { value: string; label: string }[];
 		value?: any;
 		disabled?: boolean;
 		onUpdate?: (selected_option: any) => void;
@@ -31,15 +31,15 @@
 			<div class="form-check form-check-inline">
 				<input
 					class="form-check-input"
-					id={'radio-' + option}
+					id={'radio-' + option.value}
 					type="radio"
 					bind:group={value}
-					value={option}
+					value={option.value}
 					{disabled}
 					onchange={updateSelection}
 				/>
-				<label class="form-check-label" for={'radio-' + option}>
-					{option}
+				<label class="form-check-label" for={'radio-' + option.value}>
+					{option.label}
 				</label>
 			</div>
 		{/each}

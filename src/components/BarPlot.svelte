@@ -4,12 +4,7 @@
 	import type { Action } from 'svelte/action';
 	import Modal from './Modal.svelte';
 	import { onDestroy } from 'svelte';
-	import type {
-		ChartDataset,
-		ChartOptions,
-		ChartType,
-		Plugin
-	} from 'chart.js/auto';
+	import type { ChartDataset, ChartOptions, ChartType, Plugin } from 'chart.js/auto';
 
 	Chart.register(zoomPlugin);
 
@@ -43,7 +38,7 @@
 				datasets: datasets
 			},
 			options: options,
-			plugins: plugins,
+			plugins: plugins
 		});
 
 		$effect(() => {

@@ -106,7 +106,8 @@
 
 		update_url_params({
 			solution: selected_solution.solution_name,
-			scenario: Object.keys(solutionDetail.scenarios).length > 1 ? selected_solution.scenario_name : null
+			scenario:
+				Object.keys(solutionDetail.scenarios).length > 1 ? selected_solution.scenario_name : null
 		});
 
 		carriers = selected_solution.detail.system.set_carriers.slice();

@@ -1,30 +1,35 @@
 <script lang="ts">
-	import SolutionFilter from '../../../components/SolutionFilter.svelte';
-	import AllCheckbox from '../../../components/AllCheckbox.svelte';
-	import Radio from '../../../components/Radio.svelte';
-	import BarPlot from '../../../components/BarPlot.svelte';
-	import Filters from '../../../components/Filters.svelte';
-	import FilterSection from '../../../components/FilterSection.svelte';
-	import Dropdown from '../../../components/Dropdown.svelte';
+	import type { ChartOptions, ChartDataset } from 'chart.js';
+	import type { ParseResult } from 'papaparse';
+	import { onMount, tick, untrack } from 'svelte';
+
+	import SolutionFilter from '$components/SolutionFilter.svelte';
+	import AllCheckbox from '$components/AllCheckbox.svelte';
+	import Radio from '$components/Radio.svelte';
+	import BarPlot from '$components/BarPlot.svelte';
+	import Filters from '$components/Filters.svelte';
+	import FilterSection from '$components/FilterSection.svelte';
+	import Dropdown from '$components/Dropdown.svelte';
+	import ToggleButton from '$components/ToggleButton.svelte';
+
 	import { get_component_total } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
-	import type { ChartOptions, ChartDataset } from 'chart.js';
-	import Papa from 'papaparse';
-	import { onMount, tick } from 'svelte';
 
 	interface StringList {
 		[key: string]: string[];
 	}
 
-	let data: Papa.ParseResult<Row> | null = $state(null);
+	let data: ParseResult<Row> | null = $state(null);
 
 	const variables: string[] = ['capacity', 'capacity_addition'];
 	const technology_types: string[] = ['conversion', 'storage', 'transport'];
 	const storage_type_options = ['energy', 'power'];
-	const aggregation_options = ['node', 'technology'];
-	const normalisation_options = ['not_normalized', 'normalized'];
+	const aggregation_options = [
+		{ label: 'Node', value: 'node' },
+		{ label: 'Technology', value: 'technology' }
+	];
 	let years: number[] = $state([]);
 
 	let selected_solution: ActivatedSolution | null = $state(null);
@@ -33,7 +38,7 @@
 	let selected_storage_type = $state('energy');
 	let selected_carrier: string | null = $state(null);
 	let selected_aggregation = $state('technology');
-	let selected_normalisation: string = $state('not_normalized');
+	let selected_normalization: boolean = $state(false);
 	let selected_locations: string[] = $state([]);
 	let selected_technologies: string[] = $state([]);
 	let selected_years: number[] = $state([]);
@@ -145,10 +150,12 @@
 	$effect(() => {
 		carriers;
 
-		// Update the carriers whenever the data or selected_solution changes
-		if (selected_carrier == null || !carriers.includes(selected_carrier)) {
-			selected_carrier = carriers.length > 0 ? carriers[0] : null;
-		}
+		untrack(() => {
+			// Update the carriers whenever the carriers change
+			if (selected_carrier == null || !carriers.includes(selected_carrier)) {
+				selected_carrier = carriers.length > 0 ? carriers[0] : null;
+			}
+		});
 	});
 
 	$effect(() => {
@@ -192,7 +199,7 @@
 	 */
 	function reset_data_selection() {
 		selected_aggregation = 'node';
-		selected_normalisation = 'not_normalized';
+		selected_normalization = false;
 		selected_locations = locations;
 		selected_technologies = technologies;
 		selected_years = years;
@@ -203,7 +210,6 @@
 	 * It resets all the selected values of the form.
 	 */
 	async function on_solution_changed() {
-		selected_carrier = null;
 		reset_data_selection();
 		await fetch_data();
 	}
@@ -298,7 +304,7 @@
 			dataset_selector,
 			datasets_aggregates,
 			excluded_years,
-			selected_normalisation == 'normalized'
+			selected_normalization
 		) as unknown as ChartDataset<'bar'>[];
 	});
 </script>
@@ -334,7 +340,7 @@
 				{#if selected_technology_type == 'storage'}
 					<Radio
 						label=""
-						options={storage_type_options}
+						options={to_options(storage_type_options)}
 						bind:value={selected_storage_type}
 						onUpdate={on_technology_type_changed}
 						disabled={fetching || solution_loading}
@@ -355,11 +361,7 @@
 			<FilterSection title="Data Selection">
 				<Radio label="Aggregation" options={aggregation_options} bind:value={selected_aggregation}
 				></Radio>
-				<Radio
-					label="Normalisation"
-					options={normalisation_options}
-					bind:value={selected_normalisation}
-				></Radio>
+				<ToggleButton label="Normalization" bind:value={selected_normalization}></ToggleButton>
 				{#if selected_aggregation == 'technology'}
 					<AllCheckbox label="Technology" bind:value={selected_technologies} elements={technologies}
 					></AllCheckbox>
