@@ -10,7 +10,7 @@
 
 	interface Props {
 		type: ChartType;
-		labels: string[];
+		labels?: string[];
 		datasets: ChartDataset<ChartType>[];
 		options?: ChartOptions<ChartType>;
 		plugins?: Plugin<ChartType>[];

@@ -618,7 +618,7 @@
 		{#if data && selected_carrier && technologies.length > 0 && locations.length > 0}
 			<FilterSection title="Data Selection">
 				<h3>Technology Subdivision</h3>
-				<ToggleButton bind:value={subdivision} change={update_plot_data}></ToggleButton>
+				<ToggleButton bind:value={subdivision} onUpdate={update_plot_data}></ToggleButton>
 				<AllCheckbox
 					label="Node"
 					elements={locations}

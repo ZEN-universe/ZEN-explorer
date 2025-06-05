@@ -515,14 +515,14 @@
 				<div class="row mb-2">
 					<div class="col-6 col-md-3"><h3>{show_costs[key].title}</h3></div>
 					<div class="col-4 col-md-2">
-						<ToggleButton bind:value={show_costs[key].show} change={update_plot_data}
+						<ToggleButton bind:value={show_costs[key].show} onUpdate={update_plot_data}
 						></ToggleButton>
 					</div>
 
 					{#if show_costs[key].show && key != 'carbon_emission'}
 						<div class="col-6 col-md-2">Subdivision:</div>
 						<div class="col-4 col-md-2">
-							<ToggleButton bind:value={show_costs[key].subdivision} change={update_plot_data}
+							<ToggleButton bind:value={show_costs[key].subdivision} onUpdate={update_plot_data}
 							></ToggleButton>
 						</div>
 					{/if}

@@ -22,6 +22,8 @@ export function build_url(params: URLParams, base_url?: string): string {
 	for (const key in params) {
 		if (params[key]) {
 			url.searchParams.set(key, params[key]);
+		} else {
+			url.searchParams.delete(key);
 		}
 	}
 	return url.toString();

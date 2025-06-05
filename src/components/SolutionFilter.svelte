@@ -14,7 +14,7 @@
 		selected_solution: ActivatedSolution | null;
 		loading?: boolean;
 		disabled?: boolean;
-		solution_selected: (selected_solution: ActivatedSolution | null) => void;
+		solution_selected?: (selected_solution: ActivatedSolution | null) => void;
 	}
 
 	let {
@@ -85,6 +85,8 @@
 		if (Object.keys(solutionDetail.scenarios).length == 1) {
 			activeScenario = Object.keys(solutionDetail.scenarios)[0];
 			dispatch_event();
+		} else if (activeScenario != '' && activeScenario in solutionDetail.scenarios) {
+			dispatch_event();
 		} else {
 			selected_solution = null;
 		}
@@ -100,7 +102,7 @@
 		selected_solution = {
 			solution_name: activeSolutionName,
 			scenario_name: activeScenario,
-			detail: solutionDetail!.scenarios[activeScenario],
+			detail: solutionDetail.scenarios[activeScenario],
 			components: solutionDetail.components,
 			version: solutionDetail.version
 		};
@@ -120,7 +122,7 @@
 				selected_solution!.detail.system.reference_year
 		);
 
-		solution_selected(selected_solution);
+		solution_selected?.(selected_solution);
 	}
 </script>
 

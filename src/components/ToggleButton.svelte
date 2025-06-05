@@ -3,14 +3,14 @@
 		formId: string;
 		value: boolean;
 		texts?: string[];
-		change?: () => void;
+		onUpdate?: () => void;
 	}
 
-	let { formId, value = $bindable(), texts = ['on', 'off'], change = () => {} }: Props = $props();
+	let { formId, value = $bindable(), texts = ['on', 'off'], onUpdate }: Props = $props();
 	let id = $props.id();
 
 	function dispatchEvent() {
-		change();
+		onUpdate?.();
 	}
 </script>
 
