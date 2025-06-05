@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick, untrack } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 
@@ -20,8 +20,15 @@
 
 	let data: ParseResult<any> | null = $state(null);
 	let limit_data: ParseResult<any> | null = $state(null);
-	let units: { [carrier: string]: string } = $state({});
-	let filtered_data: any[] = $state([]);
+	let technology_data: ComponentTotal | null = $state(null);
+	let carrier_data: ComponentTotal | null = $state(null);
+	let annual_data: ComponentTotal | null = $state(null);
+	let cumulative_data: ComponentTotal | null = $state(null);
+	let annual_limit_data: ComponentTotal | null = $state(null);
+	let cumulative_limit_data: ComponentTotal | null = $state(null);
+	let subdivision_units: { [carrier: string]: string } = $state({});
+	let cumulation_units: { [carrier: string]: string } = $state({});
+
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
@@ -57,11 +64,11 @@
 	let unit: string = $derived.by(() => {
 		if (selected_carriers.length == 0) {
 			return '';
+		} else if (selected_subdivision) {
+			return Object.values(subdivision_units)[0] || '';
+		} else {
+			return cumulation_units[selected_carriers[0]] || '';
 		}
-		if (!selected_subdivision) {
-			return Object.values(units)[0] || '';
-		}
-		return units[selected_carriers[0]] || '';
 	});
 	let plot_options: ChartOptions = $derived({
 		responsive: true,
@@ -98,32 +105,28 @@
 		}
 	});
 
-	let carbon_emissions_technology: ComponentTotal | null = $state(null);
-	let carbon_emissions_carrier: ComponentTotal | null = $state(null);
-
 	let technologies: string[] = $derived.by(() => {
-		if (!carbon_emissions_technology?.data) {
+		if (!technology_data?.data) {
 			return [];
 		}
-		return remove_duplicates(carbon_emissions_technology.data.data.map((d) => d.technology));
+		return remove_duplicates(technology_data.data.data.map((d) => d.technology));
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		if (!carbon_emissions_carrier?.data) {
+		if (!carrier_data?.data) {
 			return [];
 		}
-		return remove_duplicates(carbon_emissions_carrier.data.data.map((d) => d.carrier));
+		return remove_duplicates(carrier_data.data.data.map((d) => d.carrier));
 	});
 
 	let locations: string[] = $derived.by(() => {
-		if (!carbon_emissions_technology?.data && !carbon_emissions_carrier?.data) {
+		if (!technology_data?.data && !carrier_data?.data) {
 			return [];
 		}
 		return remove_duplicates(
-			[
-				...(carbon_emissions_technology?.data?.data || []),
-				...(carbon_emissions_carrier?.data?.data || [])
-			].map((d) => d.location)
+			[...(technology_data?.data?.data || []), ...(carrier_data?.data?.data || [])].map(
+				(d) => d.location
+			)
 		);
 	});
 
@@ -142,7 +145,9 @@
 
 	// Store parts of the selected variables in the URL
 	onMount(() => {
-		selected_subdivision = get_url_param('subdivision') === 'true' || selected_subdivision;
+		let subdivision_param = get_url_param('subdivision');
+		selected_subdivision =
+			subdivision_param !== null ? subdivision_param === 'true' : selected_subdivision;
 		selected_cumulation = get_url_param('cumulation') || selected_cumulation;
 	});
 
@@ -160,180 +165,126 @@
 		});
 	});
 
-	$effect(() => {
-		if (selected_solution === null) {
-			data = null;
-			limit_data = null;
-			units = {};
-			return;
-		}
-
-		selected_cumulation;
-
-		if (selected_subdivision) {
-			untrack(fetch_subdivision_data);
-		} else {
-			untrack(fetch_cumulation_data);
-		}
-	});
-
-	/**
-	 * Fetches the relevant data for when subdivision is active.
-	 * In that case, we need the data series carbon_emissions_technology and carbon_emissions_carrier.
-	 * We then combine the data series by renaming the "technology" column and the "carrier" column in the two respective data sets into "technology_carrier".
-	 */
-	async function fetch_subdivision_data() {
-		if (selected_solution === null || !selected_subdivision) {
-			return;
-		}
-		fetching = true;
-
-		// Fetch carbon_emissions_technology and carbon_emissions_carrier
-		[carbon_emissions_technology, carbon_emissions_carrier] = await Promise.all([
-			get_component_total(
-				selected_solution!.solution_name,
-				get_variable_name('carbon_emissions_technology', selected_solution?.version),
-				selected_solution!.scenario_name,
-				selected_solution!.detail.system.reference_year,
-				selected_solution!.detail.system.interval_between_years
-			),
-			get_component_total(
-				selected_solution!.solution_name,
-				get_variable_name('carbon_emissions_carrier', selected_solution?.version),
-				selected_solution!.scenario_name,
-				selected_solution!.detail.system.reference_year,
-				selected_solution!.detail.system.interval_between_years
-			)
-		]);
-
-		if (!carbon_emissions_technology.data || !carbon_emissions_carrier.data) {
-			fetching = false;
-			return;
-		}
-
-		// Rename "node" to "location" so both data series have the same location-name
-		for (let i of carbon_emissions_carrier.data.data) {
-			if ('node' in i) {
-				i.location = i.node;
-				delete i.node;
-			}
-		}
-
-		// Rename "carrier" and "technology" columns into technology_carrier and group all datasets into one list.
-		data = {
-			data: carbon_emissions_carrier.data.data
-				.map((d) => {
-					return {
-						...d,
-						technology_carrier: d.carrier
-					};
-				})
-				.concat(
-					carbon_emissions_technology.data.data.map((d) => {
-						return {
-							...d,
-							technology_carrier: d.technology
-						};
-					})
-				),
-			meta: carbon_emissions_carrier.data.meta,
-			errors: []
-		};
-
-		if (carbon_emissions_carrier.unit?.data) {
-			units = Object.fromEntries(
-				carbon_emissions_carrier.unit.data.map((unit) => {
-					return [unit.carrier, unit[0] || unit.units];
-				})
-			);
-		}
-
-		fetching = false;
+	function on_solution_selected() {
+		fetch_data();
 	}
 
-	/**
-	 * Fetch the relevant data if subdivision is not activated.
-	 */
-	async function fetch_cumulation_data() {
-		if (division_variable === null || selected_solution === null || selected_subdivision) {
+	async function fetch_data() {
+		if (selected_solution === null) {
 			return;
 		}
 
-		fetching = true;
-
-		// Fetch the limit data
-		if (
-			division_variable == get_variable_name('carbon_emissions_annual', selected_solution?.version)
-		) {
-			let res = await get_component_total(
-				selected_solution.solution_name,
-				get_variable_name('carbon_emissions_annual_limit', selected_solution?.version),
-				selected_solution.scenario_name,
-				selected_solution.detail.system.reference_year,
-				selected_solution.detail.system.interval_between_years
-			);
-			limit_data = res.data;
-		} else {
-			let res = await get_component_total(
-				selected_solution.solution_name,
-				get_variable_name('carbon_emissions_budget', selected_solution?.version),
-				selected_solution.scenario_name,
-				selected_solution.detail.system.reference_year,
-				selected_solution.detail.system.interval_between_years
-			);
-			console.log('Limit data:', res.data);
-
-			if (res.data && res.data.data.length > 0) {
-				// Copy the value of the first year to all years in the limit data
-				res.data.data[0] = Object.fromEntries(
-					years.map((year) => [year, res.data!.data[0][years[0]]])
-				);
-			}
-			limit_data = res.data;
-		}
-
-		// Get variable values
-		const fetched = await get_component_total(
-			selected_solution.solution_name,
-			division_variable,
-			selected_solution.scenario_name,
-			selected_solution.detail.system.reference_year,
-			selected_solution.detail.system.interval_between_years
+		[
+			technology_data,
+			carrier_data,
+			annual_limit_data,
+			cumulative_limit_data,
+			annual_data,
+			cumulative_data
+		] = await Promise.all(
+			[
+				'carbon_emissions_technology',
+				'carbon_emissions_carrier',
+				'carbon_emissions_annual_limit',
+				'carbon_emissions_budget',
+				'carbon_emissions_annual',
+				'carbon_emissions_cumulative'
+			].map((variable) =>
+				get_component_total(
+					selected_solution!.solution_name,
+					get_variable_name(variable, selected_solution!.version),
+					selected_solution!.scenario_name,
+					selected_solution!.detail.system.reference_year,
+					selected_solution!.detail.system.interval_between_years
+				)
+			)
 		);
 
-		data = fetched.data;
+		// Rename "node" to "location" so both technology and carrier data have the same key names
+		if (carrier_data.data?.data) {
+			carrier_data.data.data = carrier_data.data.data.map((d) => {
+				return {
+					...d,
+					location: d.location || d.node // Fallback to node if location is not present
+				};
+			});
+		}
 
-		if (fetched.unit?.data) {
-			units = Object.fromEntries(
-				fetched.unit.data.map((unit) => {
+		if (carrier_data.unit?.data) {
+			subdivision_units = Object.fromEntries(
+				carrier_data.unit.data.map((unit) => {
 					return [unit.carrier, unit[0] || unit.units];
 				})
 			);
 		}
 
-		fetching = false;
+		if (cumulative_limit_data.data && cumulative_limit_data.data.data.length > 0) {
+			// Copy the value of the first year to all years in the cumulative data
+			cumulative_limit_data.data.data[0] = Object.fromEntries(
+				years.map((year) => [year, cumulative_limit_data!.data!.data[0][years[0]]])
+			);
+		}
 	}
 
-	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
-		if (selected_solution === null || data === null) {
+	let dataset_selector: { [key: string]: string[] } = $derived.by(() => {
+		if (!selected_subdivision) {
+			return {} as { [key: string]: string[] };
+		} else if (selected_aggregation == 'location') {
+			return { ['technology_carrier']: technologies.concat(carriers) };
+		} else {
+			return { ['location']: locations };
+		}
+	});
+	let datasets_aggregates: { [key: string]: string[] } = $derived.by(() => {
+		if (!selected_subdivision) {
+			return {} as { [key: string]: string[] };
+		} else if (selected_aggregation == 'location') {
+			return { ['location']: selected_locations };
+		} else {
+			return {
+				['technology_carrier']: selected_technologies.concat(selected_carriers)
+			};
+		}
+	});
+	let excluded_years = $derived(years.filter((year) => !selected_years.includes(year)));
+
+	let bar_datasets: ChartDataset<'bar'>[] = $derived.by(() => {
+		if (
+			selected_solution === null ||
+			!annual_data?.data ||
+			!cumulative_data?.data ||
+			!carrier_data?.data ||
+			!technology_data?.data
+		) {
 			return [];
 		}
 
-		let dataset_selector: { [key: string]: string[] } = {};
-		let datasets_aggregates: { [key: string]: string[] } = {};
+		let data: ParseResult<any>;
 		if (selected_subdivision) {
-			if (selected_aggregation == 'location') {
-				dataset_selector = { ['technology_carrier']: technologies.concat(carriers) };
-				datasets_aggregates = { ['location']: selected_locations };
-			} else {
-				dataset_selector = { ['location']: locations };
-				datasets_aggregates = {
-					['technology_carrier']: selected_technologies.concat(selected_carriers)
-				};
-			}
+			data = {
+				data: carrier_data.data.data
+					.map((d) => {
+						return {
+							...d,
+							technology_carrier: d.carrier
+						};
+					})
+					.concat(
+						technology_data.data.data.map((d) => {
+							return {
+								...d,
+								technology_carrier: d.technology
+							};
+						})
+					),
+				meta: carrier_data.data.meta,
+				errors: []
+			};
+		} else if (selected_cumulation == 'Annual') {
+			data = annual_data.data;
+		} else {
+			data = cumulative_data.data;
 		}
-
-		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
 		const filtered_data = filter_and_aggregate_data(
 			data.data,
@@ -343,16 +294,33 @@
 			selected_normalization
 		);
 
-		if (filtered_data.length == 0) {
+		if (filtered_data.length == 1) {
+			filtered_data[0].label = division_variable;
+		}
+
+		return filtered_data as unknown as ChartDataset<'bar'>[];
+	});
+
+	let line_datasets: ChartDataset<'line'>[] = $derived.by(() => {
+		if (
+			selected_solution === null ||
+			annual_limit_data === null ||
+			cumulative_limit_data === null
+		) {
 			return [];
 		}
 
-		if (selected_subdivision || limit_data === null) {
-			return filtered_data as unknown as ChartDataset<'bar'>[];
+		let limit_data: ParseResult<any> | null = null;
+		if (
+			division_variable == get_variable_name('carbon_emissions_annual', selected_solution?.version)
+		) {
+			limit_data = annual_limit_data.data;
+		} else {
+			limit_data = cumulative_limit_data.data;
 		}
 
-		if (filtered_data.length == 1) {
-			filtered_data[0].label = division_variable;
+		if (limit_data?.data == null || limit_data.data.length == 0) {
+			return [];
 		}
 
 		let filtered_limit_data = filter_and_aggregate_data(
@@ -364,13 +332,18 @@
 		);
 
 		if (filtered_limit_data.length == 0) {
-			return filtered_data as unknown as ChartDataset<'bar'>[];
+			return [];
 		}
 
 		filtered_limit_data[0].label =
 			selected_cumulation == 'Annual' ? 'Annual Emissions Limit' : 'Carbon Emissions Budget';
 		filtered_limit_data[0].type = 'line';
-		return filtered_data.concat(filtered_limit_data) as unknown as ChartDataset<'bar' | 'line'>[];
+
+		return filtered_limit_data as unknown as ChartDataset<'line'>[];
+	});
+
+	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
+		return (bar_datasets as ChartDataset<'bar' | 'line'>[]).concat(line_datasets);
 	});
 </script>
 
@@ -384,6 +357,7 @@
 			bind:years
 			bind:loading={solution_loading}
 			disabled={fetching || solution_loading}
+			solution_selected={on_solution_selected}
 		/>
 	</FilterSection>
 	{#if !solution_loading && selected_solution}
@@ -448,7 +422,7 @@
 				<span class="visually-hidden">Loading...</span>
 			</div>
 		</div>
-	{:else if filtered_data != null && selected_solution != null}
+	{:else if selected_solution != null}
 		{#if datasets.length == 0 || selected_years.length == 0}
 			<div class="text-center">No data with this selection.</div>
 		{:else}
