@@ -55,9 +55,7 @@
 	};
 
 	onDestroy(() => {
-		if (chart !== undefined) {
-			chart.destroy();
-		}
+		chart?.destroy();
 	});
 
 	export function zoom_rect(min: number, max: number) {
@@ -65,6 +63,10 @@
 			return;
 		}
 		chart.zoomScale('x', { min, max });
+	}
+
+	function resetZoom() {
+		chart?.resetZoom();
 	}
 
 	let modal_open = $state(false);
@@ -118,12 +120,7 @@
 				<i class="bi bi-info"></i>
 				<div class="visually-hidden">Show Help for Zoom</div>
 			</button>
-			<button
-				class="btn btn-secondary"
-				onclick={() => {
-					chart?.resetZoom();
-				}}
-			>
+			<button class="btn btn-secondary" onclick={resetZoom}>
 				<i class="bi bi-house"></i>
 				<div class="visually-hidden">Reset zoom</div>
 			</button>
