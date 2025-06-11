@@ -265,7 +265,7 @@
 
 						// Demand is plotted in a different way than the other plots
 						let color = next_color();
-						let bg_color = color.replace(')', ', 1)');
+						let bg_color = color.replace('rgb', 'rgba').replace(')', ', 0.5)');
 
 						if (key == 'demand') {
 							return {
@@ -300,7 +300,8 @@
 	});
 </script>
 
-<h2>The Energy Balance</h2>
+<h1 class="mt-2 mb-4">The Energy Balance Storage &ndash; Nodal</h1>
+
 <Filters>
 	<FilterSection title="Solution Selection">
 		<SolutionFilter

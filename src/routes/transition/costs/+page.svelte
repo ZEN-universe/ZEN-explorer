@@ -485,7 +485,7 @@
 	});
 </script>
 
-<h2>Costs</h2>
+<h1 class="mt-2 mb-4">The Transition Pathway &ndash; Costs</h1>
 
 <Filters>
 	<FilterSection title="Solution Selection">

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Chart, ChartDataset, ChartOptions } from 'chart.js';
+	import { onMount, tick, untrack } from 'svelte';
 
 	import ToggleButton from '$components/ToggleButton.svelte';
 	import SolutionFilter from '$components/SolutionFilter.svelte';
@@ -8,16 +9,15 @@
 	import Dropdown from '$components/Dropdown.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
+	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_full_ts } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import type { ActivatedSolution, ComponentTotal, Row } from '$lib/types';
-	import FilterRow from '$components/FilterRow.svelte';
-	import { onMount, tick, untrack } from 'svelte';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 
-	// Data variables that are not reactive because of their size
+	// All but one data variable are non-reactive because of their size
 	let levelResponse: ComponentTotal | null = $state(null);
 	let chargeResponse: ComponentTotal | null = null;
 	let dischargeResponse: ComponentTotal | null = null;
@@ -25,19 +25,16 @@
 	let inflowResponse: ComponentTotal | null = null;
 	let units: { [carrier: string]: string } = $state({});
 
-	// Triggers to re-process data
-	let fetchNumber: number = $state(0);
-	let processNumber: number = 0;
-
 	let years: number[] = $state([]);
 	const window_sizes: string[] = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
 
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_carrier: string | null = $state(null);
-	let selected_locations: string[] = $state([]);
-	let selected_subdivision: boolean = $state(true);
 	let selected_year: string = $state('');
 	let selected_window_size: string = $state('Hourly');
+	let selected_subdivision: boolean = $state(true);
+	let selected_technologies: string[] = $state([]);
+	let selected_locations: string[] = $state([]);
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
@@ -135,7 +132,6 @@
 	}
 
 	let locations: string[] = $derived.by(() => {
-		fetchNumber; // Trigger
 		if (!levelResponse?.data) {
 			return [];
 		}
@@ -143,7 +139,6 @@
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		fetchNumber; // Trigger
 		if (!levelResponse?.data || !selected_solution) {
 			return [];
 		}
@@ -156,7 +151,6 @@
 	});
 
 	let technologies: string[] = $derived.by(() => {
-		fetchNumber; // Trigger
 		if (!levelResponse?.data || !selected_solution || carriers.length === 0) {
 			return [];
 		}
@@ -167,13 +161,19 @@
 	});
 
 	$effect(() => {
+		technologies;
+		untrack(() => {
+			selected_technologies = technologies;
+		});
+	});
+
+	$effect(() => {
 		locations;
 		untrack(() => {
 			selected_locations = locations;
-			update_flow_datasets();
 		});
 	});
-	
+
 	$effect(() => {
 		carriers;
 		untrack(() => {
@@ -183,7 +183,7 @@
 			}
 		});
 	});
-	
+
 	$effect(() => {
 		years;
 		untrack(() => {
@@ -197,10 +197,12 @@
 	$effect(() => {
 		// Triggers
 		selected_carrier;
+		selected_subdivision;
+		selected_technologies;
 		selected_locations;
-		untrack(update_flow_datasets)
-	})
-	
+		untrack(update_flow_datasets);
+	});
+
 	// Set URL parameters
 	onMount(() => {
 		selected_carrier = get_url_param('carrier') || selected_carrier;
@@ -213,7 +215,7 @@
 		selected_year;
 		selected_carrier;
 		selected_window_size;
-		
+
 		tick().then(() => {
 			update_url_params({
 				year: selected_year,
@@ -285,7 +287,7 @@
 	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
 		if (
 			selected_locations.length == 0 ||
-			technologies.length == 0 ||
+			selected_technologies.length == 0 ||
 			!levelResponse?.data ||
 			!chargeResponse?.data ||
 			!dischargeResponse?.data ||
@@ -295,7 +297,7 @@
 			return [];
 		}
 
-		let dataset_selector = { technology: technologies };
+		let dataset_selector = { technology: selected_technologies };
 		let datasets_aggregates = { node: selected_locations };
 
 		let filtered_data = filter_and_aggregate_data(
@@ -333,16 +335,20 @@
 				fill: 'origin',
 				stepped: true
 			}
-		] as unknown as ChartDataset<'bar' | 'line'>[];
+		] as unknown as ChartDataset<'line'>[];
 	});
 
 	let flow_datasets: ChartDataset<'bar' | 'line'>[] = $state([]);
 	function update_flow_datasets() {
-		if (selected_solution === null || fetching || selected_locations.length == 0 || technologies.length == 0) {
+		if (
+			selected_solution === null ||
+			fetching ||
+			selected_locations.length == 0 ||
+			selected_technologies.length == 0
+		) {
 			flow_datasets = [];
 			return;
 		}
-		processNumber = fetchNumber;
 
 		if (
 			!levelResponse?.data ||
@@ -355,7 +361,7 @@
 			return;
 		}
 
-		let dataset_selector = { technology: technologies };
+		let dataset_selector = { technology: selected_technologies };
 		let datasets_aggregates = { node: selected_locations };
 
 		let [
@@ -418,22 +424,22 @@
 			{
 				data: charge_filtered_data,
 				label: 'Flow Storage Charge',
-				borderColor: 'blue'
+				borderColor: 'rgb(54, 162, 235)'
 			},
 			{
 				data: discharge_filtered_data,
 				label: 'Flow Storage Discharge',
-				borderColor: 'red'
+				borderColor: 'rgb(255, 99, 132)'
 			},
 			{
 				data: inflow_filtered_data,
 				label: 'Flow Storage Inflow',
-				borderColor: 'red'
+				borderColor: 'rgb(255, 99, 132)'
 			},
 			{
 				data: spillage_filtered_data,
 				label: 'Flow Storage Spillage',
-				borderColor: 'red'
+				borderColor: 'rgb(255, 99, 132)'
 			}
 		]
 			.map(({ data, label, borderColor }) => {
@@ -446,7 +452,9 @@
 					),
 					label: label,
 					type: 'line',
+					fill: 'origin',
 					borderColor: borderColor,
+					backgroundColor: borderColor.replace('rgb', 'rgba').replace(')', ', 0.5)'),
 					stepped: true
 				} as ChartDataset<'line'>;
 			})
@@ -454,7 +462,8 @@
 	}
 </script>
 
-<h2>The Energy Balance Storage</h2>
+<h1 class="mt-2 mb-4">The Energy Balance &ndash; Storage</h1>
+
 <Filters>
 	<FilterSection title="Solution Selection">
 		<SolutionFilter
@@ -504,6 +513,8 @@
 						<ToggleButton {formId} bind:value={selected_subdivision}></ToggleButton>
 					{/snippet}
 				</FilterRow>
+				<AllCheckbox label="Technologies" elements={technologies} bind:value={selected_technologies}
+				></AllCheckbox>
 				<AllCheckbox label="Node" elements={locations} bind:value={selected_locations}
 				></AllCheckbox>
 			</FilterSection>
