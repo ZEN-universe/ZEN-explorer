@@ -53,11 +53,8 @@ export interface ReferenceCarrier {
 export interface ScenarioDetail {
 	system: System;
 	reference_carrier: ReferenceCarrier;
-	carriers_import: string[];
-	carriers_export: string[];
 	carriers_input: { [key: string]: string[] };
 	carriers_output: { [key: string]: string[] };
-	carriers_demand: string[];
 	edges: { [key: string]: string };
 }
 

@@ -13,7 +13,7 @@
 
 	import { get_variable_name } from '$lib/variables';
 	import { get_component_total } from '$lib/temple';
-	import { filter_and_aggregate_data, rename_field, to_options } from '$lib/utils';
+	import { filter_and_aggregate_data, remove_duplicates, rename_field, to_options } from '$lib/utils';
 	import type { ActivatedSolution, ComponentTotal } from '$lib/types';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
 
@@ -182,24 +182,18 @@
 		if (selected_solution == null || !fetched_cost_carrier?.data) {
 			return [];
 		}
-		let set_cost_carriers = new Set<string>(
+		return remove_duplicates(
 			fetched_cost_carrier.data.data.map((row) => row[combined_name])
 		);
-		// TODO: Get the carriers from the available datasets (loaded in fetch_data)
-		return selected_solution!.detail.carriers_import
-			.concat(selected_solution!.detail.carriers_export)
-			.filter((i) => set_cost_carriers.has(i));
 	});
 
 	let demand_carriers: string[] = $derived.by(() => {
 		if (selected_solution == null || !fetched_cost_shed_demand?.data) {
 			return [];
 		}
-		let set_demand_carriers = new Set<string>(
+		return remove_duplicates(
 			fetched_cost_shed_demand.data.data.map((row) => row[combined_name])
 		);
-		// TODO: Get the carriers from the available datasets (loaded in fetch_data)
-		return selected_solution!.detail.carriers_demand.filter((i) => set_demand_carriers.has(i));
 	});
 
 	let locations: string[] = $derived.by(() => {
