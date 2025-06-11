@@ -4,7 +4,7 @@
 	import type { Action } from 'svelte/action';
 	import Modal from './Modal.svelte';
 	import { onDestroy } from 'svelte';
-	import type { ChartDataset, ChartOptions, ChartType, Plugin } from 'chart.js/auto';
+	import type { ChartDataset, ChartOptions, ChartType, Plugin, PluginChartOptions } from 'chart.js/auto';
 
 	Chart.register(zoomPlugin);
 
@@ -35,7 +35,7 @@
 			type: type,
 			data: {
 				labels: labels,
-				datasets: datasets
+				datasets: $state.snapshot(datasets) as ChartDataset<typeof type>[]
 			},
 			options: options,
 			plugins: plugins
@@ -47,7 +47,7 @@
 			}
 			chart.data = {
 				labels: labels,
-				datasets: datasets
+				datasets: $state.snapshot(datasets) as ChartDataset<typeof type>[]
 			};
 			Object.assign(chart.options, options);
 			chart.update();
