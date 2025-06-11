@@ -4,7 +4,7 @@
 	import type { Action } from 'svelte/action';
 	import Modal from './Modal.svelte';
 	import { onDestroy } from 'svelte';
-	import type { ChartDataset, ChartOptions, ChartType, Plugin, PluginChartOptions } from 'chart.js/auto';
+	import type { ChartDataset, ChartOptions, ChartType, Plugin } from 'chart.js/auto';
 
 	Chart.register(zoomPlugin);
 
