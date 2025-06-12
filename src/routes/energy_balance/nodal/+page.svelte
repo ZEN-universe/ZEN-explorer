@@ -106,16 +106,38 @@
 	});
 
 	$effect(() => {
-		selected_node = nodes[0] || null;
-		selected_carrier = carriers[0] || null;
-		selected_year = years.length > 0 ? years[0].toString() : null;
+		years;
+		untrack(() => {
+			if (years.length > 0 && (selected_year == null || !years.includes(Number(selected_year)))) {
+				selected_year = years[0].toString();
+			}
+		});
+	});
+	$effect(() => {
+		nodes;
+		untrack(() => {
+			if (nodes.length > 0 && (selected_node == null || !nodes.includes(selected_node))) {
+				selected_node = nodes[0];
+			}
+		});
+	});
+	$effect(() => {
+		carriers;
+		untrack(() => {
+			if (
+				carriers.length > 0 &&
+				(selected_carrier == null || !carriers.includes(selected_carrier))
+			) {
+				selected_carrier = carriers[0];
+			}
+		});
 	});
 
 	$effect(() => {
 		selected_solution;
+		selected_year;
 		selected_node;
 		selected_carrier;
-		selected_year;
 		selected_window_size;
 		untrack(fetch_data);
 	});
@@ -300,7 +322,7 @@
 	});
 </script>
 
-<h1 class="mt-2 mb-4">The Energy Balance Storage &ndash; Nodal</h1>
+<h1 class="mt-2 mb-4">The Energy Balance &ndash; Nodal</h1>
 
 <Filters>
 	<FilterSection title="Solution Selection">

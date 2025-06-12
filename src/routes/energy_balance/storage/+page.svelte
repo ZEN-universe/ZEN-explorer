@@ -475,16 +475,6 @@
 	</FilterSection>
 	{#if selected_solution}
 		<FilterSection title="Variable Selection">
-			<FilterRow label="Carrier">
-				{#snippet content(formId)}
-					<Dropdown
-						{formId}
-						options={to_options(carriers)}
-						bind:value={selected_carrier}
-						disabled={fetching || solution_loading}
-					></Dropdown>
-				{/snippet}
-			</FilterRow>
 			<FilterRow label="Year">
 				{#snippet content(formId)}
 					<Dropdown
@@ -501,6 +491,16 @@
 						{formId}
 						options={to_options(window_sizes)}
 						bind:value={selected_window_size}
+						disabled={fetching || solution_loading}
+					></Dropdown>
+				{/snippet}
+			</FilterRow>
+			<FilterRow label="Carrier">
+				{#snippet content(formId)}
+					<Dropdown
+						{formId}
+						options={to_options(carriers)}
+						bind:value={selected_carrier}
 						disabled={fetching || solution_loading}
 					></Dropdown>
 				{/snippet}

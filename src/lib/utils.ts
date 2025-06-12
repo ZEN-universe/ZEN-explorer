@@ -1,56 +1,6 @@
 import type { Row, DatasetSelectors, Dataset, DatasetContainer } from '$lib/types';
 
 /**
- * Renames the column of a Papaparsed CSV
- * @param papa_result Papaparsed CSV
- * @param old_name Old name of the column
- * @param new_name New name of the column
- */
-export function rename_field(
-	papa_result: Papa.ParseResult<any>,
-	old_name: string,
-	new_name: string
-) {
-	for (let i of papa_result.data) {
-		let new_val = Object.getOwnPropertyDescriptor(i, old_name);
-
-		if (new_val === undefined) {
-			continue;
-		}
-
-		Object.defineProperty(i, new_name, new_val);
-		delete i[old_name];
-	}
-}
-
-/**
- * This function takes a new column name and a list of pairs of an old column name and a Papaparsed CSV.
- * It renames the old column name of the CSV into the new CSV and finally adds all the parsed data into one CSV.
- * For example, if you call the function with ("new_name", [["old_name_1", CSV1], ["old_name_2", CSV2]])
- * it will rename the column "old_name_1" in the CSV1 into "new_name" and rename the column "old_name_2" of the CSV2 into "new_name" and group all the rows into one list.
- * @param new_name
- * @param group_data
- * @returns
- */
-export function group_data(
-	new_name: string,
-	group_data: [string, Papa.ParseResult<any>][]
-): Papa.ParseResult<any> {
-	let ans: Papa.ParseResult<any> | undefined = undefined;
-
-	for (let group_pair of group_data) {
-		rename_field(group_pair[1], group_pair[0], new_name);
-		if (ans === undefined) {
-			ans = structuredClone(group_pair[1]);
-		} else {
-			ans.data = ans.data.concat(group_pair[1].data);
-		}
-	}
-
-	return ans!;
-}
-
-/**
  * This function takes a set of rows and creates aggregated plots out of these rows. The result can be directly used in d3 plots.
  *
  * @param data - An array of row objects of the form {<field_name>: <field_value>, ..., <year>: value}. For example:
@@ -209,6 +159,11 @@ export function remove_duplicates<T>(array: T[]): T[] {
 	return Array.from(new Set(array));
 }
 
+/**
+ * Converts an array of strings to an array of objects with value and label properties used for `Dropdown` options.
+ * @param arr array of strings to be converted to options
+ * @returns
+ */
 export function to_options(arr: string[]): { value: string; label: string }[] {
 	return arr.map((item) => ({
 		value: item,

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
 	import type { ChartDataset, ChartOptions } from 'chart.js';
+	import type { ParseResult } from 'papaparse';
 
 	import SolutionFilter from '$components/SolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
@@ -13,9 +14,9 @@
 
 	import { get_variable_name } from '$lib/variables';
 	import { get_component_total } from '$lib/temple';
-	import { filter_and_aggregate_data, remove_duplicates, rename_field, to_options } from '$lib/utils';
-	import type { ActivatedSolution, ComponentTotal } from '$lib/types';
+	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
+	import type { ActivatedSolution } from '$lib/types';
 
 	const combined_name = 'Techology / Carrier';
 	const capex_suffix = ' (Capex)';
@@ -41,11 +42,11 @@
 	let selected_conversion_technologies: string[] = $state([]);
 	let selected_aggregation: string = $state('Location');
 
-	let fetched_cost_carbon: ComponentTotal | null = $state(null);
-	let fetched_cost_carrier: ComponentTotal | null = $state(null);
-	let fetched_capex: ComponentTotal | null = $state(null);
-	let fetched_opex: ComponentTotal | null = $state(null);
-	let fetched_cost_shed_demand: ComponentTotal | null = $state(null);
+	let fetched_cost_carbon: ParseResult<any> | null = $state(null);
+	let fetched_cost_carrier: ParseResult<any> | null = $state(null);
+	let fetched_capex: ParseResult<any> | null = $state(null);
+	let fetched_opex: ParseResult<any> | null = $state(null);
+	let fetched_cost_shed_demand: ParseResult<any> | null = $state(null);
 	let units: { [carrier: string]: string } = $state({});
 
 	let solution_loading: boolean = $state(false);
@@ -148,8 +149,8 @@
 			return new Set<string>();
 		}
 		return new Set([
-			...(fetched_capex.data?.data.map((row) => row[combined_name]) || []),
-			...(fetched_opex.data?.data.map((row) => row[combined_name]) || [])
+			...(fetched_capex.data.map((row) => row[combined_name]) || []),
+			...(fetched_opex.data.map((row) => row[combined_name]) || [])
 		]);
 	});
 
@@ -182,18 +183,14 @@
 		if (selected_solution == null || !fetched_cost_carrier?.data) {
 			return [];
 		}
-		return remove_duplicates(
-			fetched_cost_carrier.data.data.map((row) => row[combined_name])
-		);
+		return remove_duplicates(fetched_cost_carrier.data.map((row) => row[combined_name]));
 	});
 
 	let demand_carriers: string[] = $derived.by(() => {
 		if (selected_solution == null || !fetched_cost_shed_demand?.data) {
 			return [];
 		}
-		return remove_duplicates(
-			fetched_cost_shed_demand.data.data.map((row) => row[combined_name])
-		);
+		return remove_duplicates(fetched_cost_shed_demand.data.map((row) => row[combined_name]));
 	});
 
 	let locations: string[] = $derived.by(() => {
@@ -206,19 +203,6 @@
 	});
 
 	// Reset selected values when options change
-	function track_changes(selection: string[], available: string[]) {
-		available;
-		untrack(() => {
-			if (available.length > 0 && selection.length === 0 && !fetching) {
-				selection = available;
-			}
-		});
-	}
-	$effect(() => track_changes(selected_transport_technologies, transport_technologies));
-	$effect(() => track_changes(selected_conversion_technologies, conversion_technologies));
-	$effect(() => track_changes(selected_storage_technologies, storage_technologies));
-	$effect(() => track_changes(selected_cost_carriers, cost_carriers));
-	$effect(() => track_changes(selected_demand_carriers, demand_carriers));
 	$effect(() => {
 		transport_technologies;
 		untrack(() => {
@@ -259,6 +243,7 @@
 			}
 		});
 	});
+
 	$effect(() => {
 		selected_locations = locations;
 	});
@@ -317,18 +302,33 @@
 		fetch_data();
 	}
 
+	function rename_fields(
+		papa_result: ParseResult<any> | null,
+		fields: string[][]
+	): ParseResult<any> | null {
+		if (!papa_result || !papa_result.data) return papa_result;
+		papa_result.data = papa_result.data.map((row) => {
+			return fields.reduce((acc, [old_name, new_name]) => {
+				if (!(old_name in row)) return acc;
+				const { [old_name]: oldValue, ...rest } = acc;
+				return { ...rest, [new_name]: oldValue };
+			}, row);
+		});
+		return papa_result;
+	}
+
 	async function fetch_data() {
 		if (selected_solution == null) {
 			return;
 		}
 		fetching = true;
 
-		[
-			fetched_capex,
-			fetched_opex,
-			fetched_cost_carbon,
-			fetched_cost_carrier,
-			fetched_cost_shed_demand
+		let [
+			response_capex,
+			response_opex,
+			response_cost_carbon,
+			response_cost_carrier,
+			response_cost_shed_demand
 		] = await Promise.all(
 			[
 				'capex_yearly',
@@ -348,16 +348,21 @@
 		);
 
 		// "Standardize" all series names
-		rename_field(fetched_cost_carrier.data!, 'node', 'location');
-		rename_field(fetched_cost_shed_demand.data!, 'node', 'location');
-		rename_field(fetched_opex.data!, 'technology', combined_name);
-		rename_field(fetched_capex.data!, 'technology', combined_name);
-		rename_field(fetched_cost_carrier.data!, 'carrier', combined_name);
-		rename_field(fetched_cost_shed_demand.data!, 'carrier', combined_name);
+		fetched_capex = rename_fields(response_capex.data, [['technology', combined_name]]);
+		fetched_opex = rename_fields(response_opex.data, [['technology', combined_name]]);
+		fetched_cost_carbon = response_cost_carbon.data;
+		fetched_cost_carrier = rename_fields(response_cost_carrier.data, [
+			['node', 'location'],
+			['carrier', combined_name]
+		]);
+		fetched_cost_shed_demand = rename_fields(response_cost_shed_demand.data, [
+			['node', 'location'],
+			['carrier', combined_name]
+		]);
 
-		if (fetched_capex.unit?.data) {
+		if (response_capex.unit?.data) {
 			units = Object.fromEntries(
-				fetched_capex.unit.data.map((u) => [u.technology, u[0] || u.units])
+				response_capex.unit.data.map((u) => [u.technology, u[0] || u.units])
 			);
 		}
 
@@ -378,7 +383,7 @@
 		const variableToDataMap = [
 			{
 				key: 'capex',
-				data: (fetched_capex?.data?.data || []).map((item) => {
+				data: (fetched_capex?.data || []).map((item) => {
 					return {
 						...item,
 						[combined_name]: item[combined_name] + capex_suffix
@@ -387,7 +392,7 @@
 			},
 			{
 				key: 'opex',
-				data: (fetched_opex?.data?.data || []).map((item) => {
+				data: (fetched_opex?.data || []).map((item) => {
 					return {
 						...item,
 						[combined_name]: item[combined_name] + opex_suffix
@@ -396,14 +401,14 @@
 			},
 			{
 				key: 'carrier',
-				data: (fetched_cost_carrier?.data?.data || []).filter((i) =>
+				data: (fetched_cost_carrier?.data || []).filter((i) =>
 					selected_cost_carriers.includes(i[combined_name])
 				)
 			},
 			{
 				key: 'shed_demand',
 				data:
-					(fetched_cost_shed_demand?.data?.data || []).filter((i) =>
+					(fetched_cost_shed_demand?.data || []).filter((i) =>
 						selected_demand_carriers.includes(i[combined_name])
 					) || null
 			}
@@ -463,13 +468,13 @@
 		let line_data: ChartDataset<'line'>[] = [];
 		if (
 			fetched_cost_carbon?.data &&
-			fetched_cost_carbon.data.data.length > 0 &&
+			fetched_cost_carbon.data.length > 0 &&
 			variables.carbon_emission.show
 		) {
 			line_data = [
 				{
 					label: 'Total Carbon Costs',
-					data: fetched_cost_carbon.data!.data[0],
+					data: fetched_cost_carbon.data[0],
 					type: 'bar'
 				}
 			] as unknown as ChartDataset<'line'>[];
