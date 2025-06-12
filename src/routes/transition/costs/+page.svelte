@@ -166,16 +166,20 @@
 		if (selected_solution == null) {
 			return [];
 		}
-		return selected_solution.detail.system.set_conversion_technologies.filter((t) =>
-			capex_opex_technologies.has(t)
+		return remove_duplicates(
+			selected_solution.detail.system.set_conversion_technologies.filter((t) =>
+				capex_opex_technologies.has(t)
+			)
 		);
 	});
 	let storage_technologies: string[] = $derived.by(() => {
 		if (selected_solution == null) {
 			return [];
 		}
-		return selected_solution.detail.system.set_storage_technologies.filter((t) =>
-			capex_opex_technologies.has(t)
+		return remove_duplicates(
+			selected_solution.detail.system.set_storage_technologies.filter((t) =>
+				capex_opex_technologies.has(t)
+			)
 		);
 	});
 

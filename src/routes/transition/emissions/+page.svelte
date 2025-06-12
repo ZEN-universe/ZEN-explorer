@@ -174,6 +174,8 @@
 			return;
 		}
 
+		fetching = true;
+
 		[
 			technology_data,
 			carrier_data,
@@ -224,6 +226,8 @@
 				years.map((year) => [year, cumulative_limit_data!.data!.data[0][years[0]]])
 			);
 		}
+
+		fetching = false;
 	}
 
 	let dataset_selector: { [key: string]: string[] } = $derived.by(() => {
@@ -422,11 +426,11 @@
 				<span class="visually-hidden">Loading...</span>
 			</div>
 		</div>
-	{:else if selected_solution != null}
-		{#if datasets.length == 0 || selected_years.length == 0}
-			<div class="text-center">No data with this selection.</div>
-		{:else}
-			<BarPlot type="bar" options={plot_options} {datasets} {plot_name}></BarPlot>
-		{/if}
+	{:else if selected_solution == null}
+		<div class="text-center">No solution selected</div>
+	{:else if datasets.length == 0 || selected_years.length == 0}
+		<div class="text-center">No data with this selection.</div>
+	{:else}
+		<BarPlot type="bar" options={plot_options} {datasets} {plot_name}></BarPlot>
 	{/if}
 </div>
