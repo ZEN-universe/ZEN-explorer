@@ -51,7 +51,11 @@
 		if (unit_data === null) {
 			return '';
 		}
-		return unit_data.data[0][0];
+		let unit_entry = unit_data.data.find((entry: any) => entry['carrier'] === selected_carrier);
+		if (unit_entry) {
+			return unit_entry[0] || unit_entry['units'] || '';
+		}
+		return unit_data.data[0][0] || unit_data.data[0]['units'] || '';
 	});
 	const plot_options: ChartOptions = $derived({
 		animation: false,
