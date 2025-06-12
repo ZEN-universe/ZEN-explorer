@@ -26,3 +26,8 @@ vite.config.ts.timestamp-*
 # IDE
 /.idea
 /.vscode
+
+# Playwright
+/playwright-report/
+/blob-report/
+/playwright/.cache/
