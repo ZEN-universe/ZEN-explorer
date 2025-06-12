@@ -2,8 +2,9 @@
 	import type { Solution, SolutionDetail, ActivatedSolution } from '$lib/types';
 	import { get_solutions, get_solution_detail } from '$lib/temple';
 	import { onMount } from 'svelte';
-	import { get_url_param, replace_url_params } from '$lib/url_params.svelte';
+	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 	import { remove_duplicates } from '$lib/utils';
+	import FilterRow from './FilterRow.svelte';
 
 	interface Props {
 		carriers?: string[];
@@ -13,7 +14,7 @@
 		selected_solution: ActivatedSolution | null;
 		loading?: boolean;
 		disabled?: boolean;
-		solution_selected: (selected_solution: ActivatedSolution | null) => void;
+		solution_selected?: (selected_solution: ActivatedSolution | null) => void;
 	}
 
 	let {
@@ -84,6 +85,8 @@
 		if (Object.keys(solutionDetail.scenarios).length == 1) {
 			activeScenario = Object.keys(solutionDetail.scenarios)[0];
 			dispatch_event();
+		} else if (activeScenario != '' && activeScenario in solutionDetail.scenarios) {
+			dispatch_event();
 		} else {
 			selected_solution = null;
 		}
@@ -99,14 +102,15 @@
 		selected_solution = {
 			solution_name: activeSolutionName,
 			scenario_name: activeScenario,
-			detail: solutionDetail!.scenarios[activeScenario],
+			detail: solutionDetail.scenarios[activeScenario],
 			components: solutionDetail.components,
 			version: solutionDetail.version
 		};
 
-		replace_url_params({
+		update_url_params({
 			solution: selected_solution.solution_name,
-			scenario: selected_solution.scenario_name
+			scenario:
+				Object.keys(solutionDetail.scenarios).length > 1 ? selected_solution.scenario_name : null
 		});
 
 		carriers = selected_solution.detail.system.set_carriers.slice();
@@ -118,14 +122,14 @@
 				selected_solution!.detail.system.reference_year
 		);
 
-		solution_selected(selected_solution);
+		solution_selected?.(selected_solution);
 	}
 </script>
 
-<div class="row align-items-end">
-	<div class="col-4">
-		<h3>Solution</h3>
+<FilterRow label="Solution">
+	{#snippet content(id)}
 		<select
+			{id}
 			class="form-select"
 			bind:value={activeFirstLevel}
 			{disabled}
@@ -137,11 +141,13 @@
 				</option>
 			{/each}
 		</select>
-	</div>
-	{#if secondLevels.length > 0}
-		<div class="col-4">
-			<h3>Subsolution</h3>
+	{/snippet}
+</FilterRow>
+{#if secondLevels.length > 0}
+	<FilterRow label="Subsolution">
+		{#snippet content(id)}
 			<select
+				{id}
 				class="form-select"
 				bind:value={activeSecondLevel}
 				{disabled}
@@ -153,19 +159,26 @@
 					</option>
 				{/each}
 			</select>
-		</div>
-	{/if}
+		{/snippet}
+	</FilterRow>
+{/if}
 
-	{#if solutionDetail && Object.keys(solutionDetail.scenarios).length > 1}
-		<div class="col-4">
-			<h3>Scenario</h3>
-			<select class="form-select" bind:value={activeScenario} {disabled} onchange={dispatch_event}>
-				{#each Object.keys(solutionDetail.scenarios) as scenario}
+{#if solutionDetail && Object.keys(solutionDetail.scenarios).length > 1}
+	<FilterRow label="Secnario">
+		{#snippet content(id)}
+			<select
+				{id}
+				class="form-select"
+				bind:value={activeScenario}
+				{disabled}
+				onchange={dispatch_event}
+			>
+				{#each Object.keys(solutionDetail?.scenarios || []) as scenario}
 					<option value={scenario}>
 						{scenario}
 					</option>
 				{/each}
 			</select>
-		</div>
-	{/if}
-</div>
+		{/snippet}
+	</FilterRow>
+{/if}

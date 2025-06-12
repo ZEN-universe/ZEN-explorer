@@ -50,6 +50,7 @@
 		<div class="collapse navbar-collapse" id="navbarSupportedContent">
 			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 				<li class="nav-item dropdown">
+					<!-- svelte-ignore a11y_invalid_attribute -->
 					<a
 						class="nav-link dropdown-toggle"
 						href="#"
@@ -71,6 +72,7 @@
 					</ul>
 				</li>
 				<li class="nav-item dropdown">
+					<!-- svelte-ignore a11y_invalid_attribute -->
 					<a
 						class="nav-link dropdown-toggle"
 						href="#"

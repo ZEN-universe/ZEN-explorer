@@ -1,32 +1,23 @@
 <script lang="ts">
 	interface Props {
-		label: string;
+		formId: string;
 		options: { label: string; value: string }[];
-		value?: any;
+		value: string | null;
 		disabled?: boolean;
 		onUpdate?: (value: any) => void;
 	}
 
-	let {
-		label,
-		options,
-		value = $bindable(options.length > 0 ? options[0].value : undefined),
-		disabled = false,
-		onUpdate
-	}: Props = $props();
+	let { formId, options, value = $bindable(), disabled = false, onUpdate }: Props = $props();
 
-	function update_selection() {
+	function update_selection(event: Event) {
 		onUpdate?.(value);
 	}
 </script>
 
-<h3>{label}</h3>
-<div class="dropdown">
-	<select class="form-select" bind:value onchange={() => update_selection()} {disabled}>
-		{#each options as option}
-			<option value={option.value}>
-				{option.label}
-			</option>
-		{/each}
-	</select>
-</div>
+<select id={formId} class="form-select" bind:value onchange={update_selection} {disabled}>
+	{#each options as option}
+		<option value={option.value}>
+			{option.label}
+		</option>
+	{/each}
+</select>

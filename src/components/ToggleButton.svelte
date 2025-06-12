@@ -1,15 +1,16 @@
 <script lang="ts">
 	interface Props {
+		formId: string;
 		value: boolean;
 		texts?: string[];
-		change: () => void;
+		onUpdate?: () => void;
 	}
 
-	let { value = $bindable(), texts = ['on', 'off'], change }: Props = $props();
+	let { formId, value = $bindable(), texts = ['on', 'off'], onUpdate }: Props = $props();
 	let id = $props.id();
 
 	function dispatchEvent() {
-		change();
+		onUpdate?.();
 	}
 </script>
 
@@ -18,7 +19,7 @@
 		class="form-check-input"
 		type="checkbox"
 		role="switch"
-		id={`switch-check-${id}`}
+		id={formId}
 		bind:checked={value}
 		onchange={dispatchEvent}
 	/>

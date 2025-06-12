@@ -1,77 +1,85 @@
 <script lang="ts">
-	import SolutionFilter from '../../../components/SolutionFilter.svelte';
-	import AllCheckbox from '../../../components/AllCheckbox.svelte';
-	import BarPlot from '../../../components/BarPlot.svelte';
-	import Dropdown from '../../../components/Dropdown.svelte';
+	import type { Chart, ChartDataset, ChartOptions } from 'chart.js';
+	import { onMount, tick, untrack } from 'svelte';
 
-	import type { ActivatedSolution, Row } from '$lib/types';
+	import ToggleButton from '$components/ToggleButton.svelte';
+	import SolutionFilter from '$components/SolutionFilter.svelte';
+	import AllCheckbox from '$components/AllCheckbox.svelte';
+	import BarPlot from '$components/BarPlot.svelte';
+	import Dropdown from '$components/Dropdown.svelte';
+	import Filters from '$components/Filters.svelte';
+	import FilterSection from '$components/FilterSection.svelte';
+	import FilterRow from '$components/FilterRow.svelte';
+
 	import { get_full_ts } from '$lib/temple';
-	import { filter_and_aggregate_data, remove_duplicates } from '$lib/utils';
-	import Papa from 'papaparse';
+	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
-	import ToggleButton from '../../../components/ToggleButton.svelte';
-	import type { ChartConfiguration } from 'chart.js';
-	import Filters from '../../../components/Filters.svelte';
-	import FilterSection from '../../../components/FilterSection.svelte';
+	import type { ActivatedSolution, ComponentTotal, Row } from '$lib/types';
+	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 
-	interface StringList {
-		[key: string]: string[];
-	}
-
-	let data: Papa.ParseResult<Row> | null = $state(null);
-	let chargeData: Papa.ParseResult<Row> | null = $state(null);
-	let dischargeData: Papa.ParseResult<Row> | null = $state(null);
-	let spillageData: Papa.ParseResult<Row> | null = $state(null);
-	let inflowData: Papa.ParseResult<Row> | null = $state(null);
-	let filtered_data: any[] | null = $state(null);
-	let charge_filtered_data: any[] | null = $state(null);
-	let discharge_filtered_data: any[] | null = $state(null);
-	let inflow_filtered_data: any[] | null = $state(null);
-	let spillage_filtered_data: any[] | null = $state(null);
-
-	let carriers: string[] = $state([]);
-	let locations: string[] = $state([]);
-	let technologies: string[] = $state([]);
-
+	// All but one data variable are non-reactive because of their size
+	let levelResponse: ComponentTotal | null = $state(null);
+	let chargeResponse: ComponentTotal | null = null;
+	let dischargeResponse: ComponentTotal | null = null;
+	let spillageResponse: ComponentTotal | null = null;
+	let inflowResponse: ComponentTotal | null = null;
 	let units: { [carrier: string]: string } = $state({});
 
+	let years: number[] = $state([]);
+	const window_sizes: string[] = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
+
 	let selected_solution: ActivatedSolution | null = $state(null);
-	const selected_variable: string = 'storage_level';
 	let selected_carrier: string | null = $state(null);
-	let selected_technologies: string[] = [];
+	let selected_year: string = $state('');
+	let selected_window_size: string = $state('Hourly');
+	let selected_subdivision: boolean = $state(true);
+	let selected_technologies: string[] = $state([]);
 	let selected_locations: string[] = $state([]);
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
-	let plot_name: string = $state('');
-	let plot_name_flows: string = $state('');
-	let subdivision: boolean = $state(true);
-	let years: number[] = $state([]);
-	let selected_year: string = $state('');
-
-	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'].map((size) => ({
-		label: size,
-		value: size
-	}));
-	let selected_window_size = $state('Hourly');
 
 	let level_plot = $state<BarPlot>();
 	let flow_plot = $state<BarPlot>();
 
-	let datasets: any[] = $state([]);
-	let flow_datasets: any[] = $state([]);
-	let labels: string[] = $state([]);
-	let unit: string = $derived(technologies.length > 0 ? units[technologies[0]] : '');
+	let unit: string = $derived.by(() => (technologies.length > 0 ? units[technologies[0]] : ''));
+	let plot_name: string = $derived.by(() => {
+		if (!selected_solution || !selected_solution.solution_name) {
+			return '';
+		}
+		let solution_names = selected_solution.solution_name.split('.');
+		return [
+			solution_names[solution_names.length - 1],
+			selected_solution.scenario_name,
+			'storage_level',
+			selected_carrier
+		].join('_');
+	});
+	let plot_name_flows: string = $derived(plot_name + '_flows');
+	let plot_options: ChartOptions = $derived(
+		get_options('Storage Level', (event) =>
+			flow_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max)
+		)
+	);
+	let plot_options_flows: ChartOptions = $derived(
+		get_options('Storage Flow', (event) =>
+			level_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max)
+		)
+	);
 
-	let plot_config: ChartConfiguration = $derived({
-		type: 'line',
-		data: { datasets: datasets, labels: labels },
-		options: {
+	function get_options(
+		label: string,
+		on_zoom: (event: { chart: Chart }) => void
+	): ChartOptions<'bar'> {
+		return {
 			animation: false,
 			normalized: true,
 			elements: {
 				point: {
 					radius: 0
+				},
+				line: {
+					borderWidth: 1
 				}
 			},
 			responsive: true,
@@ -88,20 +96,17 @@
 					beginAtZero: true,
 					title: {
 						display: true,
-						text: `Storage Level [${unit}]`
+						text: `${label} [${unit}]`
 					}
 				}
 			},
-			borderWidth: 1,
 			plugins: {
 				zoom: {
 					pan: {
 						enabled: true,
 						modifierKey: 'ctrl',
 						mode: 'x',
-						onPanComplete: (event) => {
-							flow_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
-						}
+						onPanComplete: on_zoom
 					},
 					zoom: {
 						drag: {
@@ -111,9 +116,7 @@
 							enabled: true
 						},
 						mode: 'x',
-						onZoomComplete: (event) => {
-							flow_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
-						}
+						onZoomComplete: on_zoom
 					},
 					limits: {
 						x: { minRange: 10 }
@@ -125,272 +128,180 @@
 				mode: 'nearest',
 				axis: 'x'
 			}
-		}
-	});
-	let plot_config_flows: ChartConfiguration = $derived({
-		counter: 1,
-		type: 'line',
-		data: { datasets: flow_datasets, labels: labels },
-		options: {
-			animation: false,
-			normalized: true,
-			elements: {
-				point: {
-					radius: 0
-				}
-			},
-			responsive: true,
-			scales: {
-				x: {
-					stacked: true,
-					title: {
-						display: true,
-						text: 'Time'
-					}
-				},
-				y: {
-					type: 'linear',
-					stacked: true,
-					beginAtZero: true,
-					title: {
-						display: true,
-						text: `Storage Flow [${unit}]`
-					}
-				}
-			},
-			borderWidth: 1,
-			plugins: {
-				zoom: {
-					pan: {
-						enabled: true,
-						modifierKey: 'ctrl',
-						mode: 'x',
-						onPanComplete: (event) => {
-							level_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
-						}
-					},
-					zoom: {
-						drag: {
-							enabled: true
-						},
-						wheel: {
-							enabled: true
-						},
-						mode: 'x',
-						onZoomComplete: (event) => {
-							level_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max);
-						}
-					},
-					limits: {
-						x: { minRange: 10 }
-					}
-				}
-			},
-			interaction: {
-				intersect: false,
-				mode: 'nearest',
-				axis: 'x'
-			}
-		}
-	});
-
-	/**
-	 * This function sets all the necessary variables back to the initial state in order to reset the plot.
-	 *
-	 */
-	function reset_data_selection() {
-		selected_locations = locations;
-		selected_technologies = technologies;
-		// selected_aggregation = 'node';
+		};
 	}
 
-	/**
-	 * This function fetches the the data from the api of the selected values in the form
-	 */
+	let locations: string[] = $derived.by(() => {
+		if (!levelResponse?.data) {
+			return [];
+		}
+		return remove_duplicates(levelResponse.data.data.map((a) => a.node)).sort();
+	});
+
+	let carriers: string[] = $derived.by(() => {
+		if (!levelResponse?.data || !selected_solution) {
+			return [];
+		}
+		let all_technologies = Array.from(levelResponse.data.data.map((a) => a.technology));
+		return remove_duplicates(
+			levelResponse.data.data
+				.filter((element) => all_technologies.includes(element.technology))
+				.map((element) => selected_solution!.detail.reference_carrier[element.technology])
+		);
+	});
+
+	let technologies: string[] = $derived.by(() => {
+		if (!levelResponse?.data || !selected_solution || carriers.length === 0) {
+			return [];
+		}
+		let all_technologies = remove_duplicates(levelResponse.data.data.map((a: any) => a.technology));
+		return all_technologies.filter(
+			(technology) => selected_solution!.detail.reference_carrier[technology] == selected_carrier
+		);
+	});
+
+	$effect(() => {
+		technologies;
+		untrack(() => {
+			selected_technologies = technologies;
+		});
+	});
+
+	$effect(() => {
+		locations;
+		untrack(() => {
+			selected_locations = locations;
+		});
+	});
+
+	$effect(() => {
+		carriers;
+		untrack(() => {
+			if (carriers.length > 0 && (!selected_carrier || !carriers.includes(selected_carrier))) {
+				selected_carrier = carriers[0];
+				update_flow_datasets();
+			}
+		});
+	});
+
+	$effect(() => {
+		years;
+		untrack(() => {
+			if (years.length > 0 && (!selected_year || !years.includes(Number(selected_year)))) {
+				selected_year = years[0].toString();
+				update_flow_datasets();
+			}
+		});
+	});
+
+	$effect(() => {
+		// Triggers
+		selected_carrier;
+		selected_subdivision;
+		selected_technologies;
+		selected_locations;
+		untrack(update_flow_datasets);
+	});
+
+	// Set URL parameters
+	onMount(() => {
+		selected_carrier = get_url_param('carrier') || selected_carrier;
+		selected_year = get_url_param('year') || selected_year;
+		selected_window_size = get_url_param('window_size') || selected_window_size;
+	});
+
+	$effect(() => {
+		// Triggers
+		selected_year;
+		selected_carrier;
+		selected_window_size;
+
+		tick().then(() => {
+			update_url_params({
+				year: selected_year,
+				carrier: selected_carrier,
+				window_size: selected_window_size
+			});
+		});
+	});
+
+	$effect(() => {
+		fetch_data();
+	});
+
 	async function fetch_data() {
-		data = null;
-		if (selected_solution === null) {
+		if (selected_solution === null || !selected_year) {
 			return;
 		}
+
+		fetching = true;
+
 		// Calculate index of year
 		let year_index = Math.floor(
-			(parseInt(selected_year) - selected_solution.detail.system.reference_year) /
+			(Number(selected_year) - selected_solution.detail.system.reference_year) /
 				selected_solution.detail.system.interval_between_years
 		);
+		let window_size =
+			{
+				Daily: 24,
+				Weekly: 168,
+				Monthly: 720
+			}[selected_window_size] || 1; // Default to hourly (1 hour)
 
-		let window_size = 1;
+		[levelResponse, chargeResponse, dischargeResponse, spillageResponse, inflowResponse] =
+			await Promise.all(
+				[
+					'storage_level',
+					'flow_storage_charge',
+					'flow_storage_discharge',
+					'flow_storage_spillage',
+					'flow_storage_inflow'
+				].map((variable) => {
+					return get_full_ts(
+						selected_solution!.solution_name,
+						get_variable_name(variable, selected_solution!.version),
+						selected_solution!.scenario_name,
+						year_index,
+						window_size
+					);
+				})
+			);
 
-		switch (selected_window_size) {
-			case 'Daily':
-				window_size = 24;
-				break;
-			case 'Weekly':
-				window_size = 168;
-				break;
-			case 'Monthly':
-				window_size = 720;
-				break;
-		}
-
-		const [levelResponse, chargeResponse, dischargeResponse, spillageResponse, inflowResponse] =
-			await Promise.all([
-				get_full_ts(
-					selected_solution!.solution_name,
-					get_variable_name('storage_level'),
-					selected_solution!.scenario_name,
-					year_index,
-					window_size
-				),
-				get_full_ts(
-					selected_solution!.solution_name,
-					get_variable_name('flow_storage_charge'),
-					selected_solution!.scenario_name,
-					year_index,
-					window_size
-				),
-				get_full_ts(
-					selected_solution!.solution_name,
-					get_variable_name('flow_storage_discharge'),
-					selected_solution!.scenario_name,
-					year_index,
-					window_size
-				),
-				get_full_ts(
-					selected_solution!.solution_name,
-					get_variable_name('flow_storage_spillage'),
-					selected_solution!.scenario_name,
-					year_index,
-					window_size
-				),
-				get_full_ts(
-					selected_solution!.solution_name,
-					get_variable_name('flow_storage_inflow'),
-					selected_solution!.scenario_name,
-					year_index,
-					window_size
-				)
-			]);
-
-		data = levelResponse.data;
 		if (levelResponse.unit?.data) {
 			units = Object.fromEntries(
 				levelResponse.unit.data.map((u) => [u.technology, u[0] || u.units])
 			);
 		}
-		chargeData = chargeResponse.data;
-		dischargeData = dischargeResponse.data;
-		spillageData = spillageResponse.data;
-		inflowData = inflowResponse.data;
-	}
-
-	/**
-	 * This function is called is called whenever the solution filter sends a change event.
-	 * It resets all the selected values of the form.
-	 */
-	async function solution_changed() {
-		if (selected_solution === null) {
-			return;
-		}
-
-		fetching = true;
-		selected_year = years.length > 0 ? years[0].toString() : '';
-
-		await fetch_data();
-
-		update_carriers();
-		update_technologies();
-		update_locations();
-		reset_data_selection();
-		update_plot_data();
-		fetching = false;
-	}
-
-	/**
-	 * This function is called, when the carrier is changed. It updates all the necessary values for further selection in the form.
-	 */
-	async function data_changed() {
-		fetching = true;
-
-		await fetch_data();
-
-		update_technologies();
-		update_locations();
-		reset_data_selection();
-		update_plot_data();
 
 		fetching = false;
+		update_flow_datasets();
 	}
 
-	/**
-	 * This function updates the avaible locations for the current variable selection.
-	 */
-	function update_locations() {
-		locations = remove_duplicates(data!.data.map((a) => a.node));
-		selected_locations = locations;
-	}
-
-	/**
-	 * This function updates the available carriers for the current variable selection.
-	 */
-	function update_carriers() {
-		carriers = [];
-		if (!data) {
-			return;
+	let labels: string[] = $derived.by(() => {
+		if (datasets.length === 0) {
+			return [];
 		}
-		let all_technologies = Array.from(data!.data.map((a) => a.technology));
-		// Add all the available carriers to the set of carriers for the current set of technologies
-		data!.data.forEach((element) => {
-			let current_technology = element.technology;
-			let current_carrier = selected_solution!.detail.reference_carrier[current_technology];
+		return Object.keys(datasets[0].data);
+	});
 
-			if (!carriers.includes(current_carrier) && all_technologies.includes(element.technology)) {
-				carriers.push(current_carrier);
-			}
-		});
-
-		if (carriers.length > 0) {
-			selected_carrier = carriers[0];
-		}
-	}
-
-	/**
-	 * This function updates the available technologies depending on the currently selected carrier and resets the currently selected technologies.
-	 */
-	function update_technologies() {
-		let all_technologies = remove_duplicates(data!.data.map((a: any) => a.technology));
-
-		technologies = all_technologies.filter(
-			(technology) => selected_solution?.detail.reference_carrier[technology] == selected_carrier
-		);
-		selected_technologies = technologies;
-	}
-
-	/**
-	 * This function updates the data for the plot depending on the currently selected values.
-	 */
-	function update_plot_data() {
+	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
 		if (
 			selected_locations.length == 0 ||
 			selected_technologies.length == 0 ||
-			data === null ||
-			chargeData === null ||
-			dischargeData === null ||
-			inflowData === null ||
-			spillageData === null
+			!levelResponse?.data ||
+			!chargeResponse?.data ||
+			!dischargeResponse?.data ||
+			!inflowResponse?.data ||
+			!spillageResponse?.data
 		) {
-			datasets = [];
-			labels = [];
-			plot_name = '';
-			return;
+			return [];
 		}
 
-		let dataset_selector: StringList = {};
-		let datasets_aggregates: StringList = {};
-		dataset_selector['technology'] = selected_technologies;
-		datasets_aggregates['node'] = selected_locations;
+		let dataset_selector = { technology: selected_technologies };
+		let datasets_aggregates = { node: selected_locations };
 
-		filtered_data = filter_and_aggregate_data(
-			data.data,
+		let filtered_data = filter_and_aggregate_data(
+			levelResponse.data.data,
 			dataset_selector,
 			datasets_aggregates,
 			[],
@@ -403,227 +314,208 @@
 				fill: 'origin'
 			};
 		});
-		charge_filtered_data = filter_and_aggregate_data(
-			chargeData.data,
-			dataset_selector,
-			datasets_aggregates,
-			[],
-			false,
-			'line',
-			'_charge'
-		).map((dataset) => {
-			return {
-				...dataset,
-				stepped: true,
-				fill: 'origin'
-			};
-		});
-		discharge_filtered_data = filter_and_aggregate_data(
-			dischargeData.data,
-			dataset_selector,
-			datasets_aggregates,
-			[],
-			false,
-			'line',
-			'_discharge'
-		).map((dataset) => {
-			let data: { [key: string]: number } = {};
-			for (let i in dataset.data) {
-				data[i] = dataset.data[i] > 0 ? -dataset.data[i] : dataset.data[i];
-			}
-			return {
-				data,
-				label: dataset.label,
-				type: dataset.type,
-				stepped: true,
-				fill: 'origin'
-			};
-		});
-		spillage_filtered_data = filter_and_aggregate_data(
-			spillageData.data,
-			dataset_selector,
-			datasets_aggregates,
-			[],
-			false,
-			'line',
-			'_spillage'
-		).map((dataset) => {
-			let data: { [key: string]: number } = {};
-			for (let i in dataset.data) {
-				data[i] = dataset.data[i] > 0 ? -dataset.data[i] : dataset.data[i];
-			}
-			return {
-				data,
-				label: dataset.label,
-				type: dataset.type,
-				stepped: true,
-				fill: 'origin'
-			};
-		});
-		inflow_filtered_data = filter_and_aggregate_data(
-			inflowData.data,
-			dataset_selector,
-			datasets_aggregates,
-			[],
-			false,
-			'line',
-			'_inflow'
-		).map((dataset) => {
-			return {
-				...dataset,
-				stepped: true,
-				fill: 'origin'
-			};
-		});
 
-		datasets = filtered_data;
-		flow_datasets = charge_filtered_data
-			.concat(discharge_filtered_data)
-			.concat(inflow_filtered_data)
-			.concat(spillage_filtered_data);
-		labels = Object.keys(filtered_data[0].data);
-
-		if (subdivision) {
-			datasets = filtered_data;
-			labels = Object.keys(filtered_data[0].data);
-		} else {
-			let new_data: { [key: string]: number } = {};
-			for (const i in filtered_data[0].data) {
-				new_data[i] = filtered_data
-					.map((j) => j.data[i])
-					.reduce((partialSum, a) => partialSum + a, 0);
-			}
-			let new_charge: { [key: string]: number } = {};
-			for (const i in charge_filtered_data[0].data) {
-				new_charge[i] = charge_filtered_data
-					.map((j) => j.data[i])
-					.reduce((partialSum, a) => partialSum + a, 0);
-			}
-			let new_discharge: { [key: string]: number } = {};
-			for (const i in discharge_filtered_data[0].data) {
-				new_discharge[i] = discharge_filtered_data
-					.map((j) => j.data[i])
-					.reduce((partialSum, a) => partialSum + a, 0);
-			}
-			let new_inflow: { [key: string]: number } = {};
-			for (const i in inflowData.data[0]) {
-				new_inflow[i] = inflowData.data
-					.map((j) => j.data[i])
-					.reduce((partialSum, a) => partialSum + a, 0);
-			}
-			let new_spillage: { [key: string]: number } = {};
-			for (const i in spillageData.data[0]) {
-				new_spillage[i] = spillageData.data
-					.map((j) => j.data[i])
-					.reduce((partialSum, a) => partialSum + a, 0);
-			}
-
-			datasets = [
-				{
-					data: Object.values(new_data),
-					label: 'Storage level',
-					type: 'line',
-					borderColor: 'black',
-					fill: 'origin',
-					stepped: true
-				}
-			];
-			flow_datasets = [
-				{
-					data: Object.values(new_charge),
-					label: 'Flow Storage Charge',
-					type: 'line',
-					borderColor: 'blue',
-					stepped: true
-				},
-				{
-					data: Object.values(new_discharge),
-					label: 'Flow Storage Discharge',
-					type: 'line',
-					borderColor: 'red',
-					stepped: true
-				},
-				{
-					data: Object.values(new_inflow),
-					label: 'Flow Storage Discharge',
-					type: 'line',
-					borderColor: 'red',
-					stepped: true
-				},
-				{
-					data: Object.values(new_spillage),
-					label: 'Flow Storage Discharge',
-					type: 'line',
-					borderColor: 'red',
-					stepped: true
-				}
-			];
-			labels = Object.keys(new_data);
+		if (selected_subdivision) {
+			return filtered_data as unknown as ChartDataset<'bar' | 'line'>[];
 		}
 
-		let solution_names = selected_solution!.solution_name.split('.');
+		let new_data: { [key: string]: number } = {};
+		for (const i in filtered_data[0].data) {
+			new_data[i] = filtered_data
+				.map((j) => j.data[i])
+				.reduce((partialSum, a) => partialSum + a, 0);
+		}
 
-		plot_name = [
-			solution_names[solution_names?.length - 1],
-			selected_solution?.scenario_name,
-			selected_variable,
-			selected_carrier
-		].join('_');
+		return [
+			{
+				data: Object.values(new_data),
+				label: 'Storage level',
+				type: 'line',
+				borderColor: 'black',
+				fill: 'origin',
+				stepped: true
+			}
+		] as unknown as ChartDataset<'line'>[];
+	});
+
+	let flow_datasets: ChartDataset<'bar' | 'line'>[] = $state([]);
+	function update_flow_datasets() {
+		if (
+			selected_solution === null ||
+			fetching ||
+			selected_locations.length == 0 ||
+			selected_technologies.length == 0
+		) {
+			flow_datasets = [];
+			return;
+		}
+
+		if (
+			!levelResponse?.data ||
+			!chargeResponse?.data ||
+			!dischargeResponse?.data ||
+			!inflowResponse?.data ||
+			!spillageResponse?.data
+		) {
+			flow_datasets = [];
+			return;
+		}
+
+		let dataset_selector = { technology: selected_technologies };
+		let datasets_aggregates = { node: selected_locations };
+
+		let [
+			charge_filtered_data,
+			discharge_filtered_data,
+			inflow_filtered_data,
+			spillage_filtered_data
+		] = [
+			{
+				data: chargeResponse.data,
+				label_suffix: '_charge',
+				negate: false
+			},
+			{
+				data: dischargeResponse.data,
+				label_suffix: '_discharge',
+				negate: true
+			},
+			{
+				data: inflowResponse.data,
+				label_suffix: '_inflow',
+				negate: false
+			},
+			{
+				data: spillageResponse.data,
+				label_suffix: '_spillage',
+				negate: true
+			}
+		].map(({ data, label_suffix, negate }) => {
+			return filter_and_aggregate_data(
+				data.data,
+				dataset_selector,
+				datasets_aggregates,
+				[],
+				false,
+				'line',
+				label_suffix
+			).map((dataset) => {
+				return {
+					data: Object.fromEntries(
+						Object.entries(dataset.data).map(([k, v]) => [k, negate && v > 0 ? -v : v])
+					),
+					label: dataset.label,
+					type: dataset.type,
+					stepped: true,
+					fill: 'origin'
+				};
+			});
+		});
+
+		if (selected_subdivision) {
+			flow_datasets = charge_filtered_data
+				.concat(discharge_filtered_data)
+				.concat(inflow_filtered_data)
+				.concat(spillage_filtered_data) as unknown as ChartDataset<'bar' | 'line'>[];
+			return;
+		}
+
+		flow_datasets = [
+			{
+				data: charge_filtered_data,
+				label: 'Flow Storage Charge',
+				borderColor: 'rgb(54, 162, 235)'
+			},
+			{
+				data: discharge_filtered_data,
+				label: 'Flow Storage Discharge',
+				borderColor: 'rgb(255, 99, 132)'
+			},
+			{
+				data: inflow_filtered_data,
+				label: 'Flow Storage Inflow',
+				borderColor: 'rgb(255, 99, 132)'
+			},
+			{
+				data: spillage_filtered_data,
+				label: 'Flow Storage Spillage',
+				borderColor: 'rgb(255, 99, 132)'
+			}
+		]
+			.map(({ data, label, borderColor }) => {
+				if (data.length === 0) {
+					return null;
+				}
+				return {
+					data: Object.keys(data[0].data).map((key) =>
+						data.reduce((sum, d) => sum + d.data[key], 0)
+					),
+					label: label,
+					type: 'line',
+					fill: 'origin',
+					borderColor: borderColor,
+					backgroundColor: borderColor.replace('rgb', 'rgba').replace(')', ', 0.5)'),
+					stepped: true
+				} as ChartDataset<'line'>;
+			})
+			.filter((d) => d !== null);
 	}
 </script>
 
-<h2>The Energy Balance Storage</h2>
+<h1 class="mt-2 mb-4">The Energy Balance &ndash; Storage</h1>
+
 <Filters>
 	<FilterSection title="Solution Selection">
 		<SolutionFilter
 			bind:selected_solution
 			bind:loading={solution_loading}
 			bind:years
-			solution_selected={solution_changed}
 			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>
-	{#if !solution_loading && selected_solution}
+	{#if selected_solution}
 		<FilterSection title="Variable Selection">
-			{#if carriers.length > 0}
-				<Dropdown
-					label="Carrier"
-					options={carriers.map((carrier) => ({
-						label: carrier,
-						value: carrier
-					}))}
-					bind:value={selected_carrier}
-					disabled={fetching || solution_loading}
-					onUpdate={data_changed}
-				></Dropdown>
-				<Dropdown
-					label="Year"
-					options={years.map((year) => ({
-						label: year.toString(),
-						value: year.toString()
-					}))}
-					bind:value={selected_year}
-					onUpdate={data_changed}
-					disabled={fetching || solution_loading}
-				></Dropdown>
-				<Dropdown
-					label="Smoothing Window Size"
-					options={window_sizes}
-					bind:value={selected_window_size}
-					onUpdate={data_changed}
-					disabled={fetching || solution_loading}
-				></Dropdown>
-			{/if}
+			<FilterRow label="Year">
+				{#snippet content(formId)}
+					<Dropdown
+						{formId}
+						options={to_options(years.map((year) => year.toString()))}
+						bind:value={selected_year}
+						disabled={fetching || solution_loading}
+					></Dropdown>
+				{/snippet}
+			</FilterRow>
+			<FilterRow label="Smoothing Window Size">
+				{#snippet content(formId)}
+					<Dropdown
+						{formId}
+						options={to_options(window_sizes)}
+						bind:value={selected_window_size}
+						disabled={fetching || solution_loading}
+					></Dropdown>
+				{/snippet}
+			</FilterRow>
+			<FilterRow label="Carrier">
+				{#snippet content(formId)}
+					<Dropdown
+						{formId}
+						options={to_options(carriers)}
+						bind:value={selected_carrier}
+						disabled={fetching || solution_loading}
+					></Dropdown>
+				{/snippet}
+			</FilterRow>
 		</FilterSection>
-		{#if data && selected_carrier && technologies.length > 0 && locations.length > 0}
+		{#if selected_carrier && locations.length > 0}
 			<FilterSection title="Data Selection">
-				<h3>Technology Subdivision</h3>
-				<ToggleButton bind:value={subdivision} change={update_plot_data}></ToggleButton>
-				<AllCheckbox
-					label="Node"
-					elements={locations}
-					bind:value={selected_locations}
-					onUpdate={update_plot_data}
+				<FilterRow label="Technology Subdivision">
+					{#snippet content(formId)}
+						<ToggleButton {formId} bind:value={selected_subdivision}></ToggleButton>
+					{/snippet}
+				</FilterRow>
+				<AllCheckbox label="Technologies" elements={technologies} bind:value={selected_technologies}
+				></AllCheckbox>
+				<AllCheckbox label="Node" elements={locations} bind:value={selected_locations}
 				></AllCheckbox>
 			</FilterSection>
 		{/if}
@@ -642,16 +534,25 @@
 		<div class="text-center">No carriers with this selection.</div>
 	{:else if selected_solution == null}
 		<div class="text-center">No solution selected.</div>
-	{:else if filtered_data == null}
-		<div class="text-center">No data with this selection.</div>
 	{:else if locations.length == 0}
 		<div class="text-center">No locations with this selection.</div>
-	{:else if filtered_data.length == 0}
+	{:else if datasets.length == 0}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot config={plot_config} {plot_name} zoom={true} bind:this={level_plot}></BarPlot>
 		<BarPlot
-			config={plot_config_flows}
+			type="line"
+			{labels}
+			{datasets}
+			options={plot_options}
+			{plot_name}
+			zoom={true}
+			bind:this={level_plot}
+		></BarPlot>
+		<BarPlot
+			type="line"
+			{labels}
+			datasets={flow_datasets}
+			options={plot_options_flows}
 			plot_name={plot_name_flows}
 			zoom={true}
 			bind:this={flow_plot}

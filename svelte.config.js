@@ -23,6 +23,9 @@ const config = {
 		paths: {
 			base: '',
 			relative: false
+		},
+		alias: {
+			$components: 'src/components'
 		}
 	}
 };
