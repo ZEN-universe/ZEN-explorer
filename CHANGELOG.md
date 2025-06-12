@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0 (2025-06-12)
+
+- Refactor all pages to use more of Svelte's reactivity system.
+- [Emissions] Fix wrong unit.
+
 ## 0.5.8 (2025-05-20)
 
 - [Production] Choose unit based on units from the demand component.
