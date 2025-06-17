@@ -23,7 +23,7 @@
 		bind:checked={value}
 		onchange={dispatchEvent}
 	/>
-	<label class="form-check-label" for={`switch-check-${id}`}>
+	<label class="form-check-label" for={formId}>
 		{value ? texts[0] : texts[1]}
 	</label>
 </div>

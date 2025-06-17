@@ -105,6 +105,10 @@
 	let selected_nodes: string[] = $state([]);
 	let selected_years: number[] = $state([]);
 
+	// First update flags
+	let first_conversion_technology_update = $state(true);
+	let first_storage_technology_update = $state(true);
+
 	// States
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
@@ -203,7 +207,13 @@
 	$effect(() => {
 		conversion_technologies;
 		untrack(() => {
-			if (conversion_technologies.length > 0 && selected_conversion_technologies.length == 0) {
+			// If it's the first conversion technology update, only set the selected technologies if they are empty.
+			if (first_conversion_technology_update) {
+				first_conversion_technology_update = false;
+				if (selected_conversion_technologies.length == 0 && conversion_technologies.length > 0) {
+					selected_conversion_technologies = conversion_technologies;
+				}
+			} else if (conversion_technologies.length > 0) {
 				selected_conversion_technologies = conversion_technologies;
 			}
 		});
@@ -212,7 +222,12 @@
 	$effect(() => {
 		storage_technologies;
 		untrack(() => {
-			if (storage_technologies.length > 0 && selected_storage_technologies.length == 0) {
+			if (first_storage_technology_update) {
+				first_storage_technology_update = false;
+				if (selected_storage_technologies.length == 0 && storage_technologies.length > 0) {
+					selected_storage_technologies = storage_technologies;
+				}
+			} else if (storage_technologies.length > 0) {
 				selected_storage_technologies = storage_technologies;
 			}
 		});
@@ -232,7 +247,9 @@
 			variable.subdivision = subdivision !== null ? subdivision === 'true' : variable.subdivision;
 		});
 		selected_conversion_technologies = get_url_param('conversion_technologies')?.split(',') || [];
+		first_conversion_technology_update = true;
 		selected_storage_technologies = get_url_param('storage_technologies')?.split(',') || [];
+		first_conversion_technology_update = true;
 	});
 
 	$effect(() => {
@@ -269,11 +286,6 @@
 	async function on_solution_changed() {
 		reset_data_selection();
 		await fetch_data();
-	}
-
-	function on_carrier_changed() {
-		selected_conversion_technologies = [];
-		selected_storage_technologies = [];
 	}
 
 	/**
@@ -460,7 +472,6 @@
 							options={to_options(carriers)}
 							bind:value={selected_carrier}
 							disabled={solution_loading || fetching}
-							onUpdate={on_carrier_changed}
 						></Dropdown>
 					{/snippet}
 				</FilterRow>

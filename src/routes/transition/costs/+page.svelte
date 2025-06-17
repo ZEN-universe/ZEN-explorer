@@ -31,6 +31,13 @@
 	let years: number[] = $state([]);
 	const aggregation_options: string[] = ['Location', combined_name];
 
+	let fetched_cost_carbon: ParseResult<any> | null = $state(null);
+	let fetched_cost_carrier: ParseResult<any> | null = $state(null);
+	let fetched_capex: ParseResult<any> | null = $state(null);
+	let fetched_opex: ParseResult<any> | null = $state(null);
+	let fetched_cost_shed_demand: ParseResult<any> | null = $state(null);
+	let units: { [carrier: string]: string } = $state({});
+
 	let selected_locations: string[] = $state([]);
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_years: number[] = $state([]);
@@ -42,12 +49,11 @@
 	let selected_conversion_technologies: string[] = $state([]);
 	let selected_aggregation: string = $state('Location');
 
-	let fetched_cost_carbon: ParseResult<any> | null = $state(null);
-	let fetched_cost_carrier: ParseResult<any> | null = $state(null);
-	let fetched_capex: ParseResult<any> | null = $state(null);
-	let fetched_opex: ParseResult<any> | null = $state(null);
-	let fetched_cost_shed_demand: ParseResult<any> | null = $state(null);
-	let units: { [carrier: string]: string } = $state({});
+	let first_transport_technologies_update: boolean = $state(true);
+	let first_conversion_technologies_update: boolean = $state(true);
+	let first_storage_technologies_update: boolean = $state(true);
+	let first_cost_carriers_update: boolean = $state(true);
+	let first_demand_carriers_update: boolean = $state(true);
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
@@ -98,7 +104,7 @@
 
 	// Plot configuration
 	let plot_name = $derived.by(() => {
-		if (selected_solution == null) {
+		if (!selected_solution) {
 			return '';
 		}
 		let solution_names = selected_solution.solution_name.split('.');
@@ -155,7 +161,7 @@
 	});
 
 	let transport_technologies: string[] = $derived.by(() => {
-		if (selected_solution == null) {
+		if (!selected_solution || !fetched_capex || !fetched_opex) {
 			return [];
 		}
 		return selected_solution.detail.system.set_transport_technologies.filter((t) =>
@@ -163,7 +169,7 @@
 		);
 	});
 	let conversion_technologies: string[] = $derived.by(() => {
-		if (selected_solution == null) {
+		if (!selected_solution || !fetched_capex || !fetched_opex) {
 			return [];
 		}
 		return remove_duplicates(
@@ -173,7 +179,7 @@
 		);
 	});
 	let storage_technologies: string[] = $derived.by(() => {
-		if (selected_solution == null) {
+		if (!selected_solution || !fetched_capex || !fetched_opex) {
 			return [];
 		}
 		return remove_duplicates(
@@ -184,25 +190,25 @@
 	});
 
 	let cost_carriers: string[] = $derived.by(() => {
-		if (selected_solution == null || !fetched_cost_carrier?.data) {
+		if (!selected_solution || !fetched_cost_carrier?.data) {
 			return [];
 		}
 		return remove_duplicates(fetched_cost_carrier.data.map((row) => row[combined_name]));
 	});
 
 	let demand_carriers: string[] = $derived.by(() => {
-		if (selected_solution == null || !fetched_cost_shed_demand?.data) {
+		if (!selected_solution || !fetched_cost_shed_demand?.data) {
 			return [];
 		}
 		return remove_duplicates(fetched_cost_shed_demand.data.map((row) => row[combined_name]));
 	});
 
 	let locations: string[] = $derived.by(() => {
-		if (selected_solution == null) {
+		if (!selected_solution) {
 			return [];
 		}
-		return Object.keys(selected_solution!.detail.edges).concat(
-			selected_solution!.detail.system.set_nodes
+		return Object.keys(selected_solution.detail.edges).concat(
+			selected_solution.detail.system.set_nodes
 		);
 	});
 
@@ -210,7 +216,12 @@
 	$effect(() => {
 		transport_technologies;
 		untrack(() => {
-			if (transport_technologies.length > 0 && selected_transport_technologies.length === 0) {
+			if (first_transport_technologies_update && fetched_capex && fetched_opex) {
+				first_transport_technologies_update = false;
+				if (transport_technologies.length > 0 && selected_transport_technologies.length === 0) {
+					selected_transport_technologies = transport_technologies;
+				}
+			} else if (transport_technologies.length > 0) {
 				selected_transport_technologies = transport_technologies;
 			}
 		});
@@ -218,7 +229,12 @@
 	$effect(() => {
 		conversion_technologies;
 		untrack(() => {
-			if (conversion_technologies.length > 0 && selected_conversion_technologies.length === 0) {
+			if (first_conversion_technologies_update && fetched_capex && fetched_opex) {
+				first_conversion_technologies_update = false;
+				if (conversion_technologies.length > 0 && selected_conversion_technologies.length === 0) {
+					selected_conversion_technologies = conversion_technologies;
+				}
+			} else if (conversion_technologies.length > 0) {
 				selected_conversion_technologies = conversion_technologies;
 			}
 		});
@@ -226,7 +242,12 @@
 	$effect(() => {
 		storage_technologies;
 		untrack(() => {
-			if (storage_technologies.length > 0 && selected_storage_technologies.length === 0) {
+			if (first_storage_technologies_update && fetched_capex && fetched_opex) {
+				first_storage_technologies_update = false;
+				if (storage_technologies.length > 0 && selected_storage_technologies.length === 0) {
+					selected_storage_technologies = storage_technologies;
+				}
+			} else if (storage_technologies.length > 0) {
 				selected_storage_technologies = storage_technologies;
 			}
 		});
@@ -234,7 +255,12 @@
 	$effect(() => {
 		cost_carriers;
 		untrack(() => {
-			if (cost_carriers.length > 0 && selected_cost_carriers.length === 0) {
+			if (first_cost_carriers_update && fetched_cost_carrier) {
+				first_cost_carriers_update = false;
+				if (cost_carriers.length > 0 && selected_cost_carriers.length === 0) {
+					selected_cost_carriers = cost_carriers;
+				}
+			} else if (cost_carriers.length > 0) {
 				selected_cost_carriers = cost_carriers;
 			}
 		});
@@ -242,7 +268,12 @@
 	$effect(() => {
 		demand_carriers;
 		untrack(() => {
-			if (demand_carriers.length > 0 && selected_demand_carriers.length === 0) {
+			if (first_demand_carriers_update && fetched_cost_shed_demand) {
+				first_demand_carriers_update = false;
+				if (demand_carriers.length > 0 && selected_demand_carriers.length === 0) {
+					selected_demand_carriers = demand_carriers;
+				}
+			} else if (demand_carriers.length > 0) {
 				selected_demand_carriers = demand_carriers;
 			}
 		});
@@ -263,10 +294,15 @@
 			variable.subdivision = subdivision !== null ? subdivision === 'true' : variable.subdivision;
 		});
 		selected_transport_technologies = get_url_param('transport_technologies')?.split(',') || [];
+		first_transport_technologies_update = true;
 		selected_conversion_technologies = get_url_param('conversion_technologies')?.split(',') || [];
+		first_conversion_technologies_update = true;
 		selected_storage_technologies = get_url_param('storage_technologies')?.split(',') || [];
+		first_storage_technologies_update = true;
 		selected_cost_carriers = get_url_param('cost_carriers')?.split(',') || [];
+		first_cost_carriers_update = true;
 		selected_demand_carriers = get_url_param('demand_carriers')?.split(',') || [];
+		first_demand_carriers_update = true;
 	});
 
 	$effect(() => {
@@ -299,7 +335,7 @@
 	});
 
 	function solution_changed() {
-		if (selected_solution == null) {
+		if (!selected_solution) {
 			return;
 		}
 
@@ -322,7 +358,7 @@
 	}
 
 	async function fetch_data() {
-		if (selected_solution == null) {
+		if (!selected_solution) {
 			return;
 		}
 		fetching = true;
