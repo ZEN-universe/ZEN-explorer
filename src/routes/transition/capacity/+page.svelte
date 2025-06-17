@@ -25,6 +25,10 @@
 	let data: ParseResult<Row> | null = $state(null);
 
 	const variables: string[] = ['capacity', 'capacity_addition'];
+	const variable_labels: { [key: string]: string } = {
+		capacity: 'Capacity',
+		capacity_addition: 'Capacity Addition'
+	};
 	const technology_types: string[] = ['conversion', 'storage', 'transport'];
 	const storage_type_options = ['energy', 'power'];
 	const aggregation_options = [
@@ -70,7 +74,7 @@
 				stacked: true,
 				title: {
 					display: true,
-					text: `${selected_variable} [${unit}]`
+					text: `${variable_labels[selected_variable]} [${unit}]`
 				}
 			}
 		},
