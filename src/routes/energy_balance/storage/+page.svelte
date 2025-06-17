@@ -454,7 +454,7 @@
 					type: 'line',
 					fill: 'origin',
 					borderColor: borderColor,
-					backgroundColor: borderColor.replace('rgb', 'rgba').replace(')', ', 0.5)'),
+					backgroundColor: borderColor,
 					stepped: true
 				} as ChartDataset<'line'>;
 			})
@@ -485,22 +485,22 @@
 					></Dropdown>
 				{/snippet}
 			</FilterRow>
-			<FilterRow label="Smoothing Window Size">
-				{#snippet content(formId)}
-					<Dropdown
-						{formId}
-						options={to_options(window_sizes)}
-						bind:value={selected_window_size}
-						disabled={fetching || solution_loading}
-					></Dropdown>
-				{/snippet}
-			</FilterRow>
 			<FilterRow label="Carrier">
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
 						options={to_options(carriers)}
 						bind:value={selected_carrier}
+						disabled={fetching || solution_loading}
+					></Dropdown>
+				{/snippet}
+			</FilterRow>
+			<FilterRow label="Smoothing Window Size">
+				{#snippet content(formId)}
+					<Dropdown
+						{formId}
+						options={to_options(window_sizes)}
+						bind:value={selected_window_size}
 						disabled={fetching || solution_loading}
 					></Dropdown>
 				{/snippet}
