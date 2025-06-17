@@ -291,7 +291,7 @@
 
 						// Demand is plotted in a different way than the other plots
 						let color = next_color();
-						let bg_color = color.replace('rgb', 'rgba').replace(')', ', 0.5)');
+						let bg_color = color;
 
 						if (key == 'demand') {
 							return {
@@ -315,8 +315,7 @@
 								backgroundColor: bg_color,
 								stepped: true,
 								cubicInterpolationMode: 'monotone',
-								pointRadius: Object.keys(plot_data.data).length == 1 ? 2 : 0,
-								borderWidth: 2
+								pointRadius: Object.keys(plot_data.data).length == 1 ? 2 : 0
 							} as ChartDataset<'bar' | 'line'>;
 						}
 					})
