@@ -18,8 +18,6 @@
 	import type { ActivatedSolution, ComponentTotal } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 
-	let data: ParseResult<any> | null = $state(null);
-	let limit_data: ParseResult<any> | null = $state(null);
 	let technology_data: ComponentTotal | null = $state(null);
 	let carrier_data: ComponentTotal | null = $state(null);
 	let annual_data: ComponentTotal | null = $state(null);
@@ -62,12 +60,10 @@
 		].join('_');
 	});
 	let unit: string = $derived.by(() => {
-		if (selected_carriers.length == 0) {
-			return '';
-		} else if (selected_subdivision) {
+		if (selected_subdivision) {
 			return Object.values(subdivision_units)[0] || '';
 		} else {
-			return cumulation_units[selected_carriers[0]] || '';
+			return Object.values(cumulation_units)[0] || '';
 		}
 	});
 	let plot_options: ChartOptions = $derived({
@@ -215,6 +211,14 @@
 		if (carrier_data.unit?.data) {
 			subdivision_units = Object.fromEntries(
 				carrier_data.unit.data.map((unit) => {
+					return [unit.carrier, unit[0] || unit.units];
+				})
+			);
+		}
+
+		if (annual_data.unit?.data) {
+			cumulation_units = Object.fromEntries(
+				annual_data.unit.data.map((unit) => {
 					return [unit.carrier, unit[0] || unit.units];
 				})
 			);
