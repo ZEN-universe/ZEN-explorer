@@ -164,7 +164,7 @@
 {/if}
 
 {#if solutionDetail && Object.keys(solutionDetail.scenarios).length > 1}
-	<FilterRow label="Secnario">
+	<FilterRow label="Scenario">
 		{#snippet content(id)}
 			<select
 				{id}
