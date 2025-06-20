@@ -10,6 +10,7 @@
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
+	import { all_colors } from '$lib/colors';
 
 	let topology: Topology | null = $state(null);
 	$effect(() => {
@@ -131,7 +132,7 @@
 	});
 
 	let computePath = $derived(geoPath().projection(projection));
-	const computeColor = scaleOrdinal(schemeCategory10);
+	const computeColor = scaleOrdinal(all_colors());
 	const computePie = d3pie()
 		.sort(null)
 		.value((d: any) => d);
@@ -423,13 +424,13 @@
 		onmousedown={startZoomRectangle}
 		onmouseup={endZoomRectangle}
 		onmouseleave={cancelZoomRectangle}
-		style:background="#91a9cf"
+		style:background="rgb(168, 186, 215)"
 	>
 		{#if !topology}
 			<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Loading...</text>
 		{:else}
 			<g>
-				<path d={land} fill="#b3c497" />
+				<path d={land} style:fill="rgb(195, 208, 174)" />
 				{#if regions != null}
 					<path d={regions} fill="none" stroke="#d3d3d3" stroke-width="1px" />
 				{/if}

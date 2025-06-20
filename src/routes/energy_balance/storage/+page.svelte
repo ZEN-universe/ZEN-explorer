@@ -316,13 +316,13 @@
 		});
 
 		if (selected_subdivision) {
-			return filtered_data as unknown as ChartDataset<'bar' | 'line'>[];
+			return filtered_data as ChartDataset<'bar' | 'line'>[];
 		}
 
 		let new_data: { [key: string]: number } = {};
 		for (const i in filtered_data[0].data) {
 			new_data[i] = filtered_data
-				.map((j) => j.data[i])
+				.map((j) => j.data[i] as number)
 				.reduce((partialSum, a) => partialSum + a, 0);
 		}
 
@@ -335,7 +335,7 @@
 				fill: 'origin',
 				stepped: true
 			}
-		] as unknown as ChartDataset<'line'>[];
+		] as ChartDataset<'line'>[];
 	});
 
 	let flow_datasets: ChartDataset<'bar' | 'line'>[] = $state([]);
@@ -402,7 +402,10 @@
 			).map((dataset) => {
 				return {
 					data: Object.fromEntries(
-						Object.entries(dataset.data).map(([k, v]) => [k, negate && v > 0 ? -v : v])
+						Object.entries(dataset.data).map(([k, v]) => [
+							k,
+							negate ? -(v as number) : (v as number)
+						])
 					),
 					label: dataset.label,
 					type: dataset.type,

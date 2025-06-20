@@ -17,6 +17,7 @@
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
+	import { reset_color_state } from '$lib/colors';
 
 	interface StringList {
 		[key: string]: string[];
@@ -304,6 +305,7 @@
 
 		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
+		reset_color_state();
 		return filter_and_aggregate_data(
 			data.data,
 			dataset_selector,

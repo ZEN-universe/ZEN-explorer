@@ -99,6 +99,9 @@
 						enabled: true
 					},
 					mode: 'x'
+				},
+				limits: {
+					x: { minRange: 10 }
 				}
 			}
 		},
@@ -242,7 +245,7 @@
 				}
 
 				// for (const plot_name in energy_balance_data) {
-				let dataset_selector: { [key: string]: string[] } = {
+				let dataset_selector: Record<string, string[]> = {
 					node: [selected_node!]
 				};
 
@@ -253,7 +256,31 @@
 					};
 				}
 
-				const filtered_data = filter_and_aggregate_data(data.data, dataset_selector, {});
+				// Filter and group rows by label (technology/node/label)
+				const filtered = data.data.filter((row: any) =>
+					Object.entries(dataset_selector).every(([k, v]) => v.includes(row[k]))
+				);
+
+				const grouped = filtered.reduce((acc: Record<string, any[]>, row: any) => {
+					const label = row.technology || row.node || row.label || '';
+					(acc[label] = acc[label] || []).push(row);
+					return acc;
+				}, {});
+
+				const filtered_data = Object.entries(grouped).map(([label, group]) => ({
+					label,
+					data: group.reduce((dataObj: Record<string, number>, row: any) => {
+						for (const key in row) {
+							if (
+								!isNaN(Number(row[key])) &&
+								!['year', 'technology', 'node', 'label'].includes(key)
+							) {
+								dataObj[key] = (dataObj[key] || 0) + Number(row[key]);
+							}
+						}
+						return dataObj;
+					}, {})
+				}));
 
 				// Loop through the different variables
 				return filtered_data
@@ -277,17 +304,6 @@
 								label + ' (transport out)',
 							[get_variable_name('flow_export', version)]: () => 'Export'
 						};
-						if (key in labelMap) {
-							data.label = labelMap[key](data.label);
-						}
-
-						let plot_data: ChartDataset<'line' | 'bar'> = data as unknown as ChartDataset<
-							'line' | 'bar'
-						>;
-
-						// If only one timestep is available, it should be a bar plot
-						let plot_type: 'line' | 'bar' =
-							Object.keys(plot_data.data).length == 1 ? 'bar' : 'line';
 
 						// Demand is plotted in a different way than the other plots
 						let color = next_color();
@@ -295,7 +311,7 @@
 
 						if (key == 'demand') {
 							return {
-								...plot_data,
+								data: Object.values(data.data),
 								label: 'Demand',
 								type: 'line',
 								stack: 'ownCustomStack',
@@ -304,18 +320,18 @@
 								backgroundColor: 'white',
 								borderWidth: 2,
 								stepped: true,
-								pointRadius: Object.keys(plot_data.data).length == 1 ? 2 : 0
+								pointRadius: Object.keys(data.data).length == 1 ? 2 : 0
 							} as ChartDataset<'line'>;
 						} else {
 							return {
-								...plot_data,
-								type: plot_type,
+								data: Object.values(data.data),
+								label: labelMap[key]?.(data.label) || data.label,
 								fill: 'origin',
 								borderColor: color,
 								backgroundColor: bg_color,
 								stepped: true,
 								cubicInterpolationMode: 'monotone',
-								pointRadius: Object.keys(plot_data.data).length == 1 ? 2 : 0
+								pointRadius: Object.keys(data.data).length == 1 ? 2 : 0
 							} as ChartDataset<'bar' | 'line'>;
 						}
 					})
@@ -370,7 +386,7 @@
 					></Dropdown>
 				{/snippet}
 			</FilterRow>
-			<FilterRow label="Smooting Window Size">
+			<FilterRow label="Smoothing Window Size">
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
@@ -393,7 +409,13 @@
 	{:else if datasets.length == 0}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot type="line" options={plot_options} {labels} {datasets} {plot_name} zoom={true}
+		<BarPlot
+			type={datasets[0].data.length == 1 ? 'bar' : 'line'}
+			options={plot_options}
+			{labels}
+			{datasets}
+			{plot_name}
+			zoom={true}
 		></BarPlot>
 	{/if}
 </div>
