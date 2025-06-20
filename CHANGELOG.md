@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.1 (2025-06-20)
+
+- [Storage] Reorder smoothing window size filter.
+- [Nodal] Remove transparency from plot background colors.
+- [Costs, Production] Fix setting of URL parameters for technology selection.
+- [Emissions] Fix unit when subdivision is unset.
+- [Capacity] Change label of yaxis.
+- Use ETH colors in all plots.
+
 ## 0.6.0 (2025-06-12)
 
 - Refactor all pages to use more of Svelte's reactivity system.
