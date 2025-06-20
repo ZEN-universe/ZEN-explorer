@@ -17,6 +17,7 @@
 	import { get_variable_name } from '$lib/variables';
 	import type { ActivatedSolution, ComponentTotal } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
+	import { reset_color_state } from '$lib/colors';
 
 	let technology_data: ComponentTotal | null = $state(null);
 	let carrier_data: ComponentTotal | null = $state(null);
@@ -294,6 +295,7 @@
 			data = cumulative_data.data;
 		}
 
+		reset_color_state();
 		const filtered_data = filter_and_aggregate_data(
 			data.data,
 			dataset_selector,
@@ -306,7 +308,7 @@
 			filtered_data[0].label = division_variable;
 		}
 
-		return filtered_data as unknown as ChartDataset<'bar'>[];
+		return filtered_data as ChartDataset<'bar'>[];
 	});
 
 	let line_datasets: ChartDataset<'line'>[] = $derived.by(() => {
@@ -435,6 +437,12 @@
 	{:else if datasets.length == 0 || selected_years.length == 0}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot type="bar" options={plot_options} {datasets} {plot_name}></BarPlot>
+		<BarPlot
+			type="bar"
+			options={plot_options}
+			labels={selected_years.map((year) => year.toString())}
+			{datasets}
+			{plot_name}
+		></BarPlot>
 	{/if}
 </div>

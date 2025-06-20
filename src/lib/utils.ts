@@ -1,4 +1,6 @@
-import type { Row, DatasetSelectors, Dataset, DatasetContainer } from '$lib/types';
+import type { Row, DatasetSelectors, DatasetContainer } from '$lib/types';
+import type { ChartDataset, ChartType } from 'chart.js';
+import { add_transparency, next_color } from './colors';
 
 /**
  * This function takes a set of rows and creates aggregated plots out of these rows. The result can be directly used in d3 plots.
@@ -36,9 +38,9 @@ export function filter_and_aggregate_data(
 	dataset_aggregations: DatasetSelectors,
 	years_exclude: any[] = [],
 	normalise: boolean = false,
-	plot_type: string = 'bar',
+	plot_type: ChartType = 'bar',
 	label_suffix: string = ''
-): Dataset[] {
+): ChartDataset<'line' | 'bar'>[] {
 	if (data.length == 0) {
 		return [];
 	}
@@ -119,22 +121,18 @@ export function filter_and_aggregate_data(
 		}
 	}
 
-	let ans_datasets: Dataset[] = [];
-
-	// Filter Rows that contain NaNs
-	for (let label in datasets) {
-		if (Object.values(datasets[label]).includes(NaN)) {
-			continue;
-		}
-
-		ans_datasets.push({
-			label: label,
-			data: datasets[label],
-			type: plot_type
-		});
-	}
-
-	return ans_datasets;
+	return Object.entries(datasets)
+		.filter(([, values]) => !Object.values(values).includes(NaN))
+		.map(([label, values]) => {
+			let color = next_color();
+			return {
+				label: label,
+				data: Object.values(values),
+				type: plot_type,
+				borderColor: color,
+				backgroundColor: add_transparency(color)
+			};
+		}) as ChartDataset<'line' | 'bar'>[];
 }
 
 /**

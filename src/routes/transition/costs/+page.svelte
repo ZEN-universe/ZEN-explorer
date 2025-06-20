@@ -17,6 +17,7 @@
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
 	import type { ActivatedSolution } from '$lib/types';
+	import { reset_color_state } from '$lib/colors';
 
 	const combined_name = 'Techology / Carrier';
 	const capex_suffix = ' (Capex)';
@@ -453,7 +454,7 @@
 					) || null
 			}
 		];
-		let grouped_data = variableToDataMap.flatMap(({ key, data }) => {
+		let grouped_data: Record<string, any>[] = variableToDataMap.flatMap(({ key, data }) => {
 			if (!variables[key].show || !data) {
 				return [];
 			}
@@ -468,10 +469,12 @@
 				{ [combined_name]: all_selected_carriers_technologies },
 				[],
 				false
-			).map((item: { label: string; data: any; type: string }) => {
-				item.data['location'] = item.label;
-				item.data[combined_name] = variables[key].label;
-				return item.data;
+			).map((item: ChartDataset<'line' | 'bar'>) => {
+				return {
+					...item.data,
+					location: item.label,
+					[combined_name]: variables[key].label
+				};
 			});
 		});
 
@@ -496,16 +499,17 @@
 		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
 		// Get plot data, as a base we take the grouped data adapted to the cost selection.
-		let bar_data: ChartDataset<'bar'>[] = filter_and_aggregate_data(
+		reset_color_state();
+		let bar_data = filter_and_aggregate_data(
 			grouped_data,
 			dataset_selector,
 			datasets_aggregates,
 			excluded_years,
 			selected_normalization
-		) as unknown as ChartDataset<'bar'>[];
+		);
 
 		// Get total carbon cost data
-		let line_data: ChartDataset<'line'>[] = [];
+		let line_data: ChartDataset<'bar'>[] = [];
 		if (
 			fetched_cost_carbon?.data &&
 			fetched_cost_carbon.data.length > 0 &&
@@ -517,7 +521,7 @@
 					data: fetched_cost_carbon.data[0],
 					type: 'bar'
 				}
-			] as unknown as ChartDataset<'line'>[];
+			];
 		}
 
 		return [...bar_data, ...line_data];
@@ -629,7 +633,13 @@
 		{:else if selected_years.length == 0}
 			<div class="text-center">Please select at least one year.</div>
 		{:else}
-			<BarPlot type="line" options={plot_options} {datasets} {plot_name}></BarPlot>
+			<BarPlot
+				type="line"
+				options={plot_options}
+				{datasets}
+				labels={selected_years.map((year) => year.toString())}
+				{plot_name}
+			></BarPlot>
 		{/if}
 	{/if}
 </div>

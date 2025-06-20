@@ -17,6 +17,7 @@
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
 	import type { ActivatedSolution, Dataset, Row } from '$lib/types';
+	import { reset_color_state } from '$lib/colors';
 
 	// Data
 	let data: (ParseResult<any> | null)[] | null = $state(null);
@@ -379,7 +380,7 @@
 		excluded_years: number[],
 		label: string,
 		suffix: string | undefined,
-		map_fn?: (d: Dataset) => Dataset
+		map_fn?: (d: ChartDataset<'bar' | 'line'>) => ChartDataset<'bar' | 'line'>
 	): ChartDataset<'bar'>[] {
 		if (data === null) return [];
 
@@ -407,7 +408,7 @@
 			filtered[0].label = label;
 		}
 
-		return filtered as unknown as ChartDataset<'bar'>[];
+		return filtered as ChartDataset<'bar'>[];
 	}
 
 	let datasets: ChartDataset<'bar'>[] = $derived.by(() => {
@@ -417,6 +418,7 @@
 
 		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
+		reset_color_state();
 		return variables.flatMap((variable, i) => {
 			if (!variable.show || !data) {
 				return [];
@@ -439,8 +441,8 @@
 				(d) => {
 					return {
 						...d,
-						data: Object.fromEntries(Object.entries(d.data).map(([k, e]) => [k, -e]))
-					};
+						data: Object.values(d.data).map((e) => -e!)
+					} as ChartDataset<'bar'>;
 				}
 			);
 

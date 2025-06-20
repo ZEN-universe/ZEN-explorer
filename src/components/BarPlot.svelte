@@ -35,9 +35,9 @@
 			type: type,
 			data: {
 				labels: labels,
-				datasets: $state.snapshot(datasets) as ChartDataset<typeof type>[]
+				datasets: $state.snapshot(datasets) as ChartDataset[]
 			},
-			options: options,
+			options: $state.snapshot(options) as ChartOptions,
 			plugins: plugins
 		});
 
@@ -47,9 +47,9 @@
 			}
 			chart.data = {
 				labels: labels,
-				datasets: $state.snapshot(datasets) as ChartDataset<typeof type>[]
+				datasets: $state.snapshot(datasets) as ChartDataset[]
 			};
-			Object.assign(chart.options, options);
+			Object.assign(chart.options, $state.snapshot(options) as ChartOptions);
 			chart.update();
 		});
 	};
