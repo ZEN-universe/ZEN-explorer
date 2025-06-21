@@ -141,7 +141,7 @@ export async function get_energy_balance(
  * @param step_year Years between each index
  * @returns Papaparsed CSV
  */
-function parse_csv(data_csv: string, start_year: number = 0, step_year: number = 1) {
+function parse_csv(data_csv: string) {
 	// Get first line of the csv data
 	let first_line = data_csv.slice(0, data_csv.indexOf('\n'));
 
@@ -172,20 +172,8 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
 		data_csv = data_csv.slice(0, -1);
 	}
 
-	// Define preprocess function that translates the years of index to actual years because the transform_headers visits the function twice and therefore does Number(h) * 2 step_year + 2 * start_year
-	function preprocessCSV(input: string): string {
-		let [header, ...lines] = input.split('\n');
-		let headers = header.split(',');
-
-		// Modify numeric headers
-		headers = headers.map((h) =>
-			!isNaN(Number(h)) ? String(Number(h) * step_year + start_year) : h
-		);
-
-		return [headers.join(','), ...lines].join('\n');
-	}
 	// Parse CSV
-	let data: Papa.ParseResult<Row> = Papa.parse(preprocessCSV(data_csv), {
+	let data: Papa.ParseResult<Row> = Papa.parse(data_csv, {
 		delimiter: ',',
 		header: true,
 		newline: '\n'
@@ -208,8 +196,6 @@ export async function get_component_total(
 	solution_name: string,
 	component_name: string,
 	scenario_name: string,
-	start_year: number = 0,
-	step_year: number = 1,
 	year: number = 0
 ): Promise<ComponentTotal> {
 	const fetch_url =
@@ -224,7 +210,7 @@ export async function get_component_total(
 	}
 
 	let component_data = await component_data_request.json();
-	let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv, start_year, step_year);
+	let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv);
 	let unit: Papa.ParseResult<Row> | null = null;
 
 	// Parse unit data if necessary
