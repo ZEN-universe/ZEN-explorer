@@ -149,6 +149,9 @@
 			axis: 'x'
 		}
 	});
+	let labels: string[] = $derived.by(() => {
+		return selected_years.map((year) => year.toString());
+	});
 
 	// Technologies, carriers and locations
 	let capex_opex_technologies: Set<string> = $derived.by(() => {
@@ -516,7 +519,7 @@
 			line_data = [
 				{
 					label: 'Total Carbon Costs',
-					data: fetched_cost_carbon.data[0],
+					data: Object.values(fetched_cost_carbon.data[0]),
 					type: 'bar'
 				}
 			];
@@ -631,13 +634,7 @@
 		{:else if selected_years.length == 0}
 			<div class="text-center">Please select at least one year.</div>
 		{:else}
-			<BarPlot
-				type="line"
-				options={plot_options}
-				{datasets}
-				labels={selected_years.map((year) => year.toString())}
-				{plot_name}
-			></BarPlot>
+			<BarPlot type="line" options={plot_options} {datasets} {labels} {plot_name}></BarPlot>
 		{/if}
 	{/if}
 </div>
