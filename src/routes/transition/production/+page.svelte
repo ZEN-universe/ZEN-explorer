@@ -306,16 +306,12 @@
 					get_component_total(
 						selected_solution!.solution_name,
 						get_variable_name(variable.positive, selected_solution?.version),
-						selected_solution!.scenario_name,
-						selected_solution!.detail.system.reference_year,
-						selected_solution!.detail.system.interval_between_years
+						selected_solution!.scenario_name
 					),
 					get_component_total(
 						selected_solution!.solution_name,
 						get_variable_name(variable.negative, selected_solution?.version),
-						selected_solution!.scenario_name,
-						selected_solution!.detail.system.reference_year,
-						selected_solution!.detail.system.interval_between_years
+						selected_solution!.scenario_name
 					)
 				];
 			})
