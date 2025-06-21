@@ -66,7 +66,6 @@ export interface SolutionDetail {
 	folder_name: string;
 	name: string;
 	scenarios: Scenarios;
-	components: string[];
 	version: string;
 }
 
@@ -74,7 +73,6 @@ export interface ActivatedSolution {
 	solution_name: string;
 	scenario_name: string;
 	detail: ScenarioDetail;
-	components: string[];
 	version: string;
 }
 

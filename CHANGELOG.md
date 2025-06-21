@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.2 (2025-06-21)
+
+- Remove unused components property in SolutionDetail.
+
 ## 0.6.1 (2025-06-20)
 
 - [Storage] Reorder smoothing window size filter.

@@ -103,7 +103,6 @@
 			solution_name: activeSolutionName,
 			scenario_name: activeScenario,
 			detail: solutionDetail.scenarios[activeScenario],
-			components: solutionDetail.components,
 			version: solutionDetail.version
 		};
 
