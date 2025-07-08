@@ -9,6 +9,7 @@
 	Chart.register(zoomPlugin);
 
 	interface Props {
+		id?: string;
 		type: ChartType;
 		labels?: string[];
 		datasets: ChartDataset<ChartType>[];
@@ -20,6 +21,7 @@
 	}
 
 	let {
+		id = 'chart',
 		type,
 		labels,
 		datasets,
@@ -130,7 +132,7 @@
 			<div class="visually-hidden">Download CSV Data</div>
 		</button>
 	</div>
-	<canvas id="myChart" use:handleChart></canvas>
+	<canvas {id} use:handleChart></canvas>
 </div>
 
 <style>
