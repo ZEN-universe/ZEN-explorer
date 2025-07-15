@@ -611,11 +611,11 @@
 				{/snippet}
 			</FilterRow>
 			{#if selected_aggregation == aggregation_options[1]}
-				<AllCheckbox label="Location" bind:value={selected_locations} elements={locations}
+				<AllCheckbox label="Locations" bind:value={selected_locations} elements={locations}
 				></AllCheckbox>
 			{/if}
 			{#if selected_years}
-				<AllCheckbox label="Year" bind:value={selected_years} elements={years}></AllCheckbox>
+				<AllCheckbox label="Years" bind:value={selected_years} elements={years}></AllCheckbox>
 			{/if}
 		</FilterSection>
 	{/if}

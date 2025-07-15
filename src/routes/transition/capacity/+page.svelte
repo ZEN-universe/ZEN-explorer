@@ -393,7 +393,10 @@
 					{/snippet}
 				</FilterRow>
 				{#if selected_aggregation == 'technology'}
-					<AllCheckbox label="Technologies" bind:value={selected_technologies} elements={technologies}
+					<AllCheckbox
+						label="Technologies"
+						bind:value={selected_technologies}
+						elements={technologies}
 					></AllCheckbox>
 				{:else}
 					<AllCheckbox label="Nodes" bind:value={selected_locations} elements={locations}

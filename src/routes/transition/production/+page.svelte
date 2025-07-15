@@ -214,7 +214,10 @@
 				if (selected_conversion_technologies.length == 0 && conversion_technologies.length > 0) {
 					selected_conversion_technologies = conversion_technologies;
 				}
-			} else if (conversion_technologies.length > 0 || selected_conversion_technologies.some((t) => !conversion_technologies.includes(t))) {
+			} else if (
+				conversion_technologies.length > 0 ||
+				selected_conversion_technologies.some((t) => !conversion_technologies.includes(t))
+			) {
 				selected_conversion_technologies = conversion_technologies;
 			}
 		});
@@ -228,7 +231,10 @@
 				if (selected_storage_technologies.length == 0 && storage_technologies.length > 0) {
 					selected_storage_technologies = storage_technologies;
 				}
-			} else if (storage_technologies.length > 0 || selected_storage_technologies.some((t) => !storage_technologies.includes(t))) {
+			} else if (
+				storage_technologies.length > 0 ||
+				selected_storage_technologies.some((t) => !storage_technologies.includes(t))
+			) {
 				selected_storage_technologies = storage_technologies;
 			}
 		});
