@@ -405,23 +405,23 @@
 					{/snippet}
 				</FilterRow>
 				{#if selected_aggregation == 'location'}
-					<AllCheckbox label="Location" bind:value={selected_locations} elements={locations}
+					<AllCheckbox label="Locations" bind:value={selected_locations} elements={locations}
 					></AllCheckbox>
 				{:else}
 					{#if technologies.length > 0}
 						<AllCheckbox
-							label="Technology"
+							label="Technologies"
 							bind:value={selected_technologies}
 							elements={technologies}
 						></AllCheckbox>
 					{/if}
 					{#if carriers.length > 0}
-						<AllCheckbox label="Carrier" bind:value={selected_carriers} elements={carriers}
+						<AllCheckbox label="Carriers" bind:value={selected_carriers} elements={carriers}
 						></AllCheckbox>
 					{/if}
 				{/if}
 			{/if}
-			<AllCheckbox label="Year" bind:value={selected_years} elements={years}></AllCheckbox>
+			<AllCheckbox label="Years" bind:value={selected_years} elements={years}></AllCheckbox>
 		</FilterSection>
 	{/if}
 </Filters>

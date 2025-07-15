@@ -42,10 +42,10 @@ test('production: normalisation', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
-	await page.getByLabel('Carrier').selectOption('biomass');
-  await page.getByRole('switch', { name: 'Normalization off' }).click();
+	await page.getByLabel('Carrier').selectOption('electricity');
+    await page.getByRole('switch', { name: 'Normalization off' }).click();
 	await expect(page.locator('#chart')).toHaveScreenshot(
-		`eeht_pf/biomass/normalization-on.png`
+		`eeht_pf/electricity/normalization-on.png`
 	);
 });
 

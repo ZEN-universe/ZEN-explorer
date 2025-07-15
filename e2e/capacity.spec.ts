@@ -96,7 +96,7 @@ test('capacity: node selection', async ({ page }) => {
   await page.getByLabel('Variable').selectOption('capacity');
   await page.getByLabel('Technology Type').selectOption('conversion');
   await page.getByLabel('Carrier').selectOption('heat');
-  await page.locator('div').filter({ hasText: /^Node Deselect all$/ }).getByRole('button').click();
+  await page.locator('div').filter({ hasText: /^Nodes Deselect all$/ }).getByRole('button').click();
   await expect(page.locator('.plot')).toHaveText('No data with this selection.');
   await page.getByRole('checkbox', { name: 'DE' }).check();
   await expect(page.locator('#chart')).toHaveScreenshot(
@@ -113,7 +113,7 @@ test('capacity: year selection', async ({ page }) => {
   await page.getByLabel('Variable').selectOption('capacity');
   await page.getByLabel('Technology Type').selectOption('conversion');
   await page.getByLabel('Carrier').selectOption('heat');
-  await page.locator('div').filter({ hasText: /^Year Deselect all$/ }).getByRole('button').click();
+  await page.locator('div').filter({ hasText: /^Years Deselect all$/ }).getByRole('button').click();
   await expect(page.locator('.plot')).toHaveText('No data with this selection.');
   await page.getByRole('checkbox', { name: '2024' }).check();
   await expect(page.locator('#chart')).toHaveScreenshot(
