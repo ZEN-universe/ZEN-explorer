@@ -425,7 +425,7 @@
 		onmousedown={startZoomRectangle}
 		onmouseup={endZoomRectangle}
 		onmouseleave={cancelZoomRectangle}
-		id={id}
+		{id}
 		style:background="rgb(168, 186, 215)"
 	>
 		{#if !topology}
