@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { geoMercator, geoPath } from 'd3-geo';
 	import { scaleOrdinal } from 'd3-scale';
-	import { schemeCategory10 } from 'd3-scale-chromatic';
 	import { pointer, select } from 'd3-selection';
 	import { pie as d3pie, arc as d3arc } from 'd3-shape';
 	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3-zoom';
@@ -34,6 +33,7 @@
 	}
 
 	interface Props {
+		id?: string;
 		pieData: MapPlotData;
 		lineData?: MapPlotData;
 		nodeCoords?: { [node: string]: [number, number] };
@@ -45,6 +45,7 @@
 		maxEdge: number;
 	}
 	let {
+		id = 'map',
 		pieData,
 		lineData = {},
 		nodeCoords = {},
@@ -424,6 +425,7 @@
 		onmousedown={startZoomRectangle}
 		onmouseup={endZoomRectangle}
 		onmouseleave={cancelZoomRectangle}
+		id={id}
 		style:background="rgb(168, 186, 215)"
 	>
 		{#if !topology}
