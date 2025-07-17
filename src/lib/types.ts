@@ -84,6 +84,18 @@ export interface DatasetSelectors {
 	[key: string]: string[];
 }
 
+export interface ProductionDataframes {
+	flow_conversion_output: Papa.ParseResult<Row> | undefined;
+	flow_conversion_input: Papa.ParseResult<Row> | undefined;
+	flow_storage_discharge: Papa.ParseResult<Row> | undefined;
+	flow_storage_charge: Papa.ParseResult<Row> | undefined;
+	flow_import: Papa.ParseResult<Row> | undefined;
+	flow_export: Papa.ParseResult<Row> | undefined;
+	shed_demand: Papa.ParseResult<Row> | undefined;
+	demand: Papa.ParseResult<Row> | undefined;
+	unit: Papa.ParseResult<Row> | undefined;
+}
+
 export interface EnergyBalanceDataframes {
 	demand: Papa.ParseResult<Row> | undefined;
 	flow_conversion_input: Papa.ParseResult<Row> | undefined;

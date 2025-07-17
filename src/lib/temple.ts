@@ -5,7 +5,8 @@ import type {
 	ComponentTotal,
 	SolutionDetail,
 	EnergyBalanceDataframes,
-	Row
+	Row,
+	ProductionDataframes
 } from '$lib/types';
 
 /**
@@ -48,6 +49,104 @@ export async function get_solution_detail(solution: string): Promise<SolutionDet
 }
 
 /**
+ * Helper function to fetch the full timeseries of a component from the Temple.
+ * @param solution_name Name of the solution
+ * @param component_name Name of the compoennt
+ * @param scenario_name Name of the scenario
+ * @param year Year
+ * @returns Promise of the TimeSeries as returned by the API
+ */
+export async function get_full_ts(
+	solution_name: string,
+	component_name: string,
+	scenario_name: string,
+	year: number = 0,
+	window_size: number = 1
+): Promise<ComponentTotal> {
+	const fetch_url =
+		env.PUBLIC_TEMPLE_URL +
+		`solutions/get_full_ts/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}&rolling_average_size=${window_size}`;
+
+	let component_data_request = await fetch(fetch_url, { cache: 'no-store' });
+
+	if (!component_data_request.ok) {
+		alert('Error when fetching ' + fetch_url);
+		throw new Error('Error when fetching ' + fetch_url);
+	}
+
+	let component_data = await component_data_request.json();
+
+	let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv);
+	let unit: Papa.ParseResult<Row> | null = null;
+
+	// Add unit if necessary
+	if (component_data.unit != null) {
+		if (component_data.unit.slice(-1) == '\n') {
+			component_data.unit = component_data.unit.slice(0, component_data.unit.length - 1);
+		}
+
+		unit = Papa.parse(component_data.unit, { delimiter: ',', header: true, newline: '\n' });
+	}
+
+	const ans: ComponentTotal = {
+		unit: unit,
+		data: data
+	};
+
+	return ans;
+}
+
+/**
+ * Helper function to fetch the total of a component from the Temple. It removes rows that only contain zeros.
+ * @param solution_name Name of the solution
+ * @param component_name Name of the component
+ * @param scenario_name Name of the scenario
+ * @param start_year Start year
+ * @param step_year Number of steps between years
+ * @param year Year to fetch
+ * @returns Promise of the ComponentTotal as returned by the temple.
+ */
+export async function get_component_total(
+	solution_name: string,
+	component_name: string,
+	scenario_name: string,
+	start_year: number = 0,
+	step_year: number = 1,
+	year: number = 0
+): Promise<ComponentTotal> {
+	const fetch_url =
+		env.PUBLIC_TEMPLE_URL +
+		`solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}`;
+
+	let component_data_request = await fetch(fetch_url, { cache: 'no-store' });
+
+	if (!component_data_request.ok) {
+		alert('Error when fetching ' + fetch_url);
+		throw new Error('Error when fetching ' + fetch_url);
+	}
+
+	let component_data = await component_data_request.json();
+	let data: Papa.ParseResult<Row> = filter_zero_rows(parse_csv(component_data.data_csv, start_year, step_year));
+	let unit: Papa.ParseResult<Row> | null = null;
+
+	// Parse unit data if necessary
+	if (component_data.unit != null) {
+		if (component_data.unit.slice(-1) == '\n') {
+			component_data.unit = component_data.unit.slice(0, component_data.unit.length - 1);
+		}
+
+		unit = Papa.parse(component_data.unit, { delimiter: ',', header: true, newline: '\n' });
+	}
+
+	const ans: ComponentTotal = {
+		unit: unit,
+		data: data
+	};
+
+	return ans;
+}
+
+/**
  * Helper function to fetch the unit endpoint of the temple.
  * @param solution_name Name of the solution
  * @param component_name Name of the component
@@ -71,6 +170,34 @@ export async function get_unit(
 		unit = Papa.parse(unit, { delimiter: ',', header: true, newline: '\n' });
 	}
 	return unit;
+}
+
+export async function get_production(
+	solution_name: string,
+	scenario_name: string,
+	start_year: number = 0,
+	step_year: number = 1,
+): Promise<ProductionDataframes> {
+	const url = env.PUBLIC_TEMPLE_URL + `solutions/get_production/${solution_name}?scenario=${scenario_name}`;
+
+	let production_request = await fetch(url, { cache: 'no-store' });
+
+	if (!production_request.ok) {
+		alert('Could not fetch ' + url);
+		throw new Error('Could not fetch ' + url);
+	}
+
+	let production_data = await production_request.json();
+
+	for (const key in production_data) {
+		if (production_data[key] === undefined) {
+			continue;
+		}
+		
+		production_data[key] = filter_zero_rows(parse_csv(production_data[key], start_year, step_year));
+	}
+
+	return production_data;
 }
 
 /**
@@ -194,111 +321,12 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
 	return data;
 }
 
-/**
- * Helper function to fetch the total of a component from the Temple. It removes rows that only contain zeros.
- * @param solution_name Name of the solution
- * @param component_name Name of the component
- * @param scenario_name Name of the scenario
- * @param start_year Start year
- * @param step_year Number of steps between years
- * @param year Year to fetch
- * @returns Promise of the ComponentTotal as returned by the temple.
- */
-export async function get_component_total(
-	solution_name: string,
-	component_name: string,
-	scenario_name: string,
-	start_year: number = 0,
-	step_year: number = 1,
-	year: number = 0
-): Promise<ComponentTotal> {
-	const fetch_url =
-		env.PUBLIC_TEMPLE_URL +
-		`solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}`;
-
-	let component_data_request = await fetch(fetch_url, { cache: 'no-store' });
-
-	if (!component_data_request.ok) {
-		alert('Error when fetching ' + fetch_url);
-		throw new Error('Error when fetching ' + fetch_url);
-	}
-
-	let component_data = await component_data_request.json();
-	let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv, start_year, step_year);
-	let unit: Papa.ParseResult<Row> | null = null;
-
-	// Parse unit data if necessary
-	if (component_data.unit != null) {
-		if (component_data.unit.slice(-1) == '\n') {
-			component_data.unit = component_data.unit.slice(0, component_data.unit.length - 1);
-		}
-
-		unit = Papa.parse(component_data.unit, { delimiter: ',', header: true, newline: '\n' });
-	}
-
-	// Filter zero rows
-	data.data = data.data.filter((row) => {
-		for (const key in row) {
-			let number_check = Number(key);
-			if (!Number.isNaN(number_check) && !Number.isNaN(row[key]) && Math.abs(row[key]) > 0) {
-				return true;
-			}
-		}
-		return false;
+function filter_zero_rows(data: Papa.ParseResult<Row>): Papa.ParseResult<Row> {
+	// Filter out rows that only contain zeros
+	data.data = data.data.filter((row: Row) => {
+		return Object.keys(row).some((key: string) => {
+			return !Number.isNaN(Number(key)) && !Number.isNaN(row[key]) && Math.abs(row[key]) > 0;
+		});
 	});
-
-	const ans: ComponentTotal = {
-		unit: unit,
-		data: data
-	};
-
-	return ans;
-}
-
-/**
- * Helper function to fetch the full timeseries of a component from the Temple.
- * @param solution_name Name of the solution
- * @param component_name Name of the compoennt
- * @param scenario_name Name of the scenario
- * @param year Year
- * @returns Promise of the TimeSeries as returned by the API
- */
-export async function get_full_ts(
-	solution_name: string,
-	component_name: string,
-	scenario_name: string,
-	year: number = 0,
-	window_size: number = 1
-): Promise<ComponentTotal> {
-	const fetch_url =
-		env.PUBLIC_TEMPLE_URL +
-		`solutions/get_full_ts/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}&rolling_average_size=${window_size}`;
-
-	let component_data_request = await fetch(fetch_url, { cache: 'no-store' });
-
-	if (!component_data_request.ok) {
-		alert('Error when fetching ' + fetch_url);
-		throw new Error('Error when fetching ' + fetch_url);
-	}
-
-	let component_data = await component_data_request.json();
-
-	let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv);
-	let unit: Papa.ParseResult<Row> | null = null;
-
-	// Add unit if necessary
-	if (component_data.unit != null) {
-		if (component_data.unit.slice(-1) == '\n') {
-			component_data.unit = component_data.unit.slice(0, component_data.unit.length - 1);
-		}
-
-		unit = Papa.parse(component_data.unit, { delimiter: ',', header: true, newline: '\n' });
-	}
-
-	const ans: ComponentTotal = {
-		unit: unit,
-		data: data
-	};
-
-	return ans;
+	return data;
 }
