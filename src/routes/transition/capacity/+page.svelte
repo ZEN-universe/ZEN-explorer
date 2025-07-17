@@ -393,18 +393,21 @@
 					{/snippet}
 				</FilterRow>
 				{#if selected_aggregation == 'technology'}
-					<AllCheckbox label="Technology" bind:value={selected_technologies} elements={technologies}
+					<AllCheckbox
+						label="Technologies"
+						bind:value={selected_technologies}
+						elements={technologies}
 					></AllCheckbox>
 				{:else}
-					<AllCheckbox label="Node" bind:value={selected_locations} elements={locations}
+					<AllCheckbox label="Nodes" bind:value={selected_locations} elements={locations}
 					></AllCheckbox>
 				{/if}
-				<AllCheckbox label="Year" bind:value={selected_years} elements={years}></AllCheckbox>
+				<AllCheckbox label="Years" bind:value={selected_years} elements={years}></AllCheckbox>
 			</FilterSection>
 		{/if}
 	{/if}
 </Filters>
-<div class="mt-4">
+<div class="plot mt-4">
 	{#if solution_loading || fetching}
 		<div class="text-center">
 			<div class="spinner-border center" role="status">

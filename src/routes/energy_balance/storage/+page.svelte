@@ -518,13 +518,13 @@
 				</FilterRow>
 				<AllCheckbox label="Technologies" elements={technologies} bind:value={selected_technologies}
 				></AllCheckbox>
-				<AllCheckbox label="Node" elements={locations} bind:value={selected_locations}
+				<AllCheckbox label="Nodes" elements={locations} bind:value={selected_locations}
 				></AllCheckbox>
 			</FilterSection>
 		{/if}
 	{/if}
 </Filters>
-<div class="mt-4">
+<div class="mt-4 plot">
 	{#if solution_loading || fetching}
 		<div class="text-center">
 			<div class="spinner-border center" role="status">
@@ -543,6 +543,7 @@
 		<div class="text-center">No data with this selection.</div>
 	{:else}
 		<BarPlot
+			id="level_chart"
 			type="line"
 			{labels}
 			{datasets}
@@ -552,6 +553,7 @@
 			bind:this={level_plot}
 		></BarPlot>
 		<BarPlot
+			id="flow_chart"
 			type="line"
 			{labels}
 			datasets={flow_datasets}

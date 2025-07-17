@@ -10,15 +10,21 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"format": "prettier --write .",
-		"lint": "prettier --check . && eslint ."
+		"lint": "prettier --check . && eslint .",
+		"test:e2e": "playwright test --project=chromium",
+		"test:staging": "NO_WEB_SERVER=1 playwright test --project=staging",
+		"test:production": "NO_WEB_SERVER=1 playwright test --project=production",
+		"test": "npm run test:e2e"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^1.2.5",
 		"@eslint/js": "^9.18.0",
+		"@playwright/test": "^1.53.0",
 		"@sveltejs/adapter-static": "^3.0.8",
 		"@sveltejs/kit": "^2.16.0",
 		"@sveltejs/vite-plugin-svelte": "^5.0.0",
 		"@types/d3": "^7.4.3",
+		"@types/node": "^24.0.1",
 		"@types/papaparse": "^5.3.15",
 		"@types/topojson-client": "^3.1.5",
 		"bootstrap": "^5.3.3",
