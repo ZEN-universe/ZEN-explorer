@@ -305,17 +305,19 @@
 		fetching = true;
 		data = null;
 
-		const response = await get_production(selected_solution!.solution_name, selected_solution!.scenario_name);
-		
+		const responses = await get_production(
+			selected_solution.solution_name,
+			selected_solution.scenario_name,
+			selected_solution.detail.system.reference_year,
+			selected_solution.detail.system.interval_between_years
+		);
+
 		data = variables.flatMap((variable) => {
-			return [
-				response[variable.positive] || null,
-				response[variable.negative] || null
-			];
+			return [responses[variable.positive] || null, responses[variable.negative] || null];
 		});
 
-		if (response.unit?.data) {
-			units = response.unit.data;
+		if (responses.unit?.data) {
+			units = responses.unit.data;
 		}
 
 		fetching = false;

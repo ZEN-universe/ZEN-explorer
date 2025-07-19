@@ -6,7 +6,8 @@ import type {
 	SolutionDetail,
 	EnergyBalanceDataframes,
 	Row,
-	ProductionDataframes
+	ProductionDataframes,
+	CostsDataframes
 } from '$lib/types';
 
 /**
@@ -126,7 +127,9 @@ export async function get_component_total(
 	}
 
 	let component_data = await component_data_request.json();
-	let data: Papa.ParseResult<Row> = filter_zero_rows(parse_csv(component_data.data_csv, start_year, step_year));
+	let data: Papa.ParseResult<Row> = filter_zero_rows(
+		parse_csv(component_data.data_csv, start_year, step_year)
+	);
 	let unit: Papa.ParseResult<Row> | null = null;
 
 	// Parse unit data if necessary
@@ -176,9 +179,10 @@ export async function get_production(
 	solution_name: string,
 	scenario_name: string,
 	start_year: number = 0,
-	step_year: number = 1,
+	step_year: number = 1
 ): Promise<ProductionDataframes> {
-	const url = env.PUBLIC_TEMPLE_URL + `solutions/get_production/${solution_name}?scenario=${scenario_name}`;
+	const url =
+		env.PUBLIC_TEMPLE_URL + `solutions/get_production/${solution_name}?scenario=${scenario_name}`;
 
 	let production_request = await fetch(url, { cache: 'no-store' });
 
@@ -193,11 +197,39 @@ export async function get_production(
 		if (production_data[key] === undefined) {
 			continue;
 		}
-		
+
 		production_data[key] = filter_zero_rows(parse_csv(production_data[key], start_year, step_year));
 	}
 
 	return production_data;
+}
+
+export async function get_costs(
+	solution_name: string,
+	scenario_name: string,
+	start_year: number = 0,
+	step_year: number = 1
+): Promise<CostsDataframes> {
+	const url =
+		env.PUBLIC_TEMPLE_URL + `solutions/get_costs/${solution_name}?scenario=${scenario_name}`;
+	let costs_request = await fetch(url, { cache: 'no-store' });
+
+	if (!costs_request.ok) {
+		alert('Could not fetch ' + url);
+		throw new Error('Could not fetch ' + url);
+	}
+
+	let costs_data = await costs_request.json();
+
+	for (const key in costs_data) {
+		if (costs_data[key] === undefined) {
+			continue;
+		}
+
+		costs_data[key] = filter_zero_rows(parse_csv(costs_data[key], start_year, step_year));
+	}
+
+	return costs_data;
 }
 
 /**
