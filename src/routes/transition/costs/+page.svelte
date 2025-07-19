@@ -371,8 +371,12 @@
 		);
 
 		// "Standardize" all series names
-		fetched_capex = rename_fields(responses.capex_yearly || null, [['technology', combined_name]]);
-		fetched_opex = rename_fields(responses.opex_yearly || null, [['technology', combined_name]]);
+		fetched_capex = rename_fields(responses.cost_capex_yearly || null, [
+			['technology', combined_name]
+		]);
+		fetched_opex = rename_fields(responses.cost_opex_yearly || null, [
+			['technology', combined_name]
+		]);
 		fetched_cost_carbon = responses.cost_carbon_emissions_total || null;
 		fetched_cost_carrier = rename_fields(responses.cost_carrier || null, [
 			['node', 'location'],

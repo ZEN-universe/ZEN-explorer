@@ -97,8 +97,8 @@ export interface ProductionDataframes {
 }
 
 export interface CostsDataframes {
-	capex_yearly: Papa.ParseResult<Row> | undefined;
-	opex_yearly: Papa.ParseResult<Row> | undefined;
+	cost_capex_yearly: Papa.ParseResult<Row> | undefined;
+	cost_opex_yearly: Papa.ParseResult<Row> | undefined;
 	cost_carbon_emissions_total: Papa.ParseResult<Row> | undefined;
 	cost_carrier: Papa.ParseResult<Row> | undefined;
 	cost_shed_demand: Papa.ParseResult<Row> | undefined;

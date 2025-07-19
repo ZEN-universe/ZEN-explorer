@@ -134,11 +134,7 @@ export async function get_component_total(
 
 	// Parse unit data if necessary
 	if (component_data.unit != null) {
-		if (component_data.unit.slice(-1) == '\n') {
-			component_data.unit = component_data.unit.slice(0, component_data.unit.length - 1);
-		}
-
-		unit = Papa.parse(component_data.unit, { delimiter: ',', header: true, newline: '\n' });
+		unit = parse_unit_data(component_data.unit);
 	}
 
 	const ans: ComponentTotal = {
@@ -194,12 +190,14 @@ export async function get_production(
 	let production_data = await production_request.json();
 
 	for (const key in production_data) {
-		if (production_data[key] === undefined) {
+		if (key == 'unit' || production_data[key] === undefined) {
 			continue;
 		}
 
 		production_data[key] = filter_zero_rows(parse_csv(production_data[key], start_year, step_year));
 	}
+
+	production_data.unit = parse_unit_data(production_data.unit || '');
 
 	return production_data;
 }
@@ -222,12 +220,14 @@ export async function get_costs(
 	let costs_data = await costs_request.json();
 
 	for (const key in costs_data) {
-		if (costs_data[key] === undefined) {
+		if (key == 'unit' || costs_data[key] === undefined) {
 			continue;
 		}
 
 		costs_data[key] = filter_zero_rows(parse_csv(costs_data[key], start_year, step_year));
 	}
+
+	costs_data.unit = parse_unit_data(costs_data.unit || '');
 
 	return costs_data;
 }
@@ -351,6 +351,14 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
 	});
 
 	return data;
+}
+
+function parse_unit_data(unit_csv: string): Papa.ParseResult<Row> {
+	if (unit_csv.slice(-1) == '\n') {
+		unit_csv = unit_csv.slice(0, unit_csv.length - 1);
+	}
+
+	return Papa.parse(unit_csv, { delimiter: ',', header: true, newline: '\n' });
 }
 
 function filter_zero_rows(data: Papa.ParseResult<Row>): Papa.ParseResult<Row> {
