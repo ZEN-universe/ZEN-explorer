@@ -12,7 +12,7 @@
 	import ToggleButton from '$components/ToggleButton.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 
-	import { get_production } from '$lib/temple';
+	import { get_component_total } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
 	import type { ActivatedSolution, ProductionDataframes, Row } from '$lib/types';
@@ -305,11 +305,23 @@
 		fetching = true;
 		data = null;
 
-		const responses = await get_production(
+		const responses = await get_component_total(
 			selected_solution.solution_name,
+			[
+				'flow_conversion_output',
+				'flow_conversion_input',
+				'flow_storage_discharge',
+				'flow_storage_charge',
+				'flow_import',
+				'flow_export',
+				'shed_demand',
+				'demand'
+			],
 			selected_solution.scenario_name,
 			selected_solution.detail.system.reference_year,
-			selected_solution.detail.system.interval_between_years
+			selected_solution.detail.system.interval_between_years,
+			0,
+			'demand'
 		);
 
 		data = variables.flatMap((variable) => {

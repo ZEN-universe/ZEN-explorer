@@ -53,97 +53,95 @@ export async function get_solution_detail(solution: string): Promise<SolutionDet
 /**
  * Helper function to fetch the full timeseries of a component from the Temple.
  * @param solution_name Name of the solution
- * @param component_name Name of the compoennt
+ * @param components Name of the compoennt
  * @param scenario_name Name of the scenario
  * @param year Year
  * @returns Promise of the TimeSeries as returned by the API
  */
 export async function get_full_ts(
 	solution_name: string,
-	component_name: string,
+	components: string[],
 	scenario_name: string,
-	year: number = 0,
+	unit_component: string = '',
+	year_index: number = 0,
 	window_size: number = 1
 ): Promise<ComponentTotal> {
-	const fetch_url =
-		env.PUBLIC_TEMPLE_URL +
-		`solutions/get_full_ts/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}&rolling_average_size=${window_size}`;
+	const urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/get_full_ts');
+	urlObj.searchParams.set('solution_name', solution_name);
+	urlObj.searchParams.set('components', components.join(','));
+	urlObj.searchParams.set('unit_component', unit_component);
+	urlObj.searchParams.set('scenario', scenario_name);
+	urlObj.searchParams.set('year', year_index.toString());
+	urlObj.searchParams.set('rolling_average_size', window_size.toString());
+	const url = urlObj.toString();
 
-	let component_data_request = await fetch(fetch_url, { cache: 'no-store' });
+	let component_data_request = await fetch(url, { cache: 'no-store' });
 
 	if (!component_data_request.ok) {
-		alert('Error when fetching ' + fetch_url);
-		throw new Error('Error when fetching ' + fetch_url);
+		alert('Error when fetching ' + url);
+		throw new Error('Error when fetching ' + url);
 	}
 
 	let component_data = await component_data_request.json();
 
-	let data: Papa.ParseResult<Row> = parse_csv(component_data.data_csv);
-	let unit: Papa.ParseResult<Row> | null = null;
-
-	// Add unit if necessary
-	if (component_data.unit != null) {
-		if (component_data.unit.slice(-1) == '\n') {
-			component_data.unit = component_data.unit.slice(0, component_data.unit.length - 1);
+	for (const key in component_data) {
+		if (key == 'unit' || component_data[key] === undefined) {
+			continue;
 		}
 
-		unit = Papa.parse(component_data.unit, { delimiter: ',', header: true, newline: '\n' });
+		component_data[key] = parse_csv(component_data[key]);
 	}
+	component_data.unit = parse_unit_data(component_data.unit || '');
 
-	const ans: ComponentTotal = {
-		unit: unit,
-		data: data
-	};
-
-	return ans;
+	return component_data;
 }
 
 /**
  * Helper function to fetch the total of a component from the Temple. It removes rows that only contain zeros.
  * @param solution_name Name of the solution
- * @param component_name Name of the component
+ * @param components Name of the component
  * @param scenario_name Name of the scenario
  * @param start_year Start year
  * @param step_year Number of steps between years
- * @param year Year to fetch
+ * @param year_index Year to fetch
  * @returns Promise of the ComponentTotal as returned by the temple.
  */
 export async function get_component_total(
 	solution_name: string,
-	component_name: string,
+	components: string[],
 	scenario_name: string,
 	start_year: number = 0,
 	step_year: number = 1,
-	year: number = 0
+	year_index: number = 0,
+	unit_component: string = ''
 ): Promise<ComponentTotal> {
-	const fetch_url =
-		env.PUBLIC_TEMPLE_URL +
-		`solutions/get_total/${solution_name}/${component_name}?scenario=${scenario_name}&year=${year}`;
+	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/get_total');
+	urlObj.searchParams.set('solution_name', solution_name);
+	urlObj.searchParams.set('components', components.join(','));
+	urlObj.searchParams.set('scenario', scenario_name);
+	urlObj.searchParams.set('unit_component', unit_component);
+	urlObj.searchParams.set('year', year_index.toString());
+	const url = urlObj.toString();
 
-	let component_data_request = await fetch(fetch_url, { cache: 'no-store' });
+	let component_data_request = await fetch(url, { cache: 'no-store' });
 
 	if (!component_data_request.ok) {
-		alert('Error when fetching ' + fetch_url);
-		throw new Error('Error when fetching ' + fetch_url);
+		alert('Error when fetching ' + url);
+		throw new Error('Error when fetching ' + url);
 	}
 
 	let component_data = await component_data_request.json();
-	let data: Papa.ParseResult<Row> = filter_zero_rows(
-		parse_csv(component_data.data_csv, start_year, step_year)
-	);
-	let unit: Papa.ParseResult<Row> | null = null;
 
-	// Parse unit data if necessary
-	if (component_data.unit != null) {
-		unit = parse_unit_data(component_data.unit);
+	for (const key in component_data) {
+		if (key == 'unit' || component_data[key] === undefined) {
+			continue;
+		}
+
+		component_data[key] = filter_zero_rows(parse_csv(component_data[key], start_year, step_year));
 	}
+	component_data.unit = parse_unit_data(component_data.unit || '');
 
-	const ans: ComponentTotal = {
-		unit: unit,
-		data: data
-	};
-
-	return ans;
+	return component_data;
 }
 
 /**
@@ -158,7 +156,7 @@ export async function get_unit(
 	component_name: string,
 	scenario_name: string
 ) {
-	let unit = await (
+	let unit_data = await (
 		await fetch(
 			env.PUBLIC_TEMPLE_URL +
 				`solutions/get_unit/${solution_name}/${component_name}?scenario=${scenario_name}`,
@@ -166,71 +164,7 @@ export async function get_unit(
 		)
 	).json();
 
-	if (unit != null) {
-		unit = Papa.parse(unit, { delimiter: ',', header: true, newline: '\n' });
-	}
-	return unit;
-}
-
-export async function get_production(
-	solution_name: string,
-	scenario_name: string,
-	start_year: number = 0,
-	step_year: number = 1
-): Promise<ProductionDataframes> {
-	const url =
-		env.PUBLIC_TEMPLE_URL + `solutions/get_production/${solution_name}?scenario=${scenario_name}`;
-
-	let production_request = await fetch(url, { cache: 'no-store' });
-
-	if (!production_request.ok) {
-		alert('Could not fetch ' + url);
-		throw new Error('Could not fetch ' + url);
-	}
-
-	let production_data = await production_request.json();
-
-	for (const key in production_data) {
-		if (key == 'unit' || production_data[key] === undefined) {
-			continue;
-		}
-
-		production_data[key] = filter_zero_rows(parse_csv(production_data[key], start_year, step_year));
-	}
-
-	production_data.unit = parse_unit_data(production_data.unit || '');
-
-	return production_data;
-}
-
-export async function get_costs(
-	solution_name: string,
-	scenario_name: string,
-	start_year: number = 0,
-	step_year: number = 1
-): Promise<CostsDataframes> {
-	const url =
-		env.PUBLIC_TEMPLE_URL + `solutions/get_costs/${solution_name}?scenario=${scenario_name}`;
-	let costs_request = await fetch(url, { cache: 'no-store' });
-
-	if (!costs_request.ok) {
-		alert('Could not fetch ' + url);
-		throw new Error('Could not fetch ' + url);
-	}
-
-	let costs_data = await costs_request.json();
-
-	for (const key in costs_data) {
-		if (key == 'unit' || costs_data[key] === undefined) {
-			continue;
-		}
-
-		costs_data[key] = filter_zero_rows(parse_csv(costs_data[key], start_year, step_year));
-	}
-
-	costs_data.unit = parse_unit_data(costs_data.unit || '');
-
-	return costs_data;
+	return parse_unit_data(unit_data);
 }
 
 /**
@@ -288,37 +222,6 @@ export async function get_energy_balance(
 	}
 
 	return ans;
-}
-
-export async function get_storage(
-	solution_name: string,
-	scenario_name: string,
-	year_index: number = 0,
-	window_size: number = 1
-): Promise<StorageDataframes> {
-	const url =
-		env.PUBLIC_TEMPLE_URL +
-		`solutions/get_storage/${solution_name}?scenario=${scenario_name}&year=${year_index}&rolling_average_size=${window_size}`;
-
-	let storage_request = await fetch(url, { cache: 'no-store' });
-
-	if (!storage_request.ok) {
-		alert('Could not fetch ' + url);
-		throw new Error('Could not fetch ' + url);
-	}
-
-	let storage_data = await storage_request.json();
-
-	for (const key in storage_data) {
-		if (key == 'unit' || storage_data[key] === undefined) {
-			continue;
-		}
-
-		storage_data[key] = parse_csv(storage_data[key]);
-	}
-	storage_data.unit = parse_unit_data(storage_data.unit || '');
-
-	return storage_data;
 }
 
 /**

@@ -139,7 +139,7 @@ export interface YearValue {
 
 export interface ComponentTotal {
 	unit: Papa.ParseResult<Row> | null;
-	data: Papa.ParseResult<Row> | null;
+	[key: string]: Papa.ParseResult<Row> | null;
 }
 
 export interface DatasetContainer {

@@ -12,9 +12,8 @@
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 
-	import { get_storage } from '$lib/temple';
+	import { get_full_ts } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
-	import { get_variable_name } from '$lib/variables';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 	import type { ActivatedSolution, ComponentTotal, Row } from '$lib/types';
 
@@ -249,9 +248,17 @@
 				Monthly: 720
 			}[selected_window_size] || 1; // Default to hourly (1 hour)
 
-		const responses = await get_storage(
+		const responses = await get_full_ts(
 			selected_solution.solution_name,
+			[
+				'storage_level',
+				'flow_storage_charge',
+				'flow_storage_discharge',
+				'flow_storage_spillage',
+				'flow_storage_inflow'
+			],
 			selected_solution.scenario_name,
+			'storage_level',
 			year_index,
 			window_size
 		);

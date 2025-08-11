@@ -12,11 +12,12 @@
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 
-	import { get_costs } from '$lib/temple';
+	import { get_component_total } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
 	import type { ActivatedSolution } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
+	import { get_variable_name } from '$lib/variables';
 
 	const combined_name = 'Techology / Carrier';
 	const capex_suffix = ' (Capex)';
@@ -363,8 +364,17 @@
 		}
 		fetching = true;
 
-		let responses = await get_costs(
+		let responses = await get_component_total(
 			selected_solution.solution_name,
+			[
+				'cost_capex_yearly',
+				'cost_opex_yearly',
+				'cost_carbon_emissions_total',
+				'cost_carrier',
+				'cost_shed_demand'
+			].map((variable) => {
+				return get_variable_name(variable, selected_solution?.version);
+			}),
 			selected_solution.scenario_name,
 			selected_solution.detail.system.reference_year,
 			selected_solution.detail.system.interval_between_years
