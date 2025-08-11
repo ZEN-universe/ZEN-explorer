@@ -161,13 +161,13 @@
 
 		const response = await get_component_total(
 			selected_solution.solution_name,
-			'capacity',
+			['capacity'],
 			selected_solution.scenario_name,
 			selected_solution.detail.system.reference_year,
 			selected_solution.detail.system.interval_between_years
 		);
 
-		fetchedData = response.data;
+		fetchedData = response.capacity;
 
 		if (response.unit?.data) {
 			units = Object.fromEntries(

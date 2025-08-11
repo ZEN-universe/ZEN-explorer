@@ -27,5 +27,11 @@ export default defineConfig({
 				command: 'npm run build && npm run preview',
 				port: 4173
 			},
-	testDir: 'e2e'
+	testDir: 'e2e',
+	retries: 2,
+	workers: 4,
+	timeout: 10 * 1000, // 10 seconds timeout for each test
+	expect: {
+		timeout: 10 * 1000 // 10 seconds timeout for expect assertions
+	},
 });

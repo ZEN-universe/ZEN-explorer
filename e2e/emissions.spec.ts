@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Emissions: Subdivision Annual', async ({ page }) => {
+test('Emissions: Subdivision off Annual', async ({ page }) => {
 	await page.goto('/transition/emissions');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -11,7 +11,7 @@ test('Emissions: Subdivision Annual', async ({ page }) => {
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/no-subdivision/annual.png`);
 });
 
-test('Emissions: Subdivision Cumulative', async ({ page }) => {
+test('Emissions: Subdivision off Cumulative', async ({ page }) => {
 	await page.goto('/transition/emissions');
 	await page
 		.getByLabel('Solution', { exact: true })

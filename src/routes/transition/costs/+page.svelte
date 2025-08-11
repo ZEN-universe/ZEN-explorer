@@ -12,12 +12,12 @@
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 
-	import { get_variable_name } from '$lib/variables';
 	import { get_component_total } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
 	import type { ActivatedSolution } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
+	import { get_variable_name } from '$lib/variables';
 
 	const combined_name = 'Techology / Carrier';
 	const capex_suffix = ' (Capex)';
@@ -364,47 +364,41 @@
 		}
 		fetching = true;
 
-		let [
-			response_capex,
-			response_opex,
-			response_cost_carbon,
-			response_cost_carrier,
-			response_cost_shed_demand
-		] = await Promise.all(
+		let responses = await get_component_total(
+			selected_solution.solution_name,
 			[
-				'capex_yearly',
-				'opex_yearly',
+				'cost_capex_yearly',
+				'cost_opex_yearly',
 				'cost_carbon_emissions_total',
 				'cost_carrier',
 				'cost_shed_demand'
-			].map((variable) =>
-				get_component_total(
-					selected_solution!.solution_name,
-					get_variable_name(variable, selected_solution!.version),
-					selected_solution!.scenario_name,
-					selected_solution!.detail.system.reference_year,
-					selected_solution!.detail.system.interval_between_years
-				)
-			)
+			].map((variable) => {
+				return get_variable_name(variable, selected_solution?.version);
+			}),
+			selected_solution.scenario_name,
+			selected_solution.detail.system.reference_year,
+			selected_solution.detail.system.interval_between_years
 		);
 
 		// "Standardize" all series names
-		fetched_capex = rename_fields(response_capex.data, [['technology', combined_name]]);
-		fetched_opex = rename_fields(response_opex.data, [['technology', combined_name]]);
-		fetched_cost_carbon = response_cost_carbon.data;
-		fetched_cost_carrier = rename_fields(response_cost_carrier.data, [
+		fetched_capex = rename_fields(responses.cost_capex_yearly || null, [
+			['technology', combined_name]
+		]);
+		fetched_opex = rename_fields(responses.cost_opex_yearly || null, [
+			['technology', combined_name]
+		]);
+		fetched_cost_carbon = responses.cost_carbon_emissions_total || null;
+		fetched_cost_carrier = rename_fields(responses.cost_carrier || null, [
 			['node', 'location'],
 			['carrier', combined_name]
 		]);
-		fetched_cost_shed_demand = rename_fields(response_cost_shed_demand.data, [
+		fetched_cost_shed_demand = rename_fields(responses.cost_shed_demand || null, [
 			['node', 'location'],
 			['carrier', combined_name]
 		]);
 
-		if (response_capex.unit?.data) {
-			units = Object.fromEntries(
-				response_capex.unit.data.map((u) => [u.technology, u[0] || u.units])
-			);
+		if (responses.unit?.data) {
+			units = Object.fromEntries(responses.unit.data.map((u) => [u.technology, u[0] || u.units]));
 		}
 
 		fetching = false;

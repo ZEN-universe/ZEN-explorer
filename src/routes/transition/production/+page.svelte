@@ -13,10 +13,9 @@
 	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_component_total } from '$lib/temple';
-	import { get_variable_name } from '$lib/variables';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
-	import type { ActivatedSolution, Dataset, Row } from '$lib/types';
+	import type { ActivatedSolution, ProductionDataframes, Row } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
 
 	// Data
@@ -33,10 +32,10 @@
 		subdivision: boolean;
 		show_subdivision: boolean;
 		filter_by_technologies: boolean;
-		positive: string;
+		positive: keyof ProductionDataframes;
 		positive_label: string;
 		positive_suffix?: string;
-		negative: string;
+		negative: keyof ProductionDataframes;
 		negative_label: string;
 		negative_suffix?: string;
 	}
@@ -306,34 +305,31 @@
 		fetching = true;
 		data = null;
 
-		const responses = await Promise.all(
-			variables.flatMap((variable) => {
-				return [
-					get_component_total(
-						selected_solution!.solution_name,
-						get_variable_name(variable.positive, selected_solution?.version),
-						selected_solution!.scenario_name,
-						selected_solution!.detail.system.reference_year,
-						selected_solution!.detail.system.interval_between_years
-					),
-					get_component_total(
-						selected_solution!.solution_name,
-						get_variable_name(variable.negative, selected_solution?.version),
-						selected_solution!.scenario_name,
-						selected_solution!.detail.system.reference_year,
-						selected_solution!.detail.system.interval_between_years
-					)
-				];
-			})
+		const responses = await get_component_total(
+			selected_solution.solution_name,
+			[
+				'flow_conversion_output',
+				'flow_conversion_input',
+				'flow_storage_discharge',
+				'flow_storage_charge',
+				'flow_import',
+				'flow_export',
+				'shed_demand',
+				'demand'
+			],
+			selected_solution.scenario_name,
+			selected_solution.detail.system.reference_year,
+			selected_solution.detail.system.interval_between_years,
+			0,
+			'demand'
 		);
 
-		data = responses.map((response) => {
-			if (!response || !response.data) return null;
-			return response.data;
+		data = variables.flatMap((variable) => {
+			return [responses[variable.positive] || null, responses[variable.negative] || null];
 		});
 
-		if (responses[indexOfDemandResponse]?.unit?.data) {
-			units = responses[indexOfDemandResponse].unit.data;
+		if (responses.unit?.data) {
+			units = responses.unit.data;
 		}
 
 		fetching = false;
