@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Chart, ChartDataset, ChartOptions } from 'chart.js';
 	import { onMount, tick, untrack } from 'svelte';
+	import type { ParseResult } from 'papaparse';
 
 	import ToggleButton from '$components/ToggleButton.svelte';
 	import SolutionFilter from '$components/SolutionFilter.svelte';
@@ -11,18 +12,18 @@
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 
-	import { get_full_ts } from '$lib/temple';
+	import { get_storage } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
-	import type { ActivatedSolution, ComponentTotal, Row } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
+	import type { ActivatedSolution, ComponentTotal, Row } from '$lib/types';
 
 	// All but one data variable are non-reactive because of their size
-	let levelResponse: ComponentTotal | null = $state(null);
-	let chargeResponse: ComponentTotal | null = null;
-	let dischargeResponse: ComponentTotal | null = null;
-	let spillageResponse: ComponentTotal | null = null;
-	let inflowResponse: ComponentTotal | null = null;
+	let levelResponse: ParseResult<Row> | null = $state(null);
+	let chargeResponse: ParseResult<Row> | null = null;
+	let dischargeResponse: ParseResult<Row> | null = null;
+	let spillageResponse: ParseResult<Row> | null = null;
+	let inflowResponse: ParseResult<Row> | null = null;
 	let units: { [carrier: string]: string } = $state({});
 
 	let years: number[] = $state([]);
@@ -132,29 +133,29 @@
 	}
 
 	let locations: string[] = $derived.by(() => {
-		if (!levelResponse?.data) {
+		if (!levelResponse) {
 			return [];
 		}
-		return remove_duplicates(levelResponse.data.data.map((a) => a.node)).sort();
+		return remove_duplicates(levelResponse.data.map((a) => a.node)).sort();
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		if (!levelResponse?.data || !selected_solution) {
+		if (!levelResponse || !selected_solution) {
 			return [];
 		}
-		let all_technologies = Array.from(levelResponse.data.data.map((a) => a.technology));
+		let all_technologies = Array.from(levelResponse.data.map((a) => a.technology));
 		return remove_duplicates(
-			levelResponse.data.data
+			levelResponse.data
 				.filter((element) => all_technologies.includes(element.technology))
 				.map((element) => selected_solution!.detail.reference_carrier[element.technology])
 		);
 	});
 
 	let technologies: string[] = $derived.by(() => {
-		if (!levelResponse?.data || !selected_solution || carriers.length === 0) {
+		if (!levelResponse || !selected_solution || carriers.length === 0) {
 			return [];
 		}
-		let all_technologies = remove_duplicates(levelResponse.data.data.map((a: any) => a.technology));
+		let all_technologies = remove_duplicates(levelResponse.data.map((a: any) => a.technology));
 		return all_technologies.filter(
 			(technology) => selected_solution!.detail.reference_carrier[technology] == selected_carrier
 		);
@@ -248,29 +249,21 @@
 				Monthly: 720
 			}[selected_window_size] || 1; // Default to hourly (1 hour)
 
-		[levelResponse, chargeResponse, dischargeResponse, spillageResponse, inflowResponse] =
-			await Promise.all(
-				[
-					'storage_level',
-					'flow_storage_charge',
-					'flow_storage_discharge',
-					'flow_storage_spillage',
-					'flow_storage_inflow'
-				].map((variable) => {
-					return get_full_ts(
-						selected_solution!.solution_name,
-						get_variable_name(variable, selected_solution!.version),
-						selected_solution!.scenario_name,
-						year_index,
-						window_size
-					);
-				})
-			);
+		const responses = await get_storage(
+			selected_solution.solution_name,
+			selected_solution.scenario_name,
+			year_index,
+			window_size
+		);
 
-		if (levelResponse.unit?.data) {
-			units = Object.fromEntries(
-				levelResponse.unit.data.map((u) => [u.technology, u[0] || u.units])
-			);
+		levelResponse = responses.storage_level || null;
+		chargeResponse = responses.flow_storage_charge || null;
+		dischargeResponse = responses.flow_storage_discharge || null;
+		spillageResponse = responses.flow_storage_spillage || null;
+		inflowResponse = responses.flow_storage_inflow || null;
+
+		if (responses.unit?.data) {
+			units = Object.fromEntries(responses.unit.data.map((u) => [u.technology, u[0] || u.units]));
 		}
 
 		fetching = false;
@@ -288,11 +281,11 @@
 		if (
 			selected_locations.length == 0 ||
 			selected_technologies.length == 0 ||
-			!levelResponse?.data ||
-			!chargeResponse?.data ||
-			!dischargeResponse?.data ||
-			!inflowResponse?.data ||
-			!spillageResponse?.data
+			!levelResponse ||
+			!chargeResponse ||
+			!dischargeResponse ||
+			!inflowResponse ||
+			!spillageResponse
 		) {
 			return [];
 		}
@@ -301,7 +294,7 @@
 		let datasets_aggregates = { node: selected_locations };
 
 		let filtered_data = filter_and_aggregate_data(
-			levelResponse.data.data,
+			levelResponse.data,
 			dataset_selector,
 			datasets_aggregates,
 			[],
@@ -351,11 +344,11 @@
 		}
 
 		if (
-			!levelResponse?.data ||
-			!chargeResponse?.data ||
-			!dischargeResponse?.data ||
-			!inflowResponse?.data ||
-			!spillageResponse?.data
+			!levelResponse ||
+			!chargeResponse ||
+			!dischargeResponse ||
+			!inflowResponse ||
+			!spillageResponse
 		) {
 			flow_datasets = [];
 			return;
@@ -392,7 +385,7 @@
 			}
 		].map(({ data, label_suffix, negate }) => {
 			return filter_and_aggregate_data(
-				data.data,
+				data,
 				dataset_selector,
 				datasets_aggregates,
 				[],

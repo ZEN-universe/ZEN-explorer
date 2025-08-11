@@ -118,6 +118,15 @@ export interface EnergyBalanceDataframes {
 	shed_demand: Papa.ParseResult<Row> | undefined;
 }
 
+export interface StorageDataframes {
+	storage_level: Papa.ParseResult<Row> | undefined;
+	flow_storage_charge: Papa.ParseResult<Row> | undefined;
+	flow_storage_discharge: Papa.ParseResult<Row> | undefined;
+	flow_storage_inflow: Papa.ParseResult<Row> | undefined;
+	flow_storage_spillage: Papa.ParseResult<Row> | undefined;
+	unit: Papa.ParseResult<Row> | undefined;
+}
+
 export interface Dataset {
 	label: string;
 	data: YearValue;

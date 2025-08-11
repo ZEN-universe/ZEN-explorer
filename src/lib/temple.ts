@@ -7,7 +7,8 @@ import type {
 	EnergyBalanceDataframes,
 	Row,
 	ProductionDataframes,
-	CostsDataframes
+	CostsDataframes,
+	StorageDataframes
 } from '$lib/types';
 
 /**
@@ -287,6 +288,37 @@ export async function get_energy_balance(
 	}
 
 	return ans;
+}
+
+export async function get_storage(
+	solution_name: string,
+	scenario_name: string,
+	year_index: number = 0,
+	window_size: number = 1
+): Promise<StorageDataframes> {
+	const url =
+		env.PUBLIC_TEMPLE_URL +
+		`solutions/get_storage/${solution_name}?scenario=${scenario_name}&year=${year_index}&rolling_average_size=${window_size}`;
+
+	let storage_request = await fetch(url, { cache: 'no-store' });
+
+	if (!storage_request.ok) {
+		alert('Could not fetch ' + url);
+		throw new Error('Could not fetch ' + url);
+	}
+
+	let storage_data = await storage_request.json();
+
+	for (const key in storage_data) {
+		if (key == 'unit' || storage_data[key] === undefined) {
+			continue;
+		}
+
+		storage_data[key] = parse_csv(storage_data[key]);
+	}
+	storage_data.unit = parse_unit_data(storage_data.unit || '');
+
+	return storage_data;
 }
 
 /**
