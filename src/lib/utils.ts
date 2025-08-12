@@ -62,6 +62,10 @@ export function filter_and_aggregate_data(
 			}
 		}
 
+		if (skip) {
+			continue;
+		}
+
 		// Same for the aggregations, if the row does not contain any of the aggregations we skip it.
 		for (let key of Object.keys(dataset_aggregations)) {
 			if (!dataset_aggregations[key].includes(row[key])) {

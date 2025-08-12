@@ -56,6 +56,14 @@
 		});
 	};
 
+	export function updateChart(datasets: ChartDataset<ChartType>[]) {
+		if (chart == undefined || chart.canvas == null) {
+			return;
+		}
+		chart.data.datasets = $state.snapshot(datasets) as ChartDataset[];
+		chart.update();
+	}
+
 	onDestroy(() => {
 		chart?.destroy();
 	});
