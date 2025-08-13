@@ -172,3 +172,34 @@ export function to_options(arr: string[]): { value: string; label: string }[] {
 		label: item
 	}));
 }
+
+export function normalize_dataset(data: ChartDataset<'bar'>[]): ChartDataset<'bar'>[] {
+	// Get the sum of all positive values for each year
+	let positive_totals: { [year: string]: number } = {};
+	data.forEach((dataset) => {
+		Object.entries(dataset.data).forEach(([year, value]) => {
+			if (!value || (value as number) <= 0) return;
+			positive_totals[year] = (positive_totals[year] || 0) + (value as number);
+		});
+	});
+
+	// Normalize the data by dividing each value by the total for that year
+	return data.map((dataset) => {
+		return {
+			...dataset,
+			data: Object.values(
+				Object.entries(dataset.data).reduce(
+					(acc, [year, value]) => {
+						if (!value || !positive_totals[year]) {
+							acc[year] = 0;
+						} else {
+							acc[year] = (value as number) / positive_totals[year];
+						}
+						return acc;
+					},
+					{} as { [year: string]: number }
+				)
+			)
+		};
+	});
+}

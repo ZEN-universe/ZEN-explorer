@@ -13,7 +13,12 @@
 	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_component_total } from '$lib/temple';
-	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
+	import {
+		filter_and_aggregate_data,
+		normalize_dataset,
+		remove_duplicates,
+		to_options
+	} from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
 	import type { ActivatedSolution, ProductionDataframes, Row } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
@@ -101,7 +106,7 @@
 		...selected_conversion_technologies,
 		...selected_storage_technologies
 	]);
-	let selected_normalisation: boolean = $state(false);
+	let selected_normalization: boolean = $state(false);
 	let selected_nodes: string[] = $state([]);
 	let selected_years: number[] = $state([]);
 
@@ -152,15 +157,18 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: `Production [${unit}]`
-					}
+						text: `Production` + (selected_normalization ? '' : ` [${unit}]`)
+					},
+					max: selected_normalization ? 1 : undefined,
+					suggestedMin: selected_normalization ? -1 : undefined
 				}
 			},
 			plugins: {
 				tooltip: {
 					callbacks: {
 						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-							`${item.dataset.label}: ${item.formattedValue} ${unit}`
+							`${item.dataset.label}: ${item.formattedValue}` +
+							(selected_normalization ? '' : ` ${unit}`)
 					}
 				}
 			},
@@ -399,7 +407,7 @@
 			dataset_selector,
 			datasets_aggregates,
 			excluded_years,
-			selected_normalisation,
+			false,
 			undefined,
 			suffix || ''
 		);
@@ -421,7 +429,7 @@
 		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
 		reset_color_state();
-		return variables.flatMap((variable, i) => {
+		let result = variables.flatMap((variable, i) => {
 			if (!variable.show || !data) {
 				return [];
 			}
@@ -450,6 +458,11 @@
 
 			return [...filteredPos, ...filteredNeg];
 		}) as unknown as ChartDataset<'bar'>[];
+
+		if (selected_normalization) {
+			return normalize_dataset(result);
+		}
+		return result;
 	});
 </script>
 
@@ -517,7 +530,7 @@
 			<FilterSection title="Data Selection">
 				<FilterRow label="Normalization">
 					{#snippet content(id)}
-						<ToggleButton formId={id} bind:value={selected_normalisation}></ToggleButton>
+						<ToggleButton formId={id} bind:value={selected_normalization}></ToggleButton>
 					{/snippet}
 				</FilterRow>
 				<AllCheckbox

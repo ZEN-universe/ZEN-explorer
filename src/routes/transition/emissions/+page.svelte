@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import type { ChartDataset, ChartOptions } from 'chart.js';
+	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 
 	import SolutionFilter from '$components/SolutionFilter.svelte';
@@ -13,7 +13,12 @@
 	import ToggleButton from '$components/ToggleButton.svelte';
 
 	import { get_component_total, get_unit } from '$lib/temple';
-	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
+	import {
+		filter_and_aggregate_data,
+		normalize_dataset,
+		remove_duplicates,
+		to_options
+	} from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
@@ -81,7 +86,18 @@
 				stacked: true,
 				title: {
 					display: true,
-					text: `Emissions [${unit}]`
+					text: `Emissions ` + (selected_normalization ? '' : ` [${unit}]`)
+				},
+				max: selected_normalization ? 1 : undefined,
+				suggestedMin: selected_normalization ? -1 : undefined
+			}
+		},
+		plugins: {
+			tooltip: {
+				callbacks: {
+					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+						`${item.dataset.label}: ${item.formattedValue}` +
+						(selected_normalization ? '' : ` ${unit}`)
 				}
 			}
 		},
@@ -296,15 +312,17 @@
 			data,
 			dataset_selector,
 			datasets_aggregates,
-			excluded_years,
-			selected_normalization
-		);
+			excluded_years
+		) as ChartDataset<'bar'>[];
 
 		if (filtered_data.length == 1) {
 			filtered_data[0].label = division_variable;
 		}
 
-		return filtered_data as ChartDataset<'bar'>[];
+		if (selected_normalization) {
+			return normalize_dataset(filtered_data);
+		}
+		return filtered_data;
 	});
 
 	let line_datasets: ChartDataset<'line'>[] = $derived.by(() => {
@@ -333,8 +351,7 @@
 			limit_data,
 			dataset_selector,
 			datasets_aggregates,
-			excluded_years,
-			selected_normalization
+			excluded_years
 		);
 
 		if (filtered_limit_data.length == 0) {

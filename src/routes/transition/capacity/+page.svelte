@@ -75,8 +75,11 @@
 				stacked: true,
 				title: {
 					display: true,
-					text: `${variable_labels[selected_variable]} [${unit}]`
-				}
+					text:
+						`${variable_labels[selected_variable]}` + (selected_normalization ? '' : ` [${unit}]`)
+				},
+				min: selected_normalization ? 0 : undefined,
+				max: selected_normalization ? 1 : undefined
 			}
 		},
 		interaction: {
