@@ -27,12 +27,12 @@ test('storage: carrier', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
-	await page.getByLabel('Carrier').selectOption('electricity');
+	await page.getByLabel('Carrier').selectOption('natural_gas');
 	await expect(page.locator('#level_chart')).toHaveScreenshot(
-		`eeht_pf/carrier-electricity/level.png`
+		`eeht_pf/carrier-natural_gas/level.png`
 	);
 	await expect(page.locator('#flow_chart')).toHaveScreenshot(
-		`eeht_pf/carrier-electricity/flow.png`
+		`eeht_pf/carrier-natural_gas/flow.png`
 	);
 });
 
