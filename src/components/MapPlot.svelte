@@ -412,7 +412,7 @@
 
 <svelte:window on:resize={handleSize} />
 
-<div class="position-relative border rounded overflow-hidden">
+<div class="position-relative">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<svg
 		{width}

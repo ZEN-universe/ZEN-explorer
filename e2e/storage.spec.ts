@@ -57,6 +57,7 @@ test('storage: technology subdivision', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.waitForSelector('#level_chart');
 	await page.getByRole('switch', { name: 'Technology Subdivision on' }).uncheck();
 	await expect(page.locator('#level_chart')).toHaveScreenshot(
 		`eeht_pf/technology-subdivision/level.png`
@@ -73,6 +74,7 @@ test('storage: technologies', async ({ page }) => {
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
 	await page.getByLabel('Year').selectOption('2050');
+	await page.waitForSelector('#level_chart');
 	await page
 		.locator('div')
 		.filter({ hasText: /^Technologies Deselect all$/ })
@@ -93,6 +95,7 @@ test('storage: nodes', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.waitForSelector('#level_chart');
 	await page
 		.locator('div')
 		.filter({ hasText: /^Nodes Deselect all$/ })

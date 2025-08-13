@@ -377,7 +377,7 @@
 	{/if}
 </Filters>
 
-<div class="my-4">
+<div class="my-4 border rounded overflow-hidden">
 	{#if pieData && lineData}
 		<MapPlot
 			bind:this={plot}
