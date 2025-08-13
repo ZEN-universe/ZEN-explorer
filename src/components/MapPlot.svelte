@@ -412,7 +412,7 @@
 
 <svelte:window on:resize={handleSize} />
 
-<div class="position-relative">
+<div class="position-relative border rounded overflow-hidden">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<svg
 		{width}
@@ -426,26 +426,26 @@
 		onmouseup={endZoomRectangle}
 		onmouseleave={cancelZoomRectangle}
 		{id}
-		style:background="rgb(168, 186, 215)"
+		style:background="#fff"
 	>
 		{#if !topology}
 			<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Loading...</text>
 		{:else}
 			<g>
-				<path d={land} style:fill="rgb(195, 208, 174)" />
+				<path d={land} style:fill="#ccc" />
 				{#if regions != null}
-					<path d={regions} fill="none" stroke="#d3d3d3" stroke-width="1px" />
+					<path d={regions} fill="none" stroke="#bbb" stroke-width="1px" />
 				{/if}
 				<path
 					d={countries}
 					fill="none"
-					stroke="white"
+					stroke="#888"
 					stroke-width={regions == null ? '1px' : '2px'}
 				/>
 			</g>
 			<g>
 				{#each lines as line}
-					<path d={straightLine(line.start, line.end)} stroke="#666" stroke-width={line.width} />
+					<path d={straightLine(line.start, line.end)} stroke="#000" stroke-width={line.width} />
 				{/each}
 			</g>
 			<g>

@@ -46,15 +46,15 @@ const colors: string[][] = [
 		'rgb(224, 227, 208)',
 		'rgb(129, 143, 66)'
 	],
-	[
-		// Gray
-		'rgb(169, 169, 169)',
-		'rgb(87, 87, 87)',
-		'rgb(197, 197, 197)',
-		'rgb(111, 111, 111)',
-		'rgb(226, 226, 226)',
-		'rgb(140, 140, 140)'
-	],
+	// [
+	// 	// Gray
+	// 	'rgb(169, 169, 169)',
+	// 	'rgb(87, 87, 87)',
+	// 	'rgb(197, 197, 197)',
+	// 	'rgb(111, 111, 111)',
+	// 	'rgb(226, 226, 226)',
+	// 	'rgb(140, 140, 140)'
+	// ],
 	[
 		// Bronze
 		'rgb(187, 164, 113)',
@@ -109,8 +109,8 @@ export function add_transparency(color: string, transparency: number = 0.8): str
 
 export function all_colors(): string[] {
 	let flat_colors = [];
-	for (let j = 0; j < 6; j++) {
-		for (let i = 0; i < 7; i++) {
+	for (let j = 0; j < colors.length; j++) {
+		for (let i = 0; i < colors[0].length; i++) {
 			flat_colors.push(colors[i][j]);
 		}
 	}
