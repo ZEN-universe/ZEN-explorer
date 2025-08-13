@@ -62,6 +62,7 @@ test('map: underlying map', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.waitForTimeout(1000); // Wait for the map to load
 	await page.getByLabel('Map').selectOption('nuts-1');
 	await expect(page.locator('#map')).toHaveScreenshot(`eeht_pf/conversion/heat/2022/nuts-1.png`);
 });
