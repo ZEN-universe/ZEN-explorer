@@ -413,6 +413,7 @@
 			...selected_cost_carriers,
 			...selected_demand_carriers
 		];
+		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
 		// Update the dataset aggregations and groupings
 		const variableToDataMap = [
@@ -461,7 +462,7 @@
 				data,
 				{ location: selected_locations },
 				{ [combined_name]: all_selected_carriers_technologies },
-				[],
+				excluded_years,
 				false
 			).map((item: ChartDataset<'line' | 'bar'>) => {
 				return {
@@ -490,15 +491,13 @@
 			datasets_aggregates = { location: selected_locations };
 		}
 
-		let excluded_years = years.filter((year) => !selected_years.includes(year));
-
 		// Get plot data, as a base we take the grouped data adapted to the cost selection.
 		reset_color_state();
 		let bar_data = filter_and_aggregate_data(
 			grouped_data,
 			dataset_selector,
 			datasets_aggregates,
-			excluded_years,
+			[],
 			selected_normalization
 		);
 
@@ -509,10 +508,13 @@
 			fetched_cost_carbon.data.length > 0 &&
 			variables.carbon_emission.show
 		) {
+			const total_carbon_cost_data = Object.entries(fetched_cost_carbon.data[0])
+				.filter(([key]) => !excluded_years.includes(Number(key)))
+				.map(([_, value]) => value as number);
 			line_data = [
 				{
+					data: total_carbon_cost_data,
 					label: 'Total Carbon Costs',
-					data: fetched_cost_carbon.data[0],
 					type: 'bar'
 				}
 			];
