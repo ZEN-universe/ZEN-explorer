@@ -86,7 +86,7 @@
 				stacked: true,
 				title: {
 					display: true,
-					text: `Emissions ` + (selected_normalization ? '' : ` [${unit}]`)
+					text: `Emissions` + (selected_normalization ? '' : ` [${unit}]`)
 				},
 				max: selected_normalization ? 1 : undefined,
 				suggestedMin: selected_normalization ? -1 : undefined
