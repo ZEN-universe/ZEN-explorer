@@ -72,6 +72,7 @@ test('storage: technologies', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.getByLabel('Year').selectOption('2050');
 	await page
 		.locator('div')
 		.filter({ hasText: /^Technologies Deselect all$/ })
@@ -79,10 +80,10 @@ test('storage: technologies', async ({ page }) => {
 		.click();
 	await page.getByRole('checkbox', { name: 'battery' }).check();
 	await expect(page.locator('#level_chart')).toHaveScreenshot(
-		`eeht_pf/technologies-battery/level.png`
+		`eeht_pf/technologies-battery-2050/level.png`
 	);
 	await expect(page.locator('#flow_chart')).toHaveScreenshot(
-		`eeht_pf/technologies-battery/flow.png`
+		`eeht_pf/technologies-battery-2050/flow.png`
 	);
 });
 
