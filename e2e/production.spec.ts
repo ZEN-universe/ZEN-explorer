@@ -36,7 +36,7 @@ test('production: conversion technology', async ({ page }) => {
 	);
 });
 
-test('production: normalisation', async ({ page }) => {
+test('production: normalization', async ({ page }) => {
 	await page.goto('/transition/production/');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -45,6 +45,20 @@ test('production: normalisation', async ({ page }) => {
 	await page.getByLabel('Carrier').selectOption('electricity');
 	await page.getByRole('switch', { name: 'Normalization off' }).click();
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/electricity/normalization-on.png`);
+});
+
+test('production: normalization only negative', async ({ page }) => {
+	await page.goto('/transition/production/');
+	await page
+		.getByLabel('Solution', { exact: true })
+		.selectOption('european_electricity_heating_transition');
+	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.getByLabel('Carrier').selectOption('electricity');
+	await page.locator('#variables0').uncheck(); // Conversion
+	await page.locator('#variables1').uncheck(); // Storage
+	await page.locator('#variables2').uncheck(); // Import/Export
+	await page.getByRole('switch', { name: 'Normalization off' }).click();
+	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/electricity/normalization-on-negative.png`);
 });
 
 test('production: nodes', async ({ page }) => {

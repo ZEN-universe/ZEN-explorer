@@ -183,6 +183,15 @@ export function normalize_dataset(data: ChartDataset<'bar'>[]): ChartDataset<'ba
 		});
 	});
 
+	// If a year has no positive values, we compute the absolute value of the sum of the negative values
+	let negative_totals: { [year: string]: number } = {};
+	data.forEach((dataset) => {
+		Object.entries(dataset.data).forEach(([year, value]) => {
+			if (!value || (value as number) >= 0) return;
+			negative_totals[year] = (negative_totals[year] || 0) - (value as number);
+		});
+	});
+
 	// Normalize the data by dividing each value by the total for that year
 	return data.map((dataset) => {
 		return {
@@ -190,10 +199,12 @@ export function normalize_dataset(data: ChartDataset<'bar'>[]): ChartDataset<'ba
 			data: Object.values(
 				Object.entries(dataset.data).reduce(
 					(acc, [year, value]) => {
-						if (!value || !positive_totals[year]) {
-							acc[year] = 0;
-						} else {
+						if (value && positive_totals[year] > 0) {
 							acc[year] = (value as number) / positive_totals[year];
+						} else if (value && negative_totals[year] > 0) {
+							acc[year] = (value as number) / negative_totals[year];
+						} else {
+							acc[year] = 0;
 						}
 						return acc;
 					},
