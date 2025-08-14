@@ -48,6 +48,7 @@
 	let selected_locations: string[] = $state([]);
 	let selected_technologies: string[] = $state([]);
 	let selected_years: number[] = $state([]);
+	let preferred_carrier: string | null = null;
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
@@ -162,9 +163,19 @@
 		untrack(() => {
 			// Update the carriers whenever the carriers change
 			if (selected_carrier == null || !carriers.includes(selected_carrier)) {
-				selected_carrier = carriers.length > 0 ? carriers[0] : null;
+				if (preferred_carrier != null && carriers.includes(preferred_carrier)) {
+					selected_carrier = preferred_carrier;
+				} else {
+					selected_carrier = carriers.length > 0 ? carriers[0] : null;
+				}
 			}
 		});
+	});
+
+	$effect(() => {
+		// Update the preferred carrier whenever the selected carrier changes to a non-empty value
+		if (selected_carrier == null) return;
+		preferred_carrier = selected_carrier;
 	});
 
 	$effect(() => {
