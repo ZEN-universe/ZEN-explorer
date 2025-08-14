@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Costs: Capex Subdivison', async ({ page }) => {
+test('costs: capex subdivison', async ({ page }) => {
 	await page.goto('/transition/costs');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -14,7 +14,7 @@ test('Costs: Capex Subdivison', async ({ page }) => {
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/capex-subdivison.png`);
 });
 
-test('Costs: Technologies', async ({ page }) => {
+test('costs: technologies', async ({ page }) => {
 	await page.goto('/transition/costs');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -45,7 +45,7 @@ test('Costs: Technologies', async ({ page }) => {
 	);
 });
 
-test('Costs: Aggregation by Technology & Carrier', async ({ page }) => {
+test('costs: aggregation by technology & carrier', async ({ page }) => {
 	await page.goto('/transition/costs');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -70,7 +70,7 @@ test('Costs: Aggregation by Technology & Carrier', async ({ page }) => {
 	);
 });
 
-test('Costs: Years', async ({ page }) => {
+test('costs: years', async ({ page }) => {
 	await page.goto('/transition/costs');
 	await page
 		.getByLabel('Solution', { exact: true })

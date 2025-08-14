@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('Emissions: Subdivision off Annual', async ({ page }) => {
+test('emissions: subdivision off annual', async ({ page }) => {
 	await page.goto('/transition/emissions');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -11,7 +11,7 @@ test('Emissions: Subdivision off Annual', async ({ page }) => {
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/no-subdivision/annual.png`);
 });
 
-test('Emissions: Subdivision off Cumulative', async ({ page }) => {
+test('emissions: subdivision off cumulative', async ({ page }) => {
 	await page.goto('/transition/emissions');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -22,7 +22,7 @@ test('Emissions: Subdivision off Cumulative', async ({ page }) => {
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/no-subdivision/cumulative.png`);
 });
 
-test('Emissions: Aggregation Location', async ({ page }) => {
+test('emissions: aggregation location', async ({ page }) => {
 	await page.goto('/transition/emissions');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -34,7 +34,7 @@ test('Emissions: Aggregation Location', async ({ page }) => {
 	);
 });
 
-test('Emissions: Aggregation Technology and Carrier', async ({ page }) => {
+test('emissions: aggregation technology and carrier', async ({ page }) => {
 	await page.goto('/transition/emissions');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -46,7 +46,7 @@ test('Emissions: Aggregation Technology and Carrier', async ({ page }) => {
 	);
 });
 
-test('Emissions: Normalization', async ({ page }) => {
+test('emissions: normalization', async ({ page }) => {
 	await page.goto('/transition/emissions');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -56,7 +56,7 @@ test('Emissions: Normalization', async ({ page }) => {
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/subdivision/normalization-on.png`);
 });
 
-test('Emissions: Location', async ({ page }) => {
+test('emissions: location', async ({ page }) => {
 	await page.goto('/transition/emissions');
 	await page
 		.getByLabel('Solution', { exact: true })
@@ -71,7 +71,7 @@ test('Emissions: Location', async ({ page }) => {
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/subdivision/location-only-DE.png`);
 });
 
-test('Emissions: Year', async ({ page }) => {
+test('emissions: year', async ({ page }) => {
 	await page.goto('/transition/emissions');
 	await page
 		.getByLabel('Solution', { exact: true })
