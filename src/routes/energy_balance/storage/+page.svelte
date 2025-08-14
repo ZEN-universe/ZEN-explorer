@@ -1,5 +1,11 @@
 <script lang="ts">
-	import type { Chart, ChartDataset, ChartOptions } from 'chart.js';
+	import {
+		type Chart,
+		type ChartDataset,
+		type ChartOptions,
+		type ChartTypeRegistry,
+		type TooltipItem
+	} from 'chart.js';
 	import { onMount, tick, untrack } from 'svelte';
 	import type { ParseResult } from 'papaparse';
 
@@ -15,7 +21,7 @@
 	import { get_full_ts } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
-	import type { ActivatedSolution, ComponentTotal, Row } from '$lib/types';
+	import type { ActivatedSolution, Row } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
 
 	// All but one data variable are non-reactive because of their size
@@ -58,12 +64,12 @@
 		].join('_');
 	});
 	let plot_name_flows: string = $derived(plot_name + '_flows');
-	let plot_options: ChartOptions = $derived(
+	let plot_options: ChartOptions<'line'> = $derived(
 		get_options('Storage Level', (event) =>
 			flow_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max)
 		)
 	);
-	let plot_options_flows: ChartOptions = $derived(
+	let plot_options_flows: ChartOptions<'line'> = $derived(
 		get_options('Storage Flow', (event) =>
 			level_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max)
 		)
@@ -72,7 +78,7 @@
 	function get_options(
 		label: string,
 		on_zoom: (event: { chart: Chart }) => void
-	): ChartOptions<'bar'> {
+	): ChartOptions<'line'> {
 		return {
 			animation: false,
 			normalized: true,
@@ -88,11 +94,19 @@
 			responsive: true,
 			scales: {
 				x: {
+					type: 'linear',
 					stacked: true,
 					title: {
 						display: true,
 						text: 'Time'
-					}
+					},
+					ticks: {
+						maxRotation: 0,
+						autoSkip: true,
+						callback: (value) => Number(value).toFixed(0)
+					},
+					min: 0,
+					max: selected_solution?.detail?.system.total_hours_per_year
 				},
 				y: {
 					stacked: true,
@@ -122,7 +136,17 @@
 						onZoomComplete: on_zoom
 					},
 					limits: {
-						x: { minRange: 10 }
+						x: { minRange: 10, min: 'original', max: 'original' }
+					}
+				},
+				decimation: {
+					enabled: true,
+					algorithm: 'min-max'
+				},
+				tooltip: {
+					callbacks: {
+						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+							`${item.dataset.label}: ${item.formattedValue} ${unit}`
 					}
 				}
 			},

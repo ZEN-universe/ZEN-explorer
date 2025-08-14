@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ChartOptions, ChartDataset } from 'chart.js';
+	import type { ChartOptions, ChartDataset, TooltipItem, ChartTypeRegistry } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 	import { onMount, tick, untrack } from 'svelte';
 
@@ -87,6 +87,15 @@
 			intersect: false,
 			mode: 'nearest',
 			axis: 'x'
+		},
+		plugins: {
+			tooltip: {
+				callbacks: {
+					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+						`${item.dataset.label}: ${item.formattedValue}` +
+						(selected_normalization ? '' : ` ${unit}`)
+				}
+			}
 		}
 	});
 	let plot_name: string = $derived.by(() => {

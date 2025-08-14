@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { ChartDataset, ChartOptions } from 'chart.js';
+	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 
 	import SolutionFilter from '$components/SolutionFilter.svelte';
@@ -42,7 +42,6 @@
 	let selected_locations: string[] = $state([]);
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_years: number[] = $state([]);
-	let selected_normalization: boolean = false;
 	let selected_cost_carriers: string[] = $state([]);
 	let selected_demand_carriers: string[] = $state([]);
 	let selected_transport_technologies: string[] = $state([]);
@@ -147,6 +146,14 @@
 			intersect: false,
 			mode: 'nearest',
 			axis: 'x'
+		},
+		plugins: {
+			tooltip: {
+				callbacks: {
+					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+						`${item.dataset.label}: ${item.formattedValue} ${unit}`
+				}
+			}
 		}
 	});
 
@@ -498,7 +505,7 @@
 			dataset_selector,
 			datasets_aggregates,
 			[],
-			selected_normalization
+			false
 		);
 
 		// Get total carbon cost data

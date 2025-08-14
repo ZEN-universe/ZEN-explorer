@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { ChartDataset, ChartOptions } from 'chart.js';
+	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 
 	import SolutionFilter from '$components/SolutionFilter.svelte';
@@ -60,7 +60,7 @@
 		}
 		return unit_data.data[0][0] || unit_data.data[0]['units'] || '';
 	});
-	const plot_options: ChartOptions = $derived({
+	const plot_options: ChartOptions = $derived.by(() => ({
 		animation: false,
 		normalized: true,
 		parsing: false,
@@ -73,11 +73,19 @@
 		},
 		scales: {
 			x: {
+				type: 'linear',
 				stacked: true,
 				title: {
 					display: true,
 					text: 'Time'
-				}
+				},
+				ticks: {
+					maxRotation: 0,
+					autoSkip: true,
+					callback: (value) => Number(value).toFixed(0)
+				},
+				min: 0,
+				max: selected_solution?.detail?.system.total_hours_per_year
 			},
 			y: {
 				stacked: true,
@@ -110,11 +118,21 @@
 					mode: 'x'
 				},
 				limits: {
-					x: { minRange: 10 }
+					x: { minRange: 10, min: 'original', max: 'original' }
+				}
+			},
+			decimation: {
+				enabled: true,
+				algorithm: 'min-max'
+			},
+			tooltip: {
+				callbacks: {
+					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+						`${item.dataset.label}: ${item.formattedValue} ${unit}`
 				}
 			}
 		}
-	});
+	}));
 
 	$effect(() => {
 		years;
