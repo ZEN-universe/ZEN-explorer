@@ -224,8 +224,9 @@
 
 		if (cumulative_limit_data && cumulative_limit_data.data.length > 0) {
 			// Copy the value of the first year to all years in the cumulative data
+			const cumulative_limit_value = Number(Object.values(cumulative_limit_data.data[0])[0]);
 			cumulative_limit_data.data[0] = Object.fromEntries(
-				years.map((year) => [year, cumulative_limit_data!.data[0][years[0]]])
+				years.map((year) => [year, cumulative_limit_value])
 			);
 		}
 
