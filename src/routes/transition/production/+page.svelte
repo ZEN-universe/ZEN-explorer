@@ -326,9 +326,6 @@
 				'demand'
 			],
 			selected_solution.scenario_name,
-			selected_solution.detail.system.reference_year,
-			selected_solution.detail.system.interval_between_years,
-			0,
 			'demand'
 		);
 

@@ -216,12 +216,6 @@
 
 		fetching = true;
 
-		// Calculate index of year
-		let year_index = Math.floor(
-			(Number(selected_year) - selected_solution.detail.system.reference_year) /
-				selected_solution.detail.system.interval_between_years
-		);
-
 		// Fetch the energy balance data
 		[energy_balance_data, unit_data] = await Promise.all([
 			get_energy_balance(
@@ -229,7 +223,7 @@
 				selected_node,
 				selected_carrier,
 				selected_solution.scenario_name,
-				year_index,
+				Number(selected_year),
 				window_size
 			),
 			get_unit(

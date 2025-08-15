@@ -110,9 +110,6 @@ export async function get_component_total(
 	solution_name: string,
 	components: string[],
 	scenario_name: string,
-	start_year: number = 0,
-	step_year: number = 1,
-	year_index: number = 0,
 	unit_component: string = ''
 ): Promise<ComponentTotal> {
 	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/get_total');
@@ -120,7 +117,6 @@ export async function get_component_total(
 	urlObj.searchParams.set('components', components.join(','));
 	urlObj.searchParams.set('scenario', scenario_name);
 	urlObj.searchParams.set('unit_component', unit_component);
-	urlObj.searchParams.set('year', year_index.toString());
 	const url = urlObj.toString();
 
 	let component_data_request = await fetch(url, { cache: 'no-store' });
@@ -137,7 +133,7 @@ export async function get_component_total(
 			continue;
 		}
 
-		component_data[key] = filter_zero_rows(parse_csv(component_data[key], start_year, step_year));
+		component_data[key] = filter_zero_rows(parse_csv(component_data[key]));
 	}
 	component_data.unit = parse_unit_data(component_data.unit || '');
 
@@ -235,7 +231,7 @@ export async function get_energy_balance(
  * @param step_year Years between each index
  * @returns Papaparsed CSV
  */
-function parse_csv(data_csv: string, start_year: number = 0, step_year: number = 1) {
+function parse_csv(data_csv: string) {
 	// Get first line of the csv data
 	let first_line = data_csv.slice(0, data_csv.indexOf('\n'));
 
@@ -266,20 +262,8 @@ function parse_csv(data_csv: string, start_year: number = 0, step_year: number =
 		data_csv = data_csv.slice(0, -1);
 	}
 
-	// Define preprocess function that translates the years of index to actual years because the transform_headers visits the function twice and therefore does Number(h) * 2 step_year + 2 * start_year
-	function preprocessCSV(input: string): string {
-		let [header, ...lines] = input.split('\n');
-		let headers = header.split(',');
-
-		// Modify numeric headers
-		headers = headers.map((h) =>
-			!isNaN(Number(h)) ? String(Number(h) * step_year + start_year) : h
-		);
-
-		return [headers.join(','), ...lines].join('\n');
-	}
 	// Parse CSV
-	let data: Papa.ParseResult<Row> = Papa.parse(preprocessCSV(data_csv), {
+	let data: Papa.ParseResult<Row> = Papa.parse(data_csv, {
 		delimiter: ',',
 		header: true,
 		newline: '\n'

@@ -281,9 +281,7 @@
 		const fetched = await get_component_total(
 			selected_solution.solution_name,
 			[selected_variable],
-			selected_solution.scenario_name,
-			selected_solution.detail.system.reference_year,
-			selected_solution.detail.system.interval_between_years
+			selected_solution.scenario_name
 		);
 
 		data = fetched[selected_variable];
