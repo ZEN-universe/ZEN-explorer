@@ -432,7 +432,7 @@
 			<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Loading...</text>
 		{:else}
 			<g>
-				<path d={land} style:fill="#ccc" />
+				<path d={land} style:fill="#e0e0e0" />
 				{#if regions != null}
 					<path d={regions} fill="none" stroke="#bbb" stroke-width="1px" />
 				{/if}

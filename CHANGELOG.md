@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1 (2025-08-15)
+
+- [Map] Make landmasses lighter.
+
 ## 0.7.0 (2025-08-15)
 
 - Add Playwright tests to check the state of the frontend.

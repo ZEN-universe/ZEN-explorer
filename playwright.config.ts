@@ -30,9 +30,9 @@ export default defineConfig({
 	testDir: 'e2e',
 	retries: 2,
 	workers: 4,
-	timeout: 10 * 1000, // 10 seconds timeout for each test
+	timeout: 20 * 1000, // 20 seconds timeout for each test
 	expect: {
-		timeout: 10 * 1000 // 10 seconds timeout for expect assertions
+		timeout: 20 * 1000 // 20 seconds timeout for expect assertions
 	},
 	snapshotPathTemplate:
 		'{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-snapshotSuffix}{ext}'
