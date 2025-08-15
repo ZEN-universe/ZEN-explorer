@@ -58,7 +58,9 @@ test('production: normalization only negative', async ({ page }) => {
 	await page.locator('#variables1').uncheck(); // Storage
 	await page.locator('#variables2').uncheck(); // Import/Export
 	await page.getByRole('switch', { name: 'Normalization off' }).click();
-	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/electricity/normalization-on-negative.png`);
+	await expect(page.locator('#chart')).toHaveScreenshot(
+		`eeht_pf/electricity/normalization-on-negative.png`
+	);
 });
 
 test('production: nodes', async ({ page }) => {

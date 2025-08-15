@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.0 (2025-08-15)
+
+- Add Playwright tests to check the state of the frontend.
+- Use modified endpoints to download multiple components at once.
+- [Nodal, Storage] Disable chart.js parsing and untrack response data and datasets to improve performance.
+- Remove gray from the color palette.
+- [Map] Change background to shades of gray.
+- [Nodal] Rename y axis label to "Energy".
+- [Capacity, Emissions, Production] Fix normalization to interval from 0 to 1 (only positive values).
+- [Emissions, Production] Use sum of all positive (or negative, if there are no positives) values as reference when normalizing the data.
+- [Nodal, Storage] Use decimation plugin to improve chart.js performance.
+- [Capacity] Keep carrier when changing solutions.
+- Use year that are sent from the server.
+
 ## 0.6.2 (2025-06-21)
 
 - Remove unused components property in SolutionDetail.
