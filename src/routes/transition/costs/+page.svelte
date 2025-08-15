@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { ChartDataset, ChartOptions } from 'chart.js';
+	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 
 	import SolutionFilter from '$components/SolutionFilter.svelte';
@@ -12,12 +12,12 @@
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 
-	import { get_variable_name } from '$lib/variables';
 	import { get_component_total } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
 	import type { ActivatedSolution } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
+	import { get_variable_name } from '$lib/variables';
 
 	const combined_name = 'Techology / Carrier';
 	const capex_suffix = ' (Capex)';
@@ -42,7 +42,6 @@
 	let selected_locations: string[] = $state([]);
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_years: number[] = $state([]);
-	let selected_normalization: boolean = false;
 	let selected_cost_carriers: string[] = $state([]);
 	let selected_demand_carriers: string[] = $state([]);
 	let selected_transport_technologies: string[] = $state([]);
@@ -147,8 +146,17 @@
 			intersect: false,
 			mode: 'nearest',
 			axis: 'x'
+		},
+		plugins: {
+			tooltip: {
+				callbacks: {
+					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+						`${item.dataset.label}: ${item.formattedValue} ${unit}`
+				}
+			}
 		}
 	});
+
 	let labels: string[] = $derived.by(() => {
 		return selected_years.map((year) => year.toString());
 	});
@@ -367,45 +375,39 @@
 		}
 		fetching = true;
 
-		let [
-			response_capex,
-			response_opex,
-			response_cost_carbon,
-			response_cost_carrier,
-			response_cost_shed_demand
-		] = await Promise.all(
+		let responses = await get_component_total(
+			selected_solution.solution_name,
 			[
-				'capex_yearly',
-				'opex_yearly',
+				'cost_capex_yearly',
+				'cost_opex_yearly',
 				'cost_carbon_emissions_total',
 				'cost_carrier',
 				'cost_shed_demand'
-			].map((variable) =>
-				get_component_total(
-					selected_solution!.solution_name,
-					get_variable_name(variable, selected_solution!.version),
-					selected_solution!.scenario_name
-				)
-			)
+			].map((variable) => {
+				return get_variable_name(variable, selected_solution?.version);
+			}),
+			selected_solution.scenario_name
 		);
 
 		// "Standardize" all series names
-		fetched_capex = rename_fields(response_capex.data, [['technology', combined_name]]);
-		fetched_opex = rename_fields(response_opex.data, [['technology', combined_name]]);
-		fetched_cost_carbon = response_cost_carbon.data;
-		fetched_cost_carrier = rename_fields(response_cost_carrier.data, [
+		fetched_capex = rename_fields(responses.cost_capex_yearly || null, [
+			['technology', combined_name]
+		]);
+		fetched_opex = rename_fields(responses.cost_opex_yearly || null, [
+			['technology', combined_name]
+		]);
+		fetched_cost_carbon = responses.cost_carbon_emissions_total || null;
+		fetched_cost_carrier = rename_fields(responses.cost_carrier || null, [
 			['node', 'location'],
 			['carrier', combined_name]
 		]);
-		fetched_cost_shed_demand = rename_fields(response_cost_shed_demand.data, [
+		fetched_cost_shed_demand = rename_fields(responses.cost_shed_demand || null, [
 			['node', 'location'],
 			['carrier', combined_name]
 		]);
 
-		if (response_capex.unit?.data) {
-			units = Object.fromEntries(
-				response_capex.unit.data.map((u) => [u.technology, u[0] || u.units])
-			);
+		if (responses.unit?.data) {
+			units = Object.fromEntries(responses.unit.data.map((u) => [u.technology, u[0] || u.units]));
 		}
 
 		fetching = false;
@@ -420,6 +422,7 @@
 			...selected_cost_carriers,
 			...selected_demand_carriers
 		];
+		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
 		// Update the dataset aggregations and groupings
 		const variableToDataMap = [
@@ -468,7 +471,7 @@
 				data,
 				{ location: selected_locations },
 				{ [combined_name]: all_selected_carriers_technologies },
-				[],
+				excluded_years,
 				false
 			).map((item: ChartDataset<'line' | 'bar'>) => {
 				return {
@@ -497,16 +500,14 @@
 			datasets_aggregates = { location: selected_locations };
 		}
 
-		let excluded_years = years.filter((year) => !selected_years.includes(year));
-
 		// Get plot data, as a base we take the grouped data adapted to the cost selection.
 		reset_color_state();
 		let bar_data = filter_and_aggregate_data(
 			grouped_data,
 			dataset_selector,
 			datasets_aggregates,
-			excluded_years,
-			selected_normalization
+			[],
+			false
 		);
 
 		// Get total carbon cost data
@@ -516,10 +517,13 @@
 			fetched_cost_carbon.data.length > 0 &&
 			variables.carbon_emission.show
 		) {
+			const total_carbon_cost_data = Object.entries(fetched_cost_carbon.data[0])
+				.filter(([key]) => !excluded_years.includes(Number(key)))
+				.map(([_, value]) => value as number);
 			line_data = [
 				{
+					data: total_carbon_cost_data,
 					label: 'Total Carbon Costs',
-					data: Object.values(fetched_cost_carbon.data[0]),
 					type: 'bar'
 				}
 			];
@@ -612,11 +616,11 @@
 				{/snippet}
 			</FilterRow>
 			{#if selected_aggregation == aggregation_options[1]}
-				<AllCheckbox label="Location" bind:value={selected_locations} elements={locations}
+				<AllCheckbox label="Locations" bind:value={selected_locations} elements={locations}
 				></AllCheckbox>
 			{/if}
 			{#if selected_years}
-				<AllCheckbox label="Year" bind:value={selected_years} elements={years}></AllCheckbox>
+				<AllCheckbox label="Years" bind:value={selected_years} elements={years}></AllCheckbox>
 			{/if}
 		</FilterSection>
 	{/if}

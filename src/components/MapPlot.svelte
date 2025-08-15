@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { geoMercator, geoPath } from 'd3-geo';
 	import { scaleOrdinal } from 'd3-scale';
-	import { schemeCategory10 } from 'd3-scale-chromatic';
 	import { pointer, select } from 'd3-selection';
 	import { pie as d3pie, arc as d3arc } from 'd3-shape';
 	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3-zoom';
@@ -34,6 +33,7 @@
 	}
 
 	interface Props {
+		id?: string;
 		pieData: MapPlotData;
 		lineData?: MapPlotData;
 		nodeCoords?: { [node: string]: [number, number] };
@@ -45,6 +45,7 @@
 		maxEdge: number;
 	}
 	let {
+		id = 'map',
 		pieData,
 		lineData = {},
 		nodeCoords = {},
@@ -424,26 +425,27 @@
 		onmousedown={startZoomRectangle}
 		onmouseup={endZoomRectangle}
 		onmouseleave={cancelZoomRectangle}
-		style:background="rgb(168, 186, 215)"
+		{id}
+		style:background="#fff"
 	>
 		{#if !topology}
 			<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Loading...</text>
 		{:else}
 			<g>
-				<path d={land} style:fill="rgb(195, 208, 174)" />
+				<path d={land} style:fill="#ccc" />
 				{#if regions != null}
-					<path d={regions} fill="none" stroke="#d3d3d3" stroke-width="1px" />
+					<path d={regions} fill="none" stroke="#bbb" stroke-width="1px" />
 				{/if}
 				<path
 					d={countries}
 					fill="none"
-					stroke="white"
+					stroke="#888"
 					stroke-width={regions == null ? '1px' : '2px'}
 				/>
 			</g>
 			<g>
 				{#each lines as line}
-					<path d={straightLine(line.start, line.end)} stroke="#666" stroke-width={line.width} />
+					<path d={straightLine(line.start, line.end)} stroke="#000" stroke-width={line.width} />
 				{/each}
 			</g>
 			<g>

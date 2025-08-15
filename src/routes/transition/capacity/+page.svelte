@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ChartOptions, ChartDataset } from 'chart.js';
+	import type { ChartOptions, ChartDataset, TooltipItem, ChartTypeRegistry } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 	import { onMount, tick, untrack } from 'svelte';
 
@@ -48,6 +48,7 @@
 	let selected_locations: string[] = $state([]);
 	let selected_technologies: string[] = $state([]);
 	let selected_years: number[] = $state([]);
+	let preferred_carrier: string | null = null;
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
@@ -75,14 +76,26 @@
 				stacked: true,
 				title: {
 					display: true,
-					text: `${variable_labels[selected_variable]} [${unit}]`
-				}
+					text:
+						`${variable_labels[selected_variable]}` + (selected_normalization ? '' : ` [${unit}]`)
+				},
+				min: selected_normalization ? 0 : undefined,
+				max: selected_normalization ? 1 : undefined
 			}
 		},
 		interaction: {
 			intersect: false,
 			mode: 'nearest',
 			axis: 'x'
+		},
+		plugins: {
+			tooltip: {
+				callbacks: {
+					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+						`${item.dataset.label}: ${item.formattedValue}` +
+						(selected_normalization ? '' : ` ${unit}`)
+				}
+			}
 		}
 	});
 	let plot_name: string = $derived.by(() => {
@@ -159,9 +172,19 @@
 		untrack(() => {
 			// Update the carriers whenever the carriers change
 			if (selected_carrier == null || !carriers.includes(selected_carrier)) {
-				selected_carrier = carriers.length > 0 ? carriers[0] : null;
+				if (preferred_carrier != null && carriers.includes(preferred_carrier)) {
+					selected_carrier = preferred_carrier;
+				} else {
+					selected_carrier = carriers.length > 0 ? carriers[0] : null;
+				}
 			}
 		});
+	});
+
+	$effect(() => {
+		// Update the preferred carrier whenever the selected carrier changes to a non-empty value
+		if (selected_carrier == null) return;
+		preferred_carrier = selected_carrier;
 	});
 
 	$effect(() => {
@@ -257,11 +280,11 @@
 
 		const fetched = await get_component_total(
 			selected_solution.solution_name,
-			selected_variable,
+			[selected_variable],
 			selected_solution.scenario_name
 		);
 
-		data = fetched.data;
+		data = fetched[selected_variable];
 
 		if (fetched.unit?.data) {
 			units = Object.fromEntries(
@@ -391,18 +414,21 @@
 					{/snippet}
 				</FilterRow>
 				{#if selected_aggregation == 'technology'}
-					<AllCheckbox label="Technology" bind:value={selected_technologies} elements={technologies}
+					<AllCheckbox
+						label="Technologies"
+						bind:value={selected_technologies}
+						elements={technologies}
 					></AllCheckbox>
 				{:else}
-					<AllCheckbox label="Node" bind:value={selected_locations} elements={locations}
+					<AllCheckbox label="Nodes" bind:value={selected_locations} elements={locations}
 					></AllCheckbox>
 				{/if}
-				<AllCheckbox label="Year" bind:value={selected_years} elements={years}></AllCheckbox>
+				<AllCheckbox label="Years" bind:value={selected_years} elements={years}></AllCheckbox>
 			</FilterSection>
 		{/if}
 	{/if}
 </Filters>
-<div class="mt-4">
+<div class="plot mt-4">
 	{#if solution_loading || fetching}
 		<div class="text-center">
 			<div class="spinner-border center" role="status">

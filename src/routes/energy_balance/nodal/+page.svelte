@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { ChartDataset, ChartOptions } from 'chart.js';
+	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 
 	import SolutionFilter from '$components/SolutionFilter.svelte';
@@ -11,16 +11,19 @@
 	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_energy_balance, get_unit } from '$lib/temple';
-	import { filter_and_aggregate_data, to_options } from '$lib/utils';
+	import { to_options } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import { next_color, reset_color_state as reset_color_picker_state } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 
-	let energy_balance_data: EnergyBalanceDataframes | null = $state(null);
+	let energy_balance_data: EnergyBalanceDataframes | null = null;
 	let unit_data: any = $state(null);
+
 	let solution_loading: boolean = $state(false);
 	let fetching = $state(false);
+
+	let plot = $state<BarPlot>();
 
 	let nodes: string[] = $state([]);
 	let carriers: string[] = $state([]);
@@ -57,33 +60,47 @@
 		}
 		return unit_data.data[0][0] || unit_data.data[0]['units'] || '';
 	});
-	const plot_options: ChartOptions = $derived({
+	const plot_options: ChartOptions = $derived.by(() => ({
 		animation: false,
 		normalized: true,
+		parsing: false,
+		responsive: true,
+		borderWidth: 1,
 		elements: {
 			point: {
 				radius: 0
 			}
 		},
-		responsive: true,
 		scales: {
 			x: {
+				type: 'linear',
 				stacked: true,
 				title: {
 					display: true,
 					text: 'Time'
-				}
+				},
+				ticks: {
+					maxRotation: 0,
+					autoSkip: true,
+					callback: (value) => Number(value).toFixed(0)
+				},
+				min: 0,
+				max: selected_solution?.detail?.system.total_hours_per_year
 			},
 			y: {
 				stacked: true,
 				beginAtZero: true,
 				title: {
 					display: true,
-					text: `Power [${unit}]`
+					text: `Energy [${unit}]`
 				}
 			}
 		},
-		borderWidth: 1,
+		interaction: {
+			intersect: false,
+			mode: 'nearest',
+			axis: 'x'
+		},
 		plugins: {
 			zoom: {
 				pan: {
@@ -101,16 +118,21 @@
 					mode: 'x'
 				},
 				limits: {
-					x: { minRange: 10 }
+					x: { minRange: 10, min: 'original', max: 'original' }
+				}
+			},
+			decimation: {
+				enabled: true,
+				algorithm: 'min-max'
+			},
+			tooltip: {
+				callbacks: {
+					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+						`${item.dataset.label}: ${item.formattedValue} ${unit}`
 				}
 			}
-		},
-		interaction: {
-			intersect: false,
-			mode: 'nearest',
-			axis: 'x'
 		}
-	});
+	}));
 
 	$effect(() => {
 		years;
@@ -218,15 +240,18 @@
 		]);
 
 		fetching = false;
+		update_datasets();
 	}
 
 	let labels: string[] = $derived.by(() => {
-		if (datasets.length === 0) {
-			return [];
-		}
-		return Object.keys(datasets[0].data);
+		return Array.from({ length: number_of_time_steps }, (_, i) => i.toString());
 	});
-	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
+
+	let datasets: ChartDataset<'bar' | 'line'>[] = [];
+	let datasets_length: number = $state(0);
+	let number_of_time_steps: number = $state(0);
+
+	function compute_datasets() {
 		if (
 			!selected_solution ||
 			!selected_node ||
@@ -237,7 +262,6 @@
 			return [];
 		}
 
-		reset_color_picker_state();
 		return Object.entries(energy_balance_data).flatMap(
 			([key, data]: [string, ParseResult<any> | undefined]) => {
 				if (!data || !data.data || data.data.length === 0) {
@@ -308,10 +332,11 @@
 						// Demand is plotted in a different way than the other plots
 						let color = next_color();
 						let bg_color = color;
+						let dataset_data = Object.values(data.data).map((value, i) => ({ x: i, y: value }));
 
 						if (key == 'demand') {
 							return {
-								data: Object.values(data.data),
+								data: dataset_data,
 								label: 'Demand',
 								type: 'line',
 								stack: 'ownCustomStack',
@@ -324,7 +349,7 @@
 							} as ChartDataset<'line'>;
 						} else {
 							return {
-								data: Object.values(data.data),
+								data: dataset_data,
 								label: labelMap[key]?.(data.label) || data.label,
 								fill: 'origin',
 								borderColor: color,
@@ -338,7 +363,20 @@
 					.filter((dataset) => dataset !== null);
 			}
 		);
-	});
+	}
+
+	async function update_datasets() {
+		reset_color_picker_state();
+		datasets = compute_datasets();
+		datasets_length = datasets.length;
+		number_of_time_steps = datasets_length > 0 ? datasets[0].data.length : 0;
+
+		await tick();
+
+		if (plot) {
+			plot.updateChart(datasets);
+		}
+	}
 </script>
 
 <h1 class="mt-2 mb-4">The Energy Balance &ndash; Nodal</h1>
@@ -406,16 +444,17 @@
 				<span class="visually-hidden">Loading...</span>
 			</div>
 		</div>
-	{:else if datasets.length == 0}
+	{:else if datasets_length == 0}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
 		<BarPlot
-			type={datasets[0].data.length == 1 ? 'bar' : 'line'}
+			type={number_of_time_steps == 1 ? 'bar' : 'line'}
 			options={plot_options}
 			{labels}
-			{datasets}
+			datasets={[]}
 			{plot_name}
 			zoom={true}
+			bind:this={plot}
 		></BarPlot>
 	{/if}
 </div>

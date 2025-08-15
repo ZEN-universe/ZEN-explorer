@@ -9,6 +9,7 @@
 	Chart.register(zoomPlugin);
 
 	interface Props {
+		id?: string;
 		type: ChartType;
 		labels?: string[];
 		datasets: ChartDataset<ChartType>[];
@@ -20,6 +21,7 @@
 	}
 
 	let {
+		id = 'chart',
 		type,
 		labels,
 		datasets,
@@ -53,6 +55,14 @@
 			chart.update();
 		});
 	};
+
+	export function updateChart(datasets: ChartDataset<ChartType>[]) {
+		if (chart == undefined || chart.canvas == null) {
+			return;
+		}
+		chart.data.datasets = $state.snapshot(datasets) as ChartDataset[];
+		chart.update();
+	}
 
 	onDestroy(() => {
 		chart?.destroy();
@@ -130,7 +140,7 @@
 			<div class="visually-hidden">Download CSV Data</div>
 		</button>
 	</div>
-	<canvas id="myChart" use:handleChart></canvas>
+	<canvas {id} use:handleChart></canvas>
 </div>
 
 <style>

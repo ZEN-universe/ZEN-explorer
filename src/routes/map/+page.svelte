@@ -161,11 +161,11 @@
 
 		const response = await get_component_total(
 			selected_solution.solution_name,
-			'capacity',
+			['capacity'],
 			selected_solution.scenario_name
 		);
 
-		fetchedData = response.data;
+		fetchedData = response.capacity;
 
 		if (response.unit?.data) {
 			units = Object.fromEntries(
@@ -375,7 +375,7 @@
 	{/if}
 </Filters>
 
-<div class="my-4">
+<div class="my-4 border rounded overflow-hidden">
 	{#if pieData && lineData}
 		<MapPlot
 			bind:this={plot}

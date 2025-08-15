@@ -13,10 +13,14 @@
 	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_component_total } from '$lib/temple';
-	import { get_variable_name } from '$lib/variables';
-	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
+	import {
+		filter_and_aggregate_data,
+		normalize_dataset,
+		remove_duplicates,
+		to_options
+	} from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
-	import type { ActivatedSolution, Dataset, Row } from '$lib/types';
+	import type { ActivatedSolution, ProductionDataframes, Row } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
 
 	// Data
@@ -33,10 +37,10 @@
 		subdivision: boolean;
 		show_subdivision: boolean;
 		filter_by_technologies: boolean;
-		positive: string;
+		positive: keyof ProductionDataframes;
 		positive_label: string;
 		positive_suffix?: string;
-		negative: string;
+		negative: keyof ProductionDataframes;
 		negative_label: string;
 		negative_suffix?: string;
 	}
@@ -102,7 +106,7 @@
 		...selected_conversion_technologies,
 		...selected_storage_technologies
 	]);
-	let selected_normalisation: boolean = $state(false);
+	let selected_normalization: boolean = $state(false);
 	let selected_nodes: string[] = $state([]);
 	let selected_years: number[] = $state([]);
 
@@ -153,15 +157,18 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: `Production [${unit}]`
-					}
+						text: `Production` + (selected_normalization ? '' : ` [${unit}]`)
+					},
+					max: selected_normalization ? 1 : undefined,
+					suggestedMin: selected_normalization ? -1 : undefined
 				}
 			},
 			plugins: {
 				tooltip: {
 					callbacks: {
 						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-							`${item.dataset.label}: ${item.formattedValue} ${unit}`
+							`${item.dataset.label}: ${item.formattedValue}` +
+							(selected_normalization ? '' : ` ${unit}`)
 					}
 				}
 			},
@@ -214,7 +221,10 @@
 				if (selected_conversion_technologies.length == 0 && conversion_technologies.length > 0) {
 					selected_conversion_technologies = conversion_technologies;
 				}
-			} else if (conversion_technologies.length > 0) {
+			} else if (
+				conversion_technologies.length > 0 ||
+				selected_conversion_technologies.some((t) => !conversion_technologies.includes(t))
+			) {
 				selected_conversion_technologies = conversion_technologies;
 			}
 		});
@@ -228,7 +238,10 @@
 				if (selected_storage_technologies.length == 0 && storage_technologies.length > 0) {
 					selected_storage_technologies = storage_technologies;
 				}
-			} else if (storage_technologies.length > 0) {
+			} else if (
+				storage_technologies.length > 0 ||
+				selected_storage_technologies.some((t) => !storage_technologies.includes(t))
+			) {
 				selected_storage_technologies = storage_technologies;
 			}
 		});
@@ -300,30 +313,29 @@
 		fetching = true;
 		data = null;
 
-		const responses = await Promise.all(
-			variables.flatMap((variable) => {
-				return [
-					get_component_total(
-						selected_solution!.solution_name,
-						get_variable_name(variable.positive, selected_solution?.version),
-						selected_solution!.scenario_name
-					),
-					get_component_total(
-						selected_solution!.solution_name,
-						get_variable_name(variable.negative, selected_solution?.version),
-						selected_solution!.scenario_name
-					)
-				];
-			})
+		const responses = await get_component_total(
+			selected_solution.solution_name,
+			[
+				'flow_conversion_output',
+				'flow_conversion_input',
+				'flow_storage_discharge',
+				'flow_storage_charge',
+				'flow_import',
+				'flow_export',
+				'shed_demand',
+				'demand'
+			],
+			selected_solution.scenario_name,
+			0,
+			'demand'
 		);
 
-		data = responses.map((response) => {
-			if (!response || !response.data) return null;
-			return response.data;
+		data = variables.flatMap((variable) => {
+			return [responses[variable.positive] || null, responses[variable.negative] || null];
 		});
 
-		if (responses[indexOfDemandResponse]?.unit?.data) {
-			units = responses[indexOfDemandResponse].unit.data;
+		if (responses.unit?.data) {
+			units = responses.unit.data;
 		}
 
 		fetching = false;
@@ -393,7 +405,7 @@
 			dataset_selector,
 			datasets_aggregates,
 			excluded_years,
-			selected_normalisation,
+			false,
 			undefined,
 			suffix || ''
 		);
@@ -415,7 +427,7 @@
 		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
 		reset_color_state();
-		return variables.flatMap((variable, i) => {
+		let result = variables.flatMap((variable, i) => {
 			if (!variable.show || !data) {
 				return [];
 			}
@@ -444,6 +456,11 @@
 
 			return [...filteredPos, ...filteredNeg];
 		}) as unknown as ChartDataset<'bar'>[];
+
+		if (selected_normalization) {
+			return normalize_dataset(result);
+		}
+		return result;
 	});
 </script>
 
@@ -511,7 +528,7 @@
 			<FilterSection title="Data Selection">
 				<FilterRow label="Normalization">
 					{#snippet content(id)}
-						<ToggleButton formId={id} bind:value={selected_normalisation}></ToggleButton>
+						<ToggleButton formId={id} bind:value={selected_normalization}></ToggleButton>
 					{/snippet}
 				</FilterRow>
 				<AllCheckbox
@@ -530,7 +547,7 @@
 		{/if}
 	{/if}
 </Filters>
-<div class="mt-4">
+<div class="plot mt-4">
 	{#if solution_loading || fetching}
 		<div class="text-center">
 			<div class="spinner-border center" role="status">

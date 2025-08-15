@@ -84,6 +84,27 @@ export interface DatasetSelectors {
 	[key: string]: string[];
 }
 
+export interface ProductionDataframes {
+	flow_conversion_output: Papa.ParseResult<Row> | undefined;
+	flow_conversion_input: Papa.ParseResult<Row> | undefined;
+	flow_storage_discharge: Papa.ParseResult<Row> | undefined;
+	flow_storage_charge: Papa.ParseResult<Row> | undefined;
+	flow_import: Papa.ParseResult<Row> | undefined;
+	flow_export: Papa.ParseResult<Row> | undefined;
+	shed_demand: Papa.ParseResult<Row> | undefined;
+	demand: Papa.ParseResult<Row> | undefined;
+	unit: Papa.ParseResult<Row> | undefined;
+}
+
+export interface CostsDataframes {
+	cost_capex_yearly: Papa.ParseResult<Row> | undefined;
+	cost_opex_yearly: Papa.ParseResult<Row> | undefined;
+	cost_carbon_emissions_total: Papa.ParseResult<Row> | undefined;
+	cost_carrier: Papa.ParseResult<Row> | undefined;
+	cost_shed_demand: Papa.ParseResult<Row> | undefined;
+	unit: Papa.ParseResult<Row> | undefined;
+}
+
 export interface EnergyBalanceDataframes {
 	demand: Papa.ParseResult<Row> | undefined;
 	flow_conversion_input: Papa.ParseResult<Row> | undefined;
@@ -95,6 +116,15 @@ export interface EnergyBalanceDataframes {
 	flow_transport_out: Papa.ParseResult<Row> | undefined;
 	flow_conversion_output: Papa.ParseResult<Row> | undefined;
 	shed_demand: Papa.ParseResult<Row> | undefined;
+}
+
+export interface StorageDataframes {
+	storage_level: Papa.ParseResult<Row> | undefined;
+	flow_storage_charge: Papa.ParseResult<Row> | undefined;
+	flow_storage_discharge: Papa.ParseResult<Row> | undefined;
+	flow_storage_inflow: Papa.ParseResult<Row> | undefined;
+	flow_storage_spillage: Papa.ParseResult<Row> | undefined;
+	unit: Papa.ParseResult<Row> | undefined;
 }
 
 export interface Dataset {
@@ -109,7 +139,7 @@ export interface YearValue {
 
 export interface ComponentTotal {
 	unit: Papa.ParseResult<Row> | null;
-	data: Papa.ParseResult<Row> | null;
+	[key: string]: Papa.ParseResult<Row> | null;
 }
 
 export interface DatasetContainer {

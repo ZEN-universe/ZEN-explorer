@@ -1,6 +1,13 @@
 <script lang="ts">
-	import type { Chart, ChartDataset, ChartOptions } from 'chart.js';
+	import {
+		type Chart,
+		type ChartDataset,
+		type ChartOptions,
+		type ChartTypeRegistry,
+		type TooltipItem
+	} from 'chart.js';
 	import { onMount, tick, untrack } from 'svelte';
+	import type { ParseResult } from 'papaparse';
 
 	import ToggleButton from '$components/ToggleButton.svelte';
 	import SolutionFilter from '$components/SolutionFilter.svelte';
@@ -13,16 +20,17 @@
 
 	import { get_full_ts } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
-	import { get_variable_name } from '$lib/variables';
-	import type { ActivatedSolution, ComponentTotal, Row } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
+	import type { ActivatedSolution, Row } from '$lib/types';
+	import { reset_color_state } from '$lib/colors';
 
 	// All but one data variable are non-reactive because of their size
-	let levelResponse: ComponentTotal | null = $state(null);
-	let chargeResponse: ComponentTotal | null = null;
-	let dischargeResponse: ComponentTotal | null = null;
-	let spillageResponse: ComponentTotal | null = null;
-	let inflowResponse: ComponentTotal | null = null;
+	let level_response: ParseResult<Row> | null = null;
+	let charge_response: ParseResult<Row> | null = null;
+	let discharge_response: ParseResult<Row> | null = null;
+	let spillage_response: ParseResult<Row> | null = null;
+	let inflow_response: ParseResult<Row> | null = null;
+	let response_update_trigger: number = $state(0);
 	let units: { [carrier: string]: string } = $state({});
 
 	let years: number[] = $state([]);
@@ -56,12 +64,12 @@
 		].join('_');
 	});
 	let plot_name_flows: string = $derived(plot_name + '_flows');
-	let plot_options: ChartOptions = $derived(
+	let plot_options: ChartOptions<'line'> = $derived(
 		get_options('Storage Level', (event) =>
 			flow_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max)
 		)
 	);
-	let plot_options_flows: ChartOptions = $derived(
+	let plot_options_flows: ChartOptions<'line'> = $derived(
 		get_options('Storage Flow', (event) =>
 			level_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max)
 		)
@@ -70,10 +78,11 @@
 	function get_options(
 		label: string,
 		on_zoom: (event: { chart: Chart }) => void
-	): ChartOptions<'bar'> {
+	): ChartOptions<'line'> {
 		return {
 			animation: false,
 			normalized: true,
+			parsing: false,
 			elements: {
 				point: {
 					radius: 0
@@ -85,11 +94,19 @@
 			responsive: true,
 			scales: {
 				x: {
+					type: 'linear',
 					stacked: true,
 					title: {
 						display: true,
 						text: 'Time'
-					}
+					},
+					ticks: {
+						maxRotation: 0,
+						autoSkip: true,
+						callback: (value) => Number(value).toFixed(0)
+					},
+					min: 0,
+					max: selected_solution?.detail?.system.total_hours_per_year
 				},
 				y: {
 					stacked: true,
@@ -119,7 +136,17 @@
 						onZoomComplete: on_zoom
 					},
 					limits: {
-						x: { minRange: 10 }
+						x: { minRange: 10, min: 'original', max: 'original' }
+					}
+				},
+				decimation: {
+					enabled: true,
+					algorithm: 'min-max'
+				},
+				tooltip: {
+					callbacks: {
+						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+							`${item.dataset.label}: ${item.formattedValue} ${unit}`
 					}
 				}
 			},
@@ -132,29 +159,32 @@
 	}
 
 	let locations: string[] = $derived.by(() => {
-		if (!levelResponse?.data) {
+		response_update_trigger;
+		if (!level_response) {
 			return [];
 		}
-		return remove_duplicates(levelResponse.data.data.map((a) => a.node)).sort();
+		return remove_duplicates(level_response.data.map((a) => a.node)).sort();
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		if (!levelResponse?.data || !selected_solution) {
+		response_update_trigger;
+		if (!level_response || !selected_solution) {
 			return [];
 		}
-		let all_technologies = Array.from(levelResponse.data.data.map((a) => a.technology));
+		let all_technologies = Array.from(level_response.data.map((a) => a.technology));
 		return remove_duplicates(
-			levelResponse.data.data
+			level_response.data
 				.filter((element) => all_technologies.includes(element.technology))
 				.map((element) => selected_solution!.detail.reference_carrier[element.technology])
 		);
 	});
 
 	let technologies: string[] = $derived.by(() => {
-		if (!levelResponse?.data || !selected_solution || carriers.length === 0) {
+		response_update_trigger;
+		if (!level_response || !selected_solution || carriers.length === 0) {
 			return [];
 		}
-		let all_technologies = remove_duplicates(levelResponse.data.data.map((a: any) => a.technology));
+		let all_technologies = remove_duplicates(level_response.data.map((a: any) => a.technology));
 		return all_technologies.filter(
 			(technology) => selected_solution!.detail.reference_carrier[technology] == selected_carrier
 		);
@@ -179,7 +209,7 @@
 		untrack(() => {
 			if (carriers.length > 0 && (!selected_carrier || !carriers.includes(selected_carrier))) {
 				selected_carrier = carriers[0];
-				update_flow_datasets();
+				update_datasets();
 			}
 		});
 	});
@@ -189,7 +219,7 @@
 		untrack(() => {
 			if (years.length > 0 && (!selected_year || !years.includes(Number(selected_year)))) {
 				selected_year = years[0].toString();
-				update_flow_datasets();
+				update_datasets();
 			}
 		});
 	});
@@ -200,7 +230,7 @@
 		selected_subdivision;
 		selected_technologies;
 		selected_locations;
-		untrack(update_flow_datasets);
+		untrack(update_datasets);
 	});
 
 	// Set URL parameters
@@ -248,51 +278,55 @@
 				Monthly: 720
 			}[selected_window_size] || 1; // Default to hourly (1 hour)
 
-		[levelResponse, chargeResponse, dischargeResponse, spillageResponse, inflowResponse] =
-			await Promise.all(
-				[
-					'storage_level',
-					'flow_storage_charge',
-					'flow_storage_discharge',
-					'flow_storage_spillage',
-					'flow_storage_inflow'
-				].map((variable) => {
-					return get_full_ts(
-						selected_solution!.solution_name,
-						get_variable_name(variable, selected_solution!.version),
-						selected_solution!.scenario_name,
-						year_index,
-						window_size
-					);
-				})
-			);
+		const responses = await get_full_ts(
+			selected_solution.solution_name,
+			[
+				'storage_level',
+				'flow_storage_charge',
+				'flow_storage_discharge',
+				'flow_storage_spillage',
+				'flow_storage_inflow'
+			],
+			selected_solution.scenario_name,
+			'storage_level',
+			year_index,
+			window_size
+		);
 
-		if (levelResponse.unit?.data) {
-			units = Object.fromEntries(
-				levelResponse.unit.data.map((u) => [u.technology, u[0] || u.units])
-			);
+		level_response = responses.storage_level || null;
+		charge_response = responses.flow_storage_charge || null;
+		discharge_response = responses.flow_storage_discharge || null;
+		spillage_response = responses.flow_storage_spillage || null;
+		inflow_response = responses.flow_storage_inflow || null;
+		response_update_trigger++;
+
+		if (responses.unit?.data) {
+			units = Object.fromEntries(responses.unit.data.map((u) => [u.technology, u[0] || u.units]));
 		}
 
 		fetching = false;
-		update_flow_datasets();
+		update_datasets();
 	}
 
 	let labels: string[] = $derived.by(() => {
-		if (datasets.length === 0) {
-			return [];
-		}
-		return Object.keys(datasets[0].data);
+		return Array.from({ length: number_of_time_steps }, (_, i) => i.toString());
 	});
 
-	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
+	let level_datasets: ChartDataset<'bar' | 'line'>[] = [];
+	let flow_datasets: ChartDataset<'bar' | 'line'>[] = [];
+	let level_datasets_length: number = $state(0);
+	let flow_datasets_length: number = $state(0);
+	let number_of_time_steps: number = $state(0);
+
+	function compute_level_datasets() {
 		if (
 			selected_locations.length == 0 ||
 			selected_technologies.length == 0 ||
-			!levelResponse?.data ||
-			!chargeResponse?.data ||
-			!dischargeResponse?.data ||
-			!inflowResponse?.data ||
-			!spillageResponse?.data
+			!level_response ||
+			!charge_response ||
+			!discharge_response ||
+			!inflow_response ||
+			!spillage_response
 		) {
 			return [];
 		}
@@ -301,7 +335,7 @@
 		let datasets_aggregates = { node: selected_locations };
 
 		let filtered_data = filter_and_aggregate_data(
-			levelResponse.data.data,
+			level_response.data,
 			dataset_selector,
 			datasets_aggregates,
 			[],
@@ -311,6 +345,7 @@
 		).map((dataset) => {
 			return {
 				...dataset,
+				data: dataset.data.map((value, i) => ({ x: i, y: value })),
 				fill: 'origin'
 			};
 		});
@@ -319,16 +354,16 @@
 			return filtered_data as ChartDataset<'bar' | 'line'>[];
 		}
 
-		let new_data: { [key: string]: number } = {};
-		for (const i in filtered_data[0].data) {
-			new_data[i] = filtered_data
-				.map((j) => j.data[i] as number)
-				.reduce((partialSum, a) => partialSum + a, 0);
-		}
+		// Aggregate data across all selected locations and technologies
+		// The first dataset is used to determine the x-axis values
+		let dataset_data = filtered_data[0].data.map((_, i) => ({
+			x: i,
+			y: filtered_data.reduce((partialSum, d) => partialSum + (d.data[i].y as number), 0)
+		}));
 
 		return [
 			{
-				data: Object.values(new_data),
+				data: dataset_data,
 				label: 'Storage level',
 				type: 'line',
 				borderColor: 'black',
@@ -336,29 +371,26 @@
 				stepped: true
 			}
 		] as ChartDataset<'line'>[];
-	});
+	}
 
-	let flow_datasets: ChartDataset<'bar' | 'line'>[] = $state([]);
-	function update_flow_datasets() {
+	function compute_flow_datasets() {
 		if (
 			selected_solution === null ||
 			fetching ||
 			selected_locations.length == 0 ||
 			selected_technologies.length == 0
 		) {
-			flow_datasets = [];
-			return;
+			return [];
 		}
 
 		if (
-			!levelResponse?.data ||
-			!chargeResponse?.data ||
-			!dischargeResponse?.data ||
-			!inflowResponse?.data ||
-			!spillageResponse?.data
+			!level_response ||
+			!charge_response ||
+			!discharge_response ||
+			!inflow_response ||
+			!spillage_response
 		) {
-			flow_datasets = [];
-			return;
+			return [];
 		}
 
 		let dataset_selector = { technology: selected_technologies };
@@ -371,28 +403,28 @@
 			spillage_filtered_data
 		] = [
 			{
-				data: chargeResponse.data,
+				data: charge_response.data,
 				label_suffix: '_charge',
 				negate: false
 			},
 			{
-				data: dischargeResponse.data,
+				data: discharge_response.data,
 				label_suffix: '_discharge',
 				negate: true
 			},
 			{
-				data: inflowResponse.data,
+				data: inflow_response.data,
 				label_suffix: '_inflow',
 				negate: false
 			},
 			{
-				data: spillageResponse.data,
+				data: spillage_response.data,
 				label_suffix: '_spillage',
 				negate: true
 			}
 		].map(({ data, label_suffix, negate }) => {
 			return filter_and_aggregate_data(
-				data.data,
+				data,
 				dataset_selector,
 				datasets_aggregates,
 				[],
@@ -400,13 +432,12 @@
 				'line',
 				label_suffix
 			).map((dataset) => {
+				let mapped_data = dataset.data.map((value, i) => ({
+					x: i,
+					y: negate ? -(value as number) : (value as number)
+				}));
 				return {
-					data: Object.fromEntries(
-						Object.entries(dataset.data).map(([k, v]) => [
-							k,
-							negate ? -(v as number) : (v as number)
-						])
-					),
+					data: mapped_data,
 					label: dataset.label,
 					type: dataset.type,
 					stepped: true,
@@ -416,14 +447,13 @@
 		});
 
 		if (selected_subdivision) {
-			flow_datasets = charge_filtered_data
+			return charge_filtered_data
 				.concat(discharge_filtered_data)
 				.concat(inflow_filtered_data)
 				.concat(spillage_filtered_data) as unknown as ChartDataset<'bar' | 'line'>[];
-			return;
 		}
 
-		flow_datasets = [
+		return [
 			{
 				data: charge_filtered_data,
 				label: 'Flow Storage Charge',
@@ -449,10 +479,14 @@
 				if (data.length === 0) {
 					return null;
 				}
+
+				let dataset_data = data[0].data.map((_, i) => ({
+					x: i,
+					y: data.reduce((partialSum, d) => partialSum + d.data[i].y, 0)
+				}));
+
 				return {
-					data: Object.keys(data[0].data).map((key) =>
-						data.reduce((sum, d) => sum + d.data[key], 0)
-					),
+					data: dataset_data,
 					label: label,
 					type: 'line',
 					fill: 'origin',
@@ -462,6 +496,29 @@
 				} as ChartDataset<'line'>;
 			})
 			.filter((d) => d !== null);
+	}
+
+	/**
+	 * Update the datasets for the charts.
+	 * This function is called when any data or filters change.
+	 * We do this because Svelte's reactivity does not work well with large datasets.
+	 */
+	async function update_datasets() {
+		reset_color_state();
+		level_datasets = compute_level_datasets();
+		flow_datasets = compute_flow_datasets();
+		level_datasets_length = level_datasets.length;
+		flow_datasets_length = flow_datasets.length;
+		number_of_time_steps = level_datasets_length > 0 ? level_datasets[0].data.length : 0;
+
+		await tick();
+
+		if (level_plot) {
+			level_plot.updateChart(level_datasets);
+		}
+		if (flow_plot) {
+			flow_plot.updateChart(flow_datasets);
+		}
 	}
 </script>
 
@@ -518,13 +575,13 @@
 				</FilterRow>
 				<AllCheckbox label="Technologies" elements={technologies} bind:value={selected_technologies}
 				></AllCheckbox>
-				<AllCheckbox label="Node" elements={locations} bind:value={selected_locations}
+				<AllCheckbox label="Nodes" elements={locations} bind:value={selected_locations}
 				></AllCheckbox>
 			</FilterSection>
 		{/if}
 	{/if}
 </Filters>
-<div class="mt-4">
+<div class="mt-4 plot">
 	{#if solution_loading || fetching}
 		<div class="text-center">
 			<div class="spinner-border center" role="status">
@@ -539,22 +596,26 @@
 		<div class="text-center">No solution selected.</div>
 	{:else if locations.length == 0}
 		<div class="text-center">No locations with this selection.</div>
-	{:else if datasets.length == 0}
-		<div class="text-center">No data with this selection.</div>
+	{:else if level_datasets_length == 0}
+		<div class="text-center">No data available for this selection.</div>
+	{:else if flow_datasets_length == 0}
+		<div class="text-center">No flow data available for this selection.</div>
 	{:else}
 		<BarPlot
+			id="level_chart"
 			type="line"
 			{labels}
-			{datasets}
+			datasets={[]}
 			options={plot_options}
 			{plot_name}
 			zoom={true}
 			bind:this={level_plot}
 		></BarPlot>
 		<BarPlot
+			id="flow_chart"
 			type="line"
 			{labels}
-			datasets={flow_datasets}
+			datasets={[]}
 			options={plot_options_flows}
 			plot_name={plot_name_flows}
 			zoom={true}

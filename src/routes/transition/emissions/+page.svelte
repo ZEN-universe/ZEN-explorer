@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import type { ChartDataset, ChartOptions } from 'chart.js';
+	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 
 	import SolutionFilter from '$components/SolutionFilter.svelte';
@@ -12,19 +12,24 @@
 	import FilterRow from '$components/FilterRow.svelte';
 	import ToggleButton from '$components/ToggleButton.svelte';
 
-	import { get_component_total } from '$lib/temple';
-	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
+	import { get_component_total, get_unit } from '$lib/temple';
+	import {
+		filter_and_aggregate_data,
+		normalize_dataset,
+		remove_duplicates,
+		to_options
+	} from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
-	import type { ActivatedSolution, ComponentTotal } from '$lib/types';
+	import type { ActivatedSolution, Row } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 	import { reset_color_state } from '$lib/colors';
 
-	let technology_data: ComponentTotal | null = $state(null);
-	let carrier_data: ComponentTotal | null = $state(null);
-	let annual_data: ComponentTotal | null = $state(null);
-	let cumulative_data: ComponentTotal | null = $state(null);
-	let annual_limit_data: ComponentTotal | null = $state(null);
-	let cumulative_limit_data: ComponentTotal | null = $state(null);
+	let technology_data: ParseResult<Row> | null = $state(null);
+	let carrier_data: ParseResult<Row> | null = $state(null);
+	let annual_data: ParseResult<Row> | null = $state(null);
+	let cumulative_data: ParseResult<Row> | null = $state(null);
+	let annual_limit_data: ParseResult<Row> | null = $state(null);
+	let cumulative_limit_data: ParseResult<Row> | null = $state(null);
 	let subdivision_units: { [carrier: string]: string } = $state({});
 	let cumulation_units: { [carrier: string]: string } = $state({});
 
@@ -81,7 +86,18 @@
 				stacked: true,
 				title: {
 					display: true,
-					text: `Emissions [${unit}]`
+					text: `Emissions` + (selected_normalization ? '' : ` [${unit}]`)
+				},
+				max: selected_normalization ? 1 : undefined,
+				suggestedMin: selected_normalization ? -1 : undefined
+			}
+		},
+		plugins: {
+			tooltip: {
+				callbacks: {
+					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+						`${item.dataset.label}: ${item.formattedValue}` +
+						(selected_normalization ? '' : ` ${unit}`)
 				}
 			}
 		},
@@ -106,14 +122,14 @@
 		if (!technology_data?.data) {
 			return [];
 		}
-		return remove_duplicates(technology_data.data.data.map((d) => d.technology));
+		return remove_duplicates(technology_data.data.map((d) => d.technology));
 	});
 
 	let carriers: string[] = $derived.by(() => {
 		if (!carrier_data?.data) {
 			return [];
 		}
-		return remove_duplicates(carrier_data.data.data.map((d) => d.carrier));
+		return remove_duplicates(carrier_data.data.map((d) => d.carrier));
 	});
 
 	let locations: string[] = $derived.by(() => {
@@ -121,9 +137,7 @@
 			return [];
 		}
 		return remove_duplicates(
-			[...(technology_data?.data?.data || []), ...(carrier_data?.data?.data || [])].map(
-				(d) => d.location
-			)
+			[...(technology_data?.data || []), ...(carrier_data?.data || [])].map((d) => d.location)
 		);
 	});
 
@@ -173,33 +187,35 @@
 
 		fetching = true;
 
-		[
-			technology_data,
-			carrier_data,
-			annual_limit_data,
-			cumulative_limit_data,
-			annual_data,
-			cumulative_data
-		] = await Promise.all(
-			[
-				'carbon_emissions_technology',
-				'carbon_emissions_carrier',
-				'carbon_emissions_annual_limit',
-				'carbon_emissions_budget',
-				'carbon_emissions_annual',
-				'carbon_emissions_cumulative'
-			].map((variable) =>
-				get_component_total(
-					selected_solution!.solution_name,
-					get_variable_name(variable, selected_solution!.version),
-					selected_solution!.scenario_name
-				)
-			)
-		);
+		const components = {
+			technology: get_variable_name('carbon_emissions_technology', selected_solution.version),
+			carrier: get_variable_name('carbon_emissions_carrier', selected_solution.version),
+			annual_limit: get_variable_name('carbon_emissions_annual_limit', selected_solution.version),
+			budget: get_variable_name('carbon_emissions_budget', selected_solution.version),
+			annual: get_variable_name('carbon_emissions_annual', selected_solution.version),
+			cumulative: get_variable_name('carbon_emissions_cumulative', selected_solution.version)
+		};
+		let [responses, annual_unit_data] = await Promise.all([
+			get_component_total(
+				selected_solution.solution_name,
+				Object.values(components),
+				selected_solution.scenario_name,
+				0,
+				components.carrier
+			),
+			get_unit(selected_solution.solution_name, components.annual, selected_solution.scenario_name)
+		]);
+
+		technology_data = responses[components.technology];
+		carrier_data = responses[components.carrier];
+		annual_limit_data = responses[components.annual_limit];
+		cumulative_limit_data = responses[components.budget];
+		annual_data = responses[components.annual];
+		cumulative_data = responses[components.cumulative];
 
 		// Rename "node" to "location" so both technology and carrier data have the same key names
-		if (carrier_data.data?.data) {
-			carrier_data.data.data = carrier_data.data.data.map((d) => {
+		if (carrier_data?.data) {
+			carrier_data.data = carrier_data.data.map((d) => {
 				return {
 					...d,
 					location: d.location || d.node // Fallback to node if location is not present
@@ -207,26 +223,26 @@
 			});
 		}
 
-		if (carrier_data.unit?.data) {
-			subdivision_units = Object.fromEntries(
-				carrier_data.unit.data.map((unit) => {
-					return [unit.carrier, unit[0] || unit.units];
-				})
-			);
-		}
-
-		if (annual_data.unit?.data) {
-			cumulation_units = Object.fromEntries(
-				annual_data.unit.data.map((unit) => {
-					return [unit.carrier, unit[0] || unit.units];
-				})
-			);
-		}
-
-		if (cumulative_limit_data.data && cumulative_limit_data.data.data.length > 0) {
+		if (cumulative_limit_data && cumulative_limit_data.data.length > 0) {
 			// Copy the value of the first year to all years in the cumulative data
-			cumulative_limit_data.data.data[0] = Object.fromEntries(
-				years.map((year) => [year, cumulative_limit_data!.data!.data[0][years[0]]])
+			cumulative_limit_data.data[0] = Object.fromEntries(
+				years.map((year) => [year, cumulative_limit_data!.data[0][years[0]]])
+			);
+		}
+
+		if (responses.unit?.data) {
+			subdivision_units = Object.fromEntries(
+				responses.unit.data.map((unit) => {
+					return [unit.carrier, unit[0] || unit.units];
+				})
+			);
+		}
+
+		if (annual_unit_data.data) {
+			cumulation_units = Object.fromEntries(
+				annual_unit_data.data.map((unit: any) => {
+					return [unit.carrier, unit[0] || unit.units];
+				})
 			);
 		}
 
@@ -266,27 +282,23 @@
 			return [];
 		}
 
-		let data: ParseResult<any>;
+		let data: Row[];
 		if (selected_subdivision) {
-			data = {
-				data: carrier_data.data.data
-					.map((d) => {
+			data = carrier_data.data
+				.map((d) => {
+					return {
+						...d,
+						technology_carrier: d.carrier
+					};
+				})
+				.concat(
+					technology_data.data.map((d) => {
 						return {
 							...d,
-							technology_carrier: d.carrier
+							technology_carrier: d.technology
 						};
 					})
-					.concat(
-						technology_data.data.data.map((d) => {
-							return {
-								...d,
-								technology_carrier: d.technology
-							};
-						})
-					),
-				meta: carrier_data.data.meta,
-				errors: []
-			};
+				);
 		} else if (selected_cumulation == 'Annual') {
 			data = annual_data.data;
 		} else {
@@ -295,18 +307,20 @@
 
 		reset_color_state();
 		const filtered_data = filter_and_aggregate_data(
-			data.data,
+			data,
 			dataset_selector,
 			datasets_aggregates,
-			excluded_years,
-			selected_normalization
-		);
+			excluded_years
+		) as ChartDataset<'bar'>[];
 
 		if (filtered_data.length == 1) {
 			filtered_data[0].label = division_variable;
 		}
 
-		return filtered_data as ChartDataset<'bar'>[];
+		if (selected_normalization) {
+			return normalize_dataset(filtered_data);
+		}
+		return filtered_data;
 	});
 
 	let line_datasets: ChartDataset<'line'>[] = $derived.by(() => {
@@ -318,7 +332,7 @@
 			return [];
 		}
 
-		let limit_data: ParseResult<any> | null = null;
+		let limit_data: Row[] | null = null;
 		if (
 			division_variable == get_variable_name('carbon_emissions_annual', selected_solution?.version)
 		) {
@@ -327,16 +341,15 @@
 			limit_data = cumulative_limit_data.data;
 		}
 
-		if (limit_data?.data == null || limit_data.data.length == 0) {
+		if (limit_data == null || limit_data?.length == 0) {
 			return [];
 		}
 
 		let filtered_limit_data = filter_and_aggregate_data(
-			limit_data.data,
+			limit_data,
 			dataset_selector,
 			datasets_aggregates,
-			excluded_years,
-			selected_normalization
+			excluded_years
 		);
 
 		if (filtered_limit_data.length == 0) {
@@ -403,23 +416,23 @@
 					{/snippet}
 				</FilterRow>
 				{#if selected_aggregation == 'location'}
-					<AllCheckbox label="Location" bind:value={selected_locations} elements={locations}
+					<AllCheckbox label="Locations" bind:value={selected_locations} elements={locations}
 					></AllCheckbox>
 				{:else}
 					{#if technologies.length > 0}
 						<AllCheckbox
-							label="Technology"
+							label="Technologies"
 							bind:value={selected_technologies}
 							elements={technologies}
 						></AllCheckbox>
 					{/if}
 					{#if carriers.length > 0}
-						<AllCheckbox label="Carrier" bind:value={selected_carriers} elements={carriers}
+						<AllCheckbox label="Carriers" bind:value={selected_carriers} elements={carriers}
 						></AllCheckbox>
 					{/if}
 				{/if}
 			{/if}
-			<AllCheckbox label="Year" bind:value={selected_years} elements={years}></AllCheckbox>
+			<AllCheckbox label="Years" bind:value={selected_years} elements={years}></AllCheckbox>
 		</FilterSection>
 	{/if}
 </Filters>
