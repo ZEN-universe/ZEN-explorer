@@ -200,7 +200,6 @@
 				selected_solution.solution_name,
 				Object.values(components),
 				selected_solution.scenario_name,
-				0,
 				components.carrier
 			),
 			get_unit(selected_solution.solution_name, components.annual, selected_solution.scenario_name)

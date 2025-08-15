@@ -110,7 +110,6 @@ export async function get_component_total(
 	solution_name: string,
 	components: string[],
 	scenario_name: string,
-	year_index: number = 0,
 	unit_component: string = ''
 ): Promise<ComponentTotal> {
 	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/get_total');
@@ -118,7 +117,6 @@ export async function get_component_total(
 	urlObj.searchParams.set('components', components.join(','));
 	urlObj.searchParams.set('scenario', scenario_name);
 	urlObj.searchParams.set('unit_component', unit_component);
-	urlObj.searchParams.set('year', year_index.toString());
 	const url = urlObj.toString();
 
 	let component_data_request = await fetch(url, { cache: 'no-store' });

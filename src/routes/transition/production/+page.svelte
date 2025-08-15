@@ -326,7 +326,6 @@
 				'demand'
 			],
 			selected_solution.scenario_name,
-			0,
 			'demand'
 		);
 
