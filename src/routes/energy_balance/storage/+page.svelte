@@ -266,11 +266,6 @@
 
 		fetching = true;
 
-		// Calculate index of year
-		let year_index = Math.floor(
-			(Number(selected_year) - selected_solution.detail.system.reference_year) /
-				selected_solution.detail.system.interval_between_years
-		);
 		let window_size =
 			{
 				Daily: 24,
@@ -289,7 +284,7 @@
 			],
 			selected_solution.scenario_name,
 			'storage_level',
-			year_index,
+			Number(selected_year),
 			window_size
 		);
 
