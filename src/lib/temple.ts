@@ -6,9 +6,9 @@ import type {
 	SolutionDetail,
 	EnergyBalanceDataframes,
 	Row,
-	ProductionDataframes,
-	CostsDataframes,
-	StorageDataframes
+	TimeSeriesResponseEntry,
+	ComponentTimeSeries,
+	TimeSeriesEntry
 } from '$lib/types';
 
 /**
@@ -65,7 +65,7 @@ export async function get_full_ts(
 	unit_component: string = '',
 	year_index: number = 0,
 	window_size: number = 1
-): Promise<ComponentTotal> {
+): Promise<ComponentTimeSeries> {
 	const urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/get_full_ts');
 	urlObj.searchParams.set('solution_name', solution_name);
 	urlObj.searchParams.set('components', components.join(','));
@@ -84,16 +84,25 @@ export async function get_full_ts(
 
 	let component_data = await component_data_request.json();
 
-	for (const key in component_data) {
-		if (key == 'unit' || component_data[key] === undefined) {
-			continue;
-		}
+	const parsed_components: { [key: string]: TimeSeriesEntry[] } = Object.fromEntries(
+		Object.entries(component_data)
+			.map(([key, values]) => {
+				if (key == 'unit' || values === undefined) {
+					return null;
+				}
 
-		component_data[key] = parse_csv(component_data[key]);
-	}
-	component_data.unit = parse_unit_data(component_data.unit || '');
+				return [key, parse_timeseries_data(values as TimeSeriesResponseEntry[])] as [
+					string,
+					TimeSeriesEntry[]
+				];
+			})
+			.filter((entry) => entry !== null)
+	);
 
-	return component_data;
+	return {
+		unit: parse_unit_data(component_data.unit || ''),
+		components: parsed_components
+	};
 }
 
 /**
@@ -212,8 +221,9 @@ export async function get_energy_balance(
 
 	for (const series_name of series_names) {
 		if (energy_balance_data[series_name] !== undefined) {
-			// @ts-ignore
-			ans[series_name] = parse_csv(energy_balance_data[series_name]);
+			ans[series_name as keyof EnergyBalanceDataframes] = parse_timeseries_data(
+				energy_balance_data[series_name]
+			);
 		}
 	}
 
@@ -270,6 +280,22 @@ function parse_csv(data_csv: string) {
 	});
 
 	return data;
+}
+
+function parse_timeseries_data(entries: TimeSeriesResponseEntry[]): TimeSeriesEntry[] {
+	return entries.map((entry) => {
+		let { d: data, t, ...rest } = entry;
+		const [translation, scale] = t;
+
+		// Compute cumulative sum
+		let sum: number = 0;
+		data = data.map((value) => (sum += value));
+
+		// Apply scaling and translation
+		data = data.map((value) => value * scale + translation);
+
+		return { index: rest as Record<string, string>, data };
+	});
 }
 
 function parse_unit_data(unit_csv: string): Papa.ParseResult<Row> {

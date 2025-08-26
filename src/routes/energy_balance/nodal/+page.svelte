@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
-	import type { ParseResult } from 'papaparse';
 
 	import SolutionFilter from '$components/SolutionFilter.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
@@ -14,7 +13,7 @@
 	import { to_options } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import { next_color, reset_color_state as reset_color_picker_state } from '$lib/colors';
-	import type { ActivatedSolution, EnergyBalanceDataframes } from '$lib/types';
+	import type { ActivatedSolution, EnergyBalanceDataframes, TimeSeriesEntry } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 
 	let energy_balance_data: EnergyBalanceDataframes | null = null;
@@ -120,10 +119,6 @@
 				limits: {
 					x: { minRange: 10, min: 'original', max: 'original' }
 				}
-			},
-			decimation: {
-				enabled: true,
-				algorithm: 'min-max'
 			},
 			tooltip: {
 				callbacks: {
@@ -257,8 +252,8 @@
 		}
 
 		return Object.entries(energy_balance_data).flatMap(
-			([key, data]: [string, ParseResult<any> | undefined]) => {
-				if (!data || !data.data || data.data.length === 0) {
+			([key, entries]: [string, TimeSeriesEntry[]]) => {
+				if (!entries || entries.length === 0) {
 					return [];
 				}
 
@@ -268,65 +263,52 @@
 				};
 
 				// If the dataframe has a row "technology", add all of them to the list of technologies
-				if ('technology' in data.data[0]) {
+				if ('technology' in entries[0].index) {
 					dataset_selector = {
-						technology: data.data.map((row: any) => row['technology'])
+						technology: entries.map((row: any) => row.index.technology)
 					};
 				}
 
 				// Filter and group rows by label (technology/node/label)
-				const filtered = data.data.filter((row: any) =>
-					Object.entries(dataset_selector).every(([k, v]) => v.includes(row[k]))
+				const filtered = entries.filter((entry: TimeSeriesEntry) =>
+					Object.entries(dataset_selector).every(([k, v]) => v.includes(entry.index[k]))
 				);
 
-				const grouped = filtered.reduce((acc: Record<string, any[]>, row: any) => {
-					const label = row.technology || row.node || row.label || '';
-					(acc[label] = acc[label] || []).push(row);
-					return acc;
-				}, {});
-
-				const filtered_data = Object.entries(grouped).map(([label, group]) => ({
-					label,
-					data: group.reduce((dataObj: Record<string, number>, row: any) => {
-						for (const key in row) {
-							if (
-								!isNaN(Number(row[key])) &&
-								!['year', 'technology', 'node', 'label'].includes(key)
-							) {
-								dataObj[key] = (dataObj[key] || 0) + Number(row[key]);
-							}
-						}
-						return dataObj;
-					}, {})
-				}));
+				// Group by label (technology/node/label)
+				const aggregated_map: Record<string, number[]> = {};
+				filtered.forEach((entry: TimeSeriesEntry) => {
+					const label = entry.index.technology || entry.index.node || entry.index.label || '';
+					if (!aggregated_map[label]) {
+						aggregated_map[label] = new Array(entry.data.length).fill(0);
+					}
+					entry.data.forEach((value, index) => {
+						aggregated_map[label][index] += value;
+					});
+				});
 
 				// Loop through the different variables
-				return filtered_data
-					.map((data) => {
-						if (Object.keys(data.data).length == 0) {
+				return Object.entries(aggregated_map)
+					.map(([label, data]) => {
+						if (Object.keys(data).length == 0) {
 							return null;
 						}
 
 						// Get label-name for the plot
 						const version = selected_solution!.version;
-						const labelMap = {
-							[get_variable_name('flow_storage_discharge', version)]: (label: string) =>
-								label + ' (discharge)',
-							[get_variable_name('flow_transport_in', version)]: (label: string) =>
-								label + ' (transport in)',
+						const labelMap: Record<string, (label: string) => string> = {
+							[get_variable_name('flow_storage_discharge', version)]: (l) => l + ' (discharge)',
+							[get_variable_name('flow_transport_in', version)]: (l) => l + ' (transport in)',
 							[get_variable_name('flow_import', version)]: () => 'Import',
 							[get_variable_name('shed_demand', version)]: () => 'Shed Demand',
-							[get_variable_name('flow_storage_charge', version)]: (label: string) =>
-								label + ' (charge)',
-							[get_variable_name('flow_transport_out', version)]: (label: string) =>
-								label + ' (transport out)',
+							[get_variable_name('flow_storage_charge', version)]: (l) => l + ' (charge)',
+							[get_variable_name('flow_transport_out', version)]: (l) => l + ' (transport out)',
 							[get_variable_name('flow_export', version)]: () => 'Export'
 						};
 
 						// Demand is plotted in a different way than the other plots
 						let color = next_color();
 						let bg_color = color;
-						let dataset_data = Object.values(data.data).map((value, i) => ({ x: i, y: value }));
+						let dataset_data = Object.values(data).map((value, i) => ({ x: i, y: value }));
 
 						if (key == 'demand') {
 							return {
@@ -339,18 +321,18 @@
 								backgroundColor: 'white',
 								borderWidth: 2,
 								stepped: true,
-								pointRadius: Object.keys(data.data).length == 1 ? 2 : 0
+								pointRadius: Object.keys(data).length == 1 ? 2 : 0
 							} as ChartDataset<'line'>;
 						} else {
 							return {
 								data: dataset_data,
-								label: labelMap[key]?.(data.label) || data.label,
+								label: labelMap[key]?.(label) || label,
 								fill: 'origin',
 								borderColor: color,
 								backgroundColor: bg_color,
 								stepped: true,
 								cubicInterpolationMode: 'monotone',
-								pointRadius: Object.keys(data.data).length == 1 ? 2 : 0
+								pointRadius: Object.keys(data).length == 1 ? 2 : 0
 							} as ChartDataset<'bar' | 'line'>;
 						}
 					})

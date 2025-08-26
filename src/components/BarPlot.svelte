@@ -85,30 +85,33 @@
 	};
 
 	function downloadData() {
-		let csvContent = 'data:text/csv;charset=utf-8,';
+		const data = chart?.data.datasets;
 
-		let labels: String[] = [];
-		const n_data = 1;
-		for (let i of datasets) {
-			labels.push(i.label != undefined ? i.label : '');
+		if (!data || data.length === 0) {
+			alert('No data available for download!');
+			return;
 		}
 
-		csvContent += 'timestep,' + labels.join(',') + '\r\n';
+		const labels = data.map((d) => (d.label != undefined ? d.label : ''));
+		const converted_data = Array.from({ length: data[0].data.length })
+			.map((_, i) => {
+				const row = data.map((d) =>
+					typeof d.data[i] === 'object' && d.data[i] !== null && 'y' in d.data[i]
+						? d.data[i].y
+						: d.data[i]
+				);
+				return i + ',' + row.join(',');
+			})
+			.join('\r\n');
 
-		for (let timestep of Object.keys(datasets[0].data)) {
-			csvContent += timestep;
-			for (const dataset of datasets) {
-				// @ts-ignore
-				csvContent += ',' + dataset.data[timestep];
-			}
-			csvContent += '\r\n';
-		}
-		var encodedUri = encodeURI(csvContent);
-		var link = document.createElement('a');
-		link.setAttribute('href', encodedUri);
+		const csvContent = encodeURI(
+			'data:text/csv;charset=utf-8,' + 'timestep,' + labels.join(',') + '\r\n' + converted_data
+		);
+
+		const link = document.createElement('a');
+		link.setAttribute('href', csvContent);
 		link.setAttribute('download', plot_name);
 		document.body.appendChild(link); // Required for Firefox
-
 		link.click();
 	}
 </script>
