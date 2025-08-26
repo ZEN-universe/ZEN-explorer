@@ -80,10 +80,15 @@ export interface Row {
 	[key: string]: any;
 }
 
-export interface TimeSeriesData {
+export interface TimeSeriesResponseEntry {
 	d: number[];
 	t: [number, number];
 	[key: string]: string | number[];
+}
+
+export interface TimeSeriesEntry {
+	index: { [key: string]: string },
+	data: number[],
 }
 
 export interface DatasetSelectors {
@@ -146,6 +151,11 @@ export interface YearValue {
 export interface ComponentTotal {
 	unit: Papa.ParseResult<Row> | null;
 	[key: string]: Papa.ParseResult<Row> | null;
+}
+
+export interface ComponentTimeSeries {
+	unit: Papa.ParseResult<Row> | null;
+	components: { [key: string]: TimeSeriesEntry[] };
 }
 
 export interface DatasetContainer {

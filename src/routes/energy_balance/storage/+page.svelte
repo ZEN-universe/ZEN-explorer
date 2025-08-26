@@ -3,11 +3,11 @@
 		type Chart,
 		type ChartDataset,
 		type ChartOptions,
+		type ChartType,
 		type ChartTypeRegistry,
 		type TooltipItem
 	} from 'chart.js';
 	import { onMount, tick, untrack } from 'svelte';
-	import type { ParseResult } from 'papaparse';
 
 	import ToggleButton from '$components/ToggleButton.svelte';
 	import SolutionFilter from '$components/SolutionFilter.svelte';
@@ -19,17 +19,17 @@
 	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_full_ts } from '$lib/temple';
-	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
+	import { remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
-	import type { ActivatedSolution, Row } from '$lib/types';
-	import { reset_color_state } from '$lib/colors';
+	import type { ActivatedSolution, TimeSeriesEntry } from '$lib/types';
+	import { add_transparency, next_color, reset_color_state } from '$lib/colors';
 
 	// All but one data variable are non-reactive because of their size
-	let level_response: ParseResult<Row> | null = null;
-	let charge_response: ParseResult<Row> | null = null;
-	let discharge_response: ParseResult<Row> | null = null;
-	let spillage_response: ParseResult<Row> | null = null;
-	let inflow_response: ParseResult<Row> | null = null;
+	let level_response: TimeSeriesEntry[] | null = null;
+	let charge_response: TimeSeriesEntry[] | null = null;
+	let discharge_response: TimeSeriesEntry[] | null = null;
+	let spillage_response: TimeSeriesEntry[] | null = null;
+	let inflow_response: TimeSeriesEntry[] | null = null;
 	let response_update_trigger: number = $state(0);
 	let units: { [carrier: string]: string } = $state({});
 
@@ -139,10 +139,6 @@
 						x: { minRange: 10, min: 'original', max: 'original' }
 					}
 				},
-				decimation: {
-					enabled: true,
-					algorithm: 'min-max'
-				},
 				tooltip: {
 					callbacks: {
 						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
@@ -163,7 +159,7 @@
 		if (!level_response) {
 			return [];
 		}
-		return remove_duplicates(level_response.data.map((a) => a.node)).sort();
+		return remove_duplicates(level_response.map((a) => a.index.node)).sort();
 	});
 
 	let carriers: string[] = $derived.by(() => {
@@ -171,11 +167,11 @@
 		if (!level_response || !selected_solution) {
 			return [];
 		}
-		let all_technologies = Array.from(level_response.data.map((a) => a.technology));
+		let all_technologies = Array.from(level_response.map((a) => a.index.technology));
 		return remove_duplicates(
-			level_response.data
-				.filter((element) => all_technologies.includes(element.technology))
-				.map((element) => selected_solution!.detail.reference_carrier[element.technology])
+			level_response
+				.filter((element) => all_technologies.includes(element.index.technology))
+				.map((element) => selected_solution!.detail.reference_carrier[element.index.technology])
 		);
 	});
 
@@ -184,7 +180,7 @@
 		if (!level_response || !selected_solution || carriers.length === 0) {
 			return [];
 		}
-		let all_technologies = remove_duplicates(level_response.data.map((a: any) => a.technology));
+		let all_technologies = remove_duplicates(level_response.map((a) => a.index.technology));
 		return all_technologies.filter(
 			(technology) => selected_solution!.detail.reference_carrier[technology] == selected_carrier
 		);
@@ -273,7 +269,7 @@
 				Monthly: 720
 			}[selected_window_size] || 1; // Default to hourly (1 hour)
 
-		const responses = await get_full_ts(
+		const response = await get_full_ts(
 			selected_solution.solution_name,
 			[
 				'storage_level',
@@ -288,15 +284,15 @@
 			window_size
 		);
 
-		level_response = responses.storage_level || null;
-		charge_response = responses.flow_storage_charge || null;
-		discharge_response = responses.flow_storage_discharge || null;
-		spillage_response = responses.flow_storage_spillage || null;
-		inflow_response = responses.flow_storage_inflow || null;
+		level_response = response.components.storage_level || null;
+		charge_response = response.components.flow_storage_charge || null;
+		discharge_response = response.components.flow_storage_discharge || null;
+		spillage_response = response.components.flow_storage_spillage || null;
+		inflow_response = response.components.flow_storage_inflow || null;
 		response_update_trigger++;
 
-		if (responses.unit?.data) {
-			units = Object.fromEntries(responses.unit.data.map((u) => [u.technology, u[0] || u.units]));
+		if (response.unit?.data) {
+			units = Object.fromEntries(response.unit.data.map((u) => [u.technology, u[0] || u.units]));
 		}
 
 		fetching = false;
@@ -326,46 +322,21 @@
 			return [];
 		}
 
-		let dataset_selector = { technology: selected_technologies };
-		let datasets_aggregates = { node: selected_locations };
-
-		let filtered_data = filter_and_aggregate_data(
-			level_response.data,
-			dataset_selector,
-			datasets_aggregates,
-			[],
-			false,
-			'line',
-			''
-		).map((dataset) => {
-			return {
-				...dataset,
-				data: dataset.data.map((value, i) => ({ x: i, y: value })),
-				fill: 'origin'
-			};
-		});
-
-		if (selected_subdivision) {
-			return filtered_data as ChartDataset<'bar' | 'line'>[];
-		}
-
-		// Aggregate data across all selected locations and technologies
-		// The first dataset is used to determine the x-axis values
-		let dataset_data = filtered_data[0].data.map((_, i) => ({
-			x: i,
-			y: filtered_data.reduce((partialSum, d) => partialSum + (d.data[i].y as number), 0)
-		}));
-
-		return [
+		return convert_to_dataset(
+			level_response,
 			{
-				data: dataset_data,
-				label: 'Storage level',
-				type: 'line',
-				borderColor: 'black',
-				fill: 'origin',
-				stepped: true
-			}
-		] as ChartDataset<'line'>[];
+				technology: selected_technologies,
+				node: selected_locations
+			},
+			selected_subdivision ? ['technology'] : [],
+			selected_subdivision
+				? undefined
+				: () => ({
+						label: 'Storage Level',
+						borderColor: 'rgb(0, 0, 0)',
+						backgroundColor: 'rgba(0, 0, 0, 0.2)'
+					})
+		);
 	}
 
 	function compute_flow_datasets() {
@@ -373,12 +344,7 @@
 			selected_solution === null ||
 			fetching ||
 			selected_locations.length == 0 ||
-			selected_technologies.length == 0
-		) {
-			return [];
-		}
-
-		if (
+			selected_technologies.length == 0 ||
 			!level_response ||
 			!charge_response ||
 			!discharge_response ||
@@ -388,109 +354,49 @@
 			return [];
 		}
 
-		let dataset_selector = { technology: selected_technologies };
-		let datasets_aggregates = { node: selected_locations };
-
-		let [
-			charge_filtered_data,
-			discharge_filtered_data,
-			inflow_filtered_data,
-			spillage_filtered_data
-		] = [
-			{
-				data: charge_response.data,
-				label_suffix: '_charge',
-				negate: false
-			},
-			{
-				data: discharge_response.data,
-				label_suffix: '_discharge',
-				negate: true
-			},
-			{
-				data: inflow_response.data,
-				label_suffix: '_inflow',
-				negate: false
-			},
-			{
-				data: spillage_response.data,
-				label_suffix: '_spillage',
-				negate: true
-			}
-		].map(({ data, label_suffix, negate }) => {
-			return filter_and_aggregate_data(
-				data,
-				dataset_selector,
-				datasets_aggregates,
-				[],
-				false,
-				'line',
-				label_suffix
-			).map((dataset) => {
-				let mapped_data = dataset.data.map((value, i) => ({
-					x: i,
-					y: negate ? -(value as number) : (value as number)
-				}));
-				return {
-					data: mapped_data,
-					label: dataset.label,
-					type: dataset.type,
-					stepped: true,
-					fill: 'origin'
-				};
-			});
-		});
-
-		if (selected_subdivision) {
-			return charge_filtered_data
-				.concat(discharge_filtered_data)
-				.concat(inflow_filtered_data)
-				.concat(spillage_filtered_data) as unknown as ChartDataset<'bar' | 'line'>[];
-		}
-
 		return [
 			{
-				data: charge_filtered_data,
-				label: 'Flow Storage Charge',
-				borderColor: 'rgb(54, 162, 235)'
+				data: charge_response,
+				label_suffix: '_charge',
+				label_aggregated: 'Flow Storage Charge',
+				negate: false,
+				color: 'rgb(54, 162, 235)'
 			},
 			{
-				data: discharge_filtered_data,
-				label: 'Flow Storage Discharge',
-				borderColor: 'rgb(255, 99, 132)'
+				data: discharge_response,
+				label_suffix: '_discharge',
+				label_aggregated: 'Flow Storage Discharge',
+				negate: true,
+				color: 'rgb(255, 99, 132)'
 			},
 			{
-				data: inflow_filtered_data,
-				label: 'Flow Storage Inflow',
-				borderColor: 'rgb(255, 99, 132)'
+				data: inflow_response,
+				label_suffix: '_inflow',
+				label_aggregated: 'Flow Storage Inflow',
+				negate: false,
+				color: 'rgb(75, 192, 192)'
 			},
 			{
-				data: spillage_filtered_data,
-				label: 'Flow Storage Spillage',
-				borderColor: 'rgb(255, 99, 132)'
+				data: spillage_response,
+				label_suffix: '_spillage',
+				label_aggregated: 'Flow Storage Spillage',
+				negate: true,
+				color: 'rgb(255, 99, 132)'
 			}
-		]
-			.map(({ data, label, borderColor }) => {
-				if (data.length === 0) {
-					return null;
-				}
-
-				let dataset_data = data[0].data.map((_, i) => ({
-					x: i,
-					y: data.reduce((partialSum, d) => partialSum + d.data[i].y, 0)
-				}));
-
-				return {
-					data: dataset_data,
-					label: label,
-					type: 'line',
-					fill: 'origin',
-					borderColor: borderColor,
-					backgroundColor: borderColor,
-					stepped: true
-				} as ChartDataset<'line'>;
-			})
-			.filter((d) => d !== null);
+		].flatMap(({ data, label_suffix, label_aggregated, negate, color }) => {
+			return convert_to_dataset(
+				data,
+				{
+					technology: selected_technologies,
+					node: selected_locations
+				},
+				selected_subdivision ? ['technology'] : [],
+				selected_subdivision
+					? (entry) => ({ label: entry.index.column + label_suffix })
+					: () => ({ label: label_aggregated, borderColor: color, backgroundColor: color }),
+				(value) => (negate ? -value : value)
+			);
+		});
 	}
 
 	/**
@@ -514,6 +420,86 @@
 		if (flow_plot) {
 			flow_plot.updateChart(flow_datasets);
 		}
+	}
+
+	/**
+	 * Convert time series data to a chart dataset.
+	 *
+	 * @param initial_entries The initial time series entries.
+	 * @param selectors The selectors to filter the data.
+	 * @param groupByAttributes The attributes to group by.
+	 * @param buildDatasetBase A function to build the base dataset properties.
+	 * @param mapData A function to map the data values.
+	 */
+	function convert_to_dataset(
+		initial_entries: TimeSeriesEntry[],
+		selectors: { [key: string]: string[] },
+		groupByAttributes: string[] | null,
+		buildDatasetBase: (
+			entry: TimeSeriesEntry
+		) => Partial<ChartDataset<'line'>> = () => ({}),
+		mapData: (value: number, i: number, array: number[]) => number = (value) => value
+	): ChartDataset<'bar' | 'line'>[] {
+		let entries = initial_entries
+			.filter((entry) => {
+				// Filter out all entries that do not contain at least one selector
+				return Object.entries(selectors).every(([key, values]) => {
+					return values.includes(entry.index[key]);
+				});
+			})
+			.map((entry) => {
+				// Apply mapping function to each data point
+				return {
+					index: entry.index,
+					data: entry.data.map(mapData)
+				};
+			});
+
+		if (entries.length === 0) {
+			return [];
+		}
+
+		if (groupByAttributes) {
+			// Group by the specified attributes
+			const aggregated_columns = Array.isArray(groupByAttributes) ? groupByAttributes : [0];
+			const aggregated_map: { [key: string]: number[] } = {};
+
+			entries.forEach((entry) => {
+				// Compute label of aggregated entry, initialize it, and compute total for each column
+				const label = aggregated_columns.map((column) => entry.index[column]).join('_');
+				if (!aggregated_map[label]) {
+					aggregated_map[label] = new Array(entry.data.length).fill(0);
+				}
+				entry.data.forEach((value, i) => {
+					aggregated_map[label][i] += value;
+				});
+			});
+
+			// Create aggregated entries
+			entries = Object.entries(aggregated_map).map(([column, data]) => {
+				return {
+					index: { column },
+					data: data
+				} as TimeSeriesEntry;
+			});
+		}
+
+		// Map entries to datasets
+		return entries.map((entry) => {
+			const datasetBase = buildDatasetBase(entry);
+			const color = datasetBase.borderColor || next_color();
+
+			return {
+				...datasetBase,
+				data: entry.data.map((value, i) => ({ x: i, y: value })),
+				label: datasetBase.label || entry.index.column,
+				type: 'line',
+				fill: 'origin',
+				stepped: true,
+				borderColor: color,
+				backgroundColor: datasetBase.backgroundColor || add_transparency(color as string)
+			};
+		});
 	}
 </script>
 
@@ -593,8 +579,8 @@
 		<div class="text-center">No locations with this selection.</div>
 	{:else if level_datasets_length == 0}
 		<div class="text-center">No data available for this selection.</div>
-	{:else if flow_datasets_length == 0}
-		<div class="text-center">No flow data available for this selection.</div>
+		<!-- {:else if flow_datasets_length == 0}
+		<div class="text-center">No flow data available for this selection.</div> -->
 	{:else}
 		<BarPlot
 			id="level_chart"
