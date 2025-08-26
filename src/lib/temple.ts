@@ -210,8 +210,7 @@ export async function get_energy_balance(
 
 	for (const series_name of series_names) {
 		if (energy_balance_data[series_name] !== undefined) {
-			// @ts-ignore
-			ans[series_name] = parse_csv(energy_balance_data[series_name]);
+			ans[series_name as keyof EnergyBalanceDataframes] = parse_timeseries_data(energy_balance_data[series_name]);
 		}
 	}
 
