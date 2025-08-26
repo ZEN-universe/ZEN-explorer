@@ -80,6 +80,12 @@ export interface Row {
 	[key: string]: any;
 }
 
+export interface TimeSeriesData {
+	d: number[];
+	t: [number, number];
+	[key: string]: string | number[];
+}
+
 export interface DatasetSelectors {
 	[key: string]: string[];
 }

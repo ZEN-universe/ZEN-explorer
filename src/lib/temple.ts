@@ -6,9 +6,7 @@ import type {
 	SolutionDetail,
 	EnergyBalanceDataframes,
 	Row,
-	ProductionDataframes,
-	CostsDataframes,
-	StorageDataframes
+	TimeSeriesData
 } from '$lib/types';
 
 /**
@@ -89,7 +87,7 @@ export async function get_full_ts(
 			continue;
 		}
 
-		component_data[key] = parse_csv(component_data[key]);
+		component_data[key] = parse_timeseries_data(component_data[key]);
 	}
 	component_data.unit = parse_unit_data(component_data.unit || '');
 
@@ -270,6 +268,30 @@ function parse_csv(data_csv: string) {
 	});
 
 	return data;
+}
+
+function parse_timeseries_data(entries: TimeSeriesData[]): Papa.ParseResult<Row> {
+	return {
+		data: entries.map((entry) => {
+			let translation: number = entry.t[0];
+			let scale: number = entry.t[1];
+			let data: number[] = entry.d;
+
+			// Compute cumulative sum
+			let sum: number = 0;
+			data = data.map((value) => (sum += value));
+
+			// Apply scaling and translation
+			data = data.map((value) => value * scale + translation);
+
+			return {
+				...entry,
+				...Object.fromEntries(data.map((value, index) => [index.toString(), value]))
+			};
+		}),
+		errors: [],
+		meta: { delimiter: ',', linebreak: '\n', aborted: false, truncated: false, cursor: 0 }
+	};
 }
 
 function parse_unit_data(unit_csv: string): Papa.ParseResult<Row> {
