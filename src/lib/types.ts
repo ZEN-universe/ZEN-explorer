@@ -95,47 +95,17 @@ export interface DatasetSelectors {
 	[key: string]: string[];
 }
 
-export interface ProductionDataframes {
-	flow_conversion_output: Papa.ParseResult<Row> | undefined;
-	flow_conversion_input: Papa.ParseResult<Row> | undefined;
-	flow_storage_discharge: Papa.ParseResult<Row> | undefined;
-	flow_storage_charge: Papa.ParseResult<Row> | undefined;
-	flow_import: Papa.ParseResult<Row> | undefined;
-	flow_export: Papa.ParseResult<Row> | undefined;
-	shed_demand: Papa.ParseResult<Row> | undefined;
-	demand: Papa.ParseResult<Row> | undefined;
-	unit: Papa.ParseResult<Row> | undefined;
-}
-
-export interface CostsDataframes {
-	cost_capex_yearly: Papa.ParseResult<Row> | undefined;
-	cost_opex_yearly: Papa.ParseResult<Row> | undefined;
-	cost_carbon_emissions_total: Papa.ParseResult<Row> | undefined;
-	cost_carrier: Papa.ParseResult<Row> | undefined;
-	cost_shed_demand: Papa.ParseResult<Row> | undefined;
-	unit: Papa.ParseResult<Row> | undefined;
-}
-
 export interface EnergyBalanceDataframes {
-	demand: Papa.ParseResult<Row> | undefined;
-	flow_conversion_input: Papa.ParseResult<Row> | undefined;
-	flow_export: Papa.ParseResult<Row> | undefined;
-	flow_import: Papa.ParseResult<Row> | undefined;
-	flow_storage_charge: Papa.ParseResult<Row> | undefined;
-	flow_storage_discharge: Papa.ParseResult<Row> | undefined;
-	flow_transport_in: Papa.ParseResult<Row> | undefined;
-	flow_transport_out: Papa.ParseResult<Row> | undefined;
-	flow_conversion_output: Papa.ParseResult<Row> | undefined;
-	shed_demand: Papa.ParseResult<Row> | undefined;
-}
-
-export interface StorageDataframes {
-	storage_level: Papa.ParseResult<Row> | undefined;
-	flow_storage_charge: Papa.ParseResult<Row> | undefined;
-	flow_storage_discharge: Papa.ParseResult<Row> | undefined;
-	flow_storage_inflow: Papa.ParseResult<Row> | undefined;
-	flow_storage_spillage: Papa.ParseResult<Row> | undefined;
-	unit: Papa.ParseResult<Row> | undefined;
+	demand: TimeSeriesEntry[];
+	flow_conversion_input: TimeSeriesEntry[];
+	flow_export: TimeSeriesEntry[];
+	flow_import: TimeSeriesEntry[];
+	flow_storage_charge: TimeSeriesEntry[];
+	flow_storage_discharge: TimeSeriesEntry[];
+	flow_transport_in: TimeSeriesEntry[];
+	flow_transport_out: TimeSeriesEntry[];
+	flow_conversion_output: TimeSeriesEntry[];
+	shed_demand: TimeSeriesEntry[];
 }
 
 export interface Dataset {

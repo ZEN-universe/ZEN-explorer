@@ -20,7 +20,7 @@
 		to_options
 	} from '$lib/utils';
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
-	import type { ActivatedSolution, ProductionDataframes, Row } from '$lib/types';
+	import type { ActivatedSolution, Row } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
 
 	// Data
@@ -37,10 +37,10 @@
 		subdivision: boolean;
 		show_subdivision: boolean;
 		filter_by_technologies: boolean;
-		positive: keyof ProductionDataframes;
+		positive: string;
 		positive_label: string;
 		positive_suffix?: string;
-		negative: keyof ProductionDataframes;
+		negative: string;
 		negative_label: string;
 		negative_suffix?: string;
 	}
