@@ -435,9 +435,7 @@
 		initial_entries: TimeSeriesEntry[],
 		selectors: { [key: string]: string[] },
 		groupByAttributes: string[] | null,
-		buildDatasetBase: (
-			entry: TimeSeriesEntry
-		) => Partial<ChartDataset<'line'>> = () => ({}),
+		buildDatasetBase: (entry: TimeSeriesEntry) => Partial<ChartDataset<'line'>> = () => ({}),
 		mapData: (value: number, i: number, array: number[]) => number = (value) => value
 	): ChartDataset<'bar' | 'line'>[] {
 		let entries = initial_entries

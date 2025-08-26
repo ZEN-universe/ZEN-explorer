@@ -87,8 +87,8 @@ export interface TimeSeriesResponseEntry {
 }
 
 export interface TimeSeriesEntry {
-	index: { [key: string]: string },
-	data: number[],
+	index: { [key: string]: string };
+	data: number[];
 }
 
 export interface DatasetSelectors {
