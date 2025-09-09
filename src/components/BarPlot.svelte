@@ -17,7 +17,8 @@
 		plugins?: Plugin<ChartType>[];
 		zoom?: boolean;
 		plot_name?: string;
-		zoom_rect?: (min: number, max: number) => void;
+		downloadable?: boolean;
+		onclick?: (event: any) => void;
 	}
 
 	let {
@@ -28,7 +29,9 @@
 		options,
 		plugins = [],
 		zoom = false,
-		plot_name = 'plot_data'
+		plot_name = 'plot_data',
+		downloadable = true,
+		onclick
 	}: Props = $props();
 	let chart: Chart | undefined = undefined;
 
@@ -114,6 +117,17 @@
 		document.body.appendChild(link); // Required for Firefox
 		link.click();
 	}
+
+	function onCanvasClick(event: Event) {
+		if (chart == undefined || labels == undefined || onclick == undefined) {
+			return;
+		}
+		const res = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+		if (res.length === 0) {
+			return;
+		}
+		onclick(labels[res[0].index]);
+	}
 </script>
 
 <!-- Modal -->
@@ -126,7 +140,7 @@
 	<p>The home button resets the zoom.</p>
 	<p>The download button downloads the data that is plotted as csv.</p>
 </Modal>
-<div class="canvas-container" style="position: relative;">
+<div class="canvas-container position-relative">
 	<div style="position: absolute; top: -1em; right: 0;" class="btn-group">
 		{#if zoom}
 			<button class="btn btn-secondary" onclick={toggle}>
@@ -138,12 +152,16 @@
 				<div class="visually-hidden">Reset zoom</div>
 			</button>
 		{/if}
-		<button class="btn btn-secondary" onclick={downloadData}>
-			<i class="bi bi-download"></i>
-			<div class="visually-hidden">Download CSV Data</div>
-		</button>
+		{#if downloadable}
+			<button class="btn btn-secondary" onclick={downloadData}>
+				<i class="bi bi-download"></i>
+				<div class="visually-hidden">Download CSV Data</div>
+			</button>
+		{/if}
 	</div>
-	<canvas {id} use:handleChart></canvas>
+	<div class="position-relative" style="min-height: 560px">
+		<canvas {id} use:handleChart onclick={onCanvasClick}></canvas>
+	</div>
 </div>
 
 <style>
