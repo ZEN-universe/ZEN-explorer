@@ -85,7 +85,7 @@
 </script>
 
 {#if year == null}
-	<div class="text-center">Click on a year to see production and consumption breakdown.</div>
+	<div class="text-center text-muted">Click on a bar to see a production and consumption breakdown.</div>
 {:else}
 	<div class="row">
 		<div class="col-lg-6">

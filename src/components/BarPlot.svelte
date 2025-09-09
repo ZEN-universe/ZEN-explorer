@@ -159,7 +159,7 @@
 			</button>
 		{/if}
 	</div>
-	<div class="position-relative" style="min-height: 560px">
+	<div class="position-relative" style="min-height: 558px">
 		<canvas {id} use:handleChart onclick={onCanvasClick}></canvas>
 	</div>
 </div>
