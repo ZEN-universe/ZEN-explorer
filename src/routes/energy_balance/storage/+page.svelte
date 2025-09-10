@@ -21,15 +21,15 @@
 	import { get_full_ts } from '$lib/temple';
 	import { remove_duplicates, to_options } from '$lib/utils';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
-	import type { ActivatedSolution, TimeSeriesEntry } from '$lib/types';
+	import type { ActivatedSolution, Entry } from '$lib/types';
 	import { add_transparency, next_color, reset_color_state } from '$lib/colors';
 
 	// All but one data variable are non-reactive because of their size
-	let level_response: TimeSeriesEntry[] | null = null;
-	let charge_response: TimeSeriesEntry[] | null = null;
-	let discharge_response: TimeSeriesEntry[] | null = null;
-	let spillage_response: TimeSeriesEntry[] | null = null;
-	let inflow_response: TimeSeriesEntry[] | null = null;
+	let level_response: Entry[] | null = null;
+	let charge_response: Entry[] | null = null;
+	let discharge_response: Entry[] | null = null;
+	let spillage_response: Entry[] | null = null;
+	let inflow_response: Entry[] | null = null;
 	let response_update_trigger: number = $state(0);
 	let units: { [carrier: string]: string } = $state({});
 
@@ -432,10 +432,10 @@
 	 * @param mapData A function to map the data values.
 	 */
 	function convert_to_dataset(
-		initial_entries: TimeSeriesEntry[],
+		initial_entries: Entry[],
 		selectors: { [key: string]: string[] },
 		groupByAttributes: string[] | null,
-		buildDatasetBase: (entry: TimeSeriesEntry) => Partial<ChartDataset<'line'>> = () => ({}),
+		buildDatasetBase: (entry: Entry) => Partial<ChartDataset<'line'>> = () => ({}),
 		mapData: (value: number, i: number, array: number[]) => number = (value) => value
 	): ChartDataset<'bar' | 'line'>[] {
 		let entries = initial_entries
@@ -478,7 +478,7 @@
 				return {
 					index: { column },
 					data: data
-				} as TimeSeriesEntry;
+				} as Entry;
 			});
 		}
 

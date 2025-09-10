@@ -95,6 +95,12 @@
 				</li>
 				<li class="nav-item">
 					<a
+						href={add_current_solution_to_url('/energy_system')}
+						class={['nav-link', currentPage == '/energy_system' && 'active']}>The Energy System</a
+					>
+				</li>
+				<li class="nav-item">
+					<a
 						href={add_current_solution_to_url('/map')}
 						class={['nav-link', currentPage == '/map' && 'active']}>The Map</a
 					>

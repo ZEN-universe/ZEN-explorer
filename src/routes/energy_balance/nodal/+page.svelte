@@ -13,7 +13,7 @@
 	import { to_options } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import { next_color, reset_color_state as reset_color_picker_state } from '$lib/colors';
-	import type { ActivatedSolution, EnergyBalanceDataframes, TimeSeriesEntry } from '$lib/types';
+	import type { ActivatedSolution, EnergyBalanceDataframes, Entry } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 
 	let energy_balance_data: EnergyBalanceDataframes | null = null;
@@ -252,7 +252,7 @@
 		}
 
 		return Object.entries(energy_balance_data).flatMap(
-			([key, entries]: [string, TimeSeriesEntry[]]) => {
+			([key, entries]: [string, Entry[]]) => {
 				if (!entries || entries.length === 0) {
 					return [];
 				}
@@ -270,13 +270,13 @@
 				}
 
 				// Filter and group rows by label (technology/node/label)
-				const filtered = entries.filter((entry: TimeSeriesEntry) =>
+				const filtered = entries.filter((entry: Entry) =>
 					Object.entries(dataset_selector).every(([k, v]) => v.includes(entry.index[k]))
 				);
 
 				// Group by label (technology/node/label)
 				const aggregated_map: Record<string, number[]> = {};
-				filtered.forEach((entry: TimeSeriesEntry) => {
+				filtered.forEach((entry: Entry) => {
 					const label = entry.index.technology || entry.index.node || entry.index.label || '';
 					if (!aggregated_map[label]) {
 						aggregated_map[label] = new Array(entry.data.length).fill(0);
