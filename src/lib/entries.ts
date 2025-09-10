@@ -108,8 +108,9 @@ export default class Entries {
 		return this.entries[Symbol.iterator]();
 	}
 
-	forEach(callback: (entry: Entry, index: number, array: Entry[]) => void): void {
+	forEach(callback: (entry: Entry, index: number, array: Entry[]) => void): Entries {
 		this.entries.forEach(callback);
+		return this;
 	}
 
 	reduce<T>(

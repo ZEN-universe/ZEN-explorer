@@ -76,7 +76,7 @@ export interface ActivatedSolution {
 	version: string;
 }
 
-export type Row = Record<string, any>
+export type Row = Record<string, any>;
 
 export interface TimeSeriesResponseEntry {
 	d: number[];
@@ -138,10 +138,19 @@ export interface SankeyNode {
 	color: string;
 	linksIn: SankeyLink[];
 	linksOut: SankeyLink[];
+	value: number;
+	x: number;
+	y: number;
+	dy: number;
 }
 
 export interface SankeyLink {
 	source: SankeyNode;
 	target: SankeyNode;
 	value: number;
+	causesCycle?: boolean;
+	cycleIndex?: number;
+	dy?: number;
+	sy?: number;
+	ty?: number;
 }

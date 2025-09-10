@@ -3,7 +3,7 @@
 
 	import Entries from '$lib/entries';
 	import { get_component_total } from '$lib/temple';
-	import type { ActivatedSolution, Row, SankeyNode, SankeyLink, Entry } from '$lib/types';
+	import type { ActivatedSolution, Row, Entry, SankeyNode, SankeyLink } from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 	import { to_options } from '$lib/utils';
 
@@ -36,6 +36,10 @@
 	let dataStorageInflow: Entries | null = $state(null);
 	let dataStorageSpillage: Entries | null = $state(null);
 	let units: Row[] = $state([]);
+
+	let sankeyNodesLength: number = $state(0);
+
+	let sankeyDiagram = $state<SankeyDiagram>();
 
 	function solutionChanged() {
 		fetchData();
@@ -125,6 +129,11 @@
 		units = response.unit?.data || [];
 
 		fetching = false;
+
+		const sankeyNodes = computeSankeyNodes();
+		sankeyNodesLength = sankeyNodes.length;
+		await tick();
+		sankeyDiagram?.setNodes(sankeyNodes);
 	}
 
 	function getUnit(carrier: string): string {
@@ -132,7 +141,7 @@
 		return unitRow[0] || unitRow.units || '';
 	}
 
-	let sankeyNodes = $derived.by(() => {
+	function computeSankeyNodes() {
 		if (
 			!selectedSolution ||
 			!dataConversionInput ||
@@ -160,7 +169,11 @@
 				label,
 				color,
 				linksIn: [],
-				linksOut: []
+				linksOut: [],
+				value: 0,
+				x: 0,
+				y: 0,
+				dy: 0
 			};
 		}
 
@@ -229,11 +242,21 @@
 		dataStorageCharge
 			.filterByCriteria(filterCriteria)
 			.groupBy(['technology'])
+			.forEach((entry) => {
+				const referenceCarrier = selectedSolution?.detail.reference_carrier[entry.index.technology];
+				if (!referenceCarrier) return;
+				entry.index.carrier = referenceCarrier;
+			})
 			.forEach(addLink(carrierNodes, 'carrier', storageTechNodes, 'technology'));
 		// storage discharge: storage tech -> carrier
 		dataStorageDischarge
 			.filterByCriteria(filterCriteria)
 			.groupBy(['technology'])
+			.forEach((entry) => {
+				const referenceCarrier = selectedSolution?.detail.reference_carrier[entry.index.technology];
+				if (!referenceCarrier) return;
+				entry.index.carrier = referenceCarrier;
+			})
 			.forEach(addLink(storageTechNodes, 'technology', carrierNodes, 'carrier'));
 		// storage inflow: inflow -> storage tech
 		dataStorageInflow
@@ -271,17 +294,17 @@
 			});
 
 		return [
-			...importNodes,
 			...carrierNodes,
-			...exportNodes,
-			...demandNodes,
-			...shedDemandNodes,
 			...conversionTechNodes,
 			...storageTechNodes,
 			...inflowNodes,
-			...spillageNodes
+			...spillageNodes,
+			...importNodes,
+			...exportNodes,
+			...shedDemandNodes,
+			...demandNodes
 		].filter((node) => node.linksIn.length > 0 || node.linksOut.length > 0);
-	});
+	}
 </script>
 
 <h1 class="mt-2 mb-4">The Energy System</h1>
@@ -323,9 +346,9 @@
 		</div>
 	{:else if !selectedSolution}
 		<div class="text-center">No solution selected</div>
-	{:else if sankeyNodes.length === 0}
+	{:else if sankeyNodesLength === 0}
 		<div class="text-center">No data available for the selected filters</div>
 	{:else}
-		<SankeyDiagram nodes={sankeyNodes} />
+		<SankeyDiagram bind:this={sankeyDiagram} />
 	{/if}
 </div>
