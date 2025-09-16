@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
 	import type { ParseResult } from 'papaparse';
-	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
+	import {
+		Chart,
+		type ChartDataset,
+		type ChartOptions,
+		type ChartTypeRegistry,
+		type TooltipItem
+	} from 'chart.js';
 
 	import SolutionFilter from '$components/SolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
@@ -22,6 +28,7 @@
 	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
+	import PiePlots from './PiePlots.svelte';
 
 	// Data
 	let data: (ParseResult<any> | null)[] | null = $state(null);
@@ -109,6 +116,7 @@
 	let selected_normalization: boolean = $state(false);
 	let selected_nodes: string[] = $state([]);
 	let selected_years: number[] = $state([]);
+	let active_year: string | null = $state(null);
 
 	// First update flags
 	let first_conversion_technology_update = $state(true);
@@ -138,13 +146,28 @@
 		if (!row) return '';
 		return row[0] || row.units || '';
 	});
-	const indexOfDemandResponse = 7;
 
 	// Plot config
 	let labels: string[] = $derived(selected_years.map((year) => year.toString()));
+	let tooltipSuffix = $derived(selected_normalization ? '' : ` ${unit}`);
 	let plot_options: ChartOptions = $derived.by(() => {
 		return {
+			datasets: {
+				bar: {
+					borderColor: 'rgb(255, 0, 0)',
+					borderWidth: (e: any) => {
+						if (!active_year) return 0;
+						return e.chart.data.labels[e.dataIndex] == active_year ? 5 : 0;
+					},
+					borderRadius: 2,
+					borderSkipped: 'middle'
+				}
+			},
+			animation: {
+				duration: 0
+			},
 			responsive: true,
+			maintainAspectRatio: false,
 			scales: {
 				x: {
 					stacked: true,
@@ -167,8 +190,35 @@
 				tooltip: {
 					callbacks: {
 						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-							`${item.dataset.label}: ${item.formattedValue}` +
-							(selected_normalization ? '' : ` ${unit}`)
+							`${item.dataset.label}: ${item.formattedValue}${tooltipSuffix}`,
+						labelColor: (context) => {
+							return {
+								borderColor: context.dataset.backgroundColor as string,
+								backgroundColor: context.dataset.backgroundColor as string,
+								borderWidth: 0
+							};
+						}
+					},
+					filter: (item) => Math.abs(item.parsed.y) > 1.0e-6,
+					borderWidth: 0
+				},
+				legend: {
+					labels: {
+						generateLabels: (chart) => {
+							const datasets = chart.data.datasets;
+							if (datasets.length) {
+								return datasets.map((dataset, i) => ({
+									text: dataset.label || '',
+									fillStyle: dataset.backgroundColor as string,
+									strokeStyle: dataset.borderColor as string,
+									lineWidth: 0,
+									hidden: !chart.isDatasetVisible(i),
+									datasetIndex: i,
+									fontColor: Chart.defaults.color as string
+								}));
+							}
+							return [];
+						}
 					}
 				}
 			},
@@ -302,6 +352,13 @@
 		await fetch_data();
 	}
 
+	function on_bar_click(bar_label: string) {
+		if (!bar_label) {
+			return;
+		}
+		active_year = active_year !== bar_label ? bar_label : null;
+	}
+
 	/**
 	 * Fetch data from the API server for the current selection.
 	 */
@@ -407,7 +464,12 @@
 			false,
 			undefined,
 			suffix || ''
-		);
+		).map((d) => {
+			return {
+				...d,
+				borderColor: 'rgb(0, 0, 0)'
+			} as ChartDataset<'bar' | 'line'>;
+		});
 		if (map_fn !== undefined) {
 			filtered = filtered.map(map_fn);
 		}
@@ -448,7 +510,7 @@
 				(d) => {
 					return {
 						...d,
-						data: Object.values(d.data).map((e) => -e!)
+						data: Object.values(d.data).map((e) => -Number(e))
 					} as ChartDataset<'bar'>;
 				}
 			);
@@ -546,6 +608,7 @@
 		{/if}
 	{/if}
 </Filters>
+<h2 class="visually-hidden">Plots</h2>
 <div class="plot mt-4">
 	{#if solution_loading || fetching}
 		<div class="text-center">
@@ -560,6 +623,16 @@
 	{:else if datasets.length == 0}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot type="bar" options={plot_options} {labels} {datasets} {plot_name}></BarPlot>
+		<BarPlot
+			type="bar"
+			options={plot_options}
+			{labels}
+			{datasets}
+			{plot_name}
+			onclick={on_bar_click}
+		></BarPlot>
 	{/if}
+</div>
+<div class="my-4">
+	<PiePlots {datasets} {labels} year={active_year} {tooltipSuffix}></PiePlots>
 </div>
