@@ -32,16 +32,18 @@
 			plugins: {
 				tooltip: {
 					callbacks: {
-						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-							`${item.dataset.label}: ${item.formattedValue}${tooltipSuffix}`
+						label: (item: TooltipItem<keyof ChartTypeRegistry>) => {
+							const value = Number(item.raw || 0);
+							const total = item.dataset.data
+								.map((val) => Number(val || 0))
+								.reduce((acc, val) => acc + val, 0);
+							const percentage = ((value * 100) / total).toFixed(2);
+							return `${item.dataset.label}: ${item.formattedValue}${tooltipSuffix} (${percentage}%)`;
+						}
 					}
 				},
 				legend: {
 					position: 'top' as const
-				},
-				title: {
-					display: true,
-					text: year ? `Breakdown of ${label} for ${year}` : 'Select a year'
 				}
 			}
 		};
@@ -85,10 +87,13 @@
 </script>
 
 {#if year == null}
-	<div class="text-center text-muted">Click on a bar to see a production and consumption breakdown.</div>
+	<div class="text-center text-muted">
+		Click on a bar to see a production and consumption breakdown.
+	</div>
 {:else}
 	<div class="row">
 		<div class="col-lg-6">
+			<h3 class="text-center h4">Breakdown of Production for {year}</h3>
 			<BarPlot
 				type="pie"
 				datasets={productionDatasets}
@@ -98,6 +103,7 @@
 			></BarPlot>
 		</div>
 		<div class="col-lg-6">
+			<h3 class="text-center h4">Breakdown of Consumption for {year}</h3>
 			<BarPlot
 				type="pie"
 				datasets={consumptionDatasets}

@@ -608,6 +608,7 @@
 		{/if}
 	{/if}
 </Filters>
+<h2 class="visually-hidden">Plots</h2>
 <div class="plot mt-4">
 	{#if solution_loading || fetching}
 		<div class="text-center">
