@@ -133,24 +133,75 @@ export interface DatasetContainer {
 }
 
 export interface SankeyNode {
+	/** Identifier for the node */
 	id: string;
+	/** Display label for the node */
+	label: string;
+	/** Color of the node */
+	color: string;
+	/** Incoming links to the node */
+	linksIn: SankeyLink[];
+	/** Outgoing links from the node */
+	linksOut: SankeyLink[];
+	/** Value of the node that determines its height */
+	value: number;
+	/** Horizontal position of the node */
+	x: number;
+	/** Vertical position of the node */
+	y: number;
+	/** Height of the node */
+	dy: number;
+}
+
+export interface PartialSankeyLink {
+	source: Partial<SankeyNode>;
+	target: Partial<SankeyNode>;
+	value: number;
+	color: string;
+	unit: string;
+}
+
+export interface SankeyLink {
+	/** The source node of the link */
+	source: SankeyNode;
+	/** The target node of the link */
+	target: SankeyNode;
+	/** The weight of the link */
+	value: number;
+	/** The color of the link */
+	color: string;
+	/** The unit of the link's value */
+	unit: string;
+	/** Whether this link causes a cycle in the graph */
+	causesCycle: boolean;
+	/** The index of the cycle this link is part of (if any) */
+	cycleIndex: number;
+	/** The height of the link */
+	dy: number;
+	/** The vertical offset at the source node */
+	sy: number;
+	/** The vertical offset at the target node */
+	ty: number;
+}
+
+export interface RawSankeyNode {
 	label: string;
 	color: string;
-	linksIn: SankeyLink[];
-	linksOut: SankeyLink[];
 	value: number;
 	x: number;
 	y: number;
 	dy: number;
 }
 
-export interface SankeyLink {
-	source: SankeyNode;
-	target: SankeyNode;
+export interface RawSankeyLink {
+	source: RawSankeyNode;
+	target: RawSankeyNode;
 	value: number;
-	causesCycle?: boolean;
-	cycleIndex?: number;
-	dy?: number;
-	sy?: number;
-	ty?: number;
+	color: string;
+	unit: string;
+	causesCycle: boolean;
+	cycleIndex: number;
+	dy: number;
+	sy: number;
+	ty: number;
 }

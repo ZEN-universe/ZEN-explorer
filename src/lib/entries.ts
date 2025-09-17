@@ -51,7 +51,7 @@ export default class Entries {
 			Object.entries(criteria).every(
 				// Check if entry does not have the key or if the value matches one of the allowed values
 				([key, values]) =>
-					!Object.keys(entry.index).includes(key) || values.includes(entry.index[key])
+					Object.keys(entry.index).includes(key) ? values.includes(entry.index[key]) : true
 			)
 		);
 		return new Entries(filteredEntries);

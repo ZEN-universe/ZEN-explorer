@@ -251,94 +251,92 @@
 			return [];
 		}
 
-		return Object.entries(energy_balance_data).flatMap(
-			([key, entries]: [string, Entry[]]) => {
-				if (!entries || entries.length === 0) {
-					return [];
-				}
-
-				// for (const plot_name in energy_balance_data) {
-				let dataset_selector: Record<string, string[]> = {
-					node: [selected_node!]
-				};
-
-				// If the dataframe has a row "technology", add all of them to the list of technologies
-				if ('technology' in entries[0].index) {
-					dataset_selector = {
-						technology: entries.map((row: any) => row.index.technology)
-					};
-				}
-
-				// Filter and group rows by label (technology/node/label)
-				const filtered = entries.filter((entry: Entry) =>
-					Object.entries(dataset_selector).every(([k, v]) => v.includes(entry.index[k]))
-				);
-
-				// Group by label (technology/node/label)
-				const aggregated_map: Record<string, number[]> = {};
-				filtered.forEach((entry: Entry) => {
-					const label = entry.index.technology || entry.index.node || entry.index.label || '';
-					if (!aggregated_map[label]) {
-						aggregated_map[label] = new Array(entry.data.length).fill(0);
-					}
-					entry.data.forEach((value, index) => {
-						aggregated_map[label][index] += value;
-					});
-				});
-
-				// Loop through the different variables
-				return Object.entries(aggregated_map)
-					.map(([label, data]) => {
-						if (Object.keys(data).length == 0) {
-							return null;
-						}
-
-						// Get label-name for the plot
-						const version = selected_solution!.version;
-						const labelMap: Record<string, (label: string) => string> = {
-							[get_variable_name('flow_storage_discharge', version)]: (l) => l + ' (discharge)',
-							[get_variable_name('flow_transport_in', version)]: (l) => l + ' (transport in)',
-							[get_variable_name('flow_import', version)]: () => 'Import',
-							[get_variable_name('shed_demand', version)]: () => 'Shed Demand',
-							[get_variable_name('flow_storage_charge', version)]: (l) => l + ' (charge)',
-							[get_variable_name('flow_transport_out', version)]: (l) => l + ' (transport out)',
-							[get_variable_name('flow_export', version)]: () => 'Export'
-						};
-
-						// Demand is plotted in a different way than the other plots
-						let color = next_color();
-						let bg_color = color;
-						let dataset_data = Object.values(data).map((value, i) => ({ x: i, y: value }));
-
-						if (key == 'demand') {
-							return {
-								data: dataset_data,
-								label: 'Demand',
-								type: 'line',
-								stack: 'ownCustomStack',
-								fill: false,
-								borderColor: 'black',
-								backgroundColor: 'white',
-								borderWidth: 2,
-								stepped: true,
-								pointRadius: Object.keys(data).length == 1 ? 2 : 0
-							} as ChartDataset<'line'>;
-						} else {
-							return {
-								data: dataset_data,
-								label: labelMap[key]?.(label) || label,
-								fill: 'origin',
-								borderColor: color,
-								backgroundColor: bg_color,
-								stepped: true,
-								cubicInterpolationMode: 'monotone',
-								pointRadius: Object.keys(data).length == 1 ? 2 : 0
-							} as ChartDataset<'bar' | 'line'>;
-						}
-					})
-					.filter((dataset) => dataset !== null);
+		return Object.entries(energy_balance_data).flatMap(([key, entries]: [string, Entry[]]) => {
+			if (!entries || entries.length === 0) {
+				return [];
 			}
-		);
+
+			// for (const plot_name in energy_balance_data) {
+			let dataset_selector: Record<string, string[]> = {
+				node: [selected_node!]
+			};
+
+			// If the dataframe has a row "technology", add all of them to the list of technologies
+			if ('technology' in entries[0].index) {
+				dataset_selector = {
+					technology: entries.map((row: any) => row.index.technology)
+				};
+			}
+
+			// Filter and group rows by label (technology/node/label)
+			const filtered = entries.filter((entry: Entry) =>
+				Object.entries(dataset_selector).every(([k, v]) => v.includes(entry.index[k]))
+			);
+
+			// Group by label (technology/node/label)
+			const aggregated_map: Record<string, number[]> = {};
+			filtered.forEach((entry: Entry) => {
+				const label = entry.index.technology || entry.index.node || entry.index.label || '';
+				if (!aggregated_map[label]) {
+					aggregated_map[label] = new Array(entry.data.length).fill(0);
+				}
+				entry.data.forEach((value, index) => {
+					aggregated_map[label][index] += value;
+				});
+			});
+
+			// Loop through the different variables
+			return Object.entries(aggregated_map)
+				.map(([label, data]) => {
+					if (Object.keys(data).length == 0) {
+						return null;
+					}
+
+					// Get label-name for the plot
+					const version = selected_solution!.version;
+					const labelMap: Record<string, (label: string) => string> = {
+						[get_variable_name('flow_storage_discharge', version)]: (l) => l + ' (discharge)',
+						[get_variable_name('flow_transport_in', version)]: (l) => l + ' (transport in)',
+						[get_variable_name('flow_import', version)]: () => 'Import',
+						[get_variable_name('shed_demand', version)]: () => 'Shed Demand',
+						[get_variable_name('flow_storage_charge', version)]: (l) => l + ' (charge)',
+						[get_variable_name('flow_transport_out', version)]: (l) => l + ' (transport out)',
+						[get_variable_name('flow_export', version)]: () => 'Export'
+					};
+
+					// Demand is plotted in a different way than the other plots
+					let color = next_color();
+					let bg_color = color;
+					let dataset_data = Object.values(data).map((value, i) => ({ x: i, y: value }));
+
+					if (key == 'demand') {
+						return {
+							data: dataset_data,
+							label: 'Demand',
+							type: 'line',
+							stack: 'ownCustomStack',
+							fill: false,
+							borderColor: 'black',
+							backgroundColor: 'white',
+							borderWidth: 2,
+							stepped: true,
+							pointRadius: Object.keys(data).length == 1 ? 2 : 0
+						} as ChartDataset<'line'>;
+					} else {
+						return {
+							data: dataset_data,
+							label: labelMap[key]?.(label) || label,
+							fill: 'origin',
+							borderColor: color,
+							backgroundColor: bg_color,
+							stepped: true,
+							cubicInterpolationMode: 'monotone',
+							pointRadius: Object.keys(data).length == 1 ? 2 : 0
+						} as ChartDataset<'bar' | 'line'>;
+					}
+				})
+				.filter((dataset) => dataset !== null);
+		});
 	}
 
 	async function update_datasets() {

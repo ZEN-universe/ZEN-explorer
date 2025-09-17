@@ -3,7 +3,13 @@
 
 	import Entries from '$lib/entries';
 	import { get_component_total } from '$lib/temple';
-	import type { ActivatedSolution, Row, Entry, SankeyNode, SankeyLink } from '$lib/types';
+	import type {
+		ActivatedSolution,
+		Row,
+		Entry,
+		SankeyNode,
+		PartialSankeyLink
+	} from '$lib/types';
 	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
 	import { to_options } from '$lib/utils';
 
@@ -37,9 +43,8 @@
 	let dataStorageSpillage: Entries | null = $state(null);
 	let units: Row[] = $state([]);
 
-	let sankeyNodesLength: number = $state(0);
-
-	let sankeyDiagram = $state<SankeyDiagram>();
+	let sankeyNodes: Partial<SankeyNode>[] = $state([]);
+	let sankeyLinks: PartialSankeyLink[] = $state([]);
 
 	function solutionChanged() {
 		fetchData();
@@ -66,6 +71,15 @@
 	});
 	$effect(() => {
 		selectedNodes = nodes;
+	});
+
+	$effect(() => {
+		selectedCarriers;
+		selectedNodes;
+		selectedYear;
+		untrack(() => {
+			computeSankeyData();
+		});
 	});
 
 	$effect(() => {
@@ -130,10 +144,7 @@
 
 		fetching = false;
 
-		const sankeyNodes = computeSankeyNodes();
-		sankeyNodesLength = sankeyNodes.length;
-		await tick();
-		sankeyDiagram?.setNodes(sankeyNodes);
+		computeSankeyData();
 	}
 
 	function getUnit(carrier: string): string {
@@ -141,7 +152,19 @@
 		return unitRow[0] || unitRow.units || '';
 	}
 
-	function computeSankeyNodes() {
+	function getReferenceCarrier(technology: string): string {
+		if (!selectedSolution) return '';
+		return selectedSolution.detail.reference_carrier[technology] || '';
+	}
+
+	function filterTechnologiesByCarriers(selectedCarriers: string[]): string[] {
+		if (!selectedSolution) return [];
+		return selectedSolution.detail.system.set_technologies.filter((technology) => {
+			return selectedCarriers.includes(getReferenceCarrier(technology));
+		});
+	}
+
+	function computeSankeyData() {
 		if (
 			!selectedSolution ||
 			!dataConversionInput ||
@@ -163,17 +186,11 @@
 		const storageTechs = selectedSolution?.detail.system.set_storage_technologies || [];
 		const conversionTechs = selectedSolution?.detail.system.set_conversion_technologies || [];
 
-		function newNode(id: string, label: string, color: string): SankeyNode {
+		function newNode(id: string, label: string, color: string): Partial<SankeyNode> {
 			return {
 				id,
 				label,
-				color,
-				linksIn: [],
-				linksOut: [],
-				value: 0,
-				x: 0,
-				y: 0,
-				dy: 0
+				color
 			};
 		}
 
@@ -204,13 +221,18 @@
 		);
 
 		// Stage 2: Define links
-		const filterCriteria = { carrier: selectedCarriers, node: selectedNodes };
+		const filterCriteria = {
+			carrier: selectedCarriers,
+			node: selectedNodes,
+			technology: filterTechnologiesByCarriers(selectedCarriers)
+		};
 		const indexOfYear = years.indexOf(Number(selectedYear));
+		const links: PartialSankeyLink[] = [];
 
 		function addLink(
-			sourceNodes: SankeyNode[],
+			sourceNodes: Partial<SankeyNode>[],
 			sourceId: string,
-			targetNodes: SankeyNode[],
+			targetNodes: Partial<SankeyNode>[],
 			targetId: string,
 			subtract = 0
 		): (entry: Entry) => void {
@@ -222,10 +244,29 @@
 				const targetNode = targetNodes.find((node) => node.id === entry.index[targetId]);
 				if (!sourceNode || !targetNode) return;
 
-				const link: SankeyLink = { source: sourceNode, target: targetNode, value };
-				sourceNode.linksOut.push(link);
-				targetNode.linksIn.push(link);
+				let color = grey;
+				const carrierNode = carrierNodes.find((node) => node.id === entry.index.carrier);
+				if (carrierNode) {
+					color = carrierNode.color || grey;
+				}
+
+				links.push({
+					source: sourceNode,
+					target: targetNode,
+					value,
+					color,
+					unit: getUnit(entry.index.carrier)
+				});
+				// const link: SankeyLink = { source: sourceNode, target: targetNode, value };
+				// sourceNode.linksOut.push(link);
+				// targetNode.linksIn.push(link);
 			};
+		}
+
+		function addCarrierToEntry(entry: Entry): void {
+			const referenceCarrier = getReferenceCarrier(entry.index.technology);
+			if (!referenceCarrier) return;
+			entry.index.carrier = referenceCarrier;
 		}
 
 		// conversion input: carrier -> conversion tech
@@ -243,7 +284,7 @@
 			.filterByCriteria(filterCriteria)
 			.groupBy(['technology'])
 			.forEach((entry) => {
-				const referenceCarrier = selectedSolution?.detail.reference_carrier[entry.index.technology];
+				const referenceCarrier = getReferenceCarrier(entry.index.technology);
 				if (!referenceCarrier) return;
 				entry.index.carrier = referenceCarrier;
 			})
@@ -252,21 +293,19 @@
 		dataStorageDischarge
 			.filterByCriteria(filterCriteria)
 			.groupBy(['technology'])
-			.forEach((entry) => {
-				const referenceCarrier = selectedSolution?.detail.reference_carrier[entry.index.technology];
-				if (!referenceCarrier) return;
-				entry.index.carrier = referenceCarrier;
-			})
+			.forEach(addCarrierToEntry)
 			.forEach(addLink(storageTechNodes, 'technology', carrierNodes, 'carrier'));
 		// storage inflow: inflow -> storage tech
 		dataStorageInflow
 			.filterByCriteria(filterCriteria)
 			.groupBy(['technology'])
+			.forEach(addCarrierToEntry)
 			.forEach(addLink(inflowNodes, 'technology', storageTechNodes, 'technology'));
 		// storage spillage: storage tech -> spillage
 		dataStorageSpillage
 			.filterByCriteria(filterCriteria)
 			.groupBy(['technology'])
+			.forEach(addCarrierToEntry)
 			.forEach(addLink(storageTechNodes, 'technology', spillageNodes, 'technology'));
 		// import: import -> carrier
 		dataImport
@@ -293,7 +332,7 @@
 				addLink(carrierNodes, 'carrier', demandNodes, 'carrier', shedValue)(entry);
 			});
 
-		return [
+		sankeyNodes = [
 			...carrierNodes,
 			...conversionTechNodes,
 			...storageTechNodes,
@@ -303,7 +342,8 @@
 			...exportNodes,
 			...shedDemandNodes,
 			...demandNodes
-		].filter((node) => node.linksIn.length > 0 || node.linksOut.length > 0);
+		];
+		sankeyLinks = links;
 	}
 </script>
 
@@ -337,6 +377,8 @@
 	</FilterSection>
 </Filters>
 
+<h2 class="visually-hidden">Sankey Diagram</h2>
+
 <div class="plot my-4">
 	{#if solutionLoading || fetching}
 		<div class="text-center">
@@ -346,9 +388,9 @@
 		</div>
 	{:else if !selectedSolution}
 		<div class="text-center">No solution selected</div>
-	{:else if sankeyNodesLength === 0}
+	{:else if sankeyNodes.length === 0}
 		<div class="text-center">No data available for the selected filters</div>
 	{:else}
-		<SankeyDiagram bind:this={sankeyDiagram} />
+		<SankeyDiagram nodes={sankeyNodes} links={sankeyLinks} />
 	{/if}
 </div>

@@ -166,7 +166,7 @@
 	});
 
 	// Zoom
-	let zoom = $derived(d3zoom().filter(shouldHandleZoom).on('zoom', onZoom));
+	let zoom = d3zoom().filter(shouldHandleZoom).on('zoom', onZoom);
 	onMount(() => {
 		if (!svg) return;
 		select(svg)
