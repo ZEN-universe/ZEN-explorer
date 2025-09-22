@@ -16,10 +16,12 @@
 		CYCLE_LANE_SMALL_WIDTH_BUFFER,
 		getFinalNodesAndLinks,
 		NODE_WIDTH,
+		updateNodePosition,
 		updateSankeyLayout
 	} from '$lib/sankeyDiagram';
 	import { select } from 'd3-selection';
 	import { zoom as d3zoom, zoomIdentity } from 'd3-zoom';
+	import { drag as d3drag } from 'd3-drag';
 
 	let width = $state(936);
 	let height = $state(800);
@@ -46,12 +48,12 @@
 
 	// Full nodes and links with all properties initialized
 	// It's not reactive, because it contains cyclic references
-	let nodes: SankeyNode[] = [];
-	let links: SankeyLink[] = [];
+	let fullNodes: SankeyNode[] = [];
+	let fullLinks: SankeyLink[] = [];
 
 	// Final nodes and links with positions computed by the layout algorithm with Svelte reactivity
-	let finalNodes: RawSankeyNode[] = $state([]);
-	let finalLinks: RawSankeyLink[] = $state([]);
+	let nodes: RawSankeyNode[] = $state([]);
+	let links: RawSankeyLink[] = $state([]);
 
 	/**
 	 * Debounce a function call by the given wait time in milliseconds.
@@ -75,7 +77,7 @@
 		partialNodes: Partial<SankeyNode>[],
 		partialLinks: PartialSankeyLink[]
 	): void {
-		nodes = partialNodes.map((node) => ({
+		fullNodes = partialNodes.map((node) => ({
 			label: node.label ?? 'Unnamed',
 			color: node.color ?? '#ccc',
 			id: node.id ?? '',
@@ -87,9 +89,9 @@
 			y: 0,
 			dy: 0
 		}));
-		links = partialLinks.flatMap((link) => {
-			let source = nodes.find((n) => n.id === link.source.id && n.label === link.source.label);
-			let target = nodes.find((n) => n.id === link.target.id && n.label === link.target.label);
+		fullLinks = partialLinks.flatMap((link) => {
+			let source = fullNodes.find((n) => n.id === link.source.id && n.label === link.source.label);
+			let target = fullNodes.find((n) => n.id === link.target.id && n.label === link.target.label);
 			if (!source || !target) {
 				console.warn('Link refers to unknown node', link);
 				return [];
@@ -115,8 +117,8 @@
 	 * Layout the diagram by computing node and link positions.
 	 */
 	function layoutDiagram() {
-		updateSankeyLayout(nodes, links);
-		[finalNodes, finalLinks] = getFinalNodesAndLinks();
+		updateSankeyLayout(fullNodes, fullLinks);
+		[nodes, links] = getFinalNodesAndLinks();
 	}
 
 	/**
@@ -201,8 +203,8 @@
 	 * If there are no cycles, the offset is 0.
 	 */
 	let cycleLaneHeight = $derived.by(() => {
-		if (!finalLinks.length) return 0;
-		const maxCycleIndex = Math.max(...finalLinks.map((link) => link.cycleIndex));
+		if (!links.length) return 0;
+		const maxCycleIndex = Math.max(...links.map((link) => link.cycleIndex));
 		if (maxCycleIndex == 0) return 0;
 		return (
 			CYCLE_LANE_DIST_FROM_FWD_PATHS -
@@ -214,13 +216,26 @@
 	 * Compute the maximum x and y coordinates of the diagram based on the final node positions.
 	 * Add some padding to avoid clipping.
 	 */
-	let maxX = $derived.by(() => {
-		if (!finalNodes.length) return width;
-		return Math.max(...finalNodes.map((node) => node.x + NODE_WIDTH));
+	let minX = $derived.by(() => {
+		if (!nodes.length) return 0;
+		// If there are cycles to nodes in the first level, shift the viewbox to the left to avoid clipping
+		if (nodes.some((node) => node.x === 0 && node.numLinksIn > 0)) {
+			return -CYCLE_DIST_FROM_NODE - CYCLE_LANE_NARROW_WIDTH - CYCLE_CONTROL_POINT_DIST;
+		}
+		return 0;
 	});
-	let maxY = $derived.by(() => {
-		if (!finalNodes.length) return height;
-		return Math.max(...finalNodes.map((node) => node.y + node.dy));
+	let maxWidth = $derived.by(() => {
+		if (!nodes.length) return width;
+		const max = Math.max(...nodes.map((node) => node.x + NODE_WIDTH));
+		if (nodes.some((node) => node.x === max && node.numLinksOut > 0)) {
+			// If there are cycles to nodes in the last level, extend the viewbox to the right to avoid clipping
+			return max + CYCLE_DIST_FROM_NODE + CYCLE_LANE_NARROW_WIDTH + CYCLE_CONTROL_POINT_DIST - minX;
+		}
+		return max - minX;
+	});
+	let maxHeight = $derived.by(() => {
+		if (!nodes.length) return height;
+		return Math.max(...nodes.map((node) => node.y + node.dy));
 	});
 
 	/**
@@ -271,6 +286,9 @@
 	// Zoom and pan behavior using d3-zoom
 	// ===================================
 
+	/**
+	 * Zoom behavior using d3-zoom.
+	 */
 	let transform: string = $state(zoomIdentity.toString());
 	let zoomBehavior = d3zoom()
 		.scaleExtent([1, Infinity])
@@ -278,31 +296,82 @@
 			transform = event.transform.toString();
 		});
 
+	/**
+	 * Update the zoom behavior's translate extent when the diagram content changes.
+	 */
 	$effect(() => {
 		zoomBehavior = zoomBehavior.translateExtent([
-			[-5, cycleLaneHeight - 5],
-			[maxX + 5, maxY + 5]
+			[minX - 5, cycleLaneHeight - 5],
+			[maxWidth + 5, maxHeight + 5]
 		]);
 	});
 
+	/**
+	 * Apply the zoom behavior to the SVG element after it is mounted.
+	 */
 	onMount(() => {
 		if (!svg) return;
 		select(svg).call(zoomBehavior as any);
 	});
 
+	/**
+	 * Reset the zoom to the initial state.
+	 */
 	function resetZoom() {
 		if (!svg) return;
 		select(svg).call(zoomBehavior.transform as any, zoomIdentity);
+	}
+
+	// ==================
+	// Drag node behavior
+	// ==================
+
+	/**
+	 * Drag behavior using d3-drag.
+	 */
+	let dragBehavior = d3drag()
+		.on('start', function () {
+			if (!this.parentNode) return;
+			this.parentNode.appendChild(this);
+		})
+		.on('drag', function (event) {
+			const idx = Number((this as SVGGElement).dataset.idx);
+			if (isNaN(idx)) return;
+			onDragNode(event, idx);
+		});
+
+	/**
+	 * Apply the drag behavior to the nodes after they are rendered.
+	 */
+	$effect(() => {
+		nodes;
+		if (!svg) return;
+		select(svg)
+			.selectAll<SVGRectElement, unknown>('.node')
+			.call(dragBehavior as any);
+	});
+
+	/**
+	 * Handle node drag events to update the node's y position.
+	 * @param event
+	 * @param idx
+	 */
+	function onDragNode(event: any, idx: number) {
+		if (event.clientY === 0 || idx < 0 || idx >= nodes.length) return;
+		const new_y = nodes[idx].y + event.dy;
+		const constrained_y = Math.max(0, Math.min(height - nodes[idx].dy, new_y));
+		updateNodePosition(idx, constrained_y);
+		[nodes, links] = getFinalNodesAndLinks();
 	}
 </script>
 
 <svelte:window on:resize={handleSize} />
 
 <div class="position-relative border rounded overflow-hidden">
-	<svg {width} {height} bind:this={svg} viewBox={`-1 ${cycleLaneHeight} ${maxX + 4} ${maxY}`}>
+	<svg {width} {height} bind:this={svg} viewBox={`${minX - 1} ${cycleLaneHeight} ${maxWidth + 4} ${maxHeight}`}>
 		<g {transform}>
 			<g class="links">
-				{#each finalLinks.toSorted((a, b) => b.value - a.value) as link}
+				{#each links.toSorted((a, b) => b.value - a.value) as link}
 					{#if link.causesCycle}
 						<path class="cycle-link" d={linkPath(link)} style:fill={link.color}>
 							<title>{getLinkTitle(link)}</title>
@@ -320,25 +389,26 @@
 				{/each}
 			</g>
 			<g class="nodes">
-				{#each finalNodes as node}
-					<rect
-						class="node"
-						x={node.x}
-						y={node.y + 1}
-						width={NODE_WIDTH}
-						height={Math.max(0.1, node.dy - 2)}
-						fill={node.color}
-					>
-						<title>{getNodeTitle(node)}</title>
-					</rect>
-					<text
-						x={node.x + NODE_WIDTH / 2}
-						y={node.y + node.dy / 2}
-						text-anchor="middle"
-						alignment-baseline="middle"
-					>
-						{node.label}
-					</text>
+				{#each nodes as node, idx}
+					<g class="node" data-idx={idx}>
+						<rect
+							x={node.x}
+							y={node.y}
+							width={NODE_WIDTH}
+							height={Math.max(0.1, node.dy - 2)}
+							fill={node.color}
+						>
+							<title>{getNodeTitle(node)}</title>
+						</rect>
+						<text
+							x={node.x + NODE_WIDTH / 2}
+							y={node.y + node.dy / 2}
+							text-anchor="middle"
+							alignment-baseline="middle"
+						>
+							{node.label}
+						</text>
+					</g>
 				{/each}
 			</g>
 		</g>
@@ -357,6 +427,10 @@
 	}
 
 	.node {
+		cursor: row-resize;
+	}
+
+	.node rect {
 		stroke: #000;
 		stroke-width: 2px;
 	}

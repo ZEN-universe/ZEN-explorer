@@ -391,6 +391,10 @@
 		</div>
 	{:else if !selectedSolution}
 		<div class="text-center">No solution selected</div>
+	{:else if selectedCarriers.length === 0}
+		<div class="text-center">No carriers selected</div>
+	{:else if selectedNodes.length === 0}
+		<div class="text-center">No nodes selected</div>
 	{:else if sankeyNodes.length === 0}
 		<div class="text-center">No data available for the selected filters</div>
 	{:else}

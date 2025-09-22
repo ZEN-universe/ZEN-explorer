@@ -207,22 +207,18 @@ function center(node: SankeyNode) {
  * Nodes are assigned initial depths based on their value and then
  * adjusted iteratively to minimize link crossings and node overlaps.
  */
-function computeDepths() {
+function computeNodeDepths() {
 	let nodesByBreadth = nodesGroupedByBreadth();
 
 	initializeNodeDepth();
 	resolveCollisions();
-	computeLinkDepths();
 	for (let alpha = 1, i = 0; i < NUM_DEPTH_LAYOUT_ITERATIONS; ++i, alpha *= 0.99) {
 		relaxRightToLeft(alpha);
 		resolveCollisions();
-		computeLinkDepths();
 		relaxLeftToRight(alpha);
 		resolveCollisions();
-		computeLinkDepths();
 	}
 	bringBackToTop();
-	computeLinkDepths();
 
 	/**
 	 * Set the initial vertical position (depth) of each node.
@@ -317,40 +313,40 @@ function computeDepths() {
 			node.y -= minY;
 		});
 	}
+}
 
-	/**
-	 * Compute the vertical offsets (sy, ty) of each link within their source and target nodes.
-	 */
-	function computeLinkDepths() {
-		let compareFn = (property: 'source' | 'target') => (a: SankeyLink, b: SankeyLink) => {
-			if (a.causesCycle && b.causesCycle) {
-				return a.cycleIndex - b.cycleIndex; // both cause cycles, sort by cycle index
-			} else if (a.causesCycle) {
-				return -1; // a causes a cycle, b doesn't, so a comes first
-			} else if (b.causesCycle) {
-				return 1; // b causes a cycle, a doesn't, so b comes first
-			}
-			return a[property].y - b[property].y; // neither cause cycles, sort by target y position
-		};
+/**
+ * Compute the vertical offsets (sy, ty) of each link within their source and target nodes.
+ */
+function computeLinkDepths() {
+	let compareFn = (property: 'source' | 'target') => (a: SankeyLink, b: SankeyLink) => {
+		if (a.causesCycle && b.causesCycle) {
+			return a.cycleIndex - b.cycleIndex; // both cause cycles, sort by cycle index
+		} else if (a.causesCycle) {
+			return -1; // a causes a cycle, b doesn't, so a comes first
+		} else if (b.causesCycle) {
+			return 1; // b causes a cycle, a doesn't, so b comes first
+		}
+		return a[property].y - b[property].y; // neither cause cycles, sort by target y position
+	};
 
-		nodes.forEach((node) => {
-			node.linksIn.sort(compareFn('source'));
-			node.linksOut.sort(compareFn('target'));
+	nodes.forEach((node) => {
+		node.linksIn.sort(compareFn('source'));
+		node.linksOut.sort(compareFn('target'));
+	});
+
+	nodes.forEach((node) => {
+		let sy = 0;
+		let ty = 0;
+		node.linksOut.forEach((link) => {
+			link.sy = sy;
+			sy += link.dy;
 		});
-
-		nodes.forEach((node) => {
-			let sy = 0;
-			let ty = 0;
-			node.linksOut.forEach((link) => {
-				link.sy = sy;
-				sy += link.dy;
-			});
-			node.linksIn.forEach((link) => {
-				link.ty = ty;
-				ty += link.dy;
-			});
+		node.linksIn.forEach((link) => {
+			link.ty = ty;
+			ty += link.dy;
 		});
-	}
+	});
 }
 
 // ============================
@@ -371,7 +367,19 @@ export function updateSankeyLayout(inputNodes: SankeyNode[], inputLinks: SankeyL
 	filterEmptyNodes();
 	markCycles();
 	computeNodeBreadths();
-	computeDepths();
+	computeNodeDepths();
+	computeLinkDepths();
+}
+
+/**
+ * Update the vertical position of a node in the Sankey diagram.
+ * @param node_idx The index of the node to update.
+ * @param new_y The new y coordinate of the node.
+ */
+export function updateNodePosition(node_idx: number, new_y: number) {
+	if (node_idx < 0 || node_idx >= nodes.length) return;
+	nodes[node_idx].y = new_y;
+	computeLinkDepths();
 }
 
 /**
@@ -386,7 +394,9 @@ export function getFinalNodesAndLinks(): [RawSankeyNode[], RawSankeyLink[]] {
 		unit: node.unit,
 		x: node.x,
 		y: node.y,
-		dy: node.dy
+		dy: node.dy,
+		numLinksIn: node.linksIn.length,
+		numLinksOut: node.linksOut.length
 	}));
 	const finalLinks = links.map((link) => ({
 		source: finalNodes[nodes.indexOf(link.source)],
