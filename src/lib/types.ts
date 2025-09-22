@@ -139,12 +139,14 @@ export interface SankeyNode {
 	label: string;
 	/** Color of the node */
 	color: string;
+	/** Value of the node that determines its height */
+	value: number;
+	/** Unit of the node's value */
+	unit: string;
 	/** Incoming links to the node */
 	linksIn: SankeyLink[];
 	/** Outgoing links from the node */
 	linksOut: SankeyLink[];
-	/** Value of the node that determines its height */
-	value: number;
 	/** Horizontal position of the node */
 	x: number;
 	/** Vertical position of the node */
@@ -188,6 +190,7 @@ export interface RawSankeyNode {
 	label: string;
 	color: string;
 	value: number;
+	unit: string;
 	x: number;
 	y: number;
 	dy: number;

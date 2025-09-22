@@ -22,7 +22,7 @@
 	import { zoom as d3zoom, zoomIdentity } from 'd3-zoom';
 
 	let width = $state(936);
-	let height = $state(1000);
+	let height = $state(800);
 
 	let svg = $state<SVGSVGElement>();
 
@@ -54,11 +54,16 @@
 	let finalLinks: RawSankeyLink[] = $state([]);
 
 	/**
-	 * Layout the diagram by computing node and link positions.
+	 * Debounce a function call by the given wait time in milliseconds.
+	 * @param func
+	 * @param wait
 	 */
-	function layoutDiagram() {
-		updateSankeyLayout(nodes, links);
-		[finalNodes, finalLinks] = getFinalNodesAndLinks();
+	function debounce(func: () => void, wait: number) {
+		let timeout: ReturnType<typeof setTimeout>;
+		return function () {
+			clearTimeout(timeout);
+			timeout = setTimeout(() => func(), wait);
+		};
 	}
 
 	/**
@@ -74,9 +79,10 @@
 			label: node.label ?? 'Unnamed',
 			color: node.color ?? '#ccc',
 			id: node.id ?? '',
+			value: 0,
+			unit: node.unit ?? '',
 			linksIn: [],
 			linksOut: [],
-			value: 0,
 			x: 0,
 			y: 0,
 			dy: 0
@@ -106,29 +112,11 @@
 	}
 
 	/**
-	 * Handle window resize events by updating the SVG dimensions and re-layout the diagram.
+	 * Layout the diagram by computing node and link positions.
 	 */
-	function handleSize() {
-		if (!svg) return;
-		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
-		width = w;
-		height = h;
-		debounceLayoutDiagram();
-	}
-
-	onMount(handleSize);
-
-	/**
-	 * Debounce a function call by the given wait time in milliseconds.
-	 * @param func
-	 * @param wait
-	 */
-	function debounce(func: () => void, wait: number) {
-		let timeout: ReturnType<typeof setTimeout>;
-		return function () {
-			clearTimeout(timeout);
-			timeout = setTimeout(() => func(), wait);
-		};
+	function layoutDiagram() {
+		updateSankeyLayout(nodes, links);
+		[finalNodes, finalLinks] = getFinalNodesAndLinks();
 	}
 
 	/**
@@ -204,13 +192,9 @@
 		return `M${x0},${y0} C${xm},${y0} ${xm},${y1} ${x1},${y1}`;
 	}
 
-	/**
-	 * Generate a title string for a link.
-	 * @param link
-	 */
-	function linkTitle(link: RawSankeyLink): string {
-		return `${link.source.label} → ${link.target.label}:\n${link.value} ${link.unit}`;
-	}
+	// ==============
+	// Derived values
+	// ==============
 
 	/**
 	 * Height offset for the cycle lane, based on the maximum cycle index of the links.
@@ -240,27 +224,48 @@
 	});
 
 	/**
-	 * Extract points from an SVG path string for debugging purposes.
-	 * @param path SVG path string
+	 * Round a value to the specified number of decimal places.
+	 * @param value Value to round
+	 * @param number_of_decimal_places Number of decimal places (default: 6)
+	 * @returns Rounded value
 	 */
-	function pointsFromPath(path: string): { x: number; y: number; type: string }[] {
-		const commands = path.match(/[A-Za-z][^A-Za-z]*/g);
-		if (!commands) return [];
-		return commands.flatMap((command) => {
-			const type = command[0];
-			const coords = command
-				.slice(1)
-				.split(/[\s,]+/)
-				.map((c) => parseFloat(c.trim()));
-			// Return all pairs of coordinates for the command
-			const points = [];
-			for (let i = 0; i < coords.length; i += 2) {
-				if (isNaN(coords[i]) || isNaN(coords[i + 1])) continue;
-				points.push({ x: coords[i], y: coords[i + 1], type });
-			}
-			return points;
-		});
+	function roundValue(value: number, number_of_decimal_places: number = 6): number {
+		const factor = 10 ** number_of_decimal_places;
+		return Math.round(value * factor) / factor;
 	}
+
+	/**
+	 * Generate a title string for a link.
+	 * @param link
+	 */
+	function getLinkTitle(link: RawSankeyLink): string {
+		return `${link.source.label} → ${link.target.label}:\n${roundValue(link.value)} ${link.unit}`;
+	}
+
+	/**
+	 * Generate a title string for a node.
+	 * @param node
+	 */
+	function getNodeTitle(node: RawSankeyNode): string {
+		return `${node.label}:\n${roundValue(node.value)} ${node.unit}`;
+	}
+
+	// ===================
+	// Responsive behavior
+	// ===================
+
+	/**
+	 * Handle window resize events by updating the SVG dimensions and re-layout the diagram.
+	 */
+	function handleSize() {
+		if (!svg) return;
+		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
+		width = w;
+		height = h;
+		debounceLayoutDiagram();
+	}
+
+	onMount(handleSize);
 
 	// ===================================
 	// Zoom and pan behavior using d3-zoom
@@ -300,7 +305,7 @@
 				{#each finalLinks.toSorted((a, b) => b.value - a.value) as link}
 					{#if link.causesCycle}
 						<path class="cycle-link" d={linkPath(link)} style:fill={link.color}>
-							<title>{linkTitle(link)}</title>
+							<title>{getLinkTitle(link)}</title>
 						</path>
 					{:else}
 						<path
@@ -309,7 +314,7 @@
 							style:stroke={link.color}
 							style:stroke-width={Math.max(1, link.dy)}
 						>
-							<title>{linkTitle(link)}</title>
+							<title>{getLinkTitle(link)}</title>
 						</path>
 					{/if}
 				{/each}
@@ -324,7 +329,7 @@
 						height={Math.max(0.1, node.dy - 2)}
 						fill={node.color}
 					>
-						<title>{node.label} - {node.value}</title>
+						<title>{getNodeTitle(node)}</title>
 					</rect>
 					<text
 						x={node.x + NODE_WIDTH / 2}
@@ -336,21 +341,6 @@
 					</text>
 				{/each}
 			</g>
-			<!-- <g class="points">
-				{#each finalLinks.toSorted((a, b) => b.value - a.value) as link}
-					{#if link.causesCycle}
-						{#each pointsFromPath(linkPath(link)) as point}
-							<path
-								class="point"
-								d={`M${point.x},${point.y} h0.1`}
-								stroke={point.type === 'M' ? 'blue' : point.type === 'C' ? 'green' : 'orange'}
-								stroke-width="10"
-								stroke-linecap="round"
-							></path>
-						{/each}
-					{/if}
-				{/each}
-			</g> -->
 		</g>
 	</svg>
 	<div class="position-absolute top-0 end-0 m-2">

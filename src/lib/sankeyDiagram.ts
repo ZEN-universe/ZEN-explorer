@@ -383,6 +383,7 @@ export function getFinalNodesAndLinks(): [RawSankeyNode[], RawSankeyLink[]] {
 		label: node.label,
 		color: node.color,
 		value: node.value,
+		unit: node.unit,
 		x: node.x,
 		y: node.y,
 		dy: node.dy
