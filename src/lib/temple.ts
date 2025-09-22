@@ -8,7 +8,7 @@ import type {
 	Row,
 	TimeSeriesResponseEntry,
 	ComponentTimeSeries,
-	TimeSeriesEntry
+	Entry
 } from '$lib/types';
 
 /**
@@ -84,7 +84,7 @@ export async function get_full_ts(
 
 	let component_data = await component_data_request.json();
 
-	const parsed_components: { [key: string]: TimeSeriesEntry[] } = Object.fromEntries(
+	const parsed_components: { [key: string]: Entry[] } = Object.fromEntries(
 		Object.entries(component_data)
 			.map(([key, values]) => {
 				if (key == 'unit' || values === undefined) {
@@ -93,7 +93,7 @@ export async function get_full_ts(
 
 				return [key, parse_timeseries_data(values as TimeSeriesResponseEntry[])] as [
 					string,
-					TimeSeriesEntry[]
+					Entry[]
 				];
 			})
 			.filter((entry) => entry !== null)
@@ -282,7 +282,7 @@ function parse_csv(data_csv: string) {
 	return data;
 }
 
-function parse_timeseries_data(entries: TimeSeriesResponseEntry[]): TimeSeriesEntry[] {
+function parse_timeseries_data(entries: TimeSeriesResponseEntry[]): Entry[] {
 	return entries.map((entry) => {
 		let { d: data, t, ...rest } = entry;
 		const [translation, scale] = t;

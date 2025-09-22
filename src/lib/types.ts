@@ -76,9 +76,7 @@ export interface ActivatedSolution {
 	version: string;
 }
 
-export interface Row {
-	[key: string]: any;
-}
+export type Row = Record<string, any>;
 
 export interface TimeSeriesResponseEntry {
 	d: number[];
@@ -86,8 +84,10 @@ export interface TimeSeriesResponseEntry {
 	[key: string]: string | number[];
 }
 
-export interface TimeSeriesEntry {
-	index: { [key: string]: string };
+export type Index = Record<string, string>;
+
+export interface Entry {
+	index: Index;
 	data: number[];
 }
 
@@ -96,16 +96,16 @@ export interface DatasetSelectors {
 }
 
 export interface EnergyBalanceDataframes {
-	demand: TimeSeriesEntry[];
-	flow_conversion_input: TimeSeriesEntry[];
-	flow_export: TimeSeriesEntry[];
-	flow_import: TimeSeriesEntry[];
-	flow_storage_charge: TimeSeriesEntry[];
-	flow_storage_discharge: TimeSeriesEntry[];
-	flow_transport_in: TimeSeriesEntry[];
-	flow_transport_out: TimeSeriesEntry[];
-	flow_conversion_output: TimeSeriesEntry[];
-	shed_demand: TimeSeriesEntry[];
+	demand: Entry[];
+	flow_conversion_input: Entry[];
+	flow_export: Entry[];
+	flow_import: Entry[];
+	flow_storage_charge: Entry[];
+	flow_storage_discharge: Entry[];
+	flow_transport_in: Entry[];
+	flow_transport_out: Entry[];
+	flow_conversion_output: Entry[];
+	shed_demand: Entry[];
 }
 
 export interface Dataset {
@@ -125,9 +125,88 @@ export interface ComponentTotal {
 
 export interface ComponentTimeSeries {
 	unit: Papa.ParseResult<Row> | null;
-	components: { [key: string]: TimeSeriesEntry[] };
+	components: { [key: string]: Entry[] };
 }
 
 export interface DatasetContainer {
 	[key: string]: YearValue;
+}
+
+export interface SankeyNode {
+	/** Identifier for the node */
+	id: string;
+	/** Display label for the node */
+	label: string;
+	/** Color of the node */
+	color: string;
+	/** Value of the node that determines its height */
+	value: number;
+	/** Unit of the node's value */
+	unit: string;
+	/** Incoming links to the node */
+	linksIn: SankeyLink[];
+	/** Outgoing links from the node */
+	linksOut: SankeyLink[];
+	/** Horizontal position of the node */
+	x: number;
+	/** Vertical position of the node */
+	y: number;
+	/** Height of the node */
+	dy: number;
+}
+
+export interface PartialSankeyLink {
+	source: Partial<SankeyNode>;
+	target: Partial<SankeyNode>;
+	value: number;
+	color: string;
+	unit: string;
+}
+
+export interface SankeyLink {
+	/** The source node of the link */
+	source: SankeyNode;
+	/** The target node of the link */
+	target: SankeyNode;
+	/** The weight of the link */
+	value: number;
+	/** The color of the link */
+	color: string;
+	/** The unit of the link's value */
+	unit: string;
+	/** Whether this link causes a cycle in the graph */
+	causesCycle: boolean;
+	/** The index of the cycle this link is part of (if any) */
+	cycleIndex: number;
+	/** The height of the link */
+	dy: number;
+	/** The vertical offset at the source node */
+	sy: number;
+	/** The vertical offset at the target node */
+	ty: number;
+}
+
+export interface RawSankeyNode {
+	label: string;
+	color: string;
+	value: number;
+	unit: string;
+	x: number;
+	y: number;
+	dy: number;
+	numLinksIn: number;
+	numLinksOut: number;
+}
+
+export interface RawSankeyLink {
+	source: RawSankeyNode;
+	target: RawSankeyNode;
+	value: number;
+	color: string;
+	unit: string;
+	causesCycle: boolean;
+	cycleIndex: number;
+	dy: number;
+	sy: number;
+	ty: number;
 }

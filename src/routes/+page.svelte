@@ -24,9 +24,9 @@
 		>
 			<p class="content">The Energy Balance</p>
 		</button>
-		<div class="quarter quarter3">
+		<a class="quarter active quarter3" href="/energy_system">
 			<p class="content">The Energy System</p>
-		</div>
+		</a>
 		<a class="quarter active quarter4" href="/map">
 			<p class="content">The Map</p>
 		</a>
@@ -134,11 +134,10 @@
 	}
 
 	.quarter3 {
-		cursor: default;
 		bottom: 0;
 		left: 0;
-		color: rgba(0, 0, 255, 0.2);
-		background-color: rgba(0, 0, 255, 0.1);
+		color: rgb(3, 3, 162);
+		background-color: rgba(0, 0, 255, 0.3);
 		border-radius: 0 0 0 100%;
 		border-bottom: 2px solid black;
 		border-left: 2px solid black;
