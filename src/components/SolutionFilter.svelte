@@ -2,7 +2,7 @@
 	import type { Solution, SolutionDetail, ActivatedSolution } from '$lib/types';
 	import { get_solutions, get_solution_detail } from '$lib/temple';
 	import { onMount } from 'svelte';
-	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
+	import { getURLParam, updateURLParams } from '$lib/navigationParams.svelte';
 	import { remove_duplicates } from '$lib/utils';
 	import FilterRow from './FilterRow.svelte';
 
@@ -55,9 +55,9 @@
 	onMount(async function () {
 		solutionList = await get_solutions();
 
-		activeFirstLevel = get_url_param('solution')?.split('.')[0] || '';
-		activeSecondLevel = get_url_param('solution')?.split('.')[1] || '';
-		activeScenario = get_url_param('scenario') || '';
+		activeFirstLevel = getURLParam('solution')?.split('.')[0] || '';
+		activeSecondLevel = getURLParam('solution')?.split('.')[1] || '';
+		activeScenario = getURLParam('scenario') || '';
 		update_solution_details();
 	});
 
@@ -106,7 +106,7 @@
 			version: solutionDetail.version
 		};
 
-		update_url_params({
+		updateURLParams({
 			solution: selected_solution.solution_name,
 			scenario:
 				Object.keys(solutionDetail.scenarios).length > 1 ? selected_solution.scenario_name : null

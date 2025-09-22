@@ -14,7 +14,12 @@
 
 	import { get_component_total } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
-	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
+	import {
+		getURLParamAsBoolean,
+		getURLParamAsIntArray,
+		updateURLParams,
+		type URLParams
+	} from '$lib/navigationParams.svelte';
 	import type { ActivatedSolution } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
 	import { get_variable_name } from '$lib/variables';
@@ -49,11 +54,16 @@
 	let selected_conversion_technologies: string[] = $state([]);
 	let selected_aggregation: string = $state('Location');
 
-	let first_transport_technologies_update: boolean = $state(true);
-	let first_conversion_technologies_update: boolean = $state(true);
-	let first_storage_technologies_update: boolean = $state(true);
-	let first_cost_carriers_update: boolean = $state(true);
-	let first_demand_carriers_update: boolean = $state(true);
+	// let first_transport_technologies_update: boolean = $state(true);
+	// let first_conversion_technologies_update: boolean = $state(true);
+	// let first_storage_technologies_update: boolean = $state(true);
+	// let first_cost_carriers_update: boolean = $state(true);
+	// let first_demand_carriers_update: boolean = $state(true);
+	let url_transport_technologies: number[] = $state([]);
+	let url_conversion_technologies: number[] = $state([]);
+	let url_storage_technologies: number[] = $state([]);
+	let url_cost_carriers: number[] = $state([]);
+	let url_demand_carriers: number[] = $state([]);
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
@@ -228,11 +238,13 @@
 	$effect(() => {
 		transport_technologies;
 		untrack(() => {
-			if (first_transport_technologies_update && fetched_capex && fetched_opex) {
-				first_transport_technologies_update = false;
-				if (transport_technologies.length > 0 && selected_transport_technologies.length === 0) {
-					selected_transport_technologies = transport_technologies;
+			if (url_transport_technologies.length && fetched_capex && fetched_opex) {
+				if (transport_technologies.length > 0) {
+					selected_transport_technologies = url_transport_technologies
+						.map((i) => transport_technologies[i])
+						.filter((t) => t !== undefined);
 				}
+				url_transport_technologies = [];
 			} else if (transport_technologies.length > 0) {
 				selected_transport_technologies = transport_technologies;
 			}
@@ -241,11 +253,13 @@
 	$effect(() => {
 		conversion_technologies;
 		untrack(() => {
-			if (first_conversion_technologies_update && fetched_capex && fetched_opex) {
-				first_conversion_technologies_update = false;
-				if (conversion_technologies.length > 0 && selected_conversion_technologies.length === 0) {
-					selected_conversion_technologies = conversion_technologies;
+			if (url_conversion_technologies.length && fetched_capex && fetched_opex) {
+				if (conversion_technologies.length > 0) {
+					selected_conversion_technologies = url_conversion_technologies
+						.map((i) => conversion_technologies[i])
+						.filter((t) => t !== undefined);
 				}
+				url_conversion_technologies = [];
 			} else if (conversion_technologies.length > 0) {
 				selected_conversion_technologies = conversion_technologies;
 			}
@@ -254,11 +268,13 @@
 	$effect(() => {
 		storage_technologies;
 		untrack(() => {
-			if (first_storage_technologies_update && fetched_capex && fetched_opex) {
-				first_storage_technologies_update = false;
-				if (storage_technologies.length > 0 && selected_storage_technologies.length === 0) {
-					selected_storage_technologies = storage_technologies;
+			if (url_storage_technologies.length && fetched_capex && fetched_opex) {
+				if (storage_technologies.length > 0) {
+					selected_storage_technologies = url_storage_technologies
+						.map((i) => storage_technologies[i])
+						.filter((t) => t !== undefined);
 				}
+				url_storage_technologies = [];
 			} else if (storage_technologies.length > 0) {
 				selected_storage_technologies = storage_technologies;
 			}
@@ -267,11 +283,13 @@
 	$effect(() => {
 		cost_carriers;
 		untrack(() => {
-			if (first_cost_carriers_update && fetched_cost_carrier) {
-				first_cost_carriers_update = false;
-				if (cost_carriers.length > 0 && selected_cost_carriers.length === 0) {
-					selected_cost_carriers = cost_carriers;
+			if (url_cost_carriers.length && fetched_cost_carrier) {
+				if (cost_carriers.length > 0) {
+					selected_cost_carriers = url_cost_carriers
+						.map((i) => cost_carriers[i])
+						.filter((t) => t !== undefined);
 				}
+				url_cost_carriers = [];
 			} else if (cost_carriers.length > 0) {
 				selected_cost_carriers = cost_carriers;
 			}
@@ -280,11 +298,13 @@
 	$effect(() => {
 		demand_carriers;
 		untrack(() => {
-			if (first_demand_carriers_update && fetched_cost_shed_demand) {
-				first_demand_carriers_update = false;
-				if (demand_carriers.length > 0 && selected_demand_carriers.length === 0) {
-					selected_demand_carriers = demand_carriers;
+			if (url_demand_carriers && fetched_cost_shed_demand) {
+				if (demand_carriers.length > 0) {
+					selected_demand_carriers = url_demand_carriers
+						.map((i) => demand_carriers[i])
+						.filter((t) => t !== undefined);
 				}
+				url_demand_carriers = [];
 			} else if (demand_carriers.length > 0) {
 				selected_demand_carriers = demand_carriers;
 			}
@@ -300,21 +320,14 @@
 
 	onMount(() => {
 		Object.entries(variables).forEach(([key, variable]) => {
-			let show = get_url_param(key + '_show');
-			let subdivision = get_url_param(key + '_subdivision');
-			variable.show = show !== null ? show === 'true' : variable.show;
-			variable.subdivision = subdivision !== null ? subdivision === 'true' : variable.subdivision;
+			variable.show = getURLParamAsBoolean(key, variable.show);
+			variable.subdivision = getURLParamAsBoolean(key + '_sub', variable.subdivision);
 		});
-		selected_transport_technologies = get_url_param('transport_technologies')?.split(',') || [];
-		first_transport_technologies_update = true;
-		selected_conversion_technologies = get_url_param('conversion_technologies')?.split(',') || [];
-		first_conversion_technologies_update = true;
-		selected_storage_technologies = get_url_param('storage_technologies')?.split(',') || [];
-		first_storage_technologies_update = true;
-		selected_cost_carriers = get_url_param('cost_carriers')?.split(',') || [];
-		first_cost_carriers_update = true;
-		selected_demand_carriers = get_url_param('demand_carriers')?.split(',') || [];
-		first_demand_carriers_update = true;
+		url_transport_technologies = getURLParamAsIntArray('tran');
+		url_conversion_technologies = getURLParamAsIntArray('conv');
+		url_storage_technologies = getURLParamAsIntArray('stor');
+		url_cost_carriers = getURLParamAsIntArray('cost');
+		url_demand_carriers = getURLParamAsIntArray('demand');
 	});
 
 	$effect(() => {
@@ -332,17 +345,21 @@
 		// Wait for router to be initialized
 		tick().then(() => {
 			let params: URLParams = {
-				transport_technologies: selected_transport_technologies.join(','),
-				conversion_technologies: selected_conversion_technologies.join(','),
-				storage_technologies: selected_storage_technologies.join(','),
-				cost_carriers: selected_cost_carriers.join(','),
-				demand_carriers: selected_demand_carriers.join(',')
+				tran: selected_transport_technologies
+					.map((t) => transport_technologies.indexOf(t))
+					.join('~'),
+				conv: selected_conversion_technologies
+					.map((t) => conversion_technologies.indexOf(t))
+					.join('~'),
+				stor: selected_storage_technologies.map((t) => storage_technologies.indexOf(t)).join('~'),
+				cost: selected_cost_carriers.map((t) => cost_carriers.indexOf(t)).join('~'),
+				demand: selected_demand_carriers.map((t) => demand_carriers.indexOf(t)).join('~')
 			};
 			Object.entries(variables).forEach(([key, variable]) => {
-				params[key + '_show'] = variable.show ? 'true' : 'false';
-				params[key + '_subdivision'] = variable.subdivision ? 'true' : 'false';
+				params[key] = variable.show ? '1' : '0';
+				params[key + '_sub'] = variable.subdivision ? '1' : '0';
 			});
-			update_url_params(params);
+			updateURLParams(params);
 		});
 	});
 

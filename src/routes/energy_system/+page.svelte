@@ -4,9 +4,11 @@
 	import Entries from '$lib/entries';
 	import { get_component_total } from '$lib/temple';
 	import type { ActivatedSolution, Row, Entry, SankeyNode, PartialSankeyLink } from '$lib/types';
-	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
-	import { to_options } from '$lib/utils';
-
+	import {
+		getURLParam,
+		getURLParamAsIntArray,
+		updateURLParams
+	} from '$lib/navigationParams.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
@@ -15,6 +17,7 @@
 	import SankeyDiagram from '$components/SankeyDiagram.svelte';
 	import SolutionFilter from '$components/SolutionFilter.svelte';
 	import { next_color, reset_color_state } from '$lib/colors';
+	import { to_options } from '$lib/utils';
 
 	let years: number[] = $state([]);
 	let solutionLoading: boolean = $state(false);
@@ -24,6 +27,9 @@
 	let selectedCarriers: string[] = $state([]);
 	let selectedNodes: string[] = $state([]);
 	let selectedYear: string | null = $state(null);
+
+	let urlCarriers: number[] = $state([]);
+	let urlNodes: number[] = $state([]);
 
 	let dataConversionInput: Entries | null = $state.raw(null);
 	let dataConversionOutput: Entries | null = $state(null);
@@ -61,10 +67,30 @@
 		selectedYear = years[0].toString();
 	});
 	$effect(() => {
-		selectedCarriers = carriers;
+		carriers;
+		untrack(() => {
+			if (urlCarriers.length) {
+				if (carriers.length) {
+					selectedCarriers = urlCarriers.map((i) => carriers[i]).filter((c) => c !== undefined);
+				}
+				urlCarriers = [];
+			} else {
+				selectedCarriers = carriers;
+			}
+		});
 	});
 	$effect(() => {
-		selectedNodes = nodes;
+		nodes;
+		untrack(() => {
+			if (urlNodes.length) {
+				if (nodes.length) {
+					selectedNodes = urlNodes.map((i) => nodes[i]).filter((n) => n !== undefined);
+				}
+				urlNodes = [];
+			} else {
+				selectedNodes = nodes;
+			}
+		});
 	});
 
 	$effect(() => {
@@ -83,19 +109,19 @@
 
 		tick().then(() => {
 			untrack(() => {
-				update_url_params({
+				updateURLParams({
 					year: selectedYear,
-					carriers: selectedCarriers.join(',') || null,
-					nodes: selectedNodes.join(',') || null
+					car: selectedCarriers.map((c) => carriers.indexOf(c)).join('~') || null,
+					nodes: selectedNodes.map((n) => nodes.indexOf(n)).join('~') || null
 				});
 			});
 		});
 	});
 
 	onMount(() => {
-		selectedYear = get_url_param('year');
-		selectedCarriers = get_url_param('carriers')?.split(',') || [];
-		selectedNodes = get_url_param('nodes')?.split(',') || [];
+		selectedYear = getURLParam('year');
+		urlCarriers = getURLParamAsIntArray('car');
+		urlNodes = getURLParamAsIntArray('nodes');
 	});
 
 	async function fetchData() {

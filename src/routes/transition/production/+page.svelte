@@ -25,7 +25,13 @@
 		remove_duplicates,
 		to_options
 	} from '$lib/utils';
-	import { get_url_param, update_url_params, type URLParams } from '$lib/url_params.svelte';
+	import {
+		getURLParam,
+		getURLParamAsBoolean,
+		getURLParamAsIntArray,
+		updateURLParams,
+		type URLParams
+	} from '$lib/navigationParams.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
 	import PiePlots from './PiePlots.svelte';
@@ -39,6 +45,7 @@
 	// Variables
 	interface Variable {
 		id: string;
+		short_id: string;
 		title: string;
 		show: boolean;
 		subdivision: boolean;
@@ -54,6 +61,7 @@
 	let variables: Variable[] = $state([
 		{
 			id: 'conversion',
+			short_id: 'conv',
 			title: 'Conversion',
 			show: true,
 			subdivision: false,
@@ -66,6 +74,7 @@
 		},
 		{
 			id: 'storage',
+			short_id: 'stor',
 			title: 'Storage',
 			show: true,
 			subdivision: false,
@@ -80,6 +89,7 @@
 		},
 		{
 			id: 'import_export',
+			short_id: 'imp_exp',
 			title: 'Import/Export',
 			show: true,
 			subdivision: false,
@@ -92,6 +102,7 @@
 		},
 		{
 			id: 'demand_shed_demand',
+			short_id: 'dem_shed',
 			title: 'Demand/Shed Demand',
 			show: true,
 			subdivision: false,
@@ -121,6 +132,8 @@
 	// First update flags
 	let first_conversion_technology_update = $state(true);
 	let first_storage_technology_update = $state(true);
+	let url_conversion_technologies: number[] = $state([]);
+	let url_storage_technologies: number[] = $state([]);
 
 	// States
 	let solution_loading: boolean = $state(false);
@@ -266,11 +279,13 @@
 		conversion_technologies;
 		untrack(() => {
 			// If it's the first conversion technology update, only set the selected technologies if they are empty.
-			if (first_conversion_technology_update) {
-				first_conversion_technology_update = false;
-				if (selected_conversion_technologies.length == 0 && conversion_technologies.length > 0) {
-					selected_conversion_technologies = conversion_technologies;
+			if (url_conversion_technologies.length > 0) {
+				if (conversion_technologies.length > 0) {
+					selected_conversion_technologies = url_conversion_technologies
+						.map((i) => conversion_technologies[i])
+						.filter((t) => t !== undefined);
 				}
+				url_conversion_technologies = [];
 			} else if (
 				conversion_technologies.length > 0 ||
 				selected_conversion_technologies.some((t) => !conversion_technologies.includes(t))
@@ -283,11 +298,13 @@
 	$effect(() => {
 		storage_technologies;
 		untrack(() => {
-			if (first_storage_technology_update) {
-				first_storage_technology_update = false;
-				if (selected_storage_technologies.length == 0 && storage_technologies.length > 0) {
-					selected_storage_technologies = storage_technologies;
+			if (url_storage_technologies.length > 0) {
+				if (storage_technologies.length > 0) {
+					selected_storage_technologies = url_storage_technologies
+						.map((i) => storage_technologies[i])
+						.filter((t) => t !== undefined);
 				}
+				url_storage_technologies = [];
 			} else if (
 				storage_technologies.length > 0 ||
 				selected_storage_technologies.some((t) => !storage_technologies.includes(t))
@@ -303,17 +320,15 @@
 
 	// Store parts of the selected variables in the URL
 	onMount(() => {
-		selected_carrier = get_url_param('carrier') || null;
+		selected_carrier = getURLParam('car') || null;
 		variables.forEach((variable) => {
-			let show = get_url_param(variable.id + '_show');
-			let subdivision = get_url_param(variable.id + '_subdivision');
-			variable.show = show !== null ? show === 'true' : variable.show;
-			variable.subdivision = subdivision !== null ? subdivision === 'true' : variable.subdivision;
+			variable.show = getURLParamAsBoolean(variable.short_id, variable.show);
+			variable.subdivision = getURLParamAsBoolean(variable.short_id + '_sub', variable.subdivision);
 		});
-		selected_conversion_technologies = get_url_param('conversion_technologies')?.split(',') || [];
+		url_conversion_technologies = getURLParamAsIntArray('conv_tech');
 		first_conversion_technology_update = true;
-		selected_storage_technologies = get_url_param('storage_technologies')?.split(',') || [];
-		first_conversion_technology_update = true;
+		url_storage_technologies = getURLParamAsIntArray('stor_tech');
+		first_storage_technology_update = true;
 	});
 
 	$effect(() => {
@@ -329,15 +344,19 @@
 		// Wait for router to be initialized
 		tick().then(() => {
 			let params: URLParams = {
-				carrier: selected_carrier,
-				conversion_technologies: selected_conversion_technologies.join(','),
-				storage_technologies: selected_storage_technologies.join(',')
+				car: selected_carrier,
+				conv_tech: selected_conversion_technologies
+					.map((t) => conversion_technologies.indexOf(t))
+					.join('~'),
+				stor_tech: selected_storage_technologies
+					.map((t) => storage_technologies.indexOf(t))
+					.join('~')
 			};
 			variables.forEach((variable) => {
-				params[variable.id + '_show'] = variable.show ? 'true' : 'false';
-				params[variable.id + '_subdivision'] = variable.subdivision ? 'true' : 'false';
+				params[variable.short_id] = variable.show ? '1' : '0';
+				params[variable.short_id + '_sub'] = variable.subdivision ? '1' : '0';
 			});
-			update_url_params(params);
+			updateURLParams(params);
 		});
 	});
 

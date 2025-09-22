@@ -15,7 +15,7 @@
 	import { get_component_total } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import type { ActivatedSolution, Row } from '$lib/types';
-	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
+	import { getURLParam, updateURLParams } from '$lib/navigationParams.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 	import { reset_color_state } from '$lib/colors';
 
@@ -199,10 +199,10 @@
 
 	// Store parts of the selected variables in the URL
 	onMount(() => {
-		selected_variable = get_url_param('variable') || selected_variable;
-		selected_technology_type = get_url_param('technology_type') || selected_technology_type;
-		selected_storage_type = get_url_param('storage_type') || selected_storage_type;
-		selected_carrier = get_url_param('carrier') || selected_carrier;
+		selected_variable = getURLParam('var') || selected_variable;
+		selected_technology_type = getURLParam('tech') || selected_technology_type;
+		selected_storage_type = getURLParam('stor') || selected_storage_type;
+		selected_carrier = getURLParam('car') || selected_carrier;
 	});
 
 	$effect(() => {
@@ -214,11 +214,11 @@
 
 		// Wait for router to be initialized
 		tick().then(() => {
-			update_url_params({
-				variable: selected_variable,
-				technology_type: selected_technology_type,
-				storage_type: selected_storage_type,
-				carrier: selected_carrier
+			updateURLParams({
+				var: selected_variable,
+				tech: selected_technology_type,
+				stor: selected_storage_type,
+				car: selected_carrier
 			});
 		});
 	});

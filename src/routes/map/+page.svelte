@@ -15,7 +15,7 @@
 	import { get_component_total } from '$lib/temple';
 	import { availableMaps } from '$lib/constants';
 	import { remove_duplicates, to_options } from '$lib/utils';
-	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
+	import { getURLParam, updateURLParams } from '$lib/navigationParams.svelte';
 
 	interface AggregatedData {
 		[location: string]: { technology: string; years: number[] }[];
@@ -126,9 +126,9 @@
 
 	// Set URL parameters
 	onMount(() => {
-		selected_technology_type = get_url_param('technology_type') || selected_technology_type;
-		selected_storage_type = get_url_param('storage_type') || selected_storage_type;
-		selected_carrier = get_url_param('carrier') || selected_carrier;
+		selected_technology_type = getURLParam('tech') || selected_technology_type;
+		selected_storage_type = getURLParam('stor') || selected_storage_type;
+		selected_carrier = getURLParam('car') || selected_carrier;
 	});
 
 	$effect(() => {
@@ -138,10 +138,10 @@
 		selected_carrier;
 
 		tick().then(() => {
-			update_url_params({
-				technology_type: selected_technology_type,
-				storage_type: selected_technology_type === 'storage' ? selected_storage_type : null,
-				carrier: selected_carrier
+			updateURLParams({
+				tech: selected_technology_type,
+				stor: selected_technology_type === 'storage' ? selected_storage_type : null,
+				car: selected_carrier
 			});
 		});
 	});

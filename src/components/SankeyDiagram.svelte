@@ -368,7 +368,12 @@
 <svelte:window on:resize={handleSize} />
 
 <div class="position-relative border rounded overflow-hidden">
-	<svg {width} {height} bind:this={svg} viewBox={`${minX - 1} ${cycleLaneHeight} ${maxWidth + 4} ${maxHeight}`}>
+	<svg
+		{width}
+		{height}
+		bind:this={svg}
+		viewBox={`${minX - 1} ${cycleLaneHeight} ${maxWidth + 4} ${maxHeight}`}
+	>
 		<g {transform}>
 			<g class="links">
 				{#each links.toSorted((a, b) => b.value - a.value) as link}

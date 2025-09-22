@@ -21,7 +21,7 @@
 	} from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import type { ActivatedSolution, Row } from '$lib/types';
-	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
+	import { getURLParam, getURLParamAsBoolean, updateURLParams } from '$lib/navigationParams.svelte';
 	import { reset_color_state } from '$lib/colors';
 
 	let technology_data: ParseResult<Row> | null = $state(null);
@@ -156,10 +156,8 @@
 
 	// Store parts of the selected variables in the URL
 	onMount(() => {
-		let subdivision_param = get_url_param('subdivision');
-		selected_subdivision =
-			subdivision_param !== null ? subdivision_param === 'true' : selected_subdivision;
-		selected_cumulation = get_url_param('cumulation') || selected_cumulation;
+		selected_subdivision = getURLParamAsBoolean('subdiv', selected_subdivision);
+		selected_cumulation = getURLParam('cumul') || selected_cumulation;
 	});
 
 	$effect(() => {
@@ -169,9 +167,9 @@
 
 		// Wait for router to be initialized
 		tick().then(() => {
-			update_url_params({
-				subdivision: selected_subdivision ? 'true' : 'false',
-				cumulation: selected_cumulation
+			updateURLParams({
+				subdiv: selected_subdivision ? '1' : '0',
+				cumul: selected_cumulation
 			});
 		});
 	});

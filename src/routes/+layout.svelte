@@ -6,7 +6,7 @@
 	import { base } from '$app/paths';
 	import { page } from '$app/state';
 	import { env } from '$env/dynamic/public';
-	import { add_current_solution_to_url } from '$lib/url_params.svelte';
+	import { addCurrentSolutionToURL } from '$lib/navigationParams.svelte';
 
 	interface Props {
 		children?: import('svelte').Snippet;
@@ -65,7 +65,7 @@
 							<li>
 								<a
 									class={['dropdown-item', currentPage == url && 'active']}
-									href={add_current_solution_to_url(url)}>{title}</a
+									href={addCurrentSolutionToURL(url)}>{title}</a
 								>
 							</li>
 						{/each}
@@ -87,7 +87,7 @@
 							<li>
 								<a
 									class={['dropdown-item', currentPage == url && 'active']}
-									href={add_current_solution_to_url(url)}>{title}</a
+									href={addCurrentSolutionToURL(url)}>{title}</a
 								>
 							</li>
 						{/each}
@@ -95,13 +95,13 @@
 				</li>
 				<li class="nav-item">
 					<a
-						href={add_current_solution_to_url('/energy_system')}
+						href={addCurrentSolutionToURL('/energy_system')}
 						class={['nav-link', currentPage == '/energy_system' && 'active']}>The Energy System</a
 					>
 				</li>
 				<li class="nav-item">
 					<a
-						href={add_current_solution_to_url('/map')}
+						href={addCurrentSolutionToURL('/map')}
 						class={['nav-link', currentPage == '/map' && 'active']}>The Map</a
 					>
 				</li>

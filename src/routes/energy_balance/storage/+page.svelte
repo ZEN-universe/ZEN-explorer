@@ -20,7 +20,7 @@
 
 	import { get_full_ts } from '$lib/temple';
 	import { remove_duplicates, to_options } from '$lib/utils';
-	import { get_url_param, update_url_params } from '$lib/url_params.svelte';
+	import { getURLParam, updateURLParams } from '$lib/navigationParams.svelte';
 	import type { ActivatedSolution, Entry } from '$lib/types';
 	import { add_transparency, next_color, reset_color_state } from '$lib/colors';
 
@@ -231,9 +231,9 @@
 
 	// Set URL parameters
 	onMount(() => {
-		selected_carrier = get_url_param('carrier') || selected_carrier;
-		selected_year = get_url_param('year') || selected_year;
-		selected_window_size = get_url_param('window_size') || selected_window_size;
+		selected_carrier = getURLParam('car') || selected_carrier;
+		selected_year = getURLParam('year') || selected_year;
+		selected_window_size = getURLParam('window') || selected_window_size;
 	});
 
 	$effect(() => {
@@ -243,10 +243,10 @@
 		selected_window_size;
 
 		tick().then(() => {
-			update_url_params({
+			updateURLParams({
 				year: selected_year,
-				carrier: selected_carrier,
-				window_size: selected_window_size
+				car: selected_carrier,
+				window: selected_window_size
 			});
 		});
 	});
