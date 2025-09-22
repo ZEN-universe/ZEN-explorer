@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.2 (2025-09-22)
+
+- [Nodal, Storage] Parse quantified response which reduces payload size by up to 80%.
+- [Sankey] Add energy system plot.
+- Shorten URL parameters.
+
 ## 0.7.1 (2025-08-15)
 
 - [Map] Make landmasses lighter.
