@@ -4,6 +4,7 @@
 
 - [Nodal, Storage] Parse quantified response which reduces payload size by up to 80%.
 - [Sankey] Add energy system plot.
+- [Production] Show pie plots when clicking on bars.
 - Shorten URL parameters.
 
 ## 0.7.1 (2025-08-15)

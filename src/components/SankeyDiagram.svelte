@@ -398,7 +398,7 @@
 					<g class="node" data-idx={idx}>
 						<rect
 							x={node.x}
-							y={node.y}
+							y={node.y + 1}
 							width={NODE_WIDTH}
 							height={Math.max(0.1, node.dy - 2)}
 							fill={node.color}

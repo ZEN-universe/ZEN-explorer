@@ -177,10 +177,12 @@
 		return selectedSolution.detail.reference_carrier[technology] || '';
 	}
 
-	function filterTechnologiesByCarriers(selectedCarriers: string[]): string[] {
+	function getTechnologiesRelatedToCarriers(selectedCarriers: string[]): string[] {
 		if (!selectedSolution) return [];
 		return selectedSolution.detail.system.set_technologies.filter((technology) => {
-			return selectedCarriers.includes(getReferenceCarrier(technology));
+			const inputCarriers = selectedSolution?.detail.carriers_input[technology] || [];
+			const outputCarriers = selectedSolution?.detail.carriers_output[technology] || [];
+			return [...inputCarriers, ...outputCarriers].some((c) => selectedCarriers.includes(c));
 		});
 	}
 
@@ -253,7 +255,7 @@
 		const filterCriteria = {
 			carrier: selectedCarriers,
 			node: selectedNodes,
-			technology: filterTechnologiesByCarriers(selectedCarriers)
+			technology: getTechnologiesRelatedToCarriers(selectedCarriers)
 		};
 		const indexOfYear = years.indexOf(Number(selectedYear));
 		const links: PartialSankeyLink[] = [];
@@ -286,9 +288,6 @@
 					color,
 					unit: getUnit(entry.index.carrier)
 				});
-				// const link: SankeyLink = { source: sourceNode, target: targetNode, value };
-				// sourceNode.linksOut.push(link);
-				// targetNode.linksIn.push(link);
 			};
 		}
 
