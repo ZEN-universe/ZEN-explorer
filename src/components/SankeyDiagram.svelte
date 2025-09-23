@@ -265,6 +265,27 @@
 		return `${node.label}:\n${roundValue(node.value)} ${node.unit}`;
 	}
 
+	function isDarkBackground(color: string): boolean {
+		// Parse the rgb color
+		let r: number, g: number, b: number;
+		let regex = /^rgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)$/;
+		const match = color.match(regex);
+		if (match) {
+			r = parseInt(match[1], 10);
+			g = parseInt(match[2], 10);
+			b = parseInt(match[3], 10);
+		} else {
+			// Invalid format
+			return false;
+		}
+
+		// Calculate the luminance using the formula from: https://www.w3.org/TR/AERT/#color-contrast
+		const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+
+		// Define that a color is dark if its luminance is less than this threshold
+		return luminance < 85;
+	}
+
 	// ===================
 	// Responsive behavior
 	// ===================
@@ -407,9 +428,10 @@
 						</rect>
 						<text
 							x={node.x + NODE_WIDTH / 2}
-							y={node.y + node.dy / 2}
+							y={node.dy > 16 ? node.y + node.dy / 2 : node.y - 2}
 							text-anchor="middle"
-							alignment-baseline="middle"
+							dominant-baseline={node.dy > 16 ? 'middle' : 'auto'}
+							fill={node.dy > 16 && isDarkBackground(node.color) ? '#fff' : '#000'}
 						>
 							{node.label}
 						</text>
