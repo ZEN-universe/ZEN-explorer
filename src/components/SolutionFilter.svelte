@@ -2,7 +2,7 @@
 	import type { Solution, SolutionDetail, ActivatedSolution } from '$lib/types';
 	import { get_solutions, get_solution_detail } from '$lib/temple';
 	import { onMount } from 'svelte';
-	import { getURLParam, updateURLParams } from '$lib/navigationParams.svelte';
+	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import { remove_duplicates } from '$lib/utils';
 	import FilterRow from './FilterRow.svelte';
 

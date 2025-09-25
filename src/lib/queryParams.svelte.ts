@@ -56,6 +56,6 @@ export function addCurrentSolutionToURL(url?: string): string {
 }
 
 export function updateURLParams(params: URLParams): void {
-	replaceState(buildURL(params), params);
 	urlParams = { ...urlParams, ...params };
+	replaceState(buildURL(params), $state.snapshot(urlParams));
 }

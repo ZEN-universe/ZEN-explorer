@@ -4,11 +4,7 @@
 	import Entries from '$lib/entries';
 	import { get_component_total } from '$lib/temple';
 	import type { ActivatedSolution, Row, Entry, SankeyNode, PartialSankeyLink } from '$lib/types';
-	import {
-		getURLParam,
-		getURLParamAsIntArray,
-		updateURLParams
-	} from '$lib/navigationParams.svelte';
+	import { getURLParam, getURLParamAsIntArray, updateURLParams } from '$lib/queryParams.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
 	import FilterRow from '$components/FilterRow.svelte';

@@ -19,7 +19,7 @@
 		getURLParamAsIntArray,
 		updateURLParams,
 		type URLParams
-	} from '$lib/navigationParams.svelte';
+	} from '$lib/queryParams.svelte';
 	import type { ActivatedSolution } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
 	import { get_variable_name } from '$lib/variables';

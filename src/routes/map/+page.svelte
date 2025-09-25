@@ -15,7 +15,7 @@
 	import { get_component_total } from '$lib/temple';
 	import { availableMaps } from '$lib/constants';
 	import { remove_duplicates, to_options } from '$lib/utils';
-	import { getURLParam, updateURLParams } from '$lib/navigationParams.svelte';
+	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 
 	interface AggregatedData {
 		[location: string]: { technology: string; years: number[] }[];

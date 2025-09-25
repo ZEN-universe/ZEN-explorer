@@ -14,7 +14,7 @@
 	import { get_variable_name } from '$lib/variables';
 	import { next_color, reset_color_state as reset_color_picker_state } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes, Entry } from '$lib/types';
-	import { getURLParam, updateURLParams } from '$lib/navigationParams.svelte';
+	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 
 	let energy_balance_data: EnergyBalanceDataframes | null = null;
 	let unit_data: any = $state(null);

@@ -21,7 +21,7 @@
 	} from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import type { ActivatedSolution, Row } from '$lib/types';
-	import { getURLParam, getURLParamAsBoolean, updateURLParams } from '$lib/navigationParams.svelte';
+	import { getURLParam, getURLParamAsBoolean, updateURLParams } from '$lib/queryParams.svelte';
 	import { reset_color_state } from '$lib/colors';
 
 	let technology_data: ParseResult<Row> | null = $state(null);

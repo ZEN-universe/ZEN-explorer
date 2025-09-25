@@ -15,7 +15,7 @@
 	import { get_component_total } from '$lib/temple';
 	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
 	import type { ActivatedSolution, Row } from '$lib/types';
-	import { getURLParam, updateURLParams } from '$lib/navigationParams.svelte';
+	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 	import { reset_color_state } from '$lib/colors';
 

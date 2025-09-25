@@ -6,7 +6,7 @@
 	import { base } from '$app/paths';
 	import { page } from '$app/state';
 	import { env } from '$env/dynamic/public';
-	import { addCurrentSolutionToURL } from '$lib/navigationParams.svelte';
+	import { addCurrentSolutionToURL } from '$lib/queryParams.svelte';
 
 	interface Props {
 		children?: import('svelte').Snippet;

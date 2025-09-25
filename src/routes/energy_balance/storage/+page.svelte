@@ -20,7 +20,7 @@
 
 	import { get_full_ts } from '$lib/temple';
 	import { remove_duplicates, to_options } from '$lib/utils';
-	import { getURLParam, updateURLParams } from '$lib/navigationParams.svelte';
+	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Entry } from '$lib/types';
 	import { add_transparency, next_color, reset_color_state } from '$lib/colors';
 
@@ -495,7 +495,7 @@
 				fill: 'origin',
 				stepped: true,
 				borderColor: color,
-				backgroundColor: datasetBase.backgroundColor || color as string
+				backgroundColor: datasetBase.backgroundColor || (color as string)
 			};
 		});
 	}
