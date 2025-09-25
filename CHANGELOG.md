@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.3 (2025-09-25)
+
+- [Sankey] Improve box label placement and color.
+- [Navigation] Store all urlParams in the history's state.
+- Keep selection when changing solutions if possible.
+
 ## 0.7.2 (2025-09-22)
 
 - [Nodal, Storage] Parse quantified response which reduces payload size by up to 80%.
