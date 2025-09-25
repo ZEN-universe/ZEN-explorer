@@ -7,16 +7,20 @@ export interface URLParams {
 
 let urlParams: URLParams = $state({});
 
-export function getURLParam(key: string): string | null {
+function getRawURLParam(key: string): string | null {
 	const state = page.state as Record<string, string>;
 	const urlParams = page.url.searchParams;
-	const value = state[key] ?? urlParams.get(key);
+	return state[key] ?? urlParams.get(key);
+}
+
+export function getURLParam(key: string): string | null {
+	const value = getRawURLParam(key);
 	return value ? decodeURIComponent(value) : null;
 }
 
-export function getURLParamAsIntArray(key: string): number[] {
-	const param = getURLParam(key);
-	if (!param) return [];
+export function getURLParamAsIntArray(key: string): number[] | null {
+	const param = getRawURLParam(key);
+	if (param === null) return null;
 	return param
 		.split('~')
 		.map((i) => parseInt(i))
@@ -36,7 +40,7 @@ function buildURL(params: URLParams, base_url?: string): URL {
 
 	const url = new URL(base_url, window.location.origin);
 	for (const key in params) {
-		if (params[key]) {
+		if (params[key] !== null) {
 			url.searchParams.set(key, params[key]);
 		} else {
 			url.searchParams.delete(key);

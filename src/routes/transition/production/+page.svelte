@@ -35,6 +35,7 @@
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
 	import PiePlots from './PiePlots.svelte';
+	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
 	// Data
 	let data: (ParseResult<any> | null)[] | null = $state(null);
@@ -129,11 +130,13 @@
 	let selected_years: number[] = $state([]);
 	let active_year: string | null = $state(null);
 
-	// First update flags
-	let first_conversion_technology_update = $state(true);
-	let first_storage_technology_update = $state(true);
-	let url_conversion_technologies: number[] = $state([]);
-	let url_storage_technologies: number[] = $state([]);
+	// Temporary objects to store previous values and URL values
+	let url_conversion_technologies: number[] | null = null;
+	let url_storage_technologies: number[] | null = null;
+	let previous_conversion_technologies: string = '';
+	let previous_storage_technologies: string = '';
+	let previous_nodes: string = '';
+	let previous_years: string = '';
 
 	// States
 	let solution_loading: boolean = $state(false);
@@ -265,58 +268,54 @@
 		);
 	});
 
-	// Update selected values when options change
+	// Update selected values when the corresponding options change
 	$effect(() => {
 		carriers;
 		untrack(() => {
-			if ((carriers.length >= 1 && !selected_carrier) || !carriers.includes(selected_carrier!)) {
+			if (!selected_solution) return;
+			// Keep the selected carrier if it is still available, otherwise select the first one.
+			if (carriers.length > 0 && (!selected_carrier || (selected_carrier && !carriers.includes(selected_carrier)))) {
 				selected_carrier = carriers[0];
 			}
 		});
 	});
 
-	$effect(() => {
-		conversion_technologies;
-		untrack(() => {
-			// If it's the first conversion technology update, only set the selected technologies if they are empty.
-			if (url_conversion_technologies.length > 0) {
-				if (conversion_technologies.length > 0) {
-					selected_conversion_technologies = url_conversion_technologies
-						.map((i) => conversion_technologies[i])
-						.filter((t) => t !== undefined);
-				}
-				url_conversion_technologies = [];
-			} else if (
-				conversion_technologies.length > 0 ||
-				selected_conversion_technologies.some((t) => !conversion_technologies.includes(t))
-			) {
-				selected_conversion_technologies = conversion_technologies;
-			}
-		});
-	});
-
-	$effect(() => {
-		storage_technologies;
-		untrack(() => {
-			if (url_storage_technologies.length > 0) {
-				if (storage_technologies.length > 0) {
-					selected_storage_technologies = url_storage_technologies
-						.map((i) => storage_technologies[i])
-						.filter((t) => t !== undefined);
-				}
-				url_storage_technologies = [];
-			} else if (
-				storage_technologies.length > 0 ||
-				selected_storage_technologies.some((t) => !storage_technologies.includes(t))
-			) {
-				selected_storage_technologies = storage_technologies;
-			}
-		});
-	});
-
-	$effect(() => {
-		selected_nodes = nodes;
-	});
+	updateSelectionOnStateChanges(
+		() => conversion_technologies,
+		() => !!selected_solution,
+		() => previous_conversion_technologies,
+		() => url_conversion_technologies,
+		(value) => (selected_conversion_technologies = value),
+		(value) => (previous_conversion_technologies = value),
+		(value) => (url_conversion_technologies = value)
+	);
+	updateSelectionOnStateChanges(
+		() => storage_technologies,
+		() => !!selected_solution,
+		() => previous_storage_technologies,
+		() => url_storage_technologies,
+		(value) => (selected_storage_technologies = value),
+		(value) => (previous_storage_technologies = value),
+		(value) => (url_storage_technologies = value)
+	);
+	updateSelectionOnStateChanges(
+		() => nodes,
+		() => !!selected_solution,
+		() => previous_nodes,
+		() => null,
+		(value) => (selected_nodes = value),
+		(value) => (previous_nodes = value),
+		() => {}
+	);
+	updateSelectionOnStateChanges(
+		() => years,
+		() => !!selected_solution,
+		() => previous_years,
+		() => null,
+		(value) => (selected_years = value),
+		(value) => (previous_years = value),
+		() => {}
+	);
 
 	// Store parts of the selected variables in the URL
 	onMount(() => {
@@ -326,9 +325,7 @@
 			variable.subdivision = getURLParamAsBoolean(variable.short_id + '_sub', variable.subdivision);
 		});
 		url_conversion_technologies = getURLParamAsIntArray('conv_tech');
-		first_conversion_technology_update = true;
 		url_storage_technologies = getURLParamAsIntArray('stor_tech');
-		first_storage_technology_update = true;
 	});
 
 	$effect(() => {
@@ -361,13 +358,7 @@
 	});
 
 	// Update functions
-	function reset_data_selection() {
-		selected_years = years;
-		selected_nodes = nodes;
-	}
-
 	async function on_solution_changed() {
-		reset_data_selection();
 		await fetch_data();
 	}
 

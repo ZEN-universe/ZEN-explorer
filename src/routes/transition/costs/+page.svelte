@@ -23,6 +23,7 @@
 	import type { ActivatedSolution } from '$lib/types';
 	import { reset_color_state } from '$lib/colors';
 	import { get_variable_name } from '$lib/variables';
+	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
 	const combined_name = 'Techology / Carrier';
 	const capex_suffix = ' (Capex)';
@@ -54,16 +55,18 @@
 	let selected_conversion_technologies: string[] = $state([]);
 	let selected_aggregation: string = $state('Location');
 
-	// let first_transport_technologies_update: boolean = $state(true);
-	// let first_conversion_technologies_update: boolean = $state(true);
-	// let first_storage_technologies_update: boolean = $state(true);
-	// let first_cost_carriers_update: boolean = $state(true);
-	// let first_demand_carriers_update: boolean = $state(true);
-	let url_transport_technologies: number[] = $state([]);
-	let url_conversion_technologies: number[] = $state([]);
-	let url_storage_technologies: number[] = $state([]);
-	let url_cost_carriers: number[] = $state([]);
-	let url_demand_carriers: number[] = $state([]);
+	let url_transport_technologies: number[] | null = null;
+	let url_conversion_technologies: number[] | null = null;
+	let url_storage_technologies: number[] | null = null;
+	let url_cost_carriers: number[] | null = null;
+	let url_demand_carriers: number[] | null = null;
+	let previous_transport_technologies: string = '';
+	let previous_conversion_technologies: string = '';
+	let previous_storage_technologies: string = '';
+	let previous_cost_carriers: string = '';
+	let previous_demand_carriers: string = '';
+	let previous_locations: string = '';
+	let previous_years: string = '';
 
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
@@ -177,13 +180,14 @@
 			return new Set<string>();
 		}
 		return new Set([
-			...(fetched_capex.data.map((row) => row[combined_name]) || []),
-			...(fetched_opex.data.map((row) => row[combined_name]) || [])
+			...(fetched_capex!.data.map((row) => row[combined_name]) || []),
+			...(fetched_opex!.data.map((row) => row[combined_name]) || [])
 		]);
 	});
 
 	let transport_technologies: string[] = $derived.by(() => {
-		if (!selected_solution || !fetched_capex || !fetched_opex) {
+		if (!selected_solution || capex_opex_technologies.size == 0) {
+			console.log('No transport technologies');
 			return [];
 		}
 		return selected_solution.detail.system.set_transport_technologies.filter((t) =>
@@ -235,81 +239,70 @@
 	});
 
 	// Reset selected values when options change
-	$effect(() => {
-		transport_technologies;
-		untrack(() => {
-			if (url_transport_technologies.length && fetched_capex && fetched_opex) {
-				if (transport_technologies.length > 0) {
-					selected_transport_technologies = url_transport_technologies
-						.map((i) => transport_technologies[i])
-						.filter((t) => t !== undefined);
-				}
-				url_transport_technologies = [];
-			} else if (transport_technologies.length > 0) {
-				selected_transport_technologies = transport_technologies;
-			}
-		});
-	});
-	$effect(() => {
-		conversion_technologies;
-		untrack(() => {
-			if (url_conversion_technologies.length && fetched_capex && fetched_opex) {
-				if (conversion_technologies.length > 0) {
-					selected_conversion_technologies = url_conversion_technologies
-						.map((i) => conversion_technologies[i])
-						.filter((t) => t !== undefined);
-				}
-				url_conversion_technologies = [];
-			} else if (conversion_technologies.length > 0) {
-				selected_conversion_technologies = conversion_technologies;
-			}
-		});
-	});
-	$effect(() => {
-		storage_technologies;
-		untrack(() => {
-			if (url_storage_technologies.length && fetched_capex && fetched_opex) {
-				if (storage_technologies.length > 0) {
-					selected_storage_technologies = url_storage_technologies
-						.map((i) => storage_technologies[i])
-						.filter((t) => t !== undefined);
-				}
-				url_storage_technologies = [];
-			} else if (storage_technologies.length > 0) {
-				selected_storage_technologies = storage_technologies;
-			}
-		});
-	});
-	$effect(() => {
-		cost_carriers;
-		untrack(() => {
-			if (url_cost_carriers.length && fetched_cost_carrier) {
-				if (cost_carriers.length > 0) {
-					selected_cost_carriers = url_cost_carriers
-						.map((i) => cost_carriers[i])
-						.filter((t) => t !== undefined);
-				}
-				url_cost_carriers = [];
-			} else if (cost_carriers.length > 0) {
-				selected_cost_carriers = cost_carriers;
-			}
-		});
-	});
-	$effect(() => {
-		demand_carriers;
-		untrack(() => {
-			if (url_demand_carriers && fetched_cost_shed_demand) {
-				if (demand_carriers.length > 0) {
-					selected_demand_carriers = url_demand_carriers
-						.map((i) => demand_carriers[i])
-						.filter((t) => t !== undefined);
-				}
-				url_demand_carriers = [];
-			} else if (demand_carriers.length > 0) {
-				selected_demand_carriers = demand_carriers;
-			}
-		});
-	});
+	updateSelectionOnStateChanges(
+		() => transport_technologies,
+		() => !!selected_solution && !!fetched_capex && !!fetched_opex,
+		() => previous_transport_technologies,
+		() => url_transport_technologies,
+		(value) => (selected_transport_technologies = value),
+		(value) => (previous_transport_technologies = value),
+		(value) => (url_transport_technologies = value),
+		true
+	);
+	updateSelectionOnStateChanges(
+		() => conversion_technologies,
+		() => !!selected_solution && !!fetched_capex && !!fetched_opex,
+		() => previous_conversion_technologies,
+		() => url_conversion_technologies,
+		(value) => (selected_conversion_technologies = value),
+		(value) => (previous_conversion_technologies = value),
+		(value) => (url_conversion_technologies = value)
+	);
+	updateSelectionOnStateChanges(
+		() => storage_technologies,
+		() => !!selected_solution && !!fetched_capex && !!fetched_opex,
+		() => previous_storage_technologies,
+		() => url_storage_technologies,
+		(value) => (selected_storage_technologies = value),
+		(value) => (previous_storage_technologies = value),
+		(value) => (url_storage_technologies = value)
+	);
+	updateSelectionOnStateChanges(
+		() => cost_carriers,
+		() => !!selected_solution && !!fetched_cost_carrier?.data,
+		() => previous_cost_carriers,
+		() => url_cost_carriers,
+		(value) => (selected_cost_carriers = value),
+		(value) => (previous_cost_carriers = value),
+		(value) => (url_cost_carriers = value)
+	);
+	updateSelectionOnStateChanges(
+		() => demand_carriers,
+		() => !!selected_solution && !!fetched_cost_shed_demand?.data,
+		() => previous_demand_carriers,
+		() => url_demand_carriers,
+		(value) => (selected_demand_carriers = value),
+		(value) => (previous_demand_carriers = value),
+		(value) => (url_demand_carriers = value)
+	);
+	updateSelectionOnStateChanges(
+		() => locations,
+		() => !!selected_solution,
+		() => previous_locations,
+		() => null,
+		(value) => (selected_locations = value),
+		(value) => (previous_locations = value),
+		() => {}
+	);
+	updateSelectionOnStateChanges(
+		() => years,
+		() => !!selected_solution,
+		() => previous_years,
+		() => null,
+		(value) => (selected_years = value),
+		(value) => (previous_years = value),
+		() => {}
+	);
 
 	$effect(() => {
 		selected_locations = locations;

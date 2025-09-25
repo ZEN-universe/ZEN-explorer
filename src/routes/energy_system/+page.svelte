@@ -14,18 +14,25 @@
 	import SolutionFilter from '$components/SolutionFilter.svelte';
 	import { next_color, reset_color_state } from '$lib/colors';
 	import { to_options } from '$lib/utils';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
+	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
 	let years: number[] = $state([]);
 	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
+	// Selections
 	let selectedSolution: ActivatedSolution | null = $state(null);
 	let selectedCarriers: string[] = $state([]);
 	let selectedNodes: string[] = $state([]);
 	let selectedYear: string | null = $state(null);
 
-	let urlCarriers: number[] = $state([]);
-	let urlNodes: number[] = $state([]);
+	// Temporary objects to store URL parameters and previous selection.
+	let urlCarriers: number[] | null | null = null;
+	let urlNodes: number[] | null = null;
+	let previousCarriers: string = '';
+	let previousNodes: string = '';
+	let previousYear: string = '';
 
 	let dataConversionInput: Entries | null = $state.raw(null);
 	let dataConversionOutput: Entries | null = $state(null);
@@ -60,34 +67,32 @@
 			selectedYear = null;
 			return;
 		}
-		selectedYear = years[0].toString();
+		selectedYear = previousYear || years[0].toString();
 	});
+
 	$effect(() => {
-		carriers;
-		untrack(() => {
-			if (urlCarriers.length) {
-				if (carriers.length) {
-					selectedCarriers = urlCarriers.map((i) => carriers[i]).filter((c) => c !== undefined);
-				}
-				urlCarriers = [];
-			} else {
-				selectedCarriers = carriers;
-			}
-		});
-	});
-	$effect(() => {
-		nodes;
-		untrack(() => {
-			if (urlNodes.length) {
-				if (nodes.length) {
-					selectedNodes = urlNodes.map((i) => nodes[i]).filter((n) => n !== undefined);
-				}
-				urlNodes = [];
-			} else {
-				selectedNodes = nodes;
-			}
-		});
-	});
+		if (!selectedYear) return;
+		previousYear = selectedYear;
+	})
+
+	updateSelectionOnStateChanges(
+		() => carriers,
+		() => !!selectedSolution,
+		() => previousCarriers,
+		() => urlCarriers,
+		(value) => (selectedCarriers = value),
+		(value) => (previousCarriers = value),
+		(value) => (urlCarriers = value)
+	);
+	updateSelectionOnStateChanges(
+		() => nodes,
+		() => !!selectedSolution,
+		() => previousNodes,
+		() => urlNodes,
+		(value) => (selectedNodes = value),
+		(value) => (previousNodes = value),
+		(value) => (urlNodes = value)
+	);
 
 	$effect(() => {
 		selectedCarriers;
