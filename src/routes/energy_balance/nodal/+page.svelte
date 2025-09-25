@@ -84,7 +84,7 @@
 					callback: (value) => Number(value).toFixed(0)
 				},
 				min: 0,
-				max: selected_solution?.detail?.system.total_hours_per_year
+				max: selected_solution?.detail?.system.unaggregated_time_steps_per_year
 			},
 			y: {
 				stacked: true,
