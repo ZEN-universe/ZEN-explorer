@@ -14,7 +14,6 @@
 	import SolutionFilter from '$components/SolutionFilter.svelte';
 	import { next_color, reset_color_state } from '$lib/colors';
 	import { to_options } from '$lib/utils';
-	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
 	let years: number[] = $state([]);
@@ -73,7 +72,7 @@
 	$effect(() => {
 		if (!selectedYear) return;
 		previousYear = selectedYear;
-	})
+	});
 
 	updateSelectionOnStateChanges(
 		() => carriers,
@@ -183,7 +182,11 @@
 		return selectedSolution.detail.system.set_technologies.filter((technology) => {
 			const inputCarriers = selectedSolution?.detail.carriers_input[technology] || [];
 			const outputCarriers = selectedSolution?.detail.carriers_output[technology] || [];
-			return [...inputCarriers, ...outputCarriers].some((c) => selectedCarriers.includes(c));
+			const referenceCarrier = selectedSolution?.detail.reference_carrier[technology];
+			return (
+				[...inputCarriers, ...outputCarriers].some((c) => selectedCarriers.includes(c)) ||
+				(referenceCarrier && selectedCarriers.includes(referenceCarrier))
+			);
 		});
 	}
 
