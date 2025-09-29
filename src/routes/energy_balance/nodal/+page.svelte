@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
+	import type { Chart, ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 
 	import SolutionFilter from '$components/SolutionFilter.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
@@ -23,6 +23,7 @@
 	let fetching = $state(false);
 
 	let plot = $state<BarPlot>();
+	let duals_plot = $state<BarPlot>();
 
 	let nodes: string[] = $state([]);
 	let carriers: string[] = $state([]);
@@ -49,6 +50,9 @@
 			selected_year
 		].join('_');
 	});
+	let duals_plot_name: string = $derived.by(() => {
+		return plot_name + '_duals';
+	});
 	let unit = $derived.by(() => {
 		if (unit_data === null) {
 			return '';
@@ -59,75 +63,101 @@
 		}
 		return unit_data.data[0][0] || unit_data.data[0]['units'] || '';
 	});
-	const plot_options: ChartOptions = $derived.by(() => ({
-		animation: false,
-		normalized: true,
-		parsing: false,
-		responsive: true,
-		borderWidth: 1,
-		elements: {
-			point: {
-				radius: 0
-			}
-		},
-		scales: {
-			x: {
-				type: 'linear',
-				stacked: true,
-				title: {
-					display: true,
-					text: 'Time'
-				},
-				ticks: {
-					maxRotation: 0,
-					autoSkip: true,
-					callback: (value) => Number(value).toFixed(0)
-				},
-				min: 0,
-				max: selected_solution?.detail?.system.unaggregated_time_steps_per_year
-			},
-			y: {
-				stacked: true,
-				beginAtZero: true,
-				title: {
-					display: true,
-					text: `Energy [${unit}]`
+	const plot_options: ChartOptions = $derived.by(() =>
+		getPlotOptions(`Energy [${unit}]`, (event) =>
+			duals_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max)
+		)
+	);
+	const duals_plot_options: ChartOptions = $derived.by(() =>
+		getPlotOptions(
+			'Dual',
+			(event) => plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max),
+			false,
+			5
+		)
+	);
+	function getPlotOptions(
+		yAxisLabel: string,
+		onZoom: (event: { chart: Chart }) => void,
+		showLegend: boolean = true,
+		aspectRatio: number = 2
+	): ChartOptions<'bar' | 'line'> {
+		return {
+			animation: false,
+			normalized: true,
+			parsing: false,
+			responsive: true,
+			borderWidth: 1,
+			aspectRatio,
+			elements: {
+				point: {
+					radius: 0
 				}
-			}
-		},
-		interaction: {
-			intersect: false,
-			mode: 'nearest',
-			axis: 'x'
-		},
-		plugins: {
-			zoom: {
-				pan: {
-					enabled: true,
-					modifierKey: 'ctrl',
-					mode: 'x'
+			},
+			scales: {
+				x: {
+					type: 'linear',
+					stacked: true,
+					title: {
+						display: true,
+						text: 'Time'
+					},
+					ticks: {
+						maxRotation: 0,
+						autoSkip: true,
+						callback: (value) => Number(value).toFixed(0)
+					},
+					min: 0,
+					max: (selected_solution?.detail?.system.unaggregated_time_steps_per_year || 0) - 1
+				},
+				y: {
+					stacked: true,
+					beginAtZero: true,
+					title: {
+						display: true,
+						text: yAxisLabel
+					}
+				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x'
+			},
+			plugins: {
+				legend: {
+					display: showLegend
 				},
 				zoom: {
-					drag: {
-						enabled: true
+					pan: {
+						enabled: true,
+						modifierKey: 'ctrl',
+						mode: 'x',
+						onPanComplete: onZoom
 					},
-					wheel: {
-						enabled: true
+					zoom: {
+						drag: {
+							enabled: true
+						},
+						wheel: {
+							enabled: true
+						},
+						mode: 'x',
+						onZoomComplete: onZoom
 					},
-					mode: 'x'
+					limits: {
+						x: { minRange: 10, min: 'original', max: 'original' }
+					}
 				},
-				limits: {
-					x: { minRange: 10, min: 'original', max: 'original' }
-				}
-			},
-			tooltip: {
-				callbacks: {
-					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-						`${item.dataset.label}: ${item.formattedValue} ${unit}`
+				tooltip: {
+					callbacks: {
+						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+							`${item.dataset.label}: ${item.formattedValue} ${unit}`
+					}
 				}
 			}
-		}
-	}));
+		} as ChartOptions<'bar' | 'line'>;
+	}
 
 	$effect(() => {
 		years;
@@ -237,7 +267,9 @@
 	});
 
 	let datasets: ChartDataset<'bar' | 'line'>[] = [];
+	let duals_datasets: ChartDataset<'bar' | 'line'>[] = [];
 	let datasets_length: number = $state(0);
+	let duals_datasets_length: number = $state(0);
 	let number_of_time_steps: number = $state(0);
 
 	function compute_datasets() {
@@ -339,16 +371,63 @@
 		});
 	}
 
+	function compute_duals_datasets() {
+		if (
+			!selected_solution ||
+			!selected_node ||
+			!selected_carrier ||
+			!selected_year ||
+			!energy_balance_data
+		) {
+			return [];
+		}
+
+		const duals_key = 'constraint_nodal_energy_balance';
+		const entries = energy_balance_data[duals_key];
+
+		if (!entries || entries.length === 0) {
+			return [];
+		}
+
+		// Loop through the different variables
+		return entries
+			.map((entry) => {
+				if (entry.data.length == 0) {
+					return null;
+				}
+
+				let dataset_data = entry.data.map((value, i) => ({ x: i, y: value }));
+
+				return {
+					data: dataset_data,
+					label: `dual_${entry.index.carrier}_${entry.index.node}`,
+					fill: false,
+					borderColor: 'rgb(0, 0, 0)',
+					backgroundColor: 'rgb(0, 0, 0)',
+					borderWidth: 2,
+					stepped: true,
+					cubicInterpolationMode: 'monotone',
+					pointRadius: entry.data.length == 1 ? 2 : 0
+				} as ChartDataset<'bar' | 'line'>;
+			})
+			.filter((dataset) => dataset !== null);
+	}
+
 	async function update_datasets() {
 		reset_color_picker_state();
 		datasets = compute_datasets();
 		datasets_length = datasets.length;
 		number_of_time_steps = datasets_length > 0 ? datasets[0].data.length : 0;
+		duals_datasets = compute_duals_datasets();
+		duals_datasets_length = duals_datasets.length;
 
 		await tick();
 
 		if (plot) {
 			plot.updateChart(datasets);
+		}
+		if (duals_plot) {
+			duals_plot.updateChart(duals_datasets);
 		}
 	}
 </script>
@@ -411,14 +490,14 @@
 		</FilterSection>
 	{/if}
 </Filters>
-<div class="mt-4">
+<div class="my-4">
 	{#if fetching}
 		<div class="text-center">
 			<div class="spinner-border center" role="status">
 				<span class="visually-hidden">Loading...</span>
 			</div>
 		</div>
-	{:else if datasets_length == 0}
+	{:else if datasets_length == 0 || selected_solution == null}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
 		<BarPlot
@@ -430,5 +509,19 @@
 			zoom={true}
 			bind:this={plot}
 		></BarPlot>
+		{#if duals_datasets_length > 0}
+			<BarPlot
+				type={number_of_time_steps == 1 ? 'bar' : 'line'}
+				options={duals_plot_options}
+				{labels}
+				datasets={[]}
+				plot_name={duals_plot_name}
+				zoom={true}
+				narrow
+				bind:this={duals_plot}
+			></BarPlot>
+		{:else}
+			<div class="text-center text-muted mt-2">No dual data available.</div>
+		{/if}
 	{/if}
 </div>

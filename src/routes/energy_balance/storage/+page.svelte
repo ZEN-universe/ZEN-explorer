@@ -3,7 +3,6 @@
 		type Chart,
 		type ChartDataset,
 		type ChartOptions,
-		type ChartType,
 		type ChartTypeRegistry,
 		type TooltipItem
 	} from 'chart.js';
@@ -22,7 +21,7 @@
 	import { remove_duplicates, to_options } from '$lib/utils';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Entry } from '$lib/types';
-	import { add_transparency, next_color, reset_color_state } from '$lib/colors';
+	import { next_color, reset_color_state } from '$lib/colors';
 
 	// All but one data variable are non-reactive because of their size
 	let level_response: Entry[] | null = null;
@@ -106,7 +105,7 @@
 						callback: (value) => Number(value).toFixed(0)
 					},
 					min: 0,
-					max: selected_solution?.detail?.system.unaggregated_time_steps_per_year
+					max: (selected_solution?.detail?.system.unaggregated_time_steps_per_year || 0) - 1
 				},
 				y: {
 					stacked: true,

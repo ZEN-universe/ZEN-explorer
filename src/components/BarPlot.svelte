@@ -17,6 +17,7 @@
 		plugins?: Plugin<ChartType>[];
 		zoom?: boolean;
 		plot_name?: string;
+		narrow?: boolean;
 		downloadable?: boolean;
 		onclick?: (event: any) => void;
 	}
@@ -31,6 +32,7 @@
 		zoom = false,
 		plot_name = 'plot_data',
 		downloadable = true,
+		narrow = false,
 		onclick
 	}: Props = $props();
 	let chart: Chart | undefined = undefined;
@@ -159,7 +161,7 @@
 			</button>
 		{/if}
 	</div>
-	<div class="position-relative" style="min-height: 558px">
+	<div class="position-relative" style:min-height={narrow ? '259px' : '558px'}>
 		<canvas {id} use:handleChart onclick={onCanvasClick}></canvas>
 	</div>
 </div>

@@ -213,7 +213,8 @@ export async function get_energy_balance(
 		'flow_transport_in',
 		'flow_transport_out',
 		'cost_shed_demand',
-		'flow_conversion_output'
+		'flow_conversion_output',
+		'constraint_nodal_energy_balance'
 	];
 
 	// @ts-ignore

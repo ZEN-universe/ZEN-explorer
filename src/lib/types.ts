@@ -106,6 +106,7 @@ export interface EnergyBalanceDataframes {
 	flow_transport_out: Entry[];
 	flow_conversion_output: Entry[];
 	shed_demand: Entry[];
+	constraint_nodal_energy_balance: Entry[];
 }
 
 export interface Dataset {
