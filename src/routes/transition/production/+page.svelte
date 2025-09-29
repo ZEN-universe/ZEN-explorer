@@ -274,7 +274,10 @@
 		untrack(() => {
 			if (!selected_solution) return;
 			// Keep the selected carrier if it is still available, otherwise select the first one.
-			if (carriers.length > 0 && (!selected_carrier || (selected_carrier && !carriers.includes(selected_carrier)))) {
+			if (
+				carriers.length > 0 &&
+				(!selected_carrier || (selected_carrier && !carriers.includes(selected_carrier)))
+			) {
 				selected_carrier = carriers[0];
 			}
 		});

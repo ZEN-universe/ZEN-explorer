@@ -19,9 +19,11 @@
 		updateNodePosition,
 		updateSankeyLayout
 	} from '$lib/sankeyDiagram';
-	import { select } from 'd3-selection';
+	import { pointer, select } from 'd3-selection';
 	import { zoom as d3zoom, zoomIdentity } from 'd3-zoom';
 	import { drag as d3drag } from 'd3-drag';
+	import Tooltip from './Tooltip.svelte';
+	import { debounce } from '$lib/debounce';
 
 	let width = $state(936);
 	let height = $state(800);
@@ -54,19 +56,6 @@
 	// Final nodes and links with positions computed by the layout algorithm with Svelte reactivity
 	let nodes: RawSankeyNode[] = $state([]);
 	let links: RawSankeyLink[] = $state([]);
-
-	/**
-	 * Debounce a function call by the given wait time in milliseconds.
-	 * @param func
-	 * @param wait
-	 */
-	function debounce(func: () => void, wait: number) {
-		let timeout: ReturnType<typeof setTimeout>;
-		return function () {
-			clearTimeout(timeout);
-			timeout = setTimeout(() => func(), wait);
-		};
-	}
 
 	/**
 	 * Convert partial nodes and links to full nodes and links and initialize missing properties.
@@ -219,7 +208,7 @@
 	let minX = $derived.by(() => {
 		if (!nodes.length) return 0;
 		// If there are cycles to nodes in the first level, shift the viewbox to the left to avoid clipping
-		if (nodes.some((node) => node.x === 0 && node.numLinksIn > 0)) {
+		if (nodes.some((node) => node.x === 0 && node.linksIn.length > 0)) {
 			return -CYCLE_DIST_FROM_NODE - CYCLE_LANE_NARROW_WIDTH - CYCLE_CONTROL_POINT_DIST;
 		}
 		return 0;
@@ -227,8 +216,8 @@
 	let maxWidth = $derived.by(() => {
 		if (!nodes.length) return width;
 		const max = Math.max(...nodes.map((node) => node.x + NODE_WIDTH));
-		if (nodes.some((node) => node.x === max && node.numLinksOut > 0)) {
-			// If there are cycles to nodes in the last level, extend the viewbox to the right to avoid clipping
+		// If there are cycles to nodes in the last level, extend the viewbox to the right to avoid clipping
+		if (nodes.some((node) => node.x === max && node.linksOut.length > 0)) {
 			return max + CYCLE_DIST_FROM_NODE + CYCLE_LANE_NARROW_WIDTH + CYCLE_CONTROL_POINT_DIST - minX;
 		}
 		return max - minX;
@@ -247,22 +236,6 @@
 	function roundValue(value: number, number_of_decimal_places: number = 6): number {
 		const factor = 10 ** number_of_decimal_places;
 		return Math.round(value * factor) / factor;
-	}
-
-	/**
-	 * Generate a title string for a link.
-	 * @param link
-	 */
-	function getLinkTitle(link: RawSankeyLink): string {
-		return `${link.source.label} → ${link.target.label}:\n${roundValue(link.value)} ${link.unit}`;
-	}
-
-	/**
-	 * Generate a title string for a node.
-	 * @param node
-	 */
-	function getNodeTitle(node: RawSankeyNode): string {
-		return `${node.label}:\n${roundValue(node.value)} ${node.unit}`;
 	}
 
 	function isDarkBackground(color: string): boolean {
@@ -315,6 +288,10 @@
 		.scaleExtent([1, Infinity])
 		.on('zoom', (event) => {
 			transform = event.transform.toString();
+			updateActiveNodeRect();
+		})
+		.on('end', () => {
+			updateActiveNodeRect();
 		});
 
 	/**
@@ -359,6 +336,7 @@
 			const idx = Number((this as SVGGElement).dataset.idx);
 			if (isNaN(idx)) return;
 			onDragNode(event, idx);
+			updatePointerPosition(event);
 		});
 
 	/**
@@ -384,33 +362,112 @@
 		updateNodePosition(idx, constrained_y);
 		[nodes, links] = getFinalNodesAndLinks();
 	}
+
+	// ================
+	// Tooltip behavior
+	// ================
+
+	/**
+	 * Track the mouse pointer position relative to the SVG element.
+	 */
+	let pointerPosition: [number, number] | null = $state(null);
+	function updatePointerPosition(event: MouseEvent) {
+		if (!svg) return;
+		pointerPosition = pointer(event, svg.parentElement);
+	}
+
+	/**
+	 * Bounding client rect of the SVG element, used to compute the tooltip position.
+	 */
+	let svgRect: DOMRect | null = $state(null);
+	function updateSvgRect() {
+		if (!svg) return;
+		svgRect = svg.getBoundingClientRect();
+	}
+	onMount(updateSvgRect);
+
+	/**
+	 * The currently active node under the mouse pointer, or null if none.
+	 * Also compute the bounding rect of the active node for tooltip positioning.
+	 */
+	let activeNode: RawSankeyNode | null = $derived.by(() => {
+		if (!pointerPosition || !svg) return null;
+		let [x, y] = pointerPosition;
+		let svgRect = svg.getBoundingClientRect();
+		let lastNode = select(svg)
+			.selectAll<SVGRectElement, unknown>('.node')
+			.nodes()
+			.findLast((node) => {
+				let rect = node.getBoundingClientRect();
+				let nodeX = rect.left - svgRect.left;
+				let nodeY = rect.top - svgRect.top;
+				return x >= nodeX && x <= nodeX + rect.width && y >= nodeY && y <= nodeY + rect.height;
+			});
+		if (!lastNode) return null;
+		let idx = Number(lastNode.dataset.idx);
+		if (isNaN(idx) || idx < 0 || idx >= nodes.length) return null;
+		return nodes[idx];
+	});
+	let activeNodeRect: DOMRect | null = $state(null);
+	function updateActiveNodeRect() {
+		if (activeNode === null || !svg) return;
+		const idx = nodes.findIndex((n) => n === activeNode);
+		if (idx === -1) return;
+		const node = select(svg)
+			.selectAll<SVGRectElement, unknown>(`.node[data-idx="${idx}"]`)
+			.nodes()[0];
+		if (!node) return;
+		activeNodeRect = node.getBoundingClientRect();
+	}
+	$effect(updateActiveNodeRect);
+
+	/**
+	 * Compute the tooltip position based on the active node's bounding rect.
+	 * The tooltip is centered horizontally above the node, with a vertical offset.
+	 * If the node is in the upper half of the SVG, the tooltip is shown below the node instead.
+	 */
+	let tooltipX = $derived.by(() => {
+		if (activeNodeRect === null || svgRect === null) return 0;
+		return activeNodeRect.left - svgRect.left + activeNodeRect.width / 2;
+	});
+	let tooltipY = $derived.by(() => {
+		if (activeNodeRect === null || svgRect === null) return 0;
+		return activeNodeRect.top - svgRect.top + activeNodeRect.height / 2;
+	});
+	let tooltipYOffset = $derived.by(() => {
+		if (activeNodeRect === null) return 0;
+		return activeNodeRect.height / 2;
+	});
+	let tooltipOnTop = $derived.by(() => {
+		if (activeNodeRect === null || svgRect === null) return false;
+		return activeNodeRect.top - svgRect.top > height / 2;
+	});
 </script>
 
-<svelte:window on:resize={handleSize} />
+<svelte:window onresize={handleSize} onscroll={updateSvgRect} />
 
-<div class="position-relative border rounded overflow-hidden">
+<div class="position-relative border rounded">
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<svg
 		{width}
 		{height}
 		bind:this={svg}
 		viewBox={`${minX - 1} ${cycleLaneHeight} ${maxWidth + 4} ${maxHeight}`}
+		onmousemove={updatePointerPosition}
+		onmouseleave={() => (pointerPosition = null)}
 	>
 		<g {transform}>
 			<g class="links">
 				{#each links.toSorted((a, b) => b.value - a.value) as link}
 					{#if link.causesCycle}
-						<path class="cycle-link" d={linkPath(link)} style:fill={link.color}>
-							<title>{getLinkTitle(link)}</title>
-						</path>
+						<path class="cycle-link" d={linkPath(link)} style:fill={link.color}></path>
 					{:else}
 						<path
 							class="link"
 							d={linkPath(link)}
 							style:stroke={link.color}
 							style:stroke-width={Math.max(1, link.dy)}
-						>
-							<title>{getLinkTitle(link)}</title>
-						</path>
+						></path>
 					{/if}
 				{/each}
 			</g>
@@ -423,9 +480,7 @@
 							width={NODE_WIDTH}
 							height={Math.max(0.1, node.dy - 2)}
 							fill={node.color}
-						>
-							<title>{getNodeTitle(node)}</title>
-						</rect>
+						></rect>
 						<text
 							x={node.x + NODE_WIDTH / 2}
 							y={node.dy > 16 ? node.y + node.dy / 2 : node.y - 2}
@@ -440,12 +495,56 @@
 			</g>
 		</g>
 	</svg>
+	<!-- Reset zoom button -->
 	<div class="position-absolute top-0 end-0 m-2">
 		<button class="btn btn-secondary" onclick={resetZoom}>
 			<i class="bi bi-house"></i>
 			<div class="visually-hidden">Reset zoom</div>
 		</button>
 	</div>
+	<!-- Tooltip -->
+	{#if activeNode !== null}
+		<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
+			{#snippet content()}
+				<div class="fw-bold fs-7 px-2">
+					{activeNode.label}
+				</div>
+				{#if activeNode.linksIn.length > 0}
+					<div class="fw-bold mt-1 fs-7 px-2">Inflows:</div>
+					{#each activeNode.linksIn as linkInIdx}
+						{#if links[linkInIdx]}
+							<div class="fs-8 px-2">
+								<svg width="12" height="12">
+									<rect width="12" height="12" fill={links[linkInIdx].source.color} />
+								</svg>
+								{links[linkInIdx].source.label}: {roundValue(links[linkInIdx].value)}
+								{links[linkInIdx].unit}
+							</div>
+						{/if}
+					{/each}
+				{/if}
+				{#if activeNode.linksOut.length > 0}
+					<div class="fw-bold mt-1 fs-7 px-2">Outflows:</div>
+					{#each activeNode.linksOut as linkOutIdx}
+						{#if links[linkOutIdx]}
+							<div class="fs-8 px-2">
+								<svg width="12" height="12">
+									<rect width="12" height="12" fill={links[linkOutIdx].target.color} />
+								</svg>
+								{links[linkOutIdx].target.label}: {roundValue(links[linkOutIdx].value)}
+								{links[linkOutIdx].unit}
+							</div>
+						{/if}
+					{/each}
+				{/if}
+				<div class="mt-1 fs-7 px-2">
+					<strong>Total:</strong>
+					{roundValue(activeNode.value)}
+					{activeNode.unit}
+				</div>
+			{/snippet}
+		</Tooltip>
+	{/if}
 </div>
 
 <style>
@@ -480,5 +579,12 @@
 
 	.cycle-link:hover {
 		opacity: 0.5;
+	}
+
+	.fs-7 {
+		font-size: 0.875rem;
+	}
+	.fs-8 {
+		font-size: 0.75rem;
 	}
 </style>

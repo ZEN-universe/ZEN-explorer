@@ -10,6 +10,7 @@
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
 	import { all_colors } from '$lib/colors';
+	import Tooltip from './Tooltip.svelte';
 
 	let topology: Topology | null = $state(null);
 	$effect(() => {
@@ -336,7 +337,7 @@
 		else if (activeLines.length > 0) return 0.5 * (activeLines[0].start[1] + activeLines[0].end[1]);
 		return 0;
 	});
-	let tooltipYOffset = $derived.by(() => 5 + (activePie ? computeRadius(activePie.total) : 0));
+	let tooltipYOffset = $derived.by(() => (activePie ? computeRadius(activePie.total) : 0));
 	let tooltipOnTop = $derived.by(() => tooltipY - tooltipYOffset > 180);
 
 	function updateActiveElements(event: MouseEvent) {
@@ -424,7 +425,10 @@
 		}}
 		onmousedown={startZoomRectangle}
 		onmouseup={endZoomRectangle}
-		onmouseleave={cancelZoomRectangle}
+		onmouseleave={() => {
+			cancelZoomRectangle();
+			cursorPos = [0, 0];
+		}}
 		{id}
 		style:background="#fff"
 	>
@@ -495,63 +499,39 @@
 	{/if}
 	<!-- Tooltip -->
 	{#if activePie || activeLines.length > 0}
-		<div
-			class="position-absolute bg-black bg-opacity-75 text-white py-2 rounded fs-8 pe-none"
-			style:top={tooltipOnTop ? `${tooltipY - tooltipYOffset}px` : `${tooltipY + tooltipYOffset}px`}
-			style:left={`${tooltipX}px`}
-			style:transform={tooltipOnTop ? `translate(-50%, -100%)` : `translate(-50%, 0%)`}
-			style:min-width="200px"
-			transition:fade={{ duration: 300 }}
-		>
-			{#if tooltipOnTop}
-				<svg
-					class="position-absolute translate-middle-x opacity-75 start-50"
-					style:bottom="-5px"
-					width="10"
-					height="5"
-				>
-					<polygon points="0,0 10,0 5,5" fill="black" />
-				</svg>
-			{:else}
-				<svg
-					class="position-absolute translate-middle-x opacity-75 start-50"
-					style:top="-5px"
-					width="10"
-					height="5"
-				>
-					<polygon points="0,5 10,5 5,0" fill="black" />
-				</svg>
-			{/if}
-			{#if activePie}
-				<h5 class="fs-7 mb-0 px-2">{activePie.label}</h5>
-				{#each activePie.data as d}
-					<div class="px-2">
-						<svg width="16" height="16">
-							<rect width="16" height="16" fill={d.color} />
-						</svg>
-						{d.technology}: {d.value.toFixed(3)}
-						{unit}
-					</div>
-				{/each}
-				{#if activePie.data.length > 1}
-					<div class="px-2">
-						<strong>Total: {activePie.total.toFixed(3)} {unit}</strong>
-					</div>
+		<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
+			{#snippet content()}
+				{#if activePie}
+					<h5 class="fs-7 mb-0 px-2">{activePie.label}</h5>
+					{#each activePie.data as d}
+						<div class="px-2 fs-8">
+							<svg width="16" height="16">
+								<rect width="16" height="16" fill={d.color} />
+							</svg>
+							{d.technology}: {d.value.toFixed(3)}
+							{unit}
+						</div>
+					{/each}
+					{#if activePie.data.length > 1}
+						<div class="px-2 fs-8">
+							<strong>Total: {activePie.total.toFixed(3)} {unit}</strong>
+						</div>
+					{/if}
+				{:else if activeLines.length > 0}
+					{#each activeLines as line, i}
+						<div class={['px-2 fs-8', i > 0 && 'border-top border-secondary mt-1 pt-1']}>
+							<h5 class="fs-7 mb-0">{line.label}</h5>
+							{#each line.values as d}
+								<div>
+									{d.technology}: {d.value.toFixed(3)}
+									{unit}
+								</div>
+							{/each}
+						</div>
+					{/each}
 				{/if}
-			{:else if activeLines.length > 0}
-				{#each activeLines as line, i}
-					<div class={['px-2', i > 0 && 'border-top border-secondary mt-1 pt-1']}>
-						<h5 class="fs-7 mb-0">{line.label}</h5>
-						{#each line.values as d}
-							<div>
-								{d.technology}: {d.value.toFixed(3)}
-								{unit}
-							</div>
-						{/each}
-					</div>
-				{/each}
-			{/if}
-		</div>
+			{/snippet}
+		</Tooltip>
 	{/if}
 </div>
 

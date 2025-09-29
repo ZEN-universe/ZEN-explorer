@@ -224,7 +224,7 @@
 		reset_color_state();
 
 		const carrierNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + '_' + getUnit(carrier), next_color(), getUnit(carrier))
+			newNode(carrier, carrier + ' [' + getUnit(carrier) + ']', next_color(), getUnit(carrier))
 		);
 		const conversionTechNodes = conversionTechs.map((tech) =>
 			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)))
@@ -252,7 +252,12 @@
 		);
 		currentColor = next_color();
 		const demandNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + '_demand', currentColor, getUnit(carrier))
+			newNode(
+				carrier,
+				carrier + '_demand' + ' [' + getUnit(carrier) + ']',
+				currentColor,
+				getUnit(carrier)
+			)
 		);
 
 		// Stage 2: Define links

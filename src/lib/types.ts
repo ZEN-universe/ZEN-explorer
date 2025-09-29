@@ -194,8 +194,8 @@ export interface RawSankeyNode {
 	x: number;
 	y: number;
 	dy: number;
-	numLinksIn: number;
-	numLinksOut: number;
+	linksIn: number[];
+	linksOut: number[];
 }
 
 export interface RawSankeyLink {

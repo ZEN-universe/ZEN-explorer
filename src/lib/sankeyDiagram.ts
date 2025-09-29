@@ -3,7 +3,7 @@ import type { RawSankeyLink, RawSankeyNode, SankeyLink, SankeyNode } from './typ
 // Source: https://gist.github.com/cfergus/3956043 and https://gist.github.com/soxofaan/bb6f91d57dc4b6afe91d
 
 /** width of each node */
-export const NODE_WIDTH = 120;
+export const NODE_WIDTH = 140;
 /** minimum vertical padding between nodes */
 export const NODE_PADDING = 16;
 /** max height of a node */
@@ -395,8 +395,8 @@ export function getFinalNodesAndLinks(): [RawSankeyNode[], RawSankeyLink[]] {
 		x: node.x,
 		y: node.y,
 		dy: node.dy,
-		numLinksIn: node.linksIn.length,
-		numLinksOut: node.linksOut.length
+		linksIn: links.map((link, i) => (link.target === node ? i : -1)).filter((i) => i >= 0),
+		linksOut: links.map((link, i) => (link.source === node ? i : -1)).filter((i) => i >= 0)
 	}));
 	const finalLinks = links.map((link) => ({
 		source: finalNodes[nodes.indexOf(link.source)],
