@@ -50,3 +50,12 @@ test('nodal: smoothing window size', async ({ page }) => {
 		`eeht_pf/smoothing-window-size-monthly.png`
 	);
 });
+
+test('nodal: dual plot', async ({ page }) => {
+	await page.goto('/energy_balance/nodal');
+	await page
+		.getByLabel('Solution', { exact: true })
+		.selectOption('operations_with_duals');
+	await expect(page.locator('#chart')).toHaveScreenshot(`owd/default-chart.png`);
+	await expect(page.locator('#chart-duals')).toHaveScreenshot(`owd/default-duals.png`);
+});

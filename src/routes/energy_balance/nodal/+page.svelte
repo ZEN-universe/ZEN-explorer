@@ -511,6 +511,7 @@
 		></BarPlot>
 		{#if duals_datasets_length > 0}
 			<BarPlot
+				id="chart-duals"
 				type={number_of_time_steps == 1 ? 'bar' : 'line'}
 				options={duals_plot_options}
 				{labels}
