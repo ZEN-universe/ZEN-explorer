@@ -66,7 +66,11 @@
 			selectedYear = null;
 			return;
 		}
-		selectedYear = previousYear || years[0].toString();
+		if (previousYear && years.includes(Number(previousYear))) {
+			selectedYear = previousYear;
+		} else {
+			selectedYear = years[0].toString();
+		}
 	});
 
 	$effect(() => {
@@ -267,6 +271,7 @@
 			technology: getTechnologiesRelatedToCarriers(selectedCarriers)
 		};
 		const indexOfYear = years.indexOf(Number(selectedYear));
+		if (indexOfYear === -1) return;
 		const links: PartialSankeyLink[] = [];
 
 		function addLink(
