@@ -32,11 +32,12 @@
 	let svg = $state<SVGSVGElement>();
 
 	interface Props {
+		id?: string;
 		nodes: Partial<SankeyNode>[];
 		links: PartialSankeyLink[];
 	}
 
-	let { nodes: initialNodes, links: initialLinks }: Props = $props();
+	let { id = 'diagram', nodes: initialNodes, links: initialLinks }: Props = $props();
 
 	let debounceLayoutDiagram = debounce(layoutDiagram, 100);
 
@@ -269,9 +270,8 @@
 	 */
 	function handleSize() {
 		if (!svg) return;
-		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
+		const { width: w } = svg.parentElement!.getBoundingClientRect();
 		width = w;
-		height = h;
 		debounceLayoutDiagram();
 	}
 
@@ -450,6 +450,7 @@
 <div class="position-relative border rounded">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<svg
+		{id}
 		{width}
 		{height}
 		bind:this={svg}
