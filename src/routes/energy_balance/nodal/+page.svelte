@@ -284,7 +284,7 @@
 		}
 
 		return Object.entries(energy_balance_data).flatMap(([key, entries]: [string, Entry[]]) => {
-			if (!entries || entries.length === 0) {
+			if (!entries || entries.length === 0 || key === 'constraint_nodal_energy_balance') {
 				return [];
 			}
 
