@@ -24,6 +24,7 @@
 	import { drag as d3drag } from 'd3-drag';
 	import Tooltip from './Tooltip.svelte';
 	import { debounce } from '$lib/debounce';
+	import { sum } from 'd3';
 
 	let width = $state(936);
 	let height = $state(800);
@@ -513,7 +514,7 @@
 					<div class="fw-bold mt-1 fs-7 px-2">Inflows:</div>
 					{#each activeNode.linksIn as linkInIdx}
 						{#if links[linkInIdx]}
-							<div class="fs-8 px-2">
+							<div class="fs-8 px-2 text-no-break">
 								<svg width="12" height="12">
 									<rect width="12" height="12" fill={links[linkInIdx].source.color} />
 								</svg>
@@ -522,12 +523,22 @@
 							</div>
 						{/if}
 					{/each}
+					<div
+						class={[
+							'fs-8 px-2 text-no-break',
+							activeNode.linksOut.length > 0 && 'border-bottom border-secondary pb-1'
+						]}
+					>
+						<strong>Total:</strong>
+						{roundValue(sum(activeNode.linksIn.map((linkIdx) => links[linkIdx]?.value || 0)))}
+						{activeNode.unit}
+					</div>
 				{/if}
 				{#if activeNode.linksOut.length > 0}
 					<div class="fw-bold mt-1 fs-7 px-2">Outflows:</div>
 					{#each activeNode.linksOut as linkOutIdx}
 						{#if links[linkOutIdx]}
-							<div class="fs-8 px-2">
+							<div class="fs-8 px-2 text-no-break">
 								<svg width="12" height="12">
 									<rect width="12" height="12" fill={links[linkOutIdx].target.color} />
 								</svg>
@@ -536,12 +547,12 @@
 							</div>
 						{/if}
 					{/each}
+					<div class="fs-8 px-2 text-no-break">
+						<strong>Total:</strong>
+						{roundValue(sum(activeNode.linksOut.map((linkIdx) => links[linkIdx]?.value || 0)))}
+						{activeNode.unit}
+					</div>
 				{/if}
-				<div class="mt-1 fs-7 px-2">
-					<strong>Total:</strong>
-					{roundValue(activeNode.value)}
-					{activeNode.unit}
-				</div>
 			{/snippet}
 		</Tooltip>
 	{/if}
@@ -586,5 +597,9 @@
 	}
 	.fs-8 {
 		font-size: 0.75rem;
+	}
+
+	.text-no-break {
+		white-space: nowrap;
 	}
 </style>

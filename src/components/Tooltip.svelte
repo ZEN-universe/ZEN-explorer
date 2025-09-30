@@ -13,7 +13,7 @@
 </script>
 
 <div
-	class="position-absolute bg-black bg-opacity-75 text-white py-2 rounded pe-none"
+	class="position-absolute bg-black bg-opacity-75 text-white py-2 rounded pe-none z-3"
 	style:top={isOnTop ? `${y - 5 - yOffset}px` : `${y + 5 + yOffset}px`}
 	style:left={`${x}px`}
 	style:transform={isOnTop ? `translate(-50%, -100%)` : `translate(-50%, 0%)`}
