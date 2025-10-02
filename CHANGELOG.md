@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.7.4 (2025-10-02)
+
+- [Nodal, Storage] Keep zoom level if possible when changing options and solutions.
+- Add tests for duals and energy_system plot.
+- [Nodal] Remove dual data from upper plot.
+- [Sankey] Add divider to tooltip and show total of both inflows and outflows.
+- [Sankey] Prevent processing of data for invalid years.
+- [Nodal] Add subplot to show dual variables.
+- [Sankey] Fix #124 by adding a tooltip and modifying some labels.
+- [Sankey] Fix #125. Show storage flows related by reference carriers.
+
 ## 0.7.3 (2025-09-25)
 
 - [Sankey] Improve box label placement and color.

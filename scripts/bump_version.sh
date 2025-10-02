@@ -12,8 +12,9 @@ else
     version=$1
 fi
 
-# Update the version in the package.json file
+# Update the version in the package.json and package-lock.json file
 sed -i "s/\"version\": \".*\"/\"version\": \"$version\"/" package.json
+npm install
 
 # Add new heading to the CHANGELOG.md file
 
@@ -23,5 +24,13 @@ date=$(date +"%Y-%m-%d")
 # Create the new heading
 new_heading="## $version ($date)"
 
+# Get all commit messages since the last commit that updated the changelog
+last_changelog_commit=$(git log -n 1 --pretty=format:%H -- CHANGELOG.md)
+if [ -z "$last_changelog_commit" ]; then
+    commit_messages=$(git log --pretty=format:"- %s")
+else
+    commit_messages=$(git log $last_changelog_commit..HEAD --pretty=format:"- %s")
+fi
+
 # Insert the new heading on line 3 of the CHANGELOG.md file
-sed -i "3i$new_heading\n\n- Summarize your changes ...\n" CHANGELOG.md
+awk -v heading="$new_heading" -v commits="$commit_messages" 'NR==3{print heading "\n\n" commits "\n"} {print}' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
