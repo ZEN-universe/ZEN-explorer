@@ -63,22 +63,31 @@
 		}
 		return unit_data.data[0][0] || unit_data.data[0]['units'] || '';
 	});
-	const plot_options: ChartOptions = $derived.by(() =>
-		getPlotOptions(`Energy [${unit}]`, (event) =>
-			duals_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max)
-		)
-	);
-	const duals_plot_options: ChartOptions = $derived.by(() =>
-		getPlotOptions(
-			'Dual',
-			(event) => plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max),
-			false,
-			5
-		)
-	);
+
+	// Zoom level for both plots
+	let zoomLevel: [number, number] | null = $state(null);
+
+	// Time steps per year (for x-axis scaling)
+	let timeStepsPerYear: number = $state(0);
+	$effect(() => {
+		if (selected_solution?.detail?.system.unaggregated_time_steps_per_year !== undefined) {
+			timeStepsPerYear = selected_solution.detail.system.unaggregated_time_steps_per_year;
+		}
+	});
+
+	// Reset zoom when timeStepsPerYear changes
+	$effect(() => {
+		timeStepsPerYear;
+		untrack(() => {
+			zoomLevel = null;
+		});
+	});
+
+	let plot_options: ChartOptions = $derived.by(() => getPlotOptions(`Energy [${unit}]`));
+	let duals_plot_options: ChartOptions = $derived.by(() => getPlotOptions('Dual', false, 5));
+
 	function getPlotOptions(
 		yAxisLabel: string,
-		onZoom: (event: { chart: Chart }) => void,
 		showLegend: boolean = true,
 		aspectRatio: number = 2
 	): ChartOptions<'bar' | 'line'> {
@@ -108,7 +117,7 @@
 						callback: (value) => Number(value).toFixed(0)
 					},
 					min: 0,
-					max: (selected_solution?.detail?.system.unaggregated_time_steps_per_year || 0) - 1
+					max: timeStepsPerYear - 1
 				},
 				y: {
 					stacked: true,
@@ -132,8 +141,7 @@
 					pan: {
 						enabled: true,
 						modifierKey: 'ctrl',
-						mode: 'x',
-						onPanComplete: onZoom
+						mode: 'x'
 					},
 					zoom: {
 						drag: {
@@ -142,8 +150,7 @@
 						wheel: {
 							enabled: true
 						},
-						mode: 'x',
-						onZoomComplete: onZoom
+						mode: 'x'
 					},
 					limits: {
 						x: { minRange: 10, min: 'original', max: 'original' }
@@ -507,6 +514,7 @@
 			datasets={[]}
 			{plot_name}
 			zoom={true}
+			bind:zoomLevel
 			bind:this={plot}
 		></BarPlot>
 		{#if duals_datasets_length > 0}
@@ -519,6 +527,7 @@
 				plot_name={duals_plot_name}
 				zoom={true}
 				narrow
+				bind:zoomLevel
 				bind:this={duals_plot}
 			></BarPlot>
 		{:else}

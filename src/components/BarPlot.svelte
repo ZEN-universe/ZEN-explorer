@@ -17,8 +17,9 @@
 		plugins?: Plugin<ChartType>[];
 		zoom?: boolean;
 		plot_name?: string;
-		narrow?: boolean;
 		downloadable?: boolean;
+		narrow?: boolean;
+		zoomLevel?: [number, number] | null;
 		onclick?: (event: any) => void;
 	}
 
@@ -33,6 +34,7 @@
 		plot_name = 'plot_data',
 		downloadable = true,
 		narrow = false,
+		zoomLevel = $bindable(null),
 		onclick
 	}: Props = $props();
 	let chart: Chart | undefined = undefined;
@@ -44,7 +46,7 @@
 				labels: labels,
 				datasets: $state.snapshot(datasets) as ChartDataset[]
 			},
-			options: $state.snapshot(options) as ChartOptions,
+			options: getOptions(),
 			plugins: plugins
 		});
 
@@ -56,7 +58,7 @@
 				labels: labels,
 				datasets: $state.snapshot(datasets) as ChartDataset[]
 			};
-			Object.assign(chart.options, $state.snapshot(options) as ChartOptions);
+			Object.assign(chart.options, getOptions());
 			chart.update();
 		});
 	};
@@ -67,18 +69,46 @@
 		}
 		chart.data.datasets = $state.snapshot(datasets) as ChartDataset[];
 		chart.update();
+		updateZoomLevel();
 	}
 
 	onDestroy(() => {
 		chart?.destroy();
 	});
 
-	export function zoom_rect(min: number, max: number) {
+	function getOptions(): ChartOptions {
+		const optionsSnapshot = $state.snapshot(options as ChartOptions);
+		if (!zoom) {
+			return optionsSnapshot as ChartOptions;
+		}
+
+		// Ensure the zoom options are set
+		optionsSnapshot.plugins = optionsSnapshot.plugins ?? {};
+		optionsSnapshot.plugins.zoom = optionsSnapshot.plugins.zoom ?? {};
+		optionsSnapshot.plugins.zoom.pan = optionsSnapshot.plugins.zoom.pan ?? {};
+		optionsSnapshot.plugins.zoom.zoom = optionsSnapshot.plugins.zoom.zoom ?? {};
+
+		// Set pan and zoom options
+		optionsSnapshot.plugins.zoom.pan.onPanComplete = setZoomLevel;
+		optionsSnapshot.plugins.zoom.zoom.onZoomComplete = setZoomLevel;
+
+		return optionsSnapshot as ChartOptions;
+	}
+
+	function setZoomLevel({ chart }: { chart: Chart }) {
 		if (chart == undefined || chart.canvas == null) {
 			return;
 		}
-		chart.zoomScale('x', { min, max });
+		zoomLevel = [chart.scales['x'].min as number, chart.scales['x'].max as number];
 	}
+
+	function updateZoomLevel() {
+		if (chart == undefined || chart.canvas == null || zoomLevel == null) {
+			return;
+		}
+		chart.zoomScale('x', { min: zoomLevel[0], max: zoomLevel[1] });
+	}
+	$effect(updateZoomLevel);
 
 	function resetZoom() {
 		chart?.resetZoom();

@@ -63,21 +63,29 @@
 		].join('_');
 	});
 	let plot_name_flows: string = $derived(plot_name + '_flows');
-	let plot_options: ChartOptions<'line'> = $derived(
-		get_options('Storage Level', (event) =>
-			flow_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max)
-		)
-	);
-	let plot_options_flows: ChartOptions<'line'> = $derived(
-		get_options('Storage Flow', (event) =>
-			level_plot?.zoom_rect(event.chart.scales.x.min, event.chart.scales.x.max)
-		)
-	);
+	let plot_options: ChartOptions<'line'> = $derived(get_options('Storage Level'));
+	let plot_options_flows: ChartOptions<'line'> = $derived(get_options('Storage Flow'));
 
-	function get_options(
-		label: string,
-		on_zoom: (event: { chart: Chart }) => void
-	): ChartOptions<'line'> {
+	// Zoom level for both plots
+	let zoomLevel: [number, number] | null = $state(null);
+
+	// Time steps per year (for x-axis scaling)
+	let timeStepsPerYear: number = $state(0);
+	$effect(() => {
+		if (selected_solution?.detail?.system.unaggregated_time_steps_per_year !== undefined) {
+			timeStepsPerYear = selected_solution.detail.system.unaggregated_time_steps_per_year;
+		}
+	});
+
+	// Reset zoom when timeStepsPerYear changes
+	$effect(() => {
+		timeStepsPerYear;
+		untrack(() => {
+			zoomLevel = null;
+		});
+	});
+
+	function get_options(label: string): ChartOptions<'line'> {
 		return {
 			animation: false,
 			normalized: true,
@@ -121,8 +129,7 @@
 					pan: {
 						enabled: true,
 						modifierKey: 'ctrl',
-						mode: 'x',
-						onPanComplete: on_zoom
+						mode: 'x'
 					},
 					zoom: {
 						drag: {
@@ -131,8 +138,7 @@
 						wheel: {
 							enabled: true
 						},
-						mode: 'x',
-						onZoomComplete: on_zoom
+						mode: 'x'
 					},
 					limits: {
 						x: { minRange: 10, min: 'original', max: 'original' }
@@ -587,6 +593,7 @@
 			options={plot_options}
 			{plot_name}
 			zoom={true}
+			bind:zoomLevel
 			bind:this={level_plot}
 		></BarPlot>
 		<BarPlot
@@ -597,6 +604,7 @@
 			options={plot_options_flows}
 			plot_name={plot_name_flows}
 			zoom={true}
+			bind:zoomLevel
 			bind:this={flow_plot}
 		></BarPlot>
 	{/if}
