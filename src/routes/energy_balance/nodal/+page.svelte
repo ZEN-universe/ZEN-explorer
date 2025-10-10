@@ -84,12 +84,13 @@
 	});
 
 	let plot_options: ChartOptions = $derived.by(() => getPlotOptions(`Energy [${unit}]`));
-	let duals_plot_options: ChartOptions = $derived.by(() => getPlotOptions('Dual', false, 5));
+	let duals_plot_options: ChartOptions = $derived.by(() => getPlotOptions('Dual', false, 5, false));
 
 	function getPlotOptions(
 		yAxisLabel: string,
 		showLegend: boolean = true,
-		aspectRatio: number = 2
+		aspectRatio: number = 2,
+		yAxisBeginAtZero: boolean = true
 	): ChartOptions<'bar' | 'line'> {
 		return {
 			animation: false,
@@ -121,7 +122,7 @@
 				},
 				y: {
 					stacked: true,
-					beginAtZero: true,
+					beginAtZero: yAxisBeginAtZero,
 					title: {
 						display: true,
 						text: yAxisLabel
