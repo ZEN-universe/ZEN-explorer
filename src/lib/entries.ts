@@ -75,7 +75,7 @@ export default class Entries {
 				labelMap[label] = group;
 			}
 			if (!aggregatedMap[label]) {
-				aggregatedMap[label] = entry.data;
+				aggregatedMap[label] = entry.data.slice();
 			} else {
 				entry.data.forEach((value, i) => {
 					aggregatedMap[label][i] += Number(value);
