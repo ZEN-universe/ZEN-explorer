@@ -9,7 +9,7 @@
 	import { onMount, tick, untrack } from 'svelte';
 
 	import ToggleButton from '$components/ToggleButton.svelte';
-	import SolutionFilter from '$components/SolutionFilter.svelte';
+	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import BarPlot from '$components/BarPlot.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
@@ -21,7 +21,7 @@
 	import { remove_duplicates, to_options } from '$lib/utils';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Entry } from '$lib/types';
-	import { next_color, reset_color_state } from '$lib/colors';
+	import { nextColor, resetColorState } from '$lib/colors';
 
 	// All but one data variable are non-reactive because of their size
 	let level_response: Entry[] | null = null;
@@ -410,7 +410,7 @@
 	 * We do this because Svelte's reactivity does not work well with large datasets.
 	 */
 	async function update_datasets() {
-		reset_color_state();
+		resetColorState();
 		level_datasets = compute_level_datasets();
 		flow_datasets = compute_flow_datasets();
 		level_datasets_length = level_datasets.length;
@@ -490,7 +490,7 @@
 		// Map entries to datasets
 		return entries.map((entry) => {
 			const datasetBase = buildDatasetBase(entry);
-			const color = datasetBase.borderColor || next_color();
+			const color = datasetBase.borderColor || nextColor();
 
 			return {
 				...datasetBase,

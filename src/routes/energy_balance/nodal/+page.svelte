@@ -2,7 +2,7 @@
 	import { onMount, tick, untrack } from 'svelte';
 	import type { Chart, ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 
-	import SolutionFilter from '$components/SolutionFilter.svelte';
+	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
 	import BarPlot from '$components/BarPlot.svelte';
 	import Filters from '$components/Filters.svelte';
@@ -12,7 +12,7 @@
 	import { get_energy_balance, get_unit } from '$lib/temple';
 	import { to_options } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
-	import { next_color, reset_color_state as reset_color_picker_state } from '$lib/colors';
+	import { nextColor, resetColorState as reset_color_picker_state } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes, Entry } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 
@@ -345,7 +345,7 @@
 					};
 
 					// Demand is plotted in a different way than the other plots
-					let color = next_color();
+					let color = nextColor();
 					let bg_color = color;
 					let dataset_data = Object.values(data).map((value, i) => ({ x: i, y: value }));
 

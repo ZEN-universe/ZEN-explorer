@@ -9,7 +9,7 @@
 		type TooltipItem
 	} from 'chart.js';
 
-	import SolutionFilter from '$components/SolutionFilter.svelte';
+	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import BarPlot from '$components/BarPlot.svelte';
 	import Filters from '$components/Filters.svelte';
@@ -33,7 +33,7 @@
 		type URLParams
 	} from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
-	import { reset_color_state } from '$lib/colors';
+	import { resetColorState } from '$lib/colors';
 	import PiePlots from './PiePlots.svelte';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
@@ -499,7 +499,7 @@
 
 		let excluded_years = years.filter((year) => !selected_years.includes(year));
 
-		reset_color_state();
+		resetColorState();
 		let result = variables.flatMap((variable, i) => {
 			if (!variable.show || !data) {
 				return [];
@@ -545,7 +545,7 @@
 			bind:years
 			bind:nodes
 			bind:loading={solution_loading}
-			solution_selected={on_solution_changed}
+			solutionSelected={on_solution_changed}
 			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>

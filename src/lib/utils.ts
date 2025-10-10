@@ -1,6 +1,6 @@
 import type { Row, DatasetSelectors, DatasetContainer } from '$lib/types';
 import type { ChartDataset, ChartType } from 'chart.js';
-import { add_transparency, next_color } from './colors';
+import { addTransparency, nextColor } from './colors';
 
 /**
  * This function takes a set of rows and creates aggregated plots out of these rows. The result can be directly used in d3 plots.
@@ -128,13 +128,13 @@ export function filter_and_aggregate_data(
 	return Object.entries(datasets)
 		.filter(([, values]) => !Object.values(values).includes(NaN))
 		.map(([label, values]) => {
-			let color = next_color();
+			let color = nextColor();
 			return {
 				label: label,
 				data: Object.values(values),
 				type: plot_type,
 				borderColor: color,
-				backgroundColor: add_transparency(color)
+				backgroundColor: addTransparency(color)
 			};
 		}) as ChartDataset<'line' | 'bar'>[];
 }

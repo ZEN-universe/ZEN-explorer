@@ -4,7 +4,7 @@
 
 	import Radio from '$components/Radio.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
-	import SolutionFilter from '$components/SolutionFilter.svelte';
+	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import MapPlot from '$components/MapPlot.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
@@ -313,7 +313,7 @@
 			bind:years
 			bind:selected_solution
 			bind:loading={solution_loading}
-			solution_selected={solution_changed}
+			solutionSelected={solution_changed}
 			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>

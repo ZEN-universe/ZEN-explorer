@@ -3,7 +3,7 @@
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 
-	import SolutionFilter from '$components/SolutionFilter.svelte';
+	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import Radio from '$components/Radio.svelte';
 	import BarPlot from '$components/BarPlot.svelte';
@@ -22,7 +22,7 @@
 	import { get_variable_name } from '$lib/variables';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { getURLParam, getURLParamAsBoolean, updateURLParams } from '$lib/queryParams.svelte';
-	import { reset_color_state } from '$lib/colors';
+	import { resetColorState } from '$lib/colors';
 
 	let technology_data: ParseResult<Row> | null = $state(null);
 	let carrier_data: ParseResult<Row> | null = $state(null);
@@ -303,7 +303,7 @@
 			data = cumulative_data.data;
 		}
 
-		reset_color_state();
+		resetColorState();
 		const filtered_data = filter_and_aggregate_data(
 			data,
 			dataset_selector,
@@ -376,7 +376,7 @@
 			bind:years
 			bind:loading={solution_loading}
 			disabled={fetching || solution_loading}
-			solution_selected={on_solution_selected}
+			solutionSelected={on_solution_selected}
 		/>
 	</FilterSection>
 	{#if !solution_loading && selected_solution}

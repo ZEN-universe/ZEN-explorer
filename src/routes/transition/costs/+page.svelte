@@ -3,7 +3,7 @@
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import type { ParseResult } from 'papaparse';
 
-	import SolutionFilter from '$components/SolutionFilter.svelte';
+	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import Radio from '$components/Radio.svelte';
 	import ToggleButton from '$components/ToggleButton.svelte';
@@ -21,7 +21,7 @@
 		type URLParams
 	} from '$lib/queryParams.svelte';
 	import type { ActivatedSolution } from '$lib/types';
-	import { reset_color_state } from '$lib/colors';
+	import { resetColorState } from '$lib/colors';
 	import { get_variable_name } from '$lib/variables';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
@@ -511,7 +511,7 @@
 		}
 
 		// Get plot data, as a base we take the grouped data adapted to the cost selection.
-		reset_color_state();
+		resetColorState();
 		let bar_data = filter_and_aggregate_data(
 			grouped_data,
 			dataset_selector,
@@ -553,7 +553,7 @@
 			bind:years
 			bind:selected_solution
 			bind:loading={solution_loading}
-			solution_selected={solution_changed}
+			solutionSelected={solution_changed}
 			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>

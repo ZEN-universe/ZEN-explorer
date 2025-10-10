@@ -66,34 +66,50 @@ const colors: string[][] = [
 	]
 ];
 
-let color_index = 0;
-let shade_index = 0;
+let colorIndex = 0;
+let shadeIndex = 0;
+
+let colorMap: Record<string, string> = {};
 
 /**
  * Resets the color state to the initial state.
  * This is useful when you want to start over with color selection.
  */
-export function reset_color_state() {
-	color_index = 0;
-	shade_index = 0;
+export function resetColorState() {
+	colorIndex = 0;
+	shadeIndex = 0;
+	colorMap = {};
 }
 
 /**
- * Pick the next color from the ETH color palette.
+ * Pick the next color from the ETH color palette. Assigns the same color to the same label if provided.
+ * @param label Optional label to consistently assign the same color to the same label.
  * @returns Color string in the format "rgb(r, g, b)".
  * May return duplicates if called more than 49 times without resetting.
  */
-export function next_color(): string {
-	if (color_index >= colors.length) {
-		color_index = 0; // Reset to the first color
-		shade_index++;
-		if (shade_index >= colors[0].length) {
-			shade_index = 0; // Reset to the first shade
+export function nextColor(label?: string): string {
+	// Return a previously assigned color if label is provided and already exists
+	if (label !== undefined && colorMap[label] !== undefined) {
+		return colorMap[label];
+	}
+
+	// Cycle through colors and shades
+	if (colorIndex >= colors.length) {
+		colorIndex = 0; // Reset to the first color
+		shadeIndex++;
+		if (shadeIndex >= colors[0].length) {
+			shadeIndex = 0; // Reset to the first shade
 		}
 	}
 
-	const color = colors[color_index][shade_index];
-	color_index++;
+	// Assign color
+	const color = colors[colorIndex][shadeIndex];
+	colorIndex++;
+
+	// Store in map if label is provided
+	if (label !== undefined) {
+		colorMap[label] = color;
+	}
 
 	return color;
 }
@@ -103,16 +119,16 @@ export function next_color(): string {
  * @param color color string in the format "rgb(r, g, b)"
  * @param transparency transparency value between 0 and 1 (default is 0.8)
  */
-export function add_transparency(color: string, transparency: number = 0.8): string {
+export function addTransparency(color: string, transparency: number = 0.8): string {
 	return color.replace('rgb', 'rgba').replace(')', `, ${transparency})`);
 }
 
-export function all_colors(): string[] {
-	let flat_colors = [];
+export function allColors(): string[] {
+	let flatColors = [];
 	for (let j = 0; j < colors.length; j++) {
 		for (let i = 0; i < colors[0].length; i++) {
-			flat_colors.push(colors[i][j]);
+			flatColors.push(colors[i][j]);
 		}
 	}
-	return flat_colors;
+	return flatColors;
 }

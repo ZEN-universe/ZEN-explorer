@@ -58,6 +58,21 @@ export default class Entries {
 	}
 
 	/**
+	 * Filters the data arrays of each entry to only include values at the specified indexes.
+	 * @param indexes Array of indexes to retain in the data arrays.
+	 * @returns New Entries instance with filtered data arrays.
+	 */
+	filterDataByIndex(indexes: number[]): Entries {
+		const filteredEntries = this.entries.map((entry) => {
+			return {
+				index: entry.index,
+				data: indexes.map((i) => entry.data[i])
+			};
+		});
+		return new Entries(filteredEntries);
+	}
+
+	/**
 	 * Groups and aggregates entries by the specified index fields.
 	 * Sums the data arrays for entries with the same group key.
 	 * @param fieldNames Array of index field names to group by.
@@ -94,6 +109,47 @@ export default class Entries {
 		);
 	}
 
+	normalize(): Entries {
+		const computeTotals = (fn: (v: number) => number) => {
+			const totals: number[] = [];
+			this.entries.forEach((entry) => {
+				entry.data.forEach((value, index) => {
+					const val = fn(value);
+					if (val <= 0) return;
+					totals[index] = (totals[index] ?? 0) + val;
+				});
+			});
+			return totals;
+		}
+		
+		// Get the sum of all positive values for each year
+		const positiveTotals = computeTotals((v) => v);
+		// If a year has no positive values, we compute the absolute value of the sum of the negative values
+		const negativeTotals = computeTotals((v) => -v);
+
+		// Normalize the data by dividing each value by the total for that year
+		const normalizedEntries = this.entries.map((entry) => {
+			return {
+				index: entry.index,
+				data: entry.data.reduce((acc, value, index) => {
+					if (positiveTotals[index] > 0) {
+						acc[index] = value / positiveTotals[index];
+					} else if (negativeTotals[index] > 0) {
+						acc[index] = value / negativeTotals[index];
+					} else {
+						acc[index] = 0;
+					}
+					return acc;
+				}, [] as number[])
+			};
+		});
+		return new Entries(normalizedEntries);
+	}
+
+	/**
+	 * Dumps the entries to the console.
+	 * @return Reference to itself for chaining.
+	 */
 	dump(): Entries {
 		console.table(
 			this.entries.map((entry) => ({

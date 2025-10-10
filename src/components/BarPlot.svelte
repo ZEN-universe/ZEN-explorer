@@ -1,20 +1,21 @@
-<script lang="ts">
+<script lang="ts" generics="Type extends ChartType">
 	import Chart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
 	import Modal from './Modal.svelte';
 	import { onDestroy } from 'svelte';
-	import type { ChartDataset, ChartOptions, ChartType, Plugin } from 'chart.js/auto';
+	import type { ChartDataset, ChartOptions, ChartType, Plugin, PluginOptionsByType } from 'chart.js/auto';
 
 	Chart.register(zoomPlugin);
 
 	interface Props {
 		id?: string;
-		type: ChartType;
+		type: Type;
 		labels?: string[];
-		datasets: ChartDataset<ChartType>[];
-		options?: ChartOptions<ChartType>;
+		datasets: ChartDataset<Type>[];
+		options?: ChartOptions<Type>;
 		plugins?: Plugin<ChartType>[];
+		pluginOptions?: ChartOptions<ChartType>['plugins'];
 		zoom?: boolean;
 		plot_name?: string;
 		downloadable?: boolean;
@@ -29,6 +30,7 @@
 		labels,
 		datasets,
 		options,
+		pluginOptions = {},
 		plugins = [],
 		zoom = false,
 		plot_name = 'plot_data',
@@ -63,7 +65,7 @@
 		});
 	};
 
-	export function updateChart(datasets: ChartDataset<ChartType>[]) {
+	export function updateChart(datasets: ChartDataset<Type>[]) {
 		if (chart == undefined || chart.canvas == null) {
 			return;
 		}
@@ -78,12 +80,16 @@
 
 	function getOptions(): ChartOptions {
 		const optionsSnapshot = $state.snapshot(options as ChartOptions);
+		optionsSnapshot.plugins = {
+			...(optionsSnapshot.plugins ?? {}),
+			...pluginOptions
+		} as Record<string, any>;
+		
 		if (!zoom) {
 			return optionsSnapshot as ChartOptions;
 		}
 
 		// Ensure the zoom options are set
-		optionsSnapshot.plugins = optionsSnapshot.plugins ?? {};
 		optionsSnapshot.plugins.zoom = optionsSnapshot.plugins.zoom ?? {};
 		optionsSnapshot.plugins.zoom.pan = optionsSnapshot.plugins.zoom.pan ?? {};
 		optionsSnapshot.plugins.zoom.zoom = optionsSnapshot.plugins.zoom.zoom ?? {};
@@ -91,7 +97,7 @@
 		// Set pan and zoom options
 		optionsSnapshot.plugins.zoom.pan.onPanComplete = setZoomLevel;
 		optionsSnapshot.plugins.zoom.zoom.onZoomComplete = setZoomLevel;
-
+		
 		return optionsSnapshot as ChartOptions;
 	}
 

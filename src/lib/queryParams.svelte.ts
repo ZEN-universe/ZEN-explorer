@@ -18,6 +18,12 @@ export function getURLParam(key: string): string | null {
 	return value ? decodeURIComponent(value) : null;
 }
 
+export function getURLParamAsArray(key: string): string[] {
+	const param = getRawURLParam(key);
+	if (!param) return [];
+	return param.split('~').map((i) => decodeURIComponent(i));
+}
+
 export function getURLParamAsIntArray(key: string): number[] | null {
 	const param = getRawURLParam(key);
 	if (param === null) return null;
