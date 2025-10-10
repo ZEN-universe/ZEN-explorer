@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.5 (2025-10-10)
+
+- [Sankey] Fix wrong numerical values. Closes #130.
+- [Nodal] Do not begin at zero in the duals plot. Closes #129.
+- Sort nodes and carriers alphabetically. Closes #128.
+
 ## 0.7.4 (2025-10-02)
 
 - [Nodal, Storage] Keep zoom level if possible when changing options and solutions.
