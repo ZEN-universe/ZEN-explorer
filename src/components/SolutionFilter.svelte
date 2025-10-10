@@ -9,7 +9,6 @@
 	interface Props {
 		carriers?: string[];
 		nodes?: string[];
-		edges?: string[];
 		years?: number[];
 		selected_solution: ActivatedSolution | null;
 		loading?: boolean;
@@ -20,7 +19,6 @@
 	let {
 		carriers = $bindable([]),
 		nodes = $bindable([]),
-		edges = $bindable([]),
 		years = $bindable([]),
 		selected_solution = $bindable(),
 		loading = $bindable(false),
@@ -112,9 +110,8 @@
 				Object.keys(solutionDetail.scenarios).length > 1 ? selected_solution.scenario_name : null
 		});
 
-		carriers = selected_solution.detail.system.set_carriers.slice();
-		nodes = selected_solution.detail.system.set_nodes;
-		edges = Object.keys(selected_solution.detail.edges);
+		carriers = selected_solution.detail.system.set_carriers.slice().sort();
+		nodes = selected_solution.detail.system.set_nodes.slice().sort();
 		years = [...Array(selected_solution.detail.system.optimized_years).keys()].map(
 			(i) =>
 				i * selected_solution!.detail.system.interval_between_years +

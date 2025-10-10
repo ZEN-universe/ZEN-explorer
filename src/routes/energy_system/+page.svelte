@@ -52,14 +52,8 @@
 		fetchData();
 	}
 
-	let carriers = $derived.by(() => {
-		if (!selectedSolution) return [];
-		return selectedSolution.detail.system.set_carriers.slice().sort();
-	});
-	let nodes = $derived.by(() => {
-		if (!selectedSolution) return [];
-		return selectedSolution.detail.system.set_nodes.slice().sort();
-	});
+	let carriers: string[] = $state([]);
+	let nodes: string[] = $state([]);
 
 	$effect(() => {
 		if (!years.length) {
@@ -396,6 +390,8 @@
 		<SolutionFilter
 			bind:years
 			bind:selected_solution={selectedSolution}
+			bind:carriers
+			bind:nodes
 			bind:loading={solutionLoading}
 			solution_selected={solutionChanged}
 			disabled={fetching || solutionLoading}

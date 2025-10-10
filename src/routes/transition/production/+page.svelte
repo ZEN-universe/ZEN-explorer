@@ -41,7 +41,6 @@
 	let data: (ParseResult<any> | null)[] | null = $state(null);
 	let years: number[] = $state([]);
 	let nodes: string[] = $state([]);
-	let edges: string[] = $state([]);
 
 	// Variables
 	interface Variable {
@@ -545,7 +544,6 @@
 			bind:selected_solution
 			bind:years
 			bind:nodes
-			bind:edges
 			bind:loading={solution_loading}
 			solution_selected={on_solution_changed}
 			disabled={fetching || solution_loading}
