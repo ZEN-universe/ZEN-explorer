@@ -6,6 +6,7 @@ test('nodal: default', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.getByLabel('Carrier').selectOption('heat'); // previous default was heat
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/default.png`);
 });
 
@@ -15,6 +16,7 @@ test('nodal: year', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.getByLabel('Carrier').selectOption('heat'); // previous default was heat
 	await page.getByLabel('Year').selectOption('2050');
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/year-2050.png`);
 });
@@ -25,6 +27,7 @@ test('nodal: node', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.getByLabel('Carrier').selectOption('heat'); // previous default was heat
 	await page.getByLabel('Node').selectOption('DE');
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/node-DE.png`);
 });
@@ -45,6 +48,7 @@ test('nodal: smoothing window size', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.getByLabel('Carrier').selectOption('heat'); // previous default was heat
 	await page.getByLabel('Smoothing Window Size').selectOption('Monthly');
 	await expect(page.locator('#chart')).toHaveScreenshot(
 		`eeht_pf/smoothing-window-size-monthly.png`
@@ -54,6 +58,7 @@ test('nodal: smoothing window size', async ({ page }) => {
 test('nodal: dual plot', async ({ page }) => {
 	await page.goto('/energy_balance/nodal');
 	await page.getByLabel('Solution', { exact: true }).selectOption('operations_with_duals');
+	await page.getByLabel('Carrier').selectOption('heat'); // previous default was heat
 	await expect(page.locator('#chart')).toHaveScreenshot(`owd/default-chart.png`);
 	await expect(page.locator('#chart-duals')).toHaveScreenshot(`owd/default-duals.png`);
 });
