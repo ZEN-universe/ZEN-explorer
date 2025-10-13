@@ -51,7 +51,7 @@
 		const solutionParams = getURLParamAsArray(urlParamSolutions);
 		const scenarioParams = getURLParamAsArray(urlParamScenarios);
 		if (solutionParams.length == 0 || solutionParams.length != scenarioParams.length) {
-			componentMounted = false;
+			componentMounted = true;
 			return;
 		}
 		

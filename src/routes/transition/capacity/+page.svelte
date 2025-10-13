@@ -24,7 +24,7 @@
 	import type { ActivatedSolution, Row, System } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
-	import { nextColor, resetColorState } from '$lib/colors';
+	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
 	import Entries from '$lib/entries';
 	import { nextPattern, resetPatternState, type ShapeType } from '$lib/patterns';
 
@@ -118,6 +118,7 @@
 							labelNames.add(dataset.label || '');
 							labels.push({
 								text: dataset.label || '',
+								fontColor: chart.options.color as string,
 								fillStyle: (dataset.backgroundColor as string) || 'black',
 								strokeStyle: (dataset.borderColor as string) || 'black',
 								lineWidth: (dataset.borderWidth as number) || 0,
@@ -280,6 +281,8 @@
 	}
 
 	async function onSolutionChanged() {
+		// wait for all properties (e.g. years) to be updated
+		await tick();
 		resetDataSelection();
 		await fetchData();
 	}
@@ -340,13 +343,13 @@
 
 		if (selectedAggregation == 'technology') {
 			// aggregate by technology
-			filterCriteria['location'] = selectedLocations;
-			filterCriteria['technology'] = technologies;
+			filterCriteria['technology'] = selectedTechnologies;
+			filterCriteria['location'] = locations;
 			groupByColumns.push('location');
 		} else {
 			// aggregate by location (node)
-			filterCriteria['technology'] = selectedTechnologies;
-			filterCriteria['location'] = locations;
+			filterCriteria['location'] = selectedLocations;
+			filterCriteria['technology'] = technologies;
 			groupByColumns.push('technology');
 		}
 
@@ -364,11 +367,17 @@
 		}
 
 		return entries.toArray().map((entry) => {
-			const label = selectedAggregation === 'technology' ? entry.index.location : entry.index.technology;
+			const label =
+				selectedAggregation === 'technology' ? entry.index.location : entry.index.technology;
+			const color = nextColor(label);
 			return {
 				label,
 				data: entry.data,
-				backgroundColor: pattern !== undefined ? drawPattern(pattern, nextColor(label)) : nextColor(label),
+				borderColor: color,
+				backgroundColor:
+					pattern !== undefined
+						? drawPattern(pattern, addTransparency(color))
+						: addTransparency(color),
 				stack: solutionName
 			} as ChartDataset<'bar'>;
 		});

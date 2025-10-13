@@ -36,7 +36,6 @@
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
-	let nodes: string[] = $state([]);
 	let years: number[] = $state([]);
 	const aggregation_options: { label: string; value: string }[] = [
 		{ label: 'Location', value: 'location' },
@@ -138,7 +137,7 @@
 		}
 		return remove_duplicates(
 			[...(technology_data?.data || []), ...(carrier_data?.data || [])].map((d) => d.location)
-		);
+		).sort();
 	});
 
 	$effect(() => {
@@ -321,7 +320,7 @@
 		return filtered_data;
 	});
 
-	let line_datasets: ChartDataset<'line'>[] = $derived.by(() => {
+	let line_datasets: ChartDataset<'line' | 'bar'>[] = $derived.by(() => {
 		if (
 			selected_solution === null ||
 			annual_limit_data === null ||
@@ -358,7 +357,7 @@
 			selected_cumulation == 'Annual' ? 'Annual Emissions Limit' : 'Carbon Emissions Budget';
 		filtered_limit_data[0].type = 'line';
 
-		return filtered_limit_data as unknown as ChartDataset<'line'>[];
+		return filtered_limit_data as unknown as ChartDataset<'line' | 'bar'>[];
 	});
 
 	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
@@ -372,7 +371,6 @@
 	<FilterSection title="Solution Selection">
 		<SolutionFilter
 			bind:selected_solution
-			bind:nodes
 			bind:years
 			bind:loading={solution_loading}
 			disabled={fetching || solution_loading}

@@ -62,12 +62,15 @@ test('emissions: location', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.waitForTimeout(1000); // TODO after upgrading playwright: check if this is still needed
 	await page
 		.locator('div')
 		.filter({ hasText: /^Locations Deselect all$/ })
 		.getByRole('button')
 		.click();
+	await page.waitForTimeout(1000); // TODO after upgrading playwright: check if this is still needed
 	await page.getByRole('checkbox', { name: 'DE' }).check();
+	await page.waitForTimeout(1000); // TODO after upgrading playwright: check if this is still needed
 	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/subdivision/location-only-DE.png`);
 });
 
