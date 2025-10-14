@@ -1,11 +1,10 @@
 <script lang="ts">
 	import type {
-		Chart,
+		Chart as BaseChart,
 		ChartOptions,
 		ChartDataset,
 		TooltipItem,
-		ChartTypeRegistry,
-		LegendItem
+		ChartTypeRegistry
 	} from 'chart.js';
 	import { onMount, tick, untrack } from 'svelte';
 	import { draw as drawPattern } from 'patternomaly';
@@ -13,7 +12,7 @@
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import Radio from '$components/Radio.svelte';
-	import BarPlot from '$components/BarPlot.svelte';
+	import Chart from '$components/Chart.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
@@ -21,11 +20,16 @@
 
 	import { get_component_total as getComponentTotal } from '$lib/temple';
 	import { remove_duplicates as removeDuplicates, to_options as toOptions } from '$lib/utils';
+	import {
+		generateLabelsForSolutionComparison,
+		generateSolutionSuffix,
+		onClickLegendForSolutionComparison
+	} from '$lib/compareSolutions';
 	import type { ActivatedSolution, Row, System } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
-	import Entries from '$lib/entries';
+	import Entries, { type FilterCriteria } from '$lib/entries';
 	import { nextPattern, resetPatternState, type ShapeType } from '$lib/patterns';
 
 	let data: Row[][] = $state([]);
@@ -107,42 +111,14 @@
 					}
 				}
 			}
-		},
-		legend: {
-			labels: {
-				generateLabels: (chart: Chart) => {
-					const labels: LegendItem[] = [];
-					const labelNames = new Set<string>();
-					chart.data.datasets.forEach((dataset, index) => {
-						if (!labelNames.has(dataset.label || '')) {
-							labelNames.add(dataset.label || '');
-							labels.push({
-								text: dataset.label || '',
-								fontColor: chart.options.color as string,
-								fillStyle: (dataset.backgroundColor as string) || 'black',
-								strokeStyle: (dataset.borderColor as string) || 'black',
-								lineWidth: (dataset.borderWidth as number) || 0,
-								hidden: !chart.isDatasetVisible(index),
-								datasetIndex: index
-							} as LegendItem);
-						}
-					});
-					return labels;
-				}
-			},
-			onClick(_, legendItem, legend) {
-				const chart = legend.chart;
-				chart.data.datasets.forEach((dataset, i) => {
-					if (dataset.label !== legendItem.text) return;
-					if (chart.isDatasetVisible(i)) {
-						chart.hide(i);
-					} else {
-						chart.show(i);
-					}
-				});
-			}
 		}
 	};
+
+	function generateLabels(chart: BaseChart) {
+		// TODO: Add labels for the patterns (gray background with pattern)
+		const labels = generateLabelsForSolutionComparison(chart);
+		return labels;
+	}
 
 	let plotName: string = $derived.by(() => {
 		if (selectedSolutions[0] == null) {
@@ -304,25 +280,22 @@
 	 * Fetch data from the API of the selected values in the form
 	 */
 	async function fetchData() {
-		if (selectedVariable === null || selectedSolutions[0] === null) {
+		if (selectedVariable === null || selectedSolutions.some((s) => s === null)) {
 			data = [];
 			return;
 		}
 
 		fetching = true;
 
+		const solutions = selectedSolutions as ActivatedSolution[];
 		const variable = selectedVariable;
 		const fetched = await Promise.all(
-			selectedSolutions.map((solution) => {
-				if (solution === null) return null;
+			solutions.map((solution) => {
 				return getComponentTotal(solution.solution_name, [variable], solution.scenario_name);
 			})
 		);
 
-		data = fetched
-			.filter((d) => d !== null)
-			.map((d) => d[variable]?.data)
-			.filter((d) => d !== undefined);
+		data = fetched.map((d) => d[variable]?.data).filter((d) => d !== undefined);
 
 		if (fetched[0]?.unit?.data) {
 			units = Object.fromEntries(
@@ -338,7 +311,7 @@
 		solutionName: string,
 		pattern?: ShapeType
 	): ChartDataset<'bar'>[] {
-		const filterCriteria: Record<string, string[]> = {};
+		const filterCriteria: FilterCriteria = {};
 		const groupByColumns: string[] = ['capacity_type'];
 
 		if (selectedAggregation == 'technology') {
@@ -399,10 +372,7 @@
 		return selectedSolutions.flatMap((solution, index) => {
 			if (solution === null || !data[index]) return [];
 
-			let suffix = solution.solution_name.split('.').pop() || solution.solution_name;
-			if (solution.scenario_name != 'none') {
-				suffix = `${suffix} (${solution.scenario_name})`;
-			}
+			let suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
 			return generateDatasets(data[index], suffix, index > 0 ? nextPattern() : undefined);
 		});
 	});
@@ -517,13 +487,15 @@
 	{:else if datasets.length == 0}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot
+		<Chart
 			type="bar"
 			{datasets}
 			{labels}
 			options={plotOptions}
 			pluginOptions={plotPluginOptions}
-			plot_name={plotName}
-		></BarPlot>
+			plotName={plotName}
+			{generateLabels}
+			onClickLegend={onClickLegendForSolutionComparison}
+		></Chart>
 	{/if}
 </div>

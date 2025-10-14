@@ -51,8 +51,6 @@ export function getActivatedSolution(
 
 export function generateScenarioYears(detail: ScenarioDetail): number[] {
 	return [...Array(detail.system.optimized_years).keys()].map(
-		(i) =>
-			i * detail.system.interval_between_years +
-			detail.system.reference_year
+		(i) => i * detail.system.interval_between_years + detail.system.reference_year
 	);
 }

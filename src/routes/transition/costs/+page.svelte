@@ -7,7 +7,7 @@
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import Radio from '$components/Radio.svelte';
 	import ToggleButton from '$components/ToggleButton.svelte';
-	import BarPlot from '$components/BarPlot.svelte';
+	import Chart from '$components/Chart.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
@@ -648,7 +648,7 @@
 		{:else if selected_years.length == 0}
 			<div class="text-center">Please select at least one year.</div>
 		{:else}
-			<BarPlot type="line" options={plot_options} {datasets} {labels} {plot_name}></BarPlot>
+			<Chart type="line" options={plot_options} {datasets} {labels} plotName={plot_name}></Chart>
 		{/if}
 	{/if}
 </div>

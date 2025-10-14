@@ -1,10 +1,16 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { Chart, ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
+	import type {
+		Chart as BaseChart,
+		ChartDataset,
+		ChartOptions,
+		ChartTypeRegistry,
+		TooltipItem
+	} from 'chart.js';
 
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
-	import BarPlot from '$components/BarPlot.svelte';
+	import Chart from '$components/Chart.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
@@ -22,8 +28,8 @@
 	let solution_loading: boolean = $state(false);
 	let fetching = $state(false);
 
-	let plot = $state<BarPlot>();
-	let duals_plot = $state<BarPlot>();
+	let plot = $state<Chart>();
+	let duals_plot = $state<Chart>();
 
 	let nodes: string[] = $state([]);
 	let carriers: string[] = $state([]);
@@ -508,29 +514,29 @@
 	{:else if datasets_length == 0 || selected_solution == null}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot
+		<Chart
 			type={number_of_time_steps == 1 ? 'bar' : 'line'}
 			options={plot_options}
 			{labels}
 			datasets={[]}
-			{plot_name}
+			plotName={plot_name}
 			zoom={true}
 			bind:zoomLevel
 			bind:this={plot}
-		></BarPlot>
+		></Chart>
 		{#if duals_datasets_length > 0}
-			<BarPlot
+			<Chart
 				id="chart-duals"
 				type={number_of_time_steps == 1 ? 'bar' : 'line'}
 				options={duals_plot_options}
 				{labels}
 				datasets={[]}
-				plot_name={duals_plot_name}
+				plotName={duals_plot_name}
 				zoom={true}
 				narrow
 				bind:zoomLevel
 				bind:this={duals_plot}
-			></BarPlot>
+			></Chart>
 		{:else}
 			<div class="text-center text-muted mt-2">No dual data available.</div>
 		{/if}

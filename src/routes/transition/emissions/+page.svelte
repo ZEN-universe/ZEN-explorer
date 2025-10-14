@@ -6,7 +6,7 @@
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import Radio from '$components/Radio.svelte';
-	import BarPlot from '$components/BarPlot.svelte';
+	import Chart from '$components/Chart.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
@@ -444,12 +444,12 @@
 	{:else if datasets.length == 0 || selected_years.length == 0}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot
+		<Chart
 			type="bar"
 			options={plot_options}
 			labels={selected_years.map((year) => year.toString())}
 			{datasets}
-			{plot_name}
-		></BarPlot>
+			plotName={plot_name}
+		></Chart>
 	{/if}
 </div>

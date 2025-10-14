@@ -1,5 +1,7 @@
 import type { Entry, Index, Row } from './types';
 
+export type FilterCriteria = Record<string, string[]>;
+
 /**
  * Class to handle a collection of Entry objects with methods for filtering and grouping.
  * Each Entry consists of an index (key-value pairs) and a data array (numeric values).
@@ -40,13 +42,22 @@ export default class Entries {
 	}
 
 	/**
+	 * Concatenates multiple Entries instances into a single Entries instance.
+	 * @param entriesList Array of Entries instances to concatenate.
+	 * @returns New Entries instance containing all entries from the input instances.
+	 */
+	static concatenate(entriesList: Entries[]): Entries {
+		return new Entries(entriesList.flatMap((e) => e.toArray()));
+	}
+
+	/**
 	 * Filters the entries based on the provided criteria.
 	 * Only entries whose index values match all criteria are included.
 	 * If a key in criteria does not exist in an entry's index, that entry might still be included.
 	 * @param criteria Object where keys are index fields and values are allowed values for that field.
 	 * @returns New Entries instance with filtered entries.
 	 */
-	filterByCriteria(criteria: Record<string, string[]>): Entries {
+	filterByCriteria(criteria: FilterCriteria): Entries {
 		const filteredEntries = this.entries.filter((entry) =>
 			Object.entries(criteria).every(
 				// Check if entry does not have the key or if the value matches one of the allowed values
@@ -109,6 +120,11 @@ export default class Entries {
 		);
 	}
 
+	/**
+	 * Normalizes the data arrays of each entry so that the sum of positive values for each index is 1.
+	 * If a year has no positive values, it normalizes by the absolute sum of negative values.
+	 * @returns New Entries instance with normalized data arrays.
+	 */
 	normalize(): Entries {
 		const computeTotals = (fn: (v: number) => number) => {
 			const totals: number[] = [];
@@ -120,8 +136,8 @@ export default class Entries {
 				});
 			});
 			return totals;
-		}
-		
+		};
+
 		// Get the sum of all positive values for each year
 		const positiveTotals = computeTotals((v) => v);
 		// If a year has no positive values, we compute the absolute value of the sum of the negative values
@@ -160,15 +176,59 @@ export default class Entries {
 		return this;
 	}
 
+	/**
+	 * Applies a callback function to each value in the data arrays of the entries.
+	 * @param callback Function to apply to each data value.
+	 * @returns New Entries instance with mapped data.
+	 */
+	mapData(callback: (value: number, dataIndex: number, dataArray: number[]) => number): Entries {
+		const mappedEntries = this.entries.map((entry) => {
+			return {
+				index: entry.index,
+				data: entry.data.map(callback)
+			};
+		});
+		return new Entries(mappedEntries);
+	}
+
+	/**
+	 * Applies a callback function to each index of the entries.
+	 * @param callback Function to apply to each index.
+	 * @returns New Entries instance with mapped indexes.
+	 */
+	mapIndex(callback: (index: Index, entryIndex: number, entriesArray: Entry[]) => Index): Entries {
+		const mappedEntries = this.entries.map((entry, i, arr) => {
+			return {
+				index: callback(entry.index, i, arr),
+				data: entry.data
+			};
+		});
+		return new Entries(mappedEntries);
+	}
+
+	/**
+	 * Iterates over all entries.
+	 * @returns An array of all unique index keys across all entries.
+	 */
 	*[Symbol.iterator](): Iterator<Entry> {
 		return this.entries[Symbol.iterator]();
 	}
 
+	/**
+	 * Iterates over all entries.
+	 * @returns Reference to itself for chaining.
+	 */
 	forEach(callback: (entry: Entry, index: number, array: Entry[]) => void): Entries {
 		this.entries.forEach(callback);
 		return this;
 	}
 
+	/**
+	 * Reduces the entries to a single value using the provided callback function.
+	 * @param callback Callback function to execute on each entry.
+	 * @param initialValue Initial value for the reduction.
+	 * @returns The final reduced value.
+	 */
 	reduce<T>(
 		callback: (previousValue: T, currentValue: Entry, currentIndex: number, array: Entry[]) => T,
 		initialValue: T
@@ -176,22 +236,45 @@ export default class Entries {
 		return this.entries.reduce(callback, initialValue);
 	}
 
+	/**
+	 * Finds the first entry that satisfies the provided testing function.
+	 * @param callback Function to test each entry.
+	 * @returns The first entry that satisfies the testing function, or undefined if none found.
+	 */
 	find(callback: (entry: Entry, index: number, array: Entry[]) => boolean): Entry | undefined {
 		return this.entries.find(callback);
 	}
 
+	/**
+	 * Filters the entries based on the provided testing function.
+	 * @param callback Function to test each entry.
+	 * @returns New Entries instance with entries that satisfy the testing function.
+	 */
 	filter(callback: (entry: Entry, index: number, array: Entry[]) => boolean): Entries {
 		return new Entries(this.entries.filter(callback));
 	}
 
+	/**
+	 * Gets the number of entries.
+	 * @returns Number of entries.
+	 */
 	get length(): number {
 		return this.entries.length;
 	}
 
+	/**
+	 * Gets the entry at the specified index.
+	 * @param index Index of the entry to retrieve.
+	 * @returns The entry at the specified index, or undefined if out of bounds.
+	 */
 	get(index: number): Entry | undefined {
 		return this.entries[index];
 	}
 
+	/**
+	 * Converts the Entries instance to a plain array of Entry objects.
+	 * @returns Array of Entry objects.
+	 */
 	toArray(): Entry[] {
 		return this.entries;
 	}

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-		type Chart,
+		type Chart as BaseChart,
 		type ChartDataset,
 		type ChartOptions,
 		type ChartTypeRegistry,
@@ -11,7 +11,7 @@
 	import ToggleButton from '$components/ToggleButton.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
-	import BarPlot from '$components/BarPlot.svelte';
+	import Chart from '$components/Chart.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
@@ -46,8 +46,8 @@
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
-	let level_plot = $state<BarPlot>();
-	let flow_plot = $state<BarPlot>();
+	let level_plot = $state<Chart>();
+	let flow_plot = $state<Chart>();
 
 	let unit: string = $derived.by(() => (technologies.length > 0 ? units[technologies[0]] : ''));
 	let plot_name: string = $derived.by(() => {
@@ -585,27 +585,27 @@
 		<!-- {:else if flow_datasets_length == 0}
 		<div class="text-center">No flow data available for this selection.</div> -->
 	{:else}
-		<BarPlot
+		<Chart
 			id="level_chart"
 			type="line"
 			{labels}
 			datasets={[]}
 			options={plot_options}
-			{plot_name}
+			plotName={plot_name}
 			zoom={true}
 			bind:zoomLevel
 			bind:this={level_plot}
-		></BarPlot>
-		<BarPlot
+		></Chart>
+		<Chart
 			id="flow_chart"
 			type="line"
 			{labels}
 			datasets={[]}
 			options={plot_options_flows}
-			plot_name={plot_name_flows}
+			plotName={plot_name_flows}
 			zoom={true}
 			bind:zoomLevel
 			bind:this={flow_plot}
-		></BarPlot>
+		></Chart>
 	{/if}
 </div>

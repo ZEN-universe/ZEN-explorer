@@ -1,12 +1,14 @@
 <script lang="ts" generics="Type extends ChartType">
-	import Chart from 'chart.js/auto';
+	import BaseChart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
-	import Modal from './Modal.svelte';
 	import { onDestroy } from 'svelte';
-	import type { ChartDataset, ChartOptions, ChartType, Plugin, PluginOptionsByType } from 'chart.js/auto';
+	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
 
-	Chart.register(zoomPlugin);
+	import Modal from '$components/Modal.svelte';
+	import LegendColorBox from '$components/LegendColorBox.svelte';
+
+	BaseChart.register(zoomPlugin);
 
 	interface Props {
 		id?: string;
@@ -17,11 +19,13 @@
 		plugins?: Plugin<ChartType>[];
 		pluginOptions?: ChartOptions<ChartType>['plugins'];
 		zoom?: boolean;
-		plot_name?: string;
+		plotName?: string;
 		downloadable?: boolean;
 		narrow?: boolean;
 		zoomLevel?: [number, number] | null;
-		onclick?: (event: any) => void;
+		generateLabels?: (chart: BaseChart) => LegendItem[];
+		onClickLegend?: (item: LegendItem, chart: BaseChart) => void;
+		onClickBar?: (label: string, datasetIndex: number) => void;
 	}
 
 	let {
@@ -33,23 +37,26 @@
 		pluginOptions = {},
 		plugins = [],
 		zoom = false,
-		plot_name = 'plot_data',
+		plotName = 'plot_data',
 		downloadable = true,
 		narrow = false,
 		zoomLevel = $bindable(null),
-		onclick
+		generateLabels,
+		onClickLegend,
+		onClickBar
 	}: Props = $props();
-	let chart: Chart | undefined = undefined;
+
+	let chart: BaseChart | undefined = undefined;
 
 	const handleChart: Action<HTMLCanvasElement> = (element) => {
-		chart = new Chart(element, {
+		chart = new BaseChart(element, {
 			type: type,
 			data: {
 				labels: labels,
 				datasets: $state.snapshot(datasets) as ChartDataset[]
 			},
 			options: getOptions(),
-			plugins: plugins
+			plugins: [htmlLegend, ...plugins]
 		});
 
 		$effect(() => {
@@ -84,7 +91,11 @@
 			...(optionsSnapshot.plugins ?? {}),
 			...pluginOptions
 		} as Record<string, any>;
-		
+
+		optionsSnapshot.plugins.legend = {
+			display: false
+		};
+
 		if (!zoom) {
 			return optionsSnapshot as ChartOptions;
 		}
@@ -97,11 +108,11 @@
 		// Set pan and zoom options
 		optionsSnapshot.plugins.zoom.pan.onPanComplete = setZoomLevel;
 		optionsSnapshot.plugins.zoom.zoom.onZoomComplete = setZoomLevel;
-		
+
 		return optionsSnapshot as ChartOptions;
 	}
 
-	function setZoomLevel({ chart }: { chart: Chart }) {
+	function setZoomLevel({ chart }: { chart: BaseChart }) {
 		if (chart == undefined || chart.canvas == null) {
 			return;
 		}
@@ -118,6 +129,43 @@
 
 	function resetZoom() {
 		chart?.resetZoom();
+	}
+
+	let legendItems: Array<LegendItem> = $state([]);
+
+	const htmlLegend: Plugin = {
+		id: 'htmlLegend',
+		afterUpdate(chart) {
+			if (generateLabels) {
+				legendItems = generateLabels(chart);
+			} else {
+				legendItems = chart.options.plugins?.legend?.labels?.generateLabels?.(chart) || [];
+			}
+		}
+	};
+
+	function toggleLegendItem(item: LegendItem) {
+		if (chart == undefined) {
+			return;
+		}
+		if (onClickLegend) {
+			onClickLegend(item, chart);
+			return;
+		}
+		if (type === 'pie' || type === 'doughnut') {
+			if (item.index == null) {
+				return;
+			}
+			// Pie and doughnut charts only have a single dataset and visibility per item
+			chart.toggleDataVisibility(item.index);
+		} else {
+			if (item.datasetIndex == null) {
+				return;
+			}
+			chart.setDatasetVisibility(item.datasetIndex, !chart.isDatasetVisible(item.datasetIndex));
+		}
+
+		chart.update();
 	}
 
 	let modal_open = $state(false);
@@ -151,64 +199,71 @@
 
 		const link = document.createElement('a');
 		link.setAttribute('href', csvContent);
-		link.setAttribute('download', plot_name);
+		link.setAttribute('download', plotName);
 		document.body.appendChild(link); // Required for Firefox
 		link.click();
 	}
 
-	function onCanvasClick(event: Event) {
-		if (chart == undefined || labels == undefined || onclick == undefined) {
+	function emitClickBarEvent(event: Event) {
+		if (chart == undefined || labels == undefined || onClickBar == undefined) {
 			return;
 		}
 		const res = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
 		if (res.length === 0) {
 			return;
 		}
-		onclick(labels[res[0].index]);
+		onClickBar(labels[res[0].index], res[0].datasetIndex);
 	}
 </script>
 
 <!-- Modal -->
-<Modal header="Modal title" isOpen={modal_open} {toggle}>
+<Modal header="Zoom Controls" isOpen={modal_open} {toggle}>
 	<p>
 		You can zoom in the graph into the chart by either highlighting an area with your mouse or by
 		scrolling.
 	</p>
 	<p>When zoomed in, you can press and hold CTRL and drag the plot to move along the time axis.</p>
 	<p>The home button resets the zoom.</p>
-	<p>The download button downloads the data that is plotted as csv.</p>
 </Modal>
-<div class="canvas-container position-relative">
-	<div style="position: absolute; top: -1em; right: 0;" class="btn-group">
-		{#if zoom}
-			<button class="btn btn-secondary" onclick={toggle}>
-				<i class="bi bi-info"></i>
-				<div class="visually-hidden">Show Help for Zoom</div>
+<div class="canvas-container d-flex flex-column justify-content-between h-100 py-2">
+	{#if zoom || downloadable}
+		<div class="d-flex justify-content-end mb-2">
+			{#if zoom}
+				<div class={['btn-group', downloadable && 'me-2']}>
+					<button class="btn btn-outline-secondary d-flex" onclick={toggle}>
+						<i class="bi bi-info me-2"></i>
+						<div>Show Help</div>
+					</button>
+					<button class="btn btn-outline-secondary d-flex" onclick={resetZoom}>
+						<i class="bi bi-house me-2"></i>
+						<div>Reset zoom</div>
+					</button>
+				</div>
+			{/if}
+			{#if downloadable}
+				<button class="btn btn-outline-secondary d-flex" onclick={downloadData}>
+					<i class="bi bi-download me-2"></i>
+					<div>Download CSV Data</div>
+				</button>
+			{/if}
+		</div>
+	{/if}
+	<div class="legend d-flex flex-wrap justify-content-center">
+		{#each legendItems as item}
+			<button
+				class="btn btn-text rounded-0 d-flex align-items-center p-0 me-2"
+				style:color={item.fontColor?.toString() || 'inherit'}
+				style:font-size="12px"
+				style:letter-spacing="0.0em"
+				style:font-family="Arial, sans-serif"
+				onclick={() => toggleLegendItem(item)}
+			>
+				<LegendColorBox {item}></LegendColorBox>
+				<span class={[item.hidden && 'text-decoration-line-through']}>{item.text}</span>
 			</button>
-			<button class="btn btn-secondary" onclick={resetZoom}>
-				<i class="bi bi-house"></i>
-				<div class="visually-hidden">Reset zoom</div>
-			</button>
-		{/if}
-		{#if downloadable}
-			<button class="btn btn-secondary" onclick={downloadData}>
-				<i class="bi bi-download"></i>
-				<div class="visually-hidden">Download CSV Data</div>
-			</button>
-		{/if}
+		{/each}
 	</div>
 	<div class="position-relative" style:min-height={narrow ? '259px' : '558px'}>
-		<canvas {id} use:handleChart onclick={onCanvasClick}></canvas>
+		<canvas {id} use:handleChart onclick={emitClickBarEvent}></canvas>
 	</div>
 </div>
-
-<style>
-	.btn-group {
-		opacity: 0;
-		transition: opacity 0.3s;
-	}
-
-	.canvas-container:hover > .btn-group {
-		opacity: 1;
-	}
-</style>

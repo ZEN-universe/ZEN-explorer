@@ -3,26 +3,26 @@ import { draw } from 'patternomaly';
 export type ShapeType = Parameters<typeof draw>[0];
 
 const patterns: ShapeType[] = [
+	'diagonal',
+	'diagonal-right-left',
+	'dot',
+	'diamond',
+	'dot-dash',
+	'zigzag',
+	'zigzag-vertical',
+	'line',
+	'line-vertical',
 	'plus',
 	'cross',
 	'dash',
 	'cross-dash',
-	'dot',
-	'dot-dash',
 	'disc',
 	'ring',
-	'line',
-	'line-vertical',
 	'weave',
-	'zigzag',
-	'zigzag-vertical',
-	'diagonal',
-	'diagonal-right-left',
 	'square',
 	'box',
 	'triangle',
 	'triangle-inverted',
-	'diamond',
 	'diamond-box'
 ];
 
@@ -33,6 +33,7 @@ export function resetPatternState() {
 }
 
 export function nextPattern(): ShapeType {
+	let pattern = patterns[patternIndex];
 	patternIndex = (patternIndex + 1) % patterns.length;
-	return patterns[patternIndex];
+	return pattern;
 }

@@ -10,6 +10,7 @@
 		solutions?: (ActivatedSolution | null)[];
 		loading?: boolean;
 		years?: number[];
+		nodes?: string[];
 		carriers?: string[];
 		disabled?: boolean;
 		urlParamSolutions?: string | null;
@@ -20,6 +21,7 @@
 		solutions = $bindable([]),
 		loading = $bindable(false),
 		years = $bindable([]),
+		nodes = $bindable([]),
 		carriers = $bindable([]),
 		disabled = false,
 		urlParamSolutions = 'solutions',
@@ -54,15 +56,15 @@
 			componentMounted = true;
 			return;
 		}
-		
+
 		activeFirstLevel = solutionParams[0].split('.')[0];
 		activeSecondLevels = solutionParams.map((s) => s.split('.')[1] || '');
 		activeScenarios = scenarioParams;
 		solutions = solutionParams.map(() => null);
 		loadingSolutionsFromParams = true;
-		
+
 		emitUpdateEvent();
-		
+
 		componentMounted = true;
 	});
 
@@ -104,8 +106,9 @@
 	});
 
 	$effect(() => {
-		if (solutions.length > 0 && solutions[0] != null) {
+		if (solutions.length > 0 && solutions[0] !== null) {
 			years = generateScenarioYears(solutions[0].detail);
+			nodes = solutions[0].detail.system.set_nodes;
 		}
 	});
 

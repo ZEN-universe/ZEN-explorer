@@ -153,7 +153,7 @@
 			activeScenario = '';
 		});
 	});
-	
+
 	async function updateSolutionDetails() {
 		// Wait for all effects to finish, e.g. to reset activeSecondLevel, activeScenario
 		await tick();
@@ -199,12 +199,7 @@
 {#if !withoutSolution}
 	<FilterRow label="Solution">
 		{#snippet content(id)}
-			<select
-				{id}
-				class="form-select"
-				bind:value={activeFirstLevel}
-				{disabled}
-			>
+			<select {id} class="form-select" bind:value={activeFirstLevel} {disabled}>
 				{#each firstLevels as solution}
 					<option value={solution}>
 						{solution}
@@ -217,12 +212,7 @@
 {#if secondLevels.length > 0}
 	<FilterRow label="Subsolution">
 		{#snippet content(id)}
-			<select
-				{id}
-				class="form-select"
-				bind:value={activeSecondLevel}
-				{disabled}
-			>
+			<select {id} class="form-select" bind:value={activeSecondLevel} {disabled}>
 				{#each secondLevels as solution}
 					<option value={solution}>
 						{solution}
@@ -236,12 +226,7 @@
 {#if allScenarios.length > 1}
 	<FilterRow label="Scenario">
 		{#snippet content(id)}
-			<select
-				{id}
-				class="form-select"
-				bind:value={activeScenario}
-				{disabled}
-			>
+			<select {id} class="form-select" bind:value={activeScenario} {disabled}>
 				{#each scenarios as scenario}
 					<option value={scenario}>
 						{scenario}
