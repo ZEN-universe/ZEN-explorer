@@ -148,12 +148,12 @@ function computeNodeBreadths() {
 		currentBreadth++;
 	}
 
-	// iterate backwards to move sink nodes to the rightmost position
+	// iterate backwards to move sink nodes with {stickTo: null} to the rightmost position
 	remainingNodes = nodes;
 	while (remainingNodes.length) {
 		nextNodes = [];
 		remainingNodes.forEach((node) => {
-			if (node.linksOut.length > 0) {
+			if (node.linksOut.length > 0 && node.stickTo === null) {
 				const outgoingXs = node.linksOut
 					.filter((link) => !link.causesCycle)
 					.map((link) => link.target.x);
@@ -168,6 +168,13 @@ function computeNodeBreadths() {
 		});
 		remainingNodes = nextNodes;
 	}
+
+	// move all {stickTo: 'right'} nodes to the rightmost position
+	nodes.forEach((node) => {
+		if (node.stickTo === 'right') {
+			node.x = currentBreadth - 1;
+		}
+	});
 
 	// scale the x positions to have the desired distance between nodes
 	scaleNodeBreadths(NODE_DISTANCE_BETWEEN + NODE_WIDTH);
@@ -392,6 +399,7 @@ export function getFinalNodesAndLinks(): [RawSankeyNode[], RawSankeyLink[]] {
 		color: node.color,
 		value: node.value,
 		unit: node.unit,
+		unitSuffix: node.unitSuffix,
 		x: node.x,
 		y: node.y,
 		dy: node.dy,

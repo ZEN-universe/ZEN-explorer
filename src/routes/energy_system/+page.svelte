@@ -210,52 +210,56 @@
 		const storageTechs = selectedSolution?.detail.system.set_storage_technologies || [];
 		const conversionTechs = selectedSolution?.detail.system.set_conversion_technologies || [];
 
-		function newNode(id: string, label: string, color: string, unit: string): Partial<SankeyNode> {
+		function newNode(
+			id: string,
+			label: string,
+			color: string,
+			unit: string,
+			unitSuffix: boolean,
+			stickTo: 'left' | 'right' | null
+		): Partial<SankeyNode> {
 			return {
 				id,
 				label,
 				color,
-				unit
+				unit,
+				unitSuffix,
+				stickTo
 			};
 		}
 
 		resetColorState();
 
 		const carrierNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + ' [' + getUnit(carrier) + ']', nextColor(), getUnit(carrier))
+			newNode(carrier, carrier, nextColor(), getUnit(carrier), true, null)
 		);
 		const conversionTechNodes = conversionTechs.map((tech) =>
-			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)))
+			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)), false, null)
 		);
 		const storageTechNodes = storageTechs.map((tech) =>
-			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)))
+			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)), false, null)
 		);
 		const inflowNodes = storageTechs.map((tech) =>
-			newNode(tech, tech + '_inflow', grey, getUnit(getReferenceCarrier(tech)))
+			newNode(tech, tech + '_inflow', grey, getUnit(getReferenceCarrier(tech)), false, null)
 		);
 		const spillageNodes = storageTechs.map((tech) =>
-			newNode(tech, tech + '_spillage', grey, getUnit(getReferenceCarrier(tech)))
+			newNode(tech, tech + '_spillage', grey, getUnit(getReferenceCarrier(tech)), false, null)
 		);
 		let currentColor = nextColor();
 		const importNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + '_import', currentColor, getUnit(carrier))
+			newNode(carrier, carrier + '_import', currentColor, getUnit(carrier), false, 'left')
 		);
 		currentColor = nextColor();
 		const exportNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + '_export', currentColor, getUnit(carrier))
+			newNode(carrier, carrier + '_export', currentColor, getUnit(carrier), false, 'right')
 		);
 		currentColor = nextColor();
 		const shedDemandNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + '_shed_demand', currentColor, getUnit(carrier))
+			newNode(carrier, carrier + '_shed_demand', currentColor, getUnit(carrier), false, null)
 		);
 		currentColor = nextColor();
 		const demandNodes = carriers.map((carrier) =>
-			newNode(
-				carrier,
-				carrier + '_demand' + ' [' + getUnit(carrier) + ']',
-				currentColor,
-				getUnit(carrier)
-			)
+			newNode(carrier, carrier + '_demand', currentColor, getUnit(carrier), true, 'right')
 		);
 
 		// Stage 2: Define links
@@ -277,7 +281,7 @@
 		): (entry: Entry) => void {
 			return (entry: Entry) => {
 				const value = entry.data[indexOfYear] - subtract;
-				if (Math.abs(value) < 1e-6) return;
+				if (Math.abs(value) < 5e-4) return;
 
 				const sourceNode = sourceNodes.find((node) => node.id === entry.index[sourceId]);
 				const targetNode = targetNodes.find((node) => node.id === entry.index[targetId]);

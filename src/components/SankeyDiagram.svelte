@@ -74,6 +74,8 @@
 			id: node.id ?? '',
 			value: 0,
 			unit: node.unit ?? '',
+			unitSuffix: node.unitSuffix ?? false,
+			stickTo: node.stickTo ?? null,
 			linksIn: [],
 			linksOut: [],
 			x: 0,
@@ -228,17 +230,6 @@
 		if (!nodes.length) return height;
 		return Math.max(...nodes.map((node) => node.y + node.dy));
 	});
-
-	/**
-	 * Round a value to the specified number of decimal places.
-	 * @param value Value to round
-	 * @param number_of_decimal_places Number of decimal places (default: 6)
-	 * @returns Rounded value
-	 */
-	function roundValue(value: number, number_of_decimal_places: number = 6): number {
-		const factor = 10 ** number_of_decimal_places;
-		return Math.round(value * factor) / factor;
-	}
 
 	function isDarkBackground(color: string): boolean {
 		// Parse the rgb color
@@ -443,6 +434,14 @@
 		if (activeNodeRect === null || svgRect === null) return false;
 		return activeNodeRect.top - svgRect.top > height / 2;
 	});
+
+	/**
+	 * Generate a title string for a link.
+	 * @param link
+	 */
+	function linkTitle(link: RawSankeyLink): string {
+		return `${link.source.label} → ${link.target.label}:\n${link.value.toFixed(3)} ${link.unit}`;
+	}
 </script>
 
 <svelte:window onresize={handleSize} onscroll={updateSvgRect} />
@@ -462,14 +461,18 @@
 			<g class="links">
 				{#each links.toSorted((a, b) => b.value - a.value) as link}
 					{#if link.causesCycle}
-						<path class="cycle-link" d={linkPath(link)} style:fill={link.color}></path>
+						<path class="cycle-link" d={linkPath(link)} style:fill={link.color}>
+							<title>{linkTitle(link)}</title>
+						</path>
 					{:else}
 						<path
 							class="link"
 							d={linkPath(link)}
 							style:stroke={link.color}
 							style:stroke-width={Math.max(1, link.dy)}
-						></path>
+						>
+							<title>{linkTitle(link)}</title>
+						</path>
 					{/if}
 				{/each}
 			</g>
@@ -491,6 +494,7 @@
 							fill={node.dy > 16 && isDarkBackground(node.color) ? '#fff' : '#000'}
 						>
 							{node.label}
+							{node.unitSuffix ? ` [${node.unit}]` : ''}
 						</text>
 					</g>
 				{/each}
@@ -514,44 +518,58 @@
 				{#if activeNode.linksIn.length > 0}
 					<div class="fw-bold mt-1 fs-7 px-2">Inflows:</div>
 					{#each activeNode.linksIn as linkInIdx}
-						{#if links[linkInIdx]}
-							<div class="fs-8 px-2 text-no-break">
-								<svg width="12" height="12">
-									<rect width="12" height="12" fill={links[linkInIdx].source.color} />
-								</svg>
-								{links[linkInIdx].source.label}: {roundValue(links[linkInIdx].value)}
-								{links[linkInIdx].unit}
+						{#if links[linkInIdx].value}
+							<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
+								<div class="me-1">
+									<svg width="12" height="12">
+										<rect width="12" height="12" fill={links[linkInIdx].source.color} />
+									</svg>
+									{links[linkInIdx].source.label}:
+								</div>
+								<div>
+									{links[linkInIdx].value.toFixed(3)}
+									{links[linkInIdx].unit}
+								</div>
 							</div>
 						{/if}
 					{/each}
 					<div
 						class={[
-							'fs-8 px-2 text-no-break',
+							'd-flex justify-content-between fs-8 px-2 text-no-break',
 							activeNode.linksOut.length > 0 && 'border-bottom border-secondary pb-1'
 						]}
 					>
 						<strong>Total:</strong>
-						{roundValue(sum(activeNode.linksIn.map((linkIdx) => links[linkIdx]?.value || 0)))}
-						{activeNode.unit}
+						<div>
+							{sum(activeNode.linksIn.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
+							{activeNode.unit}
+						</div>
 					</div>
 				{/if}
 				{#if activeNode.linksOut.length > 0}
 					<div class="fw-bold mt-1 fs-7 px-2">Outflows:</div>
 					{#each activeNode.linksOut as linkOutIdx}
-						{#if links[linkOutIdx]}
-							<div class="fs-8 px-2 text-no-break">
-								<svg width="12" height="12">
-									<rect width="12" height="12" fill={links[linkOutIdx].target.color} />
-								</svg>
-								{links[linkOutIdx].target.label}: {roundValue(links[linkOutIdx].value)}
-								{links[linkOutIdx].unit}
+						{#if links[linkOutIdx].value}
+							<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
+								<div class="me-1">
+									<svg width="12" height="12">
+										<rect width="12" height="12" fill={links[linkOutIdx].target.color} />
+									</svg>
+									{links[linkOutIdx].target.label}:
+								</div>
+								<div>
+									{links[linkOutIdx].value.toFixed(3)}
+									{links[linkOutIdx].unit}
+								</div>
 							</div>
 						{/if}
 					{/each}
-					<div class="fs-8 px-2 text-no-break">
+					<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
 						<strong>Total:</strong>
-						{roundValue(sum(activeNode.linksOut.map((linkIdx) => links[linkIdx]?.value || 0)))}
-						{activeNode.unit}
+						<div>
+							{sum(activeNode.linksOut.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
+							{activeNode.unit}
+						</div>
 					</div>
 				{/if}
 			{/snippet}

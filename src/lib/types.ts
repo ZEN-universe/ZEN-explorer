@@ -144,6 +144,10 @@ export interface SankeyNode {
 	value: number;
 	/** Unit of the node's value */
 	unit: string;
+	/** Whether to display the unit suffix */
+	unitSuffix: boolean;
+	/** Whether to stick to left or right */
+	stickTo: 'left' | 'right' | null;
 	/** Incoming links to the node */
 	linksIn: SankeyLink[];
 	/** Outgoing links from the node */
@@ -192,6 +196,7 @@ export interface RawSankeyNode {
 	color: string;
 	value: number;
 	unit: string;
+	unitSuffix: boolean;
 	x: number;
 	y: number;
 	dy: number;
