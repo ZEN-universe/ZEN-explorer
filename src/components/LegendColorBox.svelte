@@ -17,9 +17,9 @@
 
 		ctx.fillStyle = item.fillStyle;
 		ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = item.strokeStyle?.toString() || 'transparent';
-        ctx.lineWidth = item.lineWidth || 1;
-        ctx.strokeRect(0, 0, canvas.width, canvas.height);
+		ctx.strokeStyle = item.strokeStyle?.toString() || 'transparent';
+		ctx.lineWidth = item.lineWidth || 1;
+		ctx.strokeRect(0, 0, canvas.width, canvas.height);
 	}
 </script>
 

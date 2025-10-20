@@ -1,11 +1,5 @@
 <script lang="ts">
-	import type {
-		Chart as BaseChart,
-		ChartOptions,
-		ChartDataset,
-		TooltipItem,
-		ChartTypeRegistry
-	} from 'chart.js';
+	import type { ChartOptions, ChartDataset, TooltipItem, ChartTypeRegistry } from 'chart.js';
 	import { onMount, tick, untrack } from 'svelte';
 	import { draw as drawPattern } from 'patternomaly';
 
@@ -113,12 +107,6 @@
 			}
 		}
 	};
-
-	function generateLabels(chart: BaseChart) {
-		// TODO: Add labels for the patterns (gray background with pattern)
-		const labels = generateLabelsForSolutionComparison(chart);
-		return labels;
-	}
 
 	let plotName: string = $derived.by(() => {
 		if (selectedSolutions[0] == null) {
@@ -493,8 +481,8 @@
 			{labels}
 			options={plotOptions}
 			pluginOptions={plotPluginOptions}
-			plotName={plotName}
-			{generateLabels}
+			{plotName}
+			generateLabels={generateLabelsForSolutionComparison}
 			onClickLegend={onClickLegendForSolutionComparison}
 		></Chart>
 	{/if}

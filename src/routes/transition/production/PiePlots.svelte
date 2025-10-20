@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Chart from '$components/Chart.svelte';
-	import type { ActivatedSolution } from '$lib/types';
 	import type { ChartDataset, ChartTypeRegistry, TooltipItem } from 'chart.js';
 
 	interface Props {

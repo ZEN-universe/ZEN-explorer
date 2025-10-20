@@ -29,7 +29,7 @@ export default class Entries {
 				const index: Index = {};
 				const data: number[] = [];
 				Object.entries(row).forEach(([key, value]) => {
-					if (value === "inf") {
+					if (value === 'inf') {
 						data.push(Infinity);
 					} else if (isNaN(value)) {
 						index[key] = value as string;
