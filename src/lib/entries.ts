@@ -29,7 +29,9 @@ export default class Entries {
 				const index: Index = {};
 				const data: number[] = [];
 				Object.entries(row).forEach(([key, value]) => {
-					if (isNaN(value)) {
+					if (value === "inf") {
+						data.push(Infinity);
+					} else if (isNaN(value)) {
 						index[key] = value as string;
 						return;
 					} else {
@@ -202,6 +204,18 @@ export default class Entries {
 				index: callback(entry.index, i, arr),
 				data: entry.data
 			};
+		});
+		return new Entries(mappedEntries);
+	}
+
+	/**
+	 * Applies a callback function to each entry.
+	 * @param callback Function to apply to each entry.
+	 * @returns New Entries instance with mapped entries.
+	 */
+	mapEntries(callback: (index: Index, data: number[]) => Entry): Entries {
+		const mappedEntries = this.entries.map((entry) => {
+			return callback(entry.index, entry.data);
 		});
 		return new Entries(mappedEntries);
 	}
