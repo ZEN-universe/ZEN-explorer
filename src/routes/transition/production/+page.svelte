@@ -224,6 +224,11 @@
 			callbacks: {
 				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
 					`${item.dataset.label}: ${item.formattedValue}${tooltipSuffix}`,
+				title: (items: TooltipItem<keyof ChartTypeRegistry>[]) => {
+					if (items.length > 0) {
+						return `${items[0].label} - ${items[0].dataset.stack}`;
+					}
+				},
 				labelColor: (context) => {
 					return {
 						borderColor: context.dataset.backgroundColor as string,
@@ -577,7 +582,7 @@
 			disabled={fetching || solution_loading}
 		/>
 	</FilterSection>
-	{#if !solution_loading && selectedSolutions}
+	{#if !solution_loading && selectedSolutions[0] !== null}
 		<FilterSection title="Carrier Selection">
 			{#if carriers.length > 0}
 				<FilterRow label="Carrier">

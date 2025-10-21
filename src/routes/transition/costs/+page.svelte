@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
+	import { draw as drawPattern } from 'patternomaly';
 
-	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
+	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import Radio from '$components/Radio.svelte';
 	import ToggleButton from '$components/ToggleButton.svelte';
@@ -25,6 +26,12 @@
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 	import Entries from '$lib/entries';
 	import { debounce } from '$lib/debounce';
+	import { nextPattern, resetPatternState } from '$lib/patterns';
+	import {
+		generateLabelsForSolutionComparison,
+		generateSolutionSuffix,
+		onClickLegendForSolutionComparison
+	} from '$lib/compareSolutions';
 
 	const technologyCarrierLabel = 'Technology / Carrier';
 	const capexSuffix = ' (Capex)';
@@ -34,36 +41,34 @@
 	const carrierLabel = 'Carrier';
 	const shedDemandLabel = 'Shed Demand';
 
-	let carriers: string[] = $state([]);
-	let nodes: string[] = $state([]);
 	let years: number[] = $state([]);
 	const aggregationOptions: string[] = ['Location', technologyCarrierLabel];
 
-	let fetchedCapex: Row[] = $state([]);
-	let fetchedOpex: Row[] = $state([]);
-	let fetchedCostCarbon: Row[] = $state([]);
-	let fetchedCostCarrier: Row[] = $state([]);
-	let fetchedCostShedDemand: Row[] = $state([]);
+	let fetchedCapex: Row[][] = $state([]);
+	let fetchedOpex: Row[][] = $state([]);
+	let fetchedCostCarbon: Row[][] = $state([]);
+	let fetchedCostCarrier: Row[][] = $state([]);
+	let fetchedCostShedDemand: Row[][] = $state([]);
 	let units: { [carrier: string]: string } = $state({});
 
-	let selectedSolution: ActivatedSolution | null = $state(null);
-	let selectedLocations: string[] = $state([]);
-	let selectedYears: number[] = $state([]);
+	let selectedSolutions: (ActivatedSolution | null)[] = $state([null]);
+	let selectedConversionTechnologies: string[] = $state([]);
+	let selectedStorageTechnologies: string[] = $state([]);
+	let selectedTransportTechnologies: string[] = $state([]);
 	let selectedCostCarriers: string[] = $state([]);
 	let selectedDemandCarriers: string[] = $state([]);
-	let selectedTransportTechnologies: string[] = $state([]);
-	let selectedStorageTechnologies: string[] = $state([]);
-	let selectedConversionTechnologies: string[] = $state([]);
 	let selectedAggregation: string = $state('Location');
+	let selectedLocations: string[] = $state([]);
+	let selectedYears: number[] = $state([]);
 
-	let urlTransportTechnologies: number[] | null = null;
 	let urlConversionTechnologies: number[] | null = null;
 	let urlStorageTechnologies: number[] | null = null;
+	let urlTransportTechnologies: number[] | null = null;
 	let urlCostCarriers: number[] | null = null;
 	let urlDemandCarriers: number[] | null = null;
-	let previousTransportTechnologies: string = '';
 	let previousConversionTechnologies: string = '';
 	let previousStorageTechnologies: string = '';
+	let previousTransportTechnologies: string = '';
 	let previousCostCarriers: string = '';
 	let previousDemandCarriers: string = '';
 	let previousLocations: string = '';
@@ -118,13 +123,15 @@
 
 	// Plot configuration
 	let plotName = $derived.by(() => {
-		if (!selectedSolution) {
+		if (!selectedSolutions[0]) {
 			return '';
 		}
-		let solutionNames = selectedSolution.solution_name.split('.');
-		return [solutionNames[solutionNames.length - 1], selectedSolution.scenario_name, 'costs'].join(
-			'_'
-		);
+		let solutionNames = selectedSolutions[0].solution_name.split('.');
+		return [
+			solutionNames[solutionNames.length - 1],
+			selectedSolutions[0].scenario_name,
+			'costs'
+		].join('_');
 	});
 	let unit: string = $derived.by(() => {
 		if (conversionTechnologies.length > 0) {
@@ -164,7 +171,12 @@
 		tooltip: {
 			callbacks: {
 				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-					`${item.dataset.label}: ${item.formattedValue} ${unit}`
+					`${item.dataset.label}: ${item.formattedValue} ${unit}`,
+				title: (items: TooltipItem<keyof ChartTypeRegistry>[]) => {
+					if (items.length > 0) {
+						return `${items[0].label} - ${items[0].dataset.stack}`;
+					}
+				}
 			}
 		}
 	};
@@ -175,71 +187,71 @@
 
 	// Technologies, carriers and locations
 	let setCapexOpexTechnologies: Set<string> = $derived.by(() => {
-		if (!fetchedCapex.length || !fetchedOpex.length) {
+		if (!fetchedCapex[0]?.length || !fetchedOpex[0]?.length) {
 			return new Set<string>();
 		}
 		return new Set([
-			...(fetchedCapex.map((row) => row['technology']) || []),
-			...(fetchedOpex.map((row) => row['technology']) || [])
+			...(fetchedCapex[0].map((row) => row['technology']) || []),
+			...(fetchedOpex[0].map((row) => row['technology']) || [])
 		]);
 	});
 
 	let transportTechnologies: string[] = $derived.by(() => {
-		if (!selectedSolution || setCapexOpexTechnologies.size == 0) {
+		if (!selectedSolutions[0] || setCapexOpexTechnologies.size == 0) {
 			return [];
 		}
-		return selectedSolution.detail.system.set_transport_technologies
+		return selectedSolutions[0].detail.system.set_transport_technologies
 			.filter((t) => setCapexOpexTechnologies.has(t))
 			.sort();
 	});
 	let conversionTechnologies: string[] = $derived.by(() => {
-		if (!selectedSolution || setCapexOpexTechnologies.size == 0) {
+		if (!selectedSolutions[0] || setCapexOpexTechnologies.size == 0) {
 			return [];
 		}
 		return removeDuplicates(
-			selectedSolution.detail.system.set_conversion_technologies.filter((t) =>
+			selectedSolutions[0].detail.system.set_conversion_technologies.filter((t) =>
 				setCapexOpexTechnologies.has(t)
 			)
 		).sort();
 	});
 	let storageTechnologies: string[] = $derived.by(() => {
-		if (!selectedSolution || setCapexOpexTechnologies.size == 0) {
+		if (!selectedSolutions[0] || setCapexOpexTechnologies.size == 0) {
 			return [];
 		}
 		return removeDuplicates(
-			selectedSolution.detail.system.set_storage_technologies.filter((t) =>
+			selectedSolutions[0].detail.system.set_storage_technologies.filter((t) =>
 				setCapexOpexTechnologies.has(t)
 			)
 		).sort();
 	});
 
 	let costCarriers: string[] = $derived.by(() => {
-		if (!selectedSolution || !fetchedCostCarrier.length) {
+		if (!fetchedCostCarrier[0]?.length) {
 			return [];
 		}
-		return removeDuplicates(fetchedCostCarrier.map((row) => row['carrier'])).sort();
+		return removeDuplicates(fetchedCostCarrier[0].map((row) => row['carrier'])).sort();
 	});
 
 	let demandCarriers: string[] = $derived.by(() => {
-		if (!selectedSolution || !fetchedCostShedDemand.length) {
+		if (!fetchedCostShedDemand[0]?.length) {
 			return [];
 		}
-		return removeDuplicates(fetchedCostShedDemand.map((row) => row['carrier'])).sort();
+		return removeDuplicates(fetchedCostShedDemand[0].map((row) => row['carrier'])).sort();
 	});
 
 	let locations: string[] = $derived.by(() => {
-		if (!selectedSolution) {
+		if (!selectedSolutions[0]) {
 			return [];
 		}
-		return Object.keys(selectedSolution.detail.edges)
-			.concat(selectedSolution.detail.system.set_nodes)
+		return Object.keys(selectedSolutions[0].detail.edges)
+			.concat(selectedSolutions[0].detail.system.set_nodes)
 			.sort();
 	});
 
 	// Reset selected values when options change
 	updateSelectionOnStateChanges(
 		() => transportTechnologies,
-		() => !!selectedSolution && !!fetchedCapex && !!fetchedOpex,
+		() => !!selectedSolutions[0] && !!fetchedCapex && !!fetchedOpex,
 		() => previousTransportTechnologies,
 		() => urlTransportTechnologies,
 		(value) => (selectedTransportTechnologies = value),
@@ -248,7 +260,7 @@
 	);
 	updateSelectionOnStateChanges(
 		() => conversionTechnologies,
-		() => !!selectedSolution && fetchedCapex.length > 0 && fetchedOpex.length > 0,
+		() => !!selectedSolutions[0] && fetchedCapex.length > 0 && fetchedOpex.length > 0,
 		() => previousConversionTechnologies,
 		() => urlConversionTechnologies,
 		(value) => (selectedConversionTechnologies = value),
@@ -257,7 +269,7 @@
 	);
 	updateSelectionOnStateChanges(
 		() => storageTechnologies,
-		() => !!selectedSolution && fetchedCapex.length > 0 && fetchedOpex.length > 0,
+		() => !!selectedSolutions[0] && fetchedCapex.length > 0 && fetchedOpex.length > 0,
 		() => previousStorageTechnologies,
 		() => urlStorageTechnologies,
 		(value) => (selectedStorageTechnologies = value),
@@ -266,7 +278,7 @@
 	);
 	updateSelectionOnStateChanges(
 		() => costCarriers,
-		() => !!selectedSolution && fetchedCostCarrier.length > 0,
+		() => !!selectedSolutions[0] && fetchedCostCarrier.length > 0,
 		() => previousCostCarriers,
 		() => urlCostCarriers,
 		(value) => (selectedCostCarriers = value),
@@ -275,7 +287,7 @@
 	);
 	updateSelectionOnStateChanges(
 		() => demandCarriers,
-		() => !!selectedSolution && fetchedCostShedDemand.length > 0,
+		() => !!selectedSolutions[0] && fetchedCostShedDemand.length > 0,
 		() => previousDemandCarriers,
 		() => urlDemandCarriers,
 		(value) => (selectedDemandCarriers = value),
@@ -284,7 +296,7 @@
 	);
 	updateSelectionOnStateChanges(
 		() => locations,
-		() => !!selectedSolution,
+		() => !!selectedSolutions[0],
 		() => previousLocations,
 		() => null,
 		(value) => (selectedLocations = value),
@@ -293,7 +305,7 @@
 	);
 	updateSelectionOnStateChanges(
 		() => years,
-		() => !!selectedSolution,
+		() => !!selectedSolutions[0],
 		() => previousYears,
 		() => null,
 		(value) => (selectedYears = value),
@@ -351,43 +363,46 @@
 		});
 	});
 
-	async function onSolutionChanged() {
-		if (!selectedSolution) {
-			return;
-		}
-
+	function onSolutionChanged() {
 		fetchData();
 	}
 
 	async function fetchData() {
-		if (!selectedSolution) {
+		if (selectedSolutions.some((s) => s === null)) {
 			return;
 		}
 
 		fetching = true;
 
-		let responses = await get_component_total(
-			selectedSolution.solution_name,
-			[
-				'cost_capex_yearly',
-				'cost_opex_yearly',
-				'cost_carbon_emissions_total',
-				'cost_carrier',
-				'cost_shed_demand'
-			].map((variable) => {
-				return get_variable_name(variable, selectedSolution?.version);
-			}),
-			selectedSolution.scenario_name
+		const solutions = selectedSolutions as ActivatedSolution[];
+		const responses = await Promise.all(
+			solutions.map((solution) =>
+				get_component_total(
+					solution.solution_name,
+					[
+						'cost_capex_yearly',
+						'cost_opex_yearly',
+						'cost_carbon_emissions_total',
+						'cost_carrier',
+						'cost_shed_demand'
+					].map((variable) => {
+						return get_variable_name(variable, solution?.version);
+					}),
+					solution.scenario_name
+				)
+			)
 		);
 
-		fetchedCapex = responses.cost_capex_yearly?.data || [];
-		fetchedOpex = responses.cost_opex_yearly?.data || [];
-		fetchedCostCarbon = responses.cost_carbon_emissions_total?.data || [];
-		fetchedCostCarrier = responses.cost_carrier?.data || [];
-		fetchedCostShedDemand = responses.cost_shed_demand?.data || [];
+		fetchedCapex = responses.map((r) => r.cost_capex_yearly?.data || []);
+		fetchedOpex = responses.map((r) => r.cost_opex_yearly?.data || []);
+		fetchedCostCarbon = responses.map((r) => r.cost_carbon_emissions_total?.data || []);
+		fetchedCostCarrier = responses.map((r) => r.cost_carrier?.data || []);
+		fetchedCostShedDemand = responses.map((r) => r.cost_shed_demand?.data || []);
 
-		if (responses.unit?.data) {
-			units = Object.fromEntries(responses.unit.data.map((u) => [u.technology, u[0] || u.units]));
+		if (responses[0].unit?.data) {
+			units = Object.fromEntries(
+				responses[0].unit.data.map((u) => [u.technology, u[0] || u.units])
+			);
 		}
 
 		fetching = false;
@@ -422,90 +437,107 @@
 			return [];
 		}
 
-		const variableToDataMap = {
-			capex: Entries.fromRows(fetchedCapex).mapIndex((index) => ({
-				location: index['location'],
-				[technologyCarrierLabel]: index['technology'] + capexSuffix
-			})),
-			opex: Entries.fromRows(fetchedOpex).mapIndex((index) => ({
-				location: index['location'],
-				[technologyCarrierLabel]: index['technology'] + opexSuffix
-			})),
-			carrier: Entries.fromRows(fetchedCostCarrier)
-				.filter((i) => selectedCostCarriers.includes(i.index['carrier']))
-				.mapIndex((index) => ({
-					location: index['node'],
-					[technologyCarrierLabel]: index['carrier']
-				})),
-			shed_demand: Entries.fromRows(fetchedCostShedDemand)
-				.filter((i) => selectedDemandCarriers.includes(i.index['carrier']))
-				.mapIndex((index) => ({
-					location: index['node'],
-					[technologyCarrierLabel]: index['carrier']
-				}))
-		};
-
-		let entries = Entries.concatenate(
-			Object.entries(variableToDataMap).map(([variableName, baseEntries]) => {
-				if (!variables[variableName].show) {
-					return null;
-				}
-
-				const entries = baseEntries
-					.filterByCriteria({
-						location: selectedLocations,
-						[technologyCarrierLabel]: allSelectedTechnologies.concat(variableLabels)
-					})
-					.filterDataByIndex(selectedYears.map((year) => years.indexOf(year)));
-
-				if (variables[variableName].subdivision) {
-					return entries;
-				}
-
-				return entries.groupBy(['location']).mapIndex((index) => ({
-					location: index['location'],
-					[technologyCarrierLabel]: variables[variableName].label || ''
-				}));
-			})
-		);
-
-		if (selectedAggregation == technologyCarrierLabel) {
-			entries = entries.groupBy(['location']);
-		} else {
-			entries = entries.groupBy([technologyCarrierLabel]);
-		}
-
-		// Get plot data, as a base we take the grouped data adapted to the cost selection.
 		resetColorState();
-		const datasets: ChartDataset<'bar'>[] = entries.toArray().map((entry) => {
-			const label =
-				selectedAggregation == technologyCarrierLabel
-					? entry.index.location
-					: entry.index[technologyCarrierLabel];
-			const color = nextColor(label);
-			return {
-				label,
-				data: entry.data,
-				borderColor: color,
-				backgroundColor: addTransparency(color)
+		resetPatternState();
+		return selectedSolutions.flatMap((solution, solutionIndex) => {
+			if (solution === null) {
+				return [];
+			}
+
+			const variableToDataMap = {
+				capex: Entries.fromRows(fetchedCapex[solutionIndex]).mapIndex((index) => ({
+					location: index['location'],
+					[technologyCarrierLabel]: index['technology'] + capexSuffix
+				})),
+				opex: Entries.fromRows(fetchedOpex[solutionIndex]).mapIndex((index) => ({
+					location: index['location'],
+					[technologyCarrierLabel]: index['technology'] + opexSuffix
+				})),
+				carrier: Entries.fromRows(fetchedCostCarrier[solutionIndex])
+					.filter((i) => selectedCostCarriers.includes(i.index['carrier']))
+					.mapIndex((index) => ({
+						location: index['node'],
+						[technologyCarrierLabel]: index['carrier']
+					})),
+				shed_demand: Entries.fromRows(fetchedCostShedDemand[solutionIndex])
+					.filter((i) => selectedDemandCarriers.includes(i.index['carrier']))
+					.mapIndex((index) => ({
+						location: index['node'],
+						[technologyCarrierLabel]: index['carrier']
+					}))
 			};
-		});
 
-		// Get total carbon cost data
-		if (fetchedCostCarbon.length === 1 && variables.carbon_emission.show) {
-			const carbonCostEntries = Entries.fromRows(fetchedCostCarbon).filterDataByIndex(
-				selectedYears.map((year) => years.indexOf(year))
+			let entries = Entries.concatenate(
+				Object.entries(variableToDataMap).map(([variableName, baseEntries]) => {
+					if (!variables[variableName].show) {
+						return null;
+					}
+
+					const entries = baseEntries
+						.filterByCriteria({
+							location: selectedLocations,
+							[technologyCarrierLabel]: allSelectedTechnologies.concat(variableLabels)
+						})
+						.filterDataByIndex(selectedYears.map((year) => years.indexOf(year)));
+
+					if (variables[variableName].subdivision) {
+						return entries;
+					}
+
+					return entries.groupBy(['location']).mapIndex((index) => ({
+						location: index['location'],
+						[technologyCarrierLabel]: variables[variableName].label || ''
+					}));
+				})
 			);
-			const color = nextColor('Total Carbon Costs');
-			datasets.push({
-				data: carbonCostEntries.get(0)!.data,
-				label: 'Total Carbon Costs',
-				borderColor: color,
-				backgroundColor: addTransparency(color)
-			});
-		}
 
-		return datasets as ChartDataset<'bar' | 'line'>[];
+			if (selectedAggregation == technologyCarrierLabel) {
+				entries = entries.groupBy(['location']);
+			} else {
+				entries = entries.groupBy([technologyCarrierLabel]);
+			}
+
+			// Get plot data, as a base we take the grouped data adapted to the cost selection.
+			const pattern = solutionIndex > 0 ? nextPattern() : undefined;
+			const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+			const datasets: ChartDataset<'bar'>[] = entries.toArray().map((entry) => {
+				const label =
+					selectedAggregation == technologyCarrierLabel
+						? entry.index.location
+						: entry.index[technologyCarrierLabel];
+				const color = nextColor(label);
+				return {
+					label,
+					data: entry.data,
+					borderColor: color,
+					backgroundColor:
+						pattern !== undefined
+							? drawPattern(pattern, addTransparency(color))
+							: addTransparency(color),
+					stack: suffix
+				};
+			});
+
+			// Get total carbon cost data
+			if (fetchedCostCarbon[solutionIndex].length === 1 && variables.carbon_emission.show) {
+				const carbonCostEntries = Entries.fromRows(
+					fetchedCostCarbon[solutionIndex]
+				).filterDataByIndex(selectedYears.map((year) => years.indexOf(year)));
+				const color = nextColor('Total Carbon Costs');
+				datasets.push({
+					data: carbonCostEntries.get(0)!.data,
+					label: 'Total Carbon Costs',
+					borderColor: color,
+					backgroundColor:
+						pattern !== undefined
+							? drawPattern(pattern, addTransparency(color))
+							: addTransparency(color),
+					stack: suffix
+				});
+			}
+
+			return datasets as ChartDataset<'bar' | 'line'>[];
+		});
 	});
 </script>
 
@@ -513,17 +545,15 @@
 
 <Filters>
 	<FilterSection title="Solution Selection">
-		<SolutionFilter
-			bind:carriers
-			bind:nodes
+		<MultiSolutionFilter
+			bind:solutions={selectedSolutions}
 			bind:years
-			bind:selected_solution={selectedSolution}
 			bind:loading={solutionLoading}
-			solutionSelected={onSolutionChanged}
+			onSelected={onSolutionChanged}
 			disabled={fetching || solutionLoading}
 		/>
 	</FilterSection>
-	{#if !fetching && !solutionLoading && fetchedCapex.length && selectedSolution !== null}
+	{#if !solutionLoading && selectedSolutions[0] !== null}
 		<FilterSection title="Cost Selection">
 			{#each Object.values(variables) as variable, i}
 				<div class="row mb-2">
@@ -605,7 +635,7 @@
 				<span class="visually-hidden">Loading...</span>
 			</div>
 		</div>
-	{:else if selectedSolution != null}
+	{:else if selectedSolutions[0] !== null}
 		{#if datasets.length == 0 || datasets[0].data.length == 0}
 			<div class="text-center">No data with this selection.</div>
 		{:else if selectedYears.length == 0}
@@ -618,6 +648,8 @@
 				options={plotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
+				generateLabels={generateLabelsForSolutionComparison}
+				onClickLegend={onClickLegendForSolutionComparison}
 			></Chart>
 		{/if}
 	{/if}

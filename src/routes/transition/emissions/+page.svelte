@@ -404,7 +404,7 @@
 			onSelected={onSolutionSelected}
 		/>
 	</FilterSection>
-	{#if !solutionLoading && selectedSolutions.length > 0}
+	{#if !solutionLoading && selectedSolutions[0] !== null}
 		<FilterSection title="Variable Selection">
 			<FilterRow label="Subdivision">
 				{#snippet content(formId)}
@@ -425,7 +425,7 @@
 			{/if}
 		</FilterSection>
 	{/if}
-	{#if !solutionLoading && selectedSolutions.length > 0 && !fetching}
+	{#if !solutionLoading && selectedSolutions[0] !== null && !fetching}
 		<FilterSection title="Data Selection">
 			{#if selectedSubdivision}
 				<FilterRow label="Aggregation">
