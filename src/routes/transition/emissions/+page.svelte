@@ -13,7 +13,7 @@
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
 
 	import { get_component_total, get_unit } from '$lib/temple';
-	import { remove_duplicates, to_options } from '$lib/utils';
+	import { removeDuplicates, toOptions } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { getURLParam, getURLParamAsBoolean, updateURLParams } from '$lib/queryParams.svelte';
@@ -129,21 +129,21 @@
 		if (!technologyData.length) {
 			return [];
 		}
-		return remove_duplicates(technologyData[0].map((d) => d.technology));
+		return removeDuplicates(technologyData[0].map((d) => d.technology));
 	});
 
 	let carriers: string[] = $derived.by(() => {
 		if (!carrierData.length) {
 			return [];
 		}
-		return remove_duplicates(carrierData[0].map((d) => d.carrier));
+		return removeDuplicates(carrierData[0].map((d) => d.carrier));
 	});
 
 	let locations: string[] = $derived.by(() => {
 		if (!technologyData.length && !carrierData.length) {
 			return [];
 		}
-		return remove_duplicates(
+		return removeDuplicates(
 			[...(technologyData[0] || []), ...(carrierData[0] || [])].map((d) => d.location)
 		).sort();
 	});
@@ -416,7 +416,7 @@
 					{#snippet content(formId)}
 						<Radio
 							{formId}
-							options={to_options(cumulationOptions)}
+							options={toOptions(cumulationOptions)}
 							bind:value={selectedCumulation}
 							disabled={fetching || solutionLoading}
 						></Radio>

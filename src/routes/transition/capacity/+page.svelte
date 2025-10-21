@@ -13,7 +13,7 @@
 	import ToggleButton from '$components/ToggleButton.svelte';
 
 	import { get_component_total as getComponentTotal } from '$lib/temple';
-	import { remove_duplicates as removeDuplicates, to_options as toOptions } from '$lib/utils';
+	import { removeDuplicates, toOptions } from '$lib/utils';
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,

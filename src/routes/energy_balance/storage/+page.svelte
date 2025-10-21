@@ -18,7 +18,7 @@
 	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_full_ts } from '$lib/temple';
-	import { remove_duplicates, to_options } from '$lib/utils';
+	import { removeDuplicates, toOptions } from '$lib/utils';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Entry } from '$lib/types';
 	import { nextColor, resetColorState } from '$lib/colors';
@@ -164,7 +164,7 @@
 		if (!level_response) {
 			return [];
 		}
-		return remove_duplicates(level_response.map((a) => a.index.node)).sort();
+		return removeDuplicates(level_response.map((a) => a.index.node)).sort();
 	});
 
 	let carriers: string[] = $derived.by(() => {
@@ -173,7 +173,7 @@
 			return [];
 		}
 		let all_technologies = Array.from(level_response.map((a) => a.index.technology));
-		return remove_duplicates(
+		return removeDuplicates(
 			level_response
 				.filter((element) => all_technologies.includes(element.index.technology))
 				.map((element) => selected_solution!.detail.reference_carrier[element.index.technology])
@@ -185,7 +185,7 @@
 		if (!level_response || !selected_solution || carriers.length === 0) {
 			return [];
 		}
-		let all_technologies = remove_duplicates(level_response.map((a) => a.index.technology));
+		let all_technologies = removeDuplicates(level_response.map((a) => a.index.technology));
 		return all_technologies.filter(
 			(technology) => selected_solution!.detail.reference_carrier[technology] == selected_carrier
 		);
@@ -523,7 +523,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(years.map((year) => year.toString()))}
+						options={toOptions(years.map((year) => year.toString()))}
 						bind:value={selected_year}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -533,7 +533,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(carriers)}
+						options={toOptions(carriers)}
 						bind:value={selected_carrier}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -543,7 +543,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(window_sizes)}
+						options={toOptions(window_sizes)}
 						bind:value={selected_window_size}
 						disabled={fetching || solution_loading}
 					></Dropdown>

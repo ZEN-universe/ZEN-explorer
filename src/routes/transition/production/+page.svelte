@@ -24,7 +24,7 @@
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
 	} from '$lib/compareSolutions';
-	import { remove_duplicates, to_options } from '$lib/utils';
+	import { removeDuplicates, toOptions } from '$lib/utils';
 	import {
 		getURLParam,
 		getURLParamAsBoolean,
@@ -253,7 +253,7 @@
 
 	let conversionTechnologies = $derived.by(() => {
 		if (!selectedSolutions[0]) return [];
-		return remove_duplicates(
+		return removeDuplicates(
 			Object.entries(selectedSolutions[0].detail.carriers_input)
 				.concat(Object.entries(selectedSolutions[0].detail.carriers_output))
 				.filter((t) => selectedCarrier && t[1].includes(selectedCarrier))
@@ -584,7 +584,7 @@
 					{#snippet content(id)}
 						<Dropdown
 							formId={id}
-							options={to_options(carriers)}
+							options={toOptions(carriers)}
 							bind:value={selectedCarrier}
 							disabled={solution_loading || fetching}
 						></Dropdown>

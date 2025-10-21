@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { onMount, tick, untrack } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
-	import type { ParseResult } from 'papaparse';
 
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
@@ -13,69 +12,71 @@
 	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_component_total } from '$lib/temple';
-	import { filter_and_aggregate_data, remove_duplicates, to_options } from '$lib/utils';
+	import { removeDuplicates, toOptions } from '$lib/utils';
 	import {
 		getURLParamAsBoolean,
 		getURLParamAsIntArray,
 		updateURLParams,
 		type URLParams
 	} from '$lib/queryParams.svelte';
-	import type { ActivatedSolution } from '$lib/types';
-	import { resetColorState } from '$lib/colors';
+	import type { ActivatedSolution, Row } from '$lib/types';
+	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
 	import { get_variable_name } from '$lib/variables';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
+	import Entries from '$lib/entries';
+	import { debounce } from '$lib/debounce';
 
-	const combined_name = 'Techology / Carrier';
-	const capex_suffix = ' (Capex)';
-	const opex_suffix = ' (Opex)';
-	const capex_label = 'Capex';
-	const opex_label = 'Opex';
-	const carrier_label = 'Carrier';
-	const shed_demand_label = 'Shed Demand';
+	const technologyCarrierLabel = 'Technology / Carrier';
+	const capexSuffix = ' (Capex)';
+	const opexSuffix = ' (Opex)';
+	const capexLabel = 'Capex';
+	const opexLabel = 'Opex';
+	const carrierLabel = 'Carrier';
+	const shedDemandLabel = 'Shed Demand';
 
 	let carriers: string[] = $state([]);
 	let nodes: string[] = $state([]);
 	let years: number[] = $state([]);
-	const aggregation_options: string[] = ['Location', combined_name];
+	const aggregationOptions: string[] = ['Location', technologyCarrierLabel];
 
-	let fetched_cost_carbon: ParseResult<any> | null = $state(null);
-	let fetched_cost_carrier: ParseResult<any> | null = $state(null);
-	let fetched_capex: ParseResult<any> | null = $state(null);
-	let fetched_opex: ParseResult<any> | null = $state(null);
-	let fetched_cost_shed_demand: ParseResult<any> | null = $state(null);
+	let fetchedCapex: Row[] = $state([]);
+	let fetchedOpex: Row[] = $state([]);
+	let fetchedCostCarbon: Row[] = $state([]);
+	let fetchedCostCarrier: Row[] = $state([]);
+	let fetchedCostShedDemand: Row[] = $state([]);
 	let units: { [carrier: string]: string } = $state({});
 
-	let selected_locations: string[] = $state([]);
-	let selected_solution: ActivatedSolution | null = $state(null);
-	let selected_years: number[] = $state([]);
-	let selected_cost_carriers: string[] = $state([]);
-	let selected_demand_carriers: string[] = $state([]);
-	let selected_transport_technologies: string[] = $state([]);
-	let selected_storage_technologies: string[] = $state([]);
-	let selected_conversion_technologies: string[] = $state([]);
-	let selected_aggregation: string = $state('Location');
+	let selectedSolution: ActivatedSolution | null = $state(null);
+	let selectedLocations: string[] = $state([]);
+	let selectedYears: number[] = $state([]);
+	let selectedCostCarriers: string[] = $state([]);
+	let selectedDemandCarriers: string[] = $state([]);
+	let selectedTransportTechnologies: string[] = $state([]);
+	let selectedStorageTechnologies: string[] = $state([]);
+	let selectedConversionTechnologies: string[] = $state([]);
+	let selectedAggregation: string = $state('Location');
 
-	let url_transport_technologies: number[] | null = null;
-	let url_conversion_technologies: number[] | null = null;
-	let url_storage_technologies: number[] | null = null;
-	let url_cost_carriers: number[] | null = null;
-	let url_demand_carriers: number[] | null = null;
-	let previous_transport_technologies: string = '';
-	let previous_conversion_technologies: string = '';
-	let previous_storage_technologies: string = '';
-	let previous_cost_carriers: string = '';
-	let previous_demand_carriers: string = '';
-	let previous_locations: string = '';
-	let previous_years: string = '';
+	let urlTransportTechnologies: number[] | null = null;
+	let urlConversionTechnologies: number[] | null = null;
+	let urlStorageTechnologies: number[] | null = null;
+	let urlCostCarriers: number[] | null = null;
+	let urlDemandCarriers: number[] | null = null;
+	let previousTransportTechnologies: string = '';
+	let previousConversionTechnologies: string = '';
+	let previousStorageTechnologies: string = '';
+	let previousCostCarriers: string = '';
+	let previousDemandCarriers: string = '';
+	let previousLocations: string = '';
+	let previousYears: string = '';
 
-	let solution_loading: boolean = $state(false);
+	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
 	interface Variable {
 		title: string;
 		show: boolean;
 		subdivision: boolean;
-		show_subdivision: boolean;
+		showSubdivision: boolean;
 		label?: string;
 	}
 	let variables: { [id: string]: Variable } = $state({
@@ -83,61 +84,59 @@
 			title: 'Capex',
 			show: true,
 			subdivision: false,
-			show_subdivision: true,
-			label: capex_label
+			showSubdivision: true,
+			label: capexLabel
 		},
 		opex: {
 			title: 'Opex',
 			show: true,
 			subdivision: false,
-			show_subdivision: true,
-			label: opex_label
+			showSubdivision: true,
+			label: opexLabel
 		},
 		carrier: {
 			title: 'Carrier',
 			show: true,
 			subdivision: false,
-			show_subdivision: true,
-			label: carrier_label
+			showSubdivision: true,
+			label: carrierLabel
 		},
 		shed_demand: {
 			title: 'Shed Demand',
 			show: true,
 			subdivision: false,
-			show_subdivision: true,
-			label: shed_demand_label
+			showSubdivision: true,
+			label: shedDemandLabel
 		},
 		carbon_emission: {
 			title: 'Carbon Emissions',
 			show: true,
 			subdivision: false,
-			show_subdivision: false
+			showSubdivision: false
 		}
 	});
 
 	// Plot configuration
-	let plot_name = $derived.by(() => {
-		if (!selected_solution) {
+	let plotName = $derived.by(() => {
+		if (!selectedSolution) {
 			return '';
 		}
-		let solution_names = selected_solution.solution_name.split('.');
-		return [
-			solution_names[solution_names.length - 1],
-			selected_solution.scenario_name,
-			'costs'
-		].join('_');
+		let solutionNames = selectedSolution.solution_name.split('.');
+		return [solutionNames[solutionNames.length - 1], selectedSolution.scenario_name, 'costs'].join(
+			'_'
+		);
 	});
 	let unit: string = $derived.by(() => {
-		if (conversion_technologies.length > 0) {
-			return units[conversion_technologies[0]] || '';
-		} else if (transport_technologies.length > 0) {
-			return units[transport_technologies[0]] || '';
-		} else if (storage_technologies.length > 0) {
-			return units[storage_technologies[0]] || '';
+		if (conversionTechnologies.length > 0) {
+			return units[conversionTechnologies[0]] || '';
+		} else if (transportTechnologies.length > 0) {
+			return units[transportTechnologies[0]] || '';
+		} else if (storageTechnologies.length > 0) {
+			return units[storageTechnologies[0]] || '';
 		}
 		return '';
 	});
-	let plot_options: ChartOptions = $derived({
+	let plotOptions: ChartOptions = $derived({
 		responsive: true,
 		scales: {
 			x: {
@@ -159,156 +158,154 @@
 			intersect: false,
 			mode: 'nearest',
 			axis: 'x'
-		},
-		plugins: {
-			tooltip: {
-				callbacks: {
-					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-						`${item.dataset.label}: ${item.formattedValue} ${unit}`
-				}
-			}
 		}
 	});
+	let plotPluginOptions = {
+		tooltip: {
+			callbacks: {
+				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+					`${item.dataset.label}: ${item.formattedValue} ${unit}`
+			}
+		}
+	};
 
 	let labels: string[] = $derived.by(() => {
-		return selected_years.map((year) => year.toString());
+		return selectedYears.map((year) => year.toString());
 	});
 
 	// Technologies, carriers and locations
-	let capex_opex_technologies: Set<string> = $derived.by(() => {
-		if (!fetched_capex || !fetched_opex) {
+	let setCapexOpexTechnologies: Set<string> = $derived.by(() => {
+		if (!fetchedCapex.length || !fetchedOpex.length) {
 			return new Set<string>();
 		}
 		return new Set([
-			...(fetched_capex!.data.map((row) => row[combined_name]) || []),
-			...(fetched_opex!.data.map((row) => row[combined_name]) || [])
+			...(fetchedCapex.map((row) => row['technology']) || []),
+			...(fetchedOpex.map((row) => row['technology']) || [])
 		]);
 	});
 
-	let transport_technologies: string[] = $derived.by(() => {
-		if (!selected_solution || capex_opex_technologies.size == 0) {
-			console.log('No transport technologies');
+	let transportTechnologies: string[] = $derived.by(() => {
+		if (!selectedSolution || setCapexOpexTechnologies.size == 0) {
 			return [];
 		}
-		return selected_solution.detail.system.set_transport_technologies.filter((t) =>
-			capex_opex_technologies.has(t)
-		);
+		return selectedSolution.detail.system.set_transport_technologies
+			.filter((t) => setCapexOpexTechnologies.has(t))
+			.sort();
 	});
-	let conversion_technologies: string[] = $derived.by(() => {
-		if (!selected_solution || !fetched_capex || !fetched_opex) {
+	let conversionTechnologies: string[] = $derived.by(() => {
+		if (!selectedSolution || setCapexOpexTechnologies.size == 0) {
 			return [];
 		}
-		return remove_duplicates(
-			selected_solution.detail.system.set_conversion_technologies.filter((t) =>
-				capex_opex_technologies.has(t)
+		return removeDuplicates(
+			selectedSolution.detail.system.set_conversion_technologies.filter((t) =>
+				setCapexOpexTechnologies.has(t)
 			)
-		);
+		).sort();
 	});
-	let storage_technologies: string[] = $derived.by(() => {
-		if (!selected_solution || !fetched_capex || !fetched_opex) {
+	let storageTechnologies: string[] = $derived.by(() => {
+		if (!selectedSolution || setCapexOpexTechnologies.size == 0) {
 			return [];
 		}
-		return remove_duplicates(
-			selected_solution.detail.system.set_storage_technologies.filter((t) =>
-				capex_opex_technologies.has(t)
+		return removeDuplicates(
+			selectedSolution.detail.system.set_storage_technologies.filter((t) =>
+				setCapexOpexTechnologies.has(t)
 			)
-		);
+		).sort();
 	});
 
-	let cost_carriers: string[] = $derived.by(() => {
-		if (!selected_solution || !fetched_cost_carrier?.data) {
+	let costCarriers: string[] = $derived.by(() => {
+		if (!selectedSolution || !fetchedCostCarrier.length) {
 			return [];
 		}
-		return remove_duplicates(fetched_cost_carrier.data.map((row) => row[combined_name]));
+		return removeDuplicates(fetchedCostCarrier.map((row) => row['carrier'])).sort();
 	});
 
-	let demand_carriers: string[] = $derived.by(() => {
-		if (!selected_solution || !fetched_cost_shed_demand?.data) {
+	let demandCarriers: string[] = $derived.by(() => {
+		if (!selectedSolution || !fetchedCostShedDemand.length) {
 			return [];
 		}
-		return remove_duplicates(fetched_cost_shed_demand.data.map((row) => row[combined_name]));
+		return removeDuplicates(fetchedCostShedDemand.map((row) => row['carrier'])).sort();
 	});
 
 	let locations: string[] = $derived.by(() => {
-		if (!selected_solution) {
+		if (!selectedSolution) {
 			return [];
 		}
-		return Object.keys(selected_solution.detail.edges).concat(
-			selected_solution.detail.system.set_nodes
-		);
+		return Object.keys(selectedSolution.detail.edges)
+			.concat(selectedSolution.detail.system.set_nodes)
+			.sort();
 	});
 
 	// Reset selected values when options change
 	updateSelectionOnStateChanges(
-		() => transport_technologies,
-		() => !!selected_solution && !!fetched_capex && !!fetched_opex,
-		() => previous_transport_technologies,
-		() => url_transport_technologies,
-		(value) => (selected_transport_technologies = value),
-		(value) => (previous_transport_technologies = value),
-		(value) => (url_transport_technologies = value),
-		true
+		() => transportTechnologies,
+		() => !!selectedSolution && !!fetchedCapex && !!fetchedOpex,
+		() => previousTransportTechnologies,
+		() => urlTransportTechnologies,
+		(value) => (selectedTransportTechnologies = value),
+		(value) => (previousTransportTechnologies = value),
+		(value) => (urlTransportTechnologies = value)
 	);
 	updateSelectionOnStateChanges(
-		() => conversion_technologies,
-		() => !!selected_solution && !!fetched_capex && !!fetched_opex,
-		() => previous_conversion_technologies,
-		() => url_conversion_technologies,
-		(value) => (selected_conversion_technologies = value),
-		(value) => (previous_conversion_technologies = value),
-		(value) => (url_conversion_technologies = value)
+		() => conversionTechnologies,
+		() => !!selectedSolution && fetchedCapex.length > 0 && fetchedOpex.length > 0,
+		() => previousConversionTechnologies,
+		() => urlConversionTechnologies,
+		(value) => (selectedConversionTechnologies = value),
+		(value) => (previousConversionTechnologies = value),
+		(value) => (urlConversionTechnologies = value)
 	);
 	updateSelectionOnStateChanges(
-		() => storage_technologies,
-		() => !!selected_solution && !!fetched_capex && !!fetched_opex,
-		() => previous_storage_technologies,
-		() => url_storage_technologies,
-		(value) => (selected_storage_technologies = value),
-		(value) => (previous_storage_technologies = value),
-		(value) => (url_storage_technologies = value)
+		() => storageTechnologies,
+		() => !!selectedSolution && fetchedCapex.length > 0 && fetchedOpex.length > 0,
+		() => previousStorageTechnologies,
+		() => urlStorageTechnologies,
+		(value) => (selectedStorageTechnologies = value),
+		(value) => (previousStorageTechnologies = value),
+		(value) => (urlStorageTechnologies = value)
 	);
 	updateSelectionOnStateChanges(
-		() => cost_carriers,
-		() => !!selected_solution && !!fetched_cost_carrier?.data,
-		() => previous_cost_carriers,
-		() => url_cost_carriers,
-		(value) => (selected_cost_carriers = value),
-		(value) => (previous_cost_carriers = value),
-		(value) => (url_cost_carriers = value)
+		() => costCarriers,
+		() => !!selectedSolution && fetchedCostCarrier.length > 0,
+		() => previousCostCarriers,
+		() => urlCostCarriers,
+		(value) => (selectedCostCarriers = value),
+		(value) => (previousCostCarriers = value),
+		(value) => (urlCostCarriers = value)
 	);
 	updateSelectionOnStateChanges(
-		() => demand_carriers,
-		() => !!selected_solution && !!fetched_cost_shed_demand?.data,
-		() => previous_demand_carriers,
-		() => url_demand_carriers,
-		(value) => (selected_demand_carriers = value),
-		(value) => (previous_demand_carriers = value),
-		(value) => (url_demand_carriers = value)
+		() => demandCarriers,
+		() => !!selectedSolution && fetchedCostShedDemand.length > 0,
+		() => previousDemandCarriers,
+		() => urlDemandCarriers,
+		(value) => (selectedDemandCarriers = value),
+		(value) => (previousDemandCarriers = value),
+		(value) => (urlDemandCarriers = value)
 	);
 	updateSelectionOnStateChanges(
 		() => locations,
-		() => !!selected_solution,
-		() => previous_locations,
+		() => !!selectedSolution,
+		() => previousLocations,
 		() => null,
-		(value) => (selected_locations = value),
-		(value) => (previous_locations = value),
+		(value) => (selectedLocations = value),
+		(value) => (previousLocations = value),
 		() => {}
 	);
 	updateSelectionOnStateChanges(
 		() => years,
-		() => !!selected_solution,
-		() => previous_years,
+		() => !!selectedSolution,
+		() => previousYears,
 		() => null,
-		(value) => (selected_years = value),
-		(value) => (previous_years = value),
+		(value) => (selectedYears = value),
+		(value) => (previousYears = value),
 		() => {}
 	);
 
 	$effect(() => {
-		selected_locations = locations;
+		selectedLocations = locations;
 	});
 	$effect(() => {
-		selected_years = years;
+		selectedYears = years;
 	});
 
 	onMount(() => {
@@ -316,20 +313,20 @@
 			variable.show = getURLParamAsBoolean(key, variable.show);
 			variable.subdivision = getURLParamAsBoolean(key + '_sub', variable.subdivision);
 		});
-		url_transport_technologies = getURLParamAsIntArray('tran');
-		url_conversion_technologies = getURLParamAsIntArray('conv');
-		url_storage_technologies = getURLParamAsIntArray('stor');
-		url_cost_carriers = getURLParamAsIntArray('cost');
-		url_demand_carriers = getURLParamAsIntArray('demand');
+		urlTransportTechnologies = getURLParamAsIntArray('tran');
+		urlConversionTechnologies = getURLParamAsIntArray('conv');
+		urlStorageTechnologies = getURLParamAsIntArray('stor');
+		urlCostCarriers = getURLParamAsIntArray('cost');
+		urlDemandCarriers = getURLParamAsIntArray('demand');
 	});
 
 	$effect(() => {
 		// Triggers
-		selected_transport_technologies;
-		selected_conversion_technologies;
-		selected_storage_technologies;
-		selected_cost_carriers;
-		selected_demand_carriers;
+		selectedTransportTechnologies;
+		selectedConversionTechnologies;
+		selectedStorageTechnologies;
+		selectedCostCarriers;
+		selectedDemandCarriers;
 		Object.values(variables).forEach((variable) => {
 			variable.show;
 			variable.subdivision;
@@ -338,15 +335,13 @@
 		// Wait for router to be initialized
 		tick().then(() => {
 			let params: URLParams = {
-				tran: selected_transport_technologies
-					.map((t) => transport_technologies.indexOf(t))
+				tran: selectedTransportTechnologies.map((t) => transportTechnologies.indexOf(t)).join('~'),
+				conv: selectedConversionTechnologies
+					.map((t) => conversionTechnologies.indexOf(t))
 					.join('~'),
-				conv: selected_conversion_technologies
-					.map((t) => conversion_technologies.indexOf(t))
-					.join('~'),
-				stor: selected_storage_technologies.map((t) => storage_technologies.indexOf(t)).join('~'),
-				cost: selected_cost_carriers.map((t) => cost_carriers.indexOf(t)).join('~'),
-				demand: selected_demand_carriers.map((t) => demand_carriers.indexOf(t)).join('~')
+				stor: selectedStorageTechnologies.map((t) => storageTechnologies.indexOf(t)).join('~'),
+				cost: selectedCostCarriers.map((t) => costCarriers.indexOf(t)).join('~'),
+				demand: selectedDemandCarriers.map((t) => demandCarriers.indexOf(t)).join('~')
 			};
 			Object.entries(variables).forEach(([key, variable]) => {
 				params[key] = variable.show ? '1' : '0';
@@ -356,37 +351,23 @@
 		});
 	});
 
-	function solution_changed() {
-		if (!selected_solution) {
+	async function onSolutionChanged() {
+		if (!selectedSolution) {
 			return;
 		}
 
-		fetch_data();
+		fetchData();
 	}
 
-	function rename_fields(
-		papa_result: ParseResult<any> | null,
-		fields: string[][]
-	): ParseResult<any> | null {
-		if (!papa_result || !papa_result.data) return papa_result;
-		papa_result.data = papa_result.data.map((row) => {
-			return fields.reduce((acc, [old_name, new_name]) => {
-				if (!(old_name in row)) return acc;
-				const { [old_name]: oldValue, ...rest } = acc;
-				return { ...rest, [new_name]: oldValue };
-			}, row);
-		});
-		return papa_result;
-	}
-
-	async function fetch_data() {
-		if (!selected_solution) {
+	async function fetchData() {
+		if (!selectedSolution) {
 			return;
 		}
+
 		fetching = true;
 
 		let responses = await get_component_total(
-			selected_solution.solution_name,
+			selectedSolution.solution_name,
 			[
 				'cost_capex_yearly',
 				'cost_opex_yearly',
@@ -394,27 +375,16 @@
 				'cost_carrier',
 				'cost_shed_demand'
 			].map((variable) => {
-				return get_variable_name(variable, selected_solution?.version);
+				return get_variable_name(variable, selectedSolution?.version);
 			}),
-			selected_solution.scenario_name
+			selectedSolution.scenario_name
 		);
 
-		// "Standardize" all series names
-		fetched_capex = rename_fields(responses.cost_capex_yearly || null, [
-			['technology', combined_name]
-		]);
-		fetched_opex = rename_fields(responses.cost_opex_yearly || null, [
-			['technology', combined_name]
-		]);
-		fetched_cost_carbon = responses.cost_carbon_emissions_total || null;
-		fetched_cost_carrier = rename_fields(responses.cost_carrier || null, [
-			['node', 'location'],
-			['carrier', combined_name]
-		]);
-		fetched_cost_shed_demand = rename_fields(responses.cost_shed_demand || null, [
-			['node', 'location'],
-			['carrier', combined_name]
-		]);
+		fetchedCapex = responses.cost_capex_yearly?.data || [];
+		fetchedOpex = responses.cost_opex_yearly?.data || [];
+		fetchedCostCarbon = responses.cost_carbon_emissions_total?.data || [];
+		fetchedCostCarrier = responses.cost_carrier?.data || [];
+		fetchedCostShedDemand = responses.cost_shed_demand?.data || [];
 
 		if (responses.unit?.data) {
 			units = Object.fromEntries(responses.unit.data.map((u) => [u.technology, u[0] || u.units]));
@@ -423,123 +393,119 @@
 		fetching = false;
 	}
 
-	let datasets: ChartDataset<'line' | 'bar'>[] = $derived.by(() => {
-		let all_selected_carriers_technologies = [
-			...selected_conversion_technologies
-				.concat(selected_storage_technologies)
-				.concat(selected_transport_technologies)
-				.flatMap((i) => [i + capex_suffix, i + opex_suffix]),
-			...selected_cost_carriers,
-			...selected_demand_carriers
+	let allSelectedTechnologies: string[] = $state([]);
+	function updateAllSelectedTechnologies() {
+		allSelectedTechnologies = [
+			...selectedConversionTechnologies
+				.concat(selectedStorageTechnologies)
+				.concat(selectedTransportTechnologies)
+				.flatMap((i) => [i + capexSuffix, i + opexSuffix]),
+			...selectedCostCarriers,
+			...selectedDemandCarriers
 		];
-		let excluded_years = years.filter((year) => !selected_years.includes(year));
+	}
+	const variableLabels = Object.values(variables)
+		.filter((variable) => variable.label)
+		.map((variable) => variable.label!);
+	let debounceUpdateAllSelectedTechnologies = debounce(updateAllSelectedTechnologies, 100);
+	$effect(() => {
+		selectedConversionTechnologies;
+		selectedStorageTechnologies;
+		selectedTransportTechnologies;
+		selectedCostCarriers;
+		selectedDemandCarriers;
+		debounceUpdateAllSelectedTechnologies();
+	});
 
-		// Update the dataset aggregations and groupings
-		const variableToDataMap = [
-			{
-				key: 'capex',
-				data: (fetched_capex?.data || []).map((item) => {
-					return {
-						...item,
-						[combined_name]: item[combined_name] + capex_suffix
-					};
-				})
-			},
-			{
-				key: 'opex',
-				data: (fetched_opex?.data || []).map((item) => {
-					return {
-						...item,
-						[combined_name]: item[combined_name] + opex_suffix
-					};
-				})
-			},
-			{
-				key: 'carrier',
-				data: (fetched_cost_carrier?.data || []).filter((i) =>
-					selected_cost_carriers.includes(i[combined_name])
-				)
-			},
-			{
-				key: 'shed_demand',
-				data:
-					(fetched_cost_shed_demand?.data || []).filter((i) =>
-						selected_demand_carriers.includes(i[combined_name])
-					) || null
-			}
-		];
-		let grouped_data: Record<string, any>[] = variableToDataMap.flatMap(({ key, data }) => {
-			if (!variables[key].show || !data) {
-				return [];
-			}
+	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
+		if (allSelectedTechnologies.length == 0) {
+			return [];
+		}
 
-			if (variables[key].subdivision) {
-				return data;
-			}
+		const variableToDataMap = {
+			capex: Entries.fromRows(fetchedCapex).mapIndex((index) => ({
+				location: index['location'],
+				[technologyCarrierLabel]: index['technology'] + capexSuffix
+			})),
+			opex: Entries.fromRows(fetchedOpex).mapIndex((index) => ({
+				location: index['location'],
+				[technologyCarrierLabel]: index['technology'] + opexSuffix
+			})),
+			carrier: Entries.fromRows(fetchedCostCarrier)
+				.filter((i) => selectedCostCarriers.includes(i.index['carrier']))
+				.mapIndex((index) => ({
+					location: index['node'],
+					[technologyCarrierLabel]: index['carrier']
+				})),
+			shed_demand: Entries.fromRows(fetchedCostShedDemand)
+				.filter((i) => selectedDemandCarriers.includes(i.index['carrier']))
+				.mapIndex((index) => ({
+					location: index['node'],
+					[technologyCarrierLabel]: index['carrier']
+				}))
+		};
 
-			return filter_and_aggregate_data(
-				data,
-				{ location: selected_locations },
-				{ [combined_name]: all_selected_carriers_technologies },
-				excluded_years,
-				false
-			).map((item: ChartDataset<'line' | 'bar'>) => {
-				return {
-					...item.data,
-					location: item.label,
-					[combined_name]: variables[key].label
-				};
-			});
-		});
+		let entries = Entries.concatenate(
+			Object.entries(variableToDataMap).map(([variableName, baseEntries]) => {
+				if (!variables[variableName].show) {
+					return null;
+				}
 
-		variableToDataMap.forEach(({ key }) => {
-			if (!variables[key].label) {
-				return;
-			}
-			all_selected_carriers_technologies.push(variables[key].label);
-		});
+				const entries = baseEntries
+					.filterByCriteria({
+						location: selectedLocations,
+						[technologyCarrierLabel]: allSelectedTechnologies.concat(variableLabels)
+					})
+					.filterDataByIndex(selectedYears.map((year) => years.indexOf(year)));
 
-		// Specify Aggregation. If the aggregation type is location, all technologies have to be aggregated and vice versa.
-		let dataset_selector: { [key: string]: string[] };
-		let datasets_aggregates: { [key: string]: string[] };
-		if (selected_aggregation == combined_name) {
-			dataset_selector = { location: locations };
-			datasets_aggregates = { [combined_name]: all_selected_carriers_technologies };
+				if (variables[variableName].subdivision) {
+					return entries;
+				}
+
+				return entries.groupBy(['location']).mapIndex((index) => ({
+					location: index['location'],
+					[technologyCarrierLabel]: variables[variableName].label || ''
+				}));
+			})
+		);
+
+		if (selectedAggregation == technologyCarrierLabel) {
+			entries = entries.groupBy(['location']);
 		} else {
-			dataset_selector = { [combined_name]: all_selected_carriers_technologies };
-			datasets_aggregates = { location: selected_locations };
+			entries = entries.groupBy([technologyCarrierLabel]);
 		}
 
 		// Get plot data, as a base we take the grouped data adapted to the cost selection.
 		resetColorState();
-		let bar_data = filter_and_aggregate_data(
-			grouped_data,
-			dataset_selector,
-			datasets_aggregates,
-			[],
-			false
-		);
+		const datasets: ChartDataset<'bar'>[] = entries.toArray().map((entry) => {
+			const label =
+				selectedAggregation == technologyCarrierLabel
+					? entry.index.location
+					: entry.index[technologyCarrierLabel];
+			const color = nextColor(label);
+			return {
+				label,
+				data: entry.data,
+				borderColor: color,
+				backgroundColor: addTransparency(color)
+			};
+		});
 
 		// Get total carbon cost data
-		let line_data: ChartDataset<'bar'>[] = [];
-		if (
-			fetched_cost_carbon?.data &&
-			fetched_cost_carbon.data.length > 0 &&
-			variables.carbon_emission.show
-		) {
-			const total_carbon_cost_data = Object.entries(fetched_cost_carbon.data[0])
-				.filter(([key]) => !excluded_years.includes(Number(key)))
-				.map(([_, value]) => value as number);
-			line_data = [
-				{
-					data: total_carbon_cost_data,
-					label: 'Total Carbon Costs',
-					type: 'bar'
-				}
-			];
+		if (fetchedCostCarbon.length === 1 && variables.carbon_emission.show) {
+			const carbonCostEntries = Entries.fromRows(fetchedCostCarbon).filterDataByIndex(
+				selectedYears.map((year) => years.indexOf(year))
+			);
+			const color = nextColor('Total Carbon Costs');
+			datasets.push({
+				data: carbonCostEntries.get(0)!.data,
+				label: 'Total Carbon Costs',
+				borderColor: color,
+				backgroundColor: addTransparency(color)
+			});
 		}
 
-		return [...bar_data, ...line_data];
+		return datasets as ChartDataset<'bar' | 'line'>[];
 	});
 </script>
 
@@ -551,13 +517,13 @@
 			bind:carriers
 			bind:nodes
 			bind:years
-			bind:selected_solution
-			bind:loading={solution_loading}
-			solutionSelected={solution_changed}
-			disabled={fetching || solution_loading}
+			bind:selected_solution={selectedSolution}
+			bind:loading={solutionLoading}
+			solutionSelected={onSolutionChanged}
+			disabled={fetching || solutionLoading}
 		/>
 	</FilterSection>
-	{#if !fetching && !solution_loading && fetched_capex && selected_solution != null}
+	{#if !fetching && !solutionLoading && fetchedCapex.length && selectedSolution !== null}
 		<FilterSection title="Cost Selection">
 			{#each Object.values(variables) as variable, i}
 				<div class="row mb-2">
@@ -567,7 +533,7 @@
 					<div class="col-4 col-md-2">
 						<ToggleButton formId={'variables' + i} bind:value={variable.show}></ToggleButton>
 					</div>
-					{#if variable.show && variable.show_subdivision}
+					{#if variable.show && variable.showSubdivision}
 						<label class="col-6 col-md-2" for={'subdivision' + i}>Subdivision</label>
 						<div class="col-4 col-md-2">
 							<ToggleButton formId={'subdivision' + i} bind:value={variable.subdivision}
@@ -579,76 +545,80 @@
 		</FilterSection>
 		<FilterSection title="Technology Selection">
 			<h3>Technologies (for Capex/Opex)</h3>
-			{#if transport_technologies.length > 0}
+			{#if transportTechnologies.length > 0}
 				<AllCheckbox
 					label="Transport"
-					bind:value={selected_transport_technologies}
-					elements={transport_technologies}
+					bind:value={selectedTransportTechnologies}
+					elements={transportTechnologies}
 				></AllCheckbox>
 			{/if}
-			{#if storage_technologies.length > 0}
+			{#if storageTechnologies.length > 0}
 				<AllCheckbox
 					label="Storage"
-					bind:value={selected_storage_technologies}
-					elements={storage_technologies}
+					bind:value={selectedStorageTechnologies}
+					elements={storageTechnologies}
 				></AllCheckbox>
 			{/if}
-			{#if conversion_technologies.length > 0}
+			{#if conversionTechnologies.length > 0}
 				<AllCheckbox
 					label="Conversion"
-					bind:value={selected_conversion_technologies}
-					elements={conversion_technologies}
+					bind:value={selectedConversionTechnologies}
+					elements={conversionTechnologies}
 				></AllCheckbox>
 			{/if}
-			{#if cost_carriers.length > 0}
+			{#if costCarriers.length > 0}
 				<AllCheckbox
 					label="Cost of Carrier"
-					bind:value={selected_cost_carriers}
-					elements={cost_carriers}
+					bind:value={selectedCostCarriers}
+					elements={costCarriers}
 				></AllCheckbox>
 			{/if}
-			{#if demand_carriers.length > 0}
+			{#if demandCarriers.length > 0}
 				<AllCheckbox
 					label="Shed Demand"
-					bind:value={selected_demand_carriers}
-					elements={demand_carriers}
+					bind:value={selectedDemandCarriers}
+					elements={demandCarriers}
 				></AllCheckbox>
 			{/if}
 		</FilterSection>
 		<FilterSection title="Data Selection">
 			<FilterRow label="Aggregation">
 				{#snippet content(formId)}
-					<Radio
-						{formId}
-						options={to_options(aggregation_options)}
-						bind:value={selected_aggregation}
+					<Radio {formId} options={toOptions(aggregationOptions)} bind:value={selectedAggregation}
 					></Radio>
 				{/snippet}
 			</FilterRow>
-			{#if selected_aggregation == aggregation_options[1]}
-				<AllCheckbox label="Locations" bind:value={selected_locations} elements={locations}
+			{#if selectedAggregation == aggregationOptions[1]}
+				<AllCheckbox label="Locations" bind:value={selectedLocations} elements={locations}
 				></AllCheckbox>
 			{/if}
-			{#if selected_years}
-				<AllCheckbox label="Years" bind:value={selected_years} elements={years}></AllCheckbox>
+			{#if selectedYears}
+				<AllCheckbox label="Years" bind:value={selectedYears} elements={years}></AllCheckbox>
 			{/if}
 		</FilterSection>
 	{/if}
 </Filters>
 <div class="mt-4">
-	{#if solution_loading || fetching}
+	{#if solutionLoading || fetching}
 		<div class="text-center">
 			<div class="spinner-border center" role="status">
 				<span class="visually-hidden">Loading...</span>
 			</div>
 		</div>
-	{:else if selected_solution != null}
+	{:else if selectedSolution != null}
 		{#if datasets.length == 0 || datasets[0].data.length == 0}
 			<div class="text-center">No data with this selection.</div>
-		{:else if selected_years.length == 0}
+		{:else if selectedYears.length == 0}
 			<div class="text-center">Please select at least one year.</div>
 		{:else}
-			<Chart type="line" options={plot_options} {datasets} {labels} plotName={plot_name}></Chart>
+			<Chart
+				type="bar"
+				{labels}
+				{datasets}
+				options={plotOptions}
+				pluginOptions={plotPluginOptions}
+				{plotName}
+			></Chart>
 		{/if}
 	{/if}
 </div>

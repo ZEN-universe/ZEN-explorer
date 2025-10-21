@@ -13,7 +13,7 @@
 	import SankeyDiagram from '$components/SankeyDiagram.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import { nextColor, resetColorState } from '$lib/colors';
-	import { to_options } from '$lib/utils';
+	import { toOptions } from '$lib/utils';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
 	let years: number[] = $state([]);
@@ -406,7 +406,7 @@
 				<Dropdown
 					{formId}
 					bind:value={selectedYear}
-					options={to_options(years.map((year) => year.toString()))}
+					options={toOptions(years.map((year) => year.toString()))}
 					disabled={fetching || solutionLoading}
 				></Dropdown>
 			{/snippet}

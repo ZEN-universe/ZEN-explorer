@@ -48,8 +48,8 @@ export default class Entries {
 	 * @param entriesList Array of Entries instances to concatenate.
 	 * @returns New Entries instance containing all entries from the input instances.
 	 */
-	static concatenate(entriesList: Entries[]): Entries {
-		return new Entries(entriesList.flatMap((e) => e.toArray()));
+	static concatenate(entriesList: (Entries | null)[]): Entries {
+		return new Entries(entriesList.flatMap((e) => e?.toArray() || []));
 	}
 
 	/**

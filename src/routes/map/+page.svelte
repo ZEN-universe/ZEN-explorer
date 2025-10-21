@@ -14,7 +14,7 @@
 
 	import { get_component_total } from '$lib/temple';
 	import { availableMaps } from '$lib/constants';
-	import { remove_duplicates, to_options } from '$lib/utils';
+	import { removeDuplicates, toOptions } from '$lib/utils';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 
 	interface AggregatedData {
@@ -73,7 +73,7 @@
 			selected_solution.detail.system.set_transport_technologies
 		);
 
-		return remove_duplicates(
+		return removeDuplicates(
 			fetchedData.data
 				.map((element) => {
 					const current_technology = element.technology;
@@ -323,7 +323,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(technology_types)}
+						options={toOptions(technology_types)}
 						bind:value={selected_technology_type}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -334,7 +334,7 @@
 					{#snippet content(formId)}
 						<Radio
 							{formId}
-							options={to_options(storage_type_options)}
+							options={toOptions(storage_type_options)}
 							bind:value={selected_storage_type}
 							disabled={fetching || solution_loading}
 						></Radio>
@@ -346,7 +346,7 @@
 					{#snippet content(formId)}
 						<Dropdown
 							{formId}
-							options={to_options(carriers)}
+							options={toOptions(carriers)}
 							bind:value={selected_carrier}
 							disabled={fetching || solution_loading}
 						></Dropdown>
@@ -361,7 +361,7 @@
 						<Dropdown
 							{formId}
 							bind:value={selected_year}
-							options={to_options(years.map((year) => year.toString()))}
+							options={toOptions(years.map((year) => year.toString()))}
 						></Dropdown>
 					{/snippet}
 				</FilterRow>

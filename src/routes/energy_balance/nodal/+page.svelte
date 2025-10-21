@@ -16,7 +16,7 @@
 	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_energy_balance, get_unit } from '$lib/temple';
-	import { to_options } from '$lib/utils';
+	import { toOptions } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import { nextColor, resetColorState as reset_color_picker_state } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes, Entry } from '$lib/types';
@@ -34,7 +34,7 @@
 	let nodes: string[] = $state([]);
 	let carriers: string[] = $state([]);
 	let years: number[] = $state([]);
-	const window_sizes = to_options(['Hourly', 'Daily', 'Weekly', 'Monthly']);
+	const window_sizes = toOptions(['Hourly', 'Daily', 'Weekly', 'Monthly']);
 
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_node: string | null = $state(null);
@@ -465,7 +465,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(years.map((year) => year.toString()))}
+						options={toOptions(years.map((year) => year.toString()))}
 						bind:value={selected_year}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -475,7 +475,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(nodes)}
+						options={toOptions(nodes)}
 						bind:value={selected_node}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -485,7 +485,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(carriers)}
+						options={toOptions(carriers)}
 						bind:value={selected_carrier}
 						disabled={fetching || solution_loading}
 					></Dropdown>

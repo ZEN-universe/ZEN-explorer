@@ -3,7 +3,7 @@
 
 	import type { ActivatedSolution } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
-	import { remove_duplicates } from '$lib/utils';
+	import { removeDuplicates } from '$lib/utils';
 
 	import FilterRow from '$components/FilterRow.svelte';
 
@@ -51,7 +51,7 @@
 	}: Props = $props();
 
 	let firstLevels: string[] = $derived(
-		remove_duplicates(getSolutionList().map((solution) => solution.name.split('.')[0]))
+		removeDuplicates(getSolutionList().map((solution) => solution.name.split('.')[0]))
 	);
 
 	let secondLevels: string[] = $derived.by(() => {
@@ -158,9 +158,17 @@
 		// Wait for all effects to finish, e.g. to reset activeSecondLevel, activeScenario
 		await tick();
 
-		if (activeSolutionName == null) {
+		if (activeSolutionName === null) {
 			selectedSolution = null;
 			allScenarios = [];
+			return;
+		}
+
+		if (
+			selectedSolution !== null &&
+			selectedSolution.solution_name === activeSolutionName &&
+			selectedSolution.scenario_name === activeScenario
+		) {
 			return;
 		}
 
