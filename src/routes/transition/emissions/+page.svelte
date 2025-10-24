@@ -56,6 +56,8 @@
 	let selectedLocations: string[] = $state([]);
 	let selectedYears: number[] = $state([]);
 
+	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
+
 	let plotName = $derived.by(() => {
 		if (!selectedSolutions[0]?.solution_name) {
 			return '';
@@ -127,27 +129,42 @@
 	});
 
 	let technologies: string[] = $derived.by(() => {
-		if (!technologyData.length) {
+		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		return removeDuplicates(technologyData[0].map((d) => d.technology));
+		const setTechnologies: Set<string> = new Set();
+		technologyData.forEach((data) => {
+			data.forEach((d) => setTechnologies.add(d.technology));
+		});
+		return Array.from(setTechnologies).sort();
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		if (!carrierData.length) {
+		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		return removeDuplicates(carrierData[0].map((d) => d.carrier));
+		const setCarriers: Set<string> = new Set();
+		carrierData.forEach((data) => {
+			data.forEach((d) => setCarriers.add(d.carrier));
+		});
+		return Array.from(setCarriers).sort();
 	});
 
 	let locations: string[] = $derived.by(() => {
-		if (!technologyData.length && !carrierData.length) {
+		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		return removeDuplicates(
-			[...(technologyData[0] || []), ...(carrierData[0] || [])].map((d) => d.location)
-		).sort();
+		const setLocations: Set<string> = new Set();
+		technologyData.forEach((data) => {
+			data.forEach((d) => setLocations.add(d.location));
+		});
+		carrierData.forEach((data) => {
+			data.forEach((d) => setLocations.add(d.node));
+		});
+		return Array.from(setLocations).sort();
 	});
+
+	$inspect('locations', locations);
 
 	$effect(() => {
 		selectedTechnologies = technologies;
@@ -243,6 +260,7 @@
 	let [barDatasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() => {
 		if (
 			selectedSolutions.length === 0 ||
+			hasSomeUnsetSolutions ||
 			!annualData.length ||
 			!cumulativeData.length ||
 			!carrierData.length ||
@@ -335,11 +353,7 @@
 	});
 
 	let lineDatasets: ChartDataset<'line'>[] = $derived.by(() => {
-		if (
-			selectedSolutions.length === 0 ||
-			annualLimitData.length === 0 ||
-			cumulativeLimitData.length === 0
-		) {
+		if (selectedSolutions.length === 0 || hasSomeUnsetSolutions) {
 			return [];
 		}
 
@@ -350,10 +364,16 @@
 
 			let entry: number[];
 			if (selectedSubdivision || selectedCumulation == 'Annual') {
+				if ((annualLimitData[solutionIndex] ?? []).length === 0) {
+					return [];
+				}
 				entry = Object.entries(annualLimitData[solutionIndex][0]).map(([_, i]) =>
 					i === 'inf' ? Infinity : Number(i)
 				);
 			} else {
+				if ((cumulativeLimitData[solutionIndex] ?? []).length === 0) {
+					return [];
+				}
 				const value = Number(Object.values(cumulativeLimitData[solutionIndex][0])[0]);
 				entry = selectedYears.map(() => value);
 			}
@@ -396,7 +416,7 @@
 			onSelected={onSolutionSelected}
 		/>
 	</FilterSection>
-	{#if !solutionLoading && selectedSolutions[0] !== null}
+	{#if !solutionLoading && !hasSomeUnsetSolutions}
 		<FilterSection title="Variable Selection">
 			<FilterRow label="Subdivision">
 				{#snippet content(formId)}
@@ -417,7 +437,7 @@
 			{/if}
 		</FilterSection>
 	{/if}
-	{#if !solutionLoading && selectedSolutions[0] !== null && !fetching}
+	{#if !solutionLoading && !hasSomeUnsetSolutions && !fetching}
 		<FilterSection title="Data Selection">
 			{#if selectedSubdivision}
 				<FilterRow label="Aggregation">
@@ -458,7 +478,7 @@
 				<span class="visually-hidden">Loading...</span>
 			</div>
 		</div>
-	{:else if selectedSolutions.length == 0}
+	{:else if selectedSolutions.length == 0 || hasSomeUnsetSolutions}
 		<div class="text-center">No solution selected</div>
 	{:else if datasets.length == 0 || selectedYears.length == 0}
 		<div class="text-center">No data with this selection.</div>

@@ -13,7 +13,7 @@
 	import ToggleButton from '$components/ToggleButton.svelte';
 
 	import { get_component_total as getComponentTotal } from '$lib/temple';
-	import { removeDuplicates, toOptions } from '$lib/utils';
+	import { toOptions } from '$lib/utils';
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
@@ -62,6 +62,8 @@
 
 	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
+
+	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
 
 	// Units
 	let units: { [carrier: string]: string } = $state({});
@@ -128,60 +130,75 @@
 	});
 
 	// Filter options
-	let carriers: string[] = $derived.by(() => {
-		if (data.length === 0 || selectedSolutions[0] === null) {
+	let technologiesPerSolution = $derived.by(() => {
+		if (hasSomeUnsetSolutions || selectedTechnologyType === null) {
 			return [];
 		}
 
-		const solution = selectedSolutions[0];
-		const carriers: string[] = [];
-		data[0].forEach((element) => {
-			const currentTechnology = element.technology;
-			const currentCarrier = solution.detail.reference_carrier[currentTechnology];
-
-			if (!carriers.includes(currentCarrier) && allTechnologies.includes(element.technology)) {
-				carriers.push(currentCarrier);
-			}
-		});
-
-		return carriers;
-	});
-
-	let allTechnologies: string[] = $derived.by(() => {
-		if (!selectedSolutions[0] || !selectedTechnologyType) {
-			return [];
-		}
-
-		const solution = selectedSolutions[0];
 		const key = {
 			conversion: 'set_conversion_technologies',
 			storage: 'set_storage_technologies',
 			transport: 'set_transport_technologies'
-		}[selectedTechnologyType] as keyof System;
-		return (solution.detail.system[key] || []) as string[];
+		}[selectedTechnologyType] as
+			| 'set_conversion_technologies'
+			| 'set_storage_technologies'
+			| 'set_transport_technologies';
+
+		return (selectedSolutions as ActivatedSolution[]).map((solution) => {
+			return solution.detail.system[key] || [];
+		});
 	});
 
-	let technologies: string[] = $derived.by(() => {
-		if (selectedSolutions[0] === null || selectedTechnologyType === null) {
+	let carriers: string[] = $derived.by(() => {
+		if (data.length === 0 || hasSomeUnsetSolutions) {
 			return [];
 		}
 
-		const solution = selectedSolutions[0];
-		return allTechnologies.filter(
-			(technology) => solution.detail.reference_carrier[technology] == selectedCarrier
-		);
+		const setUsedCarriers: Set<string> = new Set();
+		selectedSolutions.forEach((solution, solutionIndex) => {
+			if (solution === null) {
+				return;
+			}
+			data[solutionIndex].forEach((row) => {
+				if (technologiesPerSolution[solutionIndex].includes(row['technology'])) {
+					setUsedCarriers.add(solution.detail.reference_carrier[row['technology']]);
+				}
+			});
+		});
+
+		return Array.from(setUsedCarriers).sort();
 	});
+
+	let technologies: string[] = $derived.by(() => {
+		if (selectedTechnologyType === null || selectedCarrier === null || hasSomeUnsetSolutions) {
+			return [];
+		}
+
+		const setTechnologies: Set<string> = new Set();
+		(selectedSolutions as ActivatedSolution[]).forEach((solution, solutionIndex) => {
+			technologiesPerSolution[solutionIndex].forEach((tech) => {
+				if (solution.detail.reference_carrier[tech] === selectedCarrier) {
+					setTechnologies.add(tech);
+				}
+			});
+		});
+		return Array.from(setTechnologies).sort();
+	});
+	$inspect('technologies', technologies);
 
 	let locations: string[] = $derived.by(() => {
 		if (data.length === 0) {
 			return [];
 		}
 
-		return removeDuplicates(
-			data[0]
-				.filter((element) => technologies.includes(element.technology))
-				.map((element) => element.location)
-		);
+		const setLocations: Set<string> = new Set();
+		selectedSolutions.forEach((solution, index) => {
+			if (solution === null) {
+				return;
+			}
+			solution.detail.system.set_nodes.forEach((node) => setLocations.add(node));
+		});
+		return Array.from(setLocations).sort();
 	});
 
 	// Effects for filter options
@@ -274,7 +291,7 @@
 	 * Fetch data from the API of the selected values in the form
 	 */
 	async function fetchData() {
-		if (selectedVariable === null || selectedSolutions.some((s) => s === null)) {
+		if (selectedVariable === null || hasSomeUnsetSolutions) {
 			data = [];
 			return;
 		}

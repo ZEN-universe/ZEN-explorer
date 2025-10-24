@@ -1,5 +1,10 @@
-import type { Chart, ChartEvent, ChartType, LegendElement, LegendItem } from 'chart.js';
+import type { Chart, LegendItem } from 'chart.js';
 
+/**
+ * Generates legend labels for solution comparison charts.
+ * @param chart The chart instance.
+ * @returns An array of LegendItem objects representing the legend labels.
+ */
 export function generateLabelsForSolutionComparison(chart: Chart): LegendItem[] {
 	const labels: LegendItem[] = [];
 	const labelNames = new Set<string>();
@@ -20,16 +25,16 @@ export function generateLabelsForSolutionComparison(chart: Chart): LegendItem[] 
 	return labels;
 }
 
+/**
+ * Handles the click event on a legend item for solution comparison charts.
+ * @param legendItem The legend item that was clicked.
+ * @param chart The chart instance.
+ */
 export function onClickLegendForSolutionComparison(legendItem: LegendItem, chart: Chart): void {
 	chart.data.datasets.forEach((dataset, i) => {
 		if (dataset.label !== legendItem.text) return;
 		chart.setDatasetVisibility(i, !chart.isDatasetVisible(i));
 		chart.update();
-		// if (chart.isDatasetVisible(i)) {
-		// 	chart.hide(i);
-		// } else {
-		// 	chart.show(i);
-		// }
 	});
 }
 

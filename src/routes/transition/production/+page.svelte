@@ -155,6 +155,8 @@
 		].join('_');
 	});
 
+	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
+
 	// Units
 	let units: Row[] = $state([]);
 	let unit = $derived.by(() => {
@@ -253,25 +255,47 @@
 
 	// Carriers and technologies
 	let carriers: string[] = $derived.by(() => {
-		if (!selectedSolutions[0]) return [];
-		return selectedSolutions[0].detail.system.set_carriers.slice().sort();
+		if (hasSomeUnsetSolutions) return [];
+		
+		const setCarriers: Set<string> = new Set();
+		const solutions = selectedSolutions as ActivatedSolution[];
+		
+		solutions.forEach((solution) => {
+			solution.detail.system.set_carriers.forEach((carrier) => setCarriers.add(carrier));
+		});
+		return Array.from(setCarriers).sort();
 	});
 
 	let conversionTechnologies = $derived.by(() => {
-		if (!selectedSolutions[0]) return [];
-		return removeDuplicates(
-			Object.entries(selectedSolutions[0].detail.carriers_input)
-				.concat(Object.entries(selectedSolutions[0].detail.carriers_output))
+		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
+		
+		const setTechnologies: Set<string> = new Set();
+		const solutions = selectedSolutions as ActivatedSolution[];
+		
+		solutions.forEach((solution) => {
+			Object.entries(solution.detail.carriers_input)
+				.concat(Object.entries(solution.detail.carriers_output))
 				.filter((t) => selectedCarrier && t[1].includes(selectedCarrier))
-				.map((t) => t[0])
-		);
+				.forEach((t) => setTechnologies.add(t[0]));
+		});
+		return Array.from(setTechnologies).sort();
 	});
+	
 	let storageTechnologies = $derived.by(() => {
-		if (!selectedSolutions[0]) return [];
-		const solution = selectedSolutions[0];
-		return solution.detail.system.set_storage_technologies.filter(
-			(t) => solution.detail.reference_carrier[t] == selectedCarrier
-		);
+		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
+
+		const setStorageTechnologies: Set<string> = new Set();
+		const solutions = selectedSolutions as ActivatedSolution[];
+
+		solutions.forEach((solution) => {
+			solution.detail.system.set_storage_technologies.forEach((tech) => {
+				if (solution.detail.reference_carrier[tech] !== selectedCarrier) {
+					return;
+				}
+				setStorageTechnologies.add(tech);
+			});
+		});
+		return Array.from(setStorageTechnologies).sort();
 	});
 
 	// Update selected values when the corresponding options change
@@ -387,33 +411,32 @@
 	 * Fetch data from the API server for the current selection.
 	 */
 	async function fetchData() {
-		if (selectedSolutions.some((s) => s === null)) {
+		if (hasSomeUnsetSolutions) {
 			return;
 		}
 
 		fetching = true;
 		data = [];
 
+		const solutions = selectedSolutions as ActivatedSolution[];
 		const responses = await Promise.all(
-			selectedSolutions
-				.filter((s) => s !== null)
-				.map((solution) => {
-					return get_component_total(
-						solution.solution_name,
-						[
-							'flow_conversion_output',
-							'flow_conversion_input',
-							'flow_storage_discharge',
-							'flow_storage_charge',
-							'flow_import',
-							'flow_export',
-							'shed_demand',
-							'demand'
-						],
-						solution.scenario_name,
+			solutions.map((solution) => {
+				return get_component_total(
+					solution.solution_name,
+					[
+						'flow_conversion_output',
+						'flow_conversion_input',
+						'flow_storage_discharge',
+						'flow_storage_charge',
+						'flow_import',
+						'flow_export',
+						'shed_demand',
 						'demand'
-					);
-				})
+					],
+					solution.scenario_name,
+					'demand'
+				);
+			})
 		);
 
 		data = responses.map((response) => {

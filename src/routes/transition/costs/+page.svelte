@@ -78,6 +78,8 @@
 	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
+	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
+
 	interface Variable {
 		title: string;
 		show: boolean;
@@ -188,65 +190,104 @@
 
 	// Technologies, carriers and locations
 	let setCapexOpexTechnologies: Set<string> = $derived.by(() => {
-		if (!fetchedCapex[0]?.length || !fetchedOpex[0]?.length) {
+		if (hasSomeUnsetSolutions) {
 			return new Set<string>();
 		}
 		return new Set([
-			...(fetchedCapex[0].map((row) => row['technology']) || []),
-			...(fetchedOpex[0].map((row) => row['technology']) || [])
+			...(fetchedCapex.flatMap((data) => data.map((row) => row['technology'])) || []),
+			...(fetchedOpex.flatMap((data) => data.map((row) => row['technology'])) || [])
 		]);
 	});
 
 	let transportTechnologies: string[] = $derived.by(() => {
-		if (!selectedSolutions[0] || setCapexOpexTechnologies.size == 0) {
+		if (hasSomeUnsetSolutions || setCapexOpexTechnologies.size == 0) {
 			return [];
 		}
-		return selectedSolutions[0].detail.system.set_transport_technologies
-			.filter((t) => setCapexOpexTechnologies.has(t))
-			.sort();
+		const solutions = selectedSolutions as ActivatedSolution[];
+		const setTechnologies: Set<string> = new Set();
+		solutions.forEach((solution) => {
+			solution.detail.system.set_transport_technologies.forEach((t) => {
+				if (setCapexOpexTechnologies.has(t)) {
+					setTechnologies.add(t);
+				}
+			});
+		});
+		return Array.from(setTechnologies).sort();
 	});
+
 	let conversionTechnologies: string[] = $derived.by(() => {
-		if (!selectedSolutions[0] || setCapexOpexTechnologies.size == 0) {
+		if (hasSomeUnsetSolutions || setCapexOpexTechnologies.size == 0) {
 			return [];
 		}
-		return removeDuplicates(
-			selectedSolutions[0].detail.system.set_conversion_technologies.filter((t) =>
-				setCapexOpexTechnologies.has(t)
-			)
-		).sort();
+		const solutions = selectedSolutions as ActivatedSolution[];
+		const setTechnologies: Set<string> = new Set();
+		solutions.forEach((solution) => {
+			solution.detail.system.set_conversion_technologies.forEach((t) => {
+				if (setCapexOpexTechnologies.has(t)) {
+					setTechnologies.add(t);
+				}
+			});
+		});
+		return Array.from(setTechnologies).sort();
 	});
+
 	let storageTechnologies: string[] = $derived.by(() => {
-		if (!selectedSolutions[0] || setCapexOpexTechnologies.size == 0) {
+		if (hasSomeUnsetSolutions || setCapexOpexTechnologies.size == 0) {
 			return [];
 		}
-		return removeDuplicates(
-			selectedSolutions[0].detail.system.set_storage_technologies.filter((t) =>
-				setCapexOpexTechnologies.has(t)
-			)
-		).sort();
+		const solutions = selectedSolutions as ActivatedSolution[];
+		const setTechnologies: Set<string> = new Set();
+		solutions.forEach((solution) => {
+			solution.detail.system.set_storage_technologies.forEach((t) => {
+				if (setCapexOpexTechnologies.has(t)) {
+					setTechnologies.add(t);
+				}
+			});
+		});
+		return Array.from(setTechnologies).sort();
 	});
 
 	let costCarriers: string[] = $derived.by(() => {
-		if (!fetchedCostCarrier[0]?.length) {
+		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		return removeDuplicates(fetchedCostCarrier[0].map((row) => row['carrier'])).sort();
+		const setCarriers = new Set<string>();
+		fetchedCostCarrier.forEach((data) => {
+			data.forEach((row) => {
+				setCarriers.add(row['carrier']);
+			});
+		});
+		return Array.from(setCarriers).sort();
 	});
 
 	let demandCarriers: string[] = $derived.by(() => {
-		if (!fetchedCostShedDemand[0]?.length) {
+		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		return removeDuplicates(fetchedCostShedDemand[0].map((row) => row['carrier'])).sort();
+		const setCarriers = new Set<string>();
+		fetchedCostShedDemand.forEach((data) => {
+			data.forEach((row) => {
+				setCarriers.add(row['carrier']);
+			});
+		});
+		return Array.from(setCarriers).sort();
 	});
 
 	let locations: string[] = $derived.by(() => {
-		if (!selectedSolutions[0]) {
+		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		return Object.keys(selectedSolutions[0].detail.edges)
-			.concat(selectedSolutions[0].detail.system.set_nodes)
-			.sort();
+		const solutions = selectedSolutions as ActivatedSolution[];
+		const setLocations = new Set<string>();
+		solutions.forEach((solution) => {
+			Object.keys(solution.detail.edges).forEach((edge) => {
+				setLocations.add(edge);
+			});
+			solution.detail.system.set_nodes.forEach((node) => {
+				setLocations.add(node);
+			});
+		});
+		return Array.from(setLocations).sort();
 	});
 
 	// Reset selected values when options change
@@ -558,7 +599,7 @@
 			disabled={fetching || solutionLoading}
 		/>
 	</FilterSection>
-	{#if !solutionLoading && selectedSolutions[0] !== null}
+	{#if !solutionLoading && !hasSomeUnsetSolutions}
 		<FilterSection title="Cost Selection">
 			{#each Object.values(variables) as variable, i}
 				<div class="row mb-2">
@@ -640,23 +681,23 @@
 				<span class="visually-hidden">Loading...</span>
 			</div>
 		</div>
-	{:else if selectedSolutions[0] !== null}
-		{#if datasets.length == 0 || datasets[0].data.length == 0}
-			<div class="text-center">No data with this selection.</div>
-		{:else if selectedYears.length == 0}
-			<div class="text-center">Please select at least one year.</div>
-		{:else}
-			<Chart
-				type="bar"
-				{labels}
-				{datasets}
-				options={plotOptions}
-				pluginOptions={plotPluginOptions}
-				{plotName}
-				{patterns}
-				generateLabels={generateLabelsForSolutionComparison}
-				onClickLegend={onClickLegendForSolutionComparison}
-			></Chart>
-		{/if}
+	{:else if hasSomeUnsetSolutions}
+		<div class="text-center">Please select at least one solution.</div>
+	{:else if selectedYears.length == 0}
+		<div class="text-center">Please select at least one year.</div>
+	{:else if datasets.length == 0}
+		<div class="text-center">No data with this selection.</div>
+	{:else}
+		<Chart
+			type="bar"
+			{labels}
+			{datasets}
+			options={plotOptions}
+			pluginOptions={plotPluginOptions}
+			{plotName}
+			{patterns}
+			generateLabels={generateLabelsForSolutionComparison}
+			onClickLegend={onClickLegendForSolutionComparison}
+		></Chart>
 	{/if}
 </div>
