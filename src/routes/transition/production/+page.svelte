@@ -17,6 +17,7 @@
 	import Dropdown from '$components/Dropdown.svelte';
 	import ToggleButton from '$components/ToggleButton.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 
 	import { get_component_total } from '$lib/temple';
 	import {
@@ -36,7 +37,7 @@
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
 	import PiePlots from './PiePlots.svelte';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
-	import { nextPattern, resetPatternState } from '$lib/patterns';
+	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import Entries, { type FilterCriteria } from '$lib/entries';
 
 	// Data
@@ -508,14 +509,15 @@
 		return entries;
 	}
 
-	let datasets: ChartDataset<'bar'>[] = $derived.by(() => {
+	let [datasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() => {
 		if (selectedNodes.length == 0 || selectedYears.length == 0 || data.length == 0) {
-			return [];
+			return [[], []];
 		}
 
 		resetColorState();
 		resetPatternState();
-		let result = selectedSolutions.flatMap((solution, i) => {
+		const patterns: ColorBoxItem[] = [];
+		let datasets: ChartDataset<'bar'>[] = selectedSolutions.flatMap((solution, i) => {
 			const rows = data[i];
 			if (!solution || !rows.length) {
 				return [];
@@ -551,6 +553,7 @@
 
 			let suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
 			let pattern = i > 0 ? nextPattern() : undefined;
+			patterns.push(createColorBoxItem(suffix, pattern));
 			return entries.toArray().map((entry) => {
 				const label = entry.index.label;
 				const color = nextColor(label);
@@ -566,7 +569,8 @@
 				} as ChartDataset<'bar'>;
 			});
 		});
-		return result;
+
+		return [datasets, patterns];
 	});
 </script>
 
@@ -674,6 +678,7 @@
 			options={plot_options}
 			pluginOptions={plotPluginOptions}
 			plotName={plot_name}
+			{patterns}
 			{generateLabels}
 			onClickLegend={onClickLegendForSolutionComparison}
 			onClickBar={onBarClick}

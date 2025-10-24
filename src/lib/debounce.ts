@@ -3,13 +3,13 @@
  * @param func Function to debounce.
  * @param wait Time in milliseconds to wait before invoking the function.
  * @returns Debounced function.
- * 
+ *
  * @example
  * // Register a debounced function
  * const debouncedFunction = debounce(() => {
  *     console.log('Function called after 300ms of inactivity');
  * }, 300);
- * 
+ *
  * // Call the debounced function multiple times
  * debouncedFunction();
  * debouncedFunction();

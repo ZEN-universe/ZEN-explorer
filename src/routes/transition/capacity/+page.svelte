@@ -24,7 +24,13 @@
 	import FilterRow from '$components/FilterRow.svelte';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
 	import Entries, { type FilterCriteria } from '$lib/entries';
-	import { nextPattern, resetPatternState, type ShapeType } from '$lib/patterns';
+	import {
+		createColorBoxItem,
+		nextPattern,
+		resetPatternState,
+		type ShapeType
+	} from '$lib/patterns';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 
 	let data: Row[][] = $state([]);
 
@@ -344,7 +350,7 @@
 		});
 	}
 
-	let datasets: ChartDataset<'bar'>[] = $derived.by(() => {
+	let [datasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() => {
 		if (
 			selectedVariable == null ||
 			selectedLocations.length == 0 ||
@@ -352,17 +358,21 @@
 			selectedTechnologies.length == 0 ||
 			data.length === 0
 		) {
-			return [];
+			return [[], []];
 		}
 
 		resetColorState();
 		resetPatternState();
-		return selectedSolutions.flatMap((solution, index) => {
+		const patterns: ColorBoxItem[] = [];
+		const datasets: ChartDataset<'bar'>[] = selectedSolutions.flatMap((solution, index) => {
 			if (solution === null || !data[index]) return [];
 
-			let suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
-			return generateDatasets(data[index], suffix, index > 0 ? nextPattern() : undefined);
+			const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+			const pattern = index > 0 ? nextPattern() : undefined;
+			patterns.push(createColorBoxItem(suffix, pattern));
+			return generateDatasets(data[index], suffix, pattern);
 		});
+		return [datasets, patterns];
 	});
 </script>
 
@@ -482,6 +492,7 @@
 			options={plotOptions}
 			pluginOptions={plotPluginOptions}
 			{plotName}
+			{patterns}
 			generateLabels={generateLabelsForSolutionComparison}
 			onClickLegend={onClickLegendForSolutionComparison}
 		></Chart>

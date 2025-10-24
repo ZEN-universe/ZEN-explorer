@@ -6,7 +6,7 @@
 	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
 
 	import Modal from '$components/Modal.svelte';
-	import LegendColorBox from '$components/LegendColorBox.svelte';
+	import ColorBox, { type ColorBoxItem } from '$components/ColorBox.svelte';
 
 	BaseChart.register(zoomPlugin);
 
@@ -23,6 +23,7 @@
 		downloadable?: boolean;
 		narrow?: boolean;
 		zoomLevel?: [number, number] | null;
+		patterns?: ColorBoxItem[];
 		generateLabels?: (chart: BaseChart) => LegendItem[];
 		onClickLegend?: (item: LegendItem, chart: BaseChart) => void;
 		onClickBar?: (label: string, datasetIndex: number) => void;
@@ -41,6 +42,7 @@
 		downloadable = true,
 		narrow = false,
 		zoomLevel = $bindable(null),
+		patterns = [],
 		generateLabels,
 		onClickLegend,
 		onClickBar
@@ -131,15 +133,16 @@
 		chart?.resetZoom();
 	}
 
-	let legendItems: Array<LegendItem> = $state([]);
+	let legendItems: ColorBoxItem[] = $state([]);
 
 	const htmlLegend: Plugin = {
 		id: 'htmlLegend',
 		afterUpdate(chart) {
 			if (generateLabels) {
-				legendItems = generateLabels(chart);
+				legendItems = generateLabels(chart) as ColorBoxItem[];
 			} else {
-				legendItems = chart.options.plugins?.legend?.labels?.generateLabels?.(chart) || [];
+				legendItems =
+					(chart.options.plugins?.legend?.labels?.generateLabels?.(chart) as ColorBoxItem[]) || [];
 			}
 		}
 	};
@@ -248,21 +251,35 @@
 			{/if}
 		</div>
 	{/if}
-	<div class="legend d-flex flex-wrap justify-content-center">
+	<div class={['legend d-flex flex-wrap justify-content-center', patterns.length > 1 && 'mb-2']}>
 		{#each legendItems as item}
 			<button
-				class="btn btn-text rounded-0 d-flex align-items-center p-0 me-2"
-				style:color={item.fontColor?.toString() || 'inherit'}
+				class="btn btn-text rounded-0 d-flex align-items-center p-0 me-2 text-secondary"
 				style:font-size="12px"
 				style:letter-spacing="0.0em"
 				style:font-family="Arial, sans-serif"
 				onclick={() => toggleLegendItem(item)}
 			>
-				<LegendColorBox {item}></LegendColorBox>
+				<ColorBox item={item as ColorBoxItem}></ColorBox>
 				<span class={[item.hidden && 'text-decoration-line-through']}>{item.text}</span>
 			</button>
 		{/each}
 	</div>
+	{#if patterns.length > 1}
+		<div class="legend d-flex flex-wrap justify-content-center">
+			{#each patterns as pattern}
+				<div
+					class="d-flex align-items-center me-2 text-secondary"
+					style:font-size="12px"
+					style:letter-spacing="0.0em"
+					style:font-family="Arial, sans-serif"
+				>
+					<ColorBox item={pattern}></ColorBox>
+					<span>{pattern.text}</span>
+				</div>
+			{/each}
+		</div>
+	{/if}
 	<div class="position-relative" style:min-height={narrow ? '259px' : '558px'}>
 		<canvas {id} use:handleChart onclick={emitClickBarEvent}></canvas>
 	</div>

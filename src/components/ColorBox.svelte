@@ -1,8 +1,15 @@
 <script lang="ts">
-	import type { LegendItem } from 'chart.js';
+	export interface ColorBoxItem {
+		text: string;
+		fillStyle: CanvasPattern | string;
+		fontColor?: string;
+		strokeStyle?: CanvasPattern | string;
+		lineWidth?: number;
+		hidden?: boolean;
+	}
 
 	interface Props {
-		item: LegendItem;
+		item: ColorBoxItem;
 	}
 
 	let { item }: Props = $props();

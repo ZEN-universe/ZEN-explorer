@@ -24,7 +24,8 @@
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
 	} from '$lib/compareSolutions';
-	import { nextPattern, resetPatternState } from '$lib/patterns';
+	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 
 	let technologyData: Row[][] = $state([]);
 	let carrierData: Row[][] = $state([]);
@@ -239,7 +240,7 @@
 		fetching = false;
 	}
 
-	let barDatasets: ChartDataset<'bar'>[] = $derived.by(() => {
+	let [barDatasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() => {
 		if (
 			selectedSolutions.length === 0 ||
 			!annualData.length ||
@@ -247,7 +248,7 @@
 			!carrierData.length ||
 			!technologyData.length
 		) {
-			return [];
+			return [[], []];
 		}
 
 		let filterCriteria: FilterCriteria;
@@ -271,7 +272,8 @@
 
 		resetColorState();
 		resetPatternState();
-		return selectedSolutions.flatMap((solution, solutionIndex) => {
+		const patterns: ColorBoxItem[] = [];
+		const datasets = selectedSolutions.flatMap((solution, solutionIndex) => {
 			if (!solution) {
 				return [];
 			}
@@ -306,19 +308,7 @@
 
 			const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
 			const pattern = solutionIndex > 0 ? nextPattern() : undefined;
-			// if (entries.length == 1) {
-			// 	const entry = entries.get(0)!;
-			// 	const color = nextColor(divisionVariable);
-			// 	return [
-			// 		{
-			// 			label: divisionVariable,
-			// 			data: entry.data,
-			// 			borderColor: color,
-			// 			backgroundColor: pattern !== undefined ? drawPattern(pattern, addTransparency(color)) : addTransparency(color),
-			// 			stack: suffix
-			// 		}
-			// 	] as ChartDataset<'bar'>[];
-			// }
+			patterns.push(createColorBoxItem(suffix, pattern));
 
 			return entries.toArray().map((entry) => {
 				const label =
@@ -340,6 +330,8 @@
 				} as ChartDataset<'bar'>;
 			});
 		});
+
+		return [datasets, patterns];
 	});
 
 	let lineDatasets: ChartDataset<'line'>[] = $derived.by(() => {
@@ -478,6 +470,7 @@
 			options={plotOptions}
 			pluginOptions={plotPluginOptions}
 			{plotName}
+			{patterns}
 			generateLabels={generateLabelsForSolutionComparison}
 			onClickLegend={onClickLegendForSolutionComparison}
 		></Chart>

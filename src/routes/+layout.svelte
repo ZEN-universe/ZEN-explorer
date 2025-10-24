@@ -65,7 +65,7 @@
 							<li>
 								<a
 									class={['dropdown-item', currentPage == url && 'active']}
-									href={addCurrentSolutionToURL(url)}>{title}</a
+									href={addCurrentSolutionToURL(url, true)}>{title}</a
 								>
 							</li>
 						{/each}
@@ -87,7 +87,7 @@
 							<li>
 								<a
 									class={['dropdown-item', currentPage == url && 'active']}
-									href={addCurrentSolutionToURL(url)}>{title}</a
+									href={addCurrentSolutionToURL(url, false)}>{title}</a
 								>
 							</li>
 						{/each}
@@ -95,13 +95,13 @@
 				</li>
 				<li class="nav-item">
 					<a
-						href={addCurrentSolutionToURL('/energy_system')}
+						href={addCurrentSolutionToURL('/energy_system', false)}
 						class={['nav-link', currentPage == '/energy_system' && 'active']}>The Energy System</a
 					>
 				</li>
 				<li class="nav-item">
 					<a
-						href={addCurrentSolutionToURL('/map')}
+						href={addCurrentSolutionToURL('/map', false)}
 						class={['nav-link', currentPage == '/map' && 'active']}>The Map</a
 					>
 				</li>

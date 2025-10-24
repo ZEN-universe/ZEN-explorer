@@ -138,7 +138,7 @@
 				initialFirstLevel = false;
 				return;
 			}
-			activeSecondLevel = '';
+			activeSecondLevel = secondLevels.length === 1 ? secondLevels[0] : '';
 			activeScenario = '';
 		});
 	});
@@ -152,6 +152,12 @@
 			}
 			activeScenario = '';
 		});
+	});
+
+	$effect(() => {
+		if (secondLevels.length === 1) {
+			activeSecondLevel = secondLevels[0];
+		}
 	});
 
 	async function updateSolutionDetails() {

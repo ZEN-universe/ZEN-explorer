@@ -26,12 +26,13 @@
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 	import Entries from '$lib/entries';
 	import { debounce } from '$lib/debounce';
-	import { nextPattern, resetPatternState } from '$lib/patterns';
+	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
 	} from '$lib/compareSolutions';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 
 	const technologyCarrierLabel = 'Technology / Carrier';
 	const capexSuffix = ' (Capex)';
@@ -432,14 +433,15 @@
 		debounceUpdateAllSelectedTechnologies();
 	});
 
-	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
+	let [datasets, patterns]: [ChartDataset<'bar' | 'line'>[], ColorBoxItem[]] = $derived.by(() => {
 		if (allSelectedTechnologies.length == 0) {
-			return [];
+			return [[], []];
 		}
 
 		resetColorState();
 		resetPatternState();
-		return selectedSolutions.flatMap((solution, solutionIndex) => {
+		const patterns: ColorBoxItem[] = [];
+		const datasets = selectedSolutions.flatMap((solution, solutionIndex) => {
 			if (solution === null) {
 				return [];
 			}
@@ -500,6 +502,7 @@
 			// Get plot data, as a base we take the grouped data adapted to the cost selection.
 			const pattern = solutionIndex > 0 ? nextPattern() : undefined;
 			const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+			patterns.push(createColorBoxItem(suffix, pattern));
 			const datasets: ChartDataset<'bar'>[] = entries.toArray().map((entry) => {
 				const label =
 					selectedAggregation == technologyCarrierLabel
@@ -538,6 +541,8 @@
 
 			return datasets as ChartDataset<'bar' | 'line'>[];
 		});
+
+		return [datasets, patterns];
 	});
 </script>
 
@@ -648,6 +653,7 @@
 				options={plotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
+				{patterns}
 				generateLabels={generateLabelsForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
 			></Chart>
