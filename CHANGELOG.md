@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.6 (2025-10-27)
+
+- The Transition Pathway: compare multiple solutions on one page.
+- [Sankey] Add structure only view.
+- [Sankey] Add legend to focus on carriers.
+- [Sankey] Restructure nodes, smaller layout updates.
+
 ## 0.7.5 (2025-10-10)
 
 - [Sankey] Fix wrong numerical values. Closes #130.
