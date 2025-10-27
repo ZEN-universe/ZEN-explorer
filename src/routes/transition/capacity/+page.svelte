@@ -159,8 +159,8 @@
 			if (solution === null) {
 				return;
 			}
-			data[solutionIndex].forEach((row) => {
-				if (technologiesPerSolution[solutionIndex].includes(row['technology'])) {
+			(data[solutionIndex] ?? []).forEach((row) => {
+				if ((technologiesPerSolution[solutionIndex] ?? []).includes(row['technology'])) {
 					setUsedCarriers.add(solution.detail.reference_carrier[row['technology']]);
 				}
 			});
@@ -176,7 +176,7 @@
 
 		const setTechnologies: Set<string> = new Set();
 		(selectedSolutions as ActivatedSolution[]).forEach((solution, solutionIndex) => {
-			technologiesPerSolution[solutionIndex].forEach((tech) => {
+			(technologiesPerSolution[solutionIndex] ?? []).forEach((tech) => {
 				if (solution.detail.reference_carrier[tech] === selectedCarrier) {
 					setTechnologies.add(tech);
 				}
@@ -184,19 +184,19 @@
 		});
 		return Array.from(setTechnologies).sort();
 	});
-	$inspect('technologies', technologies);
 
 	let locations: string[] = $derived.by(() => {
-		if (data.length === 0) {
+		if (hasSomeUnsetSolutions) {
 			return [];
 		}
 
 		const setLocations: Set<string> = new Set();
-		selectedSolutions.forEach((solution, index) => {
-			if (solution === null) {
-				return;
-			}
-			solution.detail.system.set_nodes.forEach((node) => setLocations.add(node));
+		data.forEach((items) => {
+			items.forEach((d) => {
+				if (technologies.includes(d.technology)) {
+					setLocations.add(d.location);
+				}
+			});
 		});
 		return Array.from(setLocations).sort();
 	});

@@ -7,7 +7,7 @@ test(`production: carrier`, async ({ page }) => {
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
 	await page.getByLabel('Carrier').selectOption('carbon');
-	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/carbon.png`);
+	await expect(page.locator('#chart-container')).toHaveScreenshot(`eeht_pf/carbon.png`);
 });
 
 test('production: conversion subdivision', async ({ page }) => {
@@ -18,7 +18,7 @@ test('production: conversion subdivision', async ({ page }) => {
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
 	await page.getByLabel('Carrier').selectOption('biomass');
 	await page.locator('#subdivision0').check();
-	await expect(page.locator('#chart')).toHaveScreenshot(
+	await expect(page.locator('#chart-container')).toHaveScreenshot(
 		`eeht_pf/biomass/conversion-subdivision.png`
 	);
 });
@@ -31,7 +31,7 @@ test('production: conversion technology', async ({ page }) => {
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
 	await page.getByLabel('Carrier').selectOption('biomass');
 	await page.getByRole('checkbox', { name: 'biomass_boiler', exact: true }).uncheck();
-	await expect(page.locator('#chart')).toHaveScreenshot(
+	await expect(page.locator('#chart-container')).toHaveScreenshot(
 		`eeht_pf/biomass/conversion-technology-without-biomass_boiler.png`
 	);
 });
@@ -44,7 +44,9 @@ test('production: normalization', async ({ page }) => {
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
 	await page.getByLabel('Carrier').selectOption('electricity');
 	await page.getByRole('switch', { name: 'Normalization off' }).click();
-	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/electricity/normalization-on.png`);
+	await expect(page.locator('#chart-container')).toHaveScreenshot(
+		`eeht_pf/electricity/normalization-on.png`
+	);
 });
 
 test('production: normalization only negative', async ({ page }) => {
@@ -58,7 +60,7 @@ test('production: normalization only negative', async ({ page }) => {
 	await page.locator('#variables1').uncheck(); // Storage
 	await page.locator('#variables2').uncheck(); // Import/Export
 	await page.getByRole('switch', { name: 'Normalization off' }).click();
-	await expect(page.locator('#chart')).toHaveScreenshot(
+	await expect(page.locator('#chart-container')).toHaveScreenshot(
 		`eeht_pf/electricity/normalization-on-negative.png`
 	);
 });
@@ -77,7 +79,9 @@ test('production: nodes', async ({ page }) => {
 		.click();
 	await expect(page.locator('.plot')).toHaveText('No data with this selection.');
 	await page.getByRole('checkbox', { name: 'DE' }).check();
-	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/biomass/nodes-only-DE.png`);
+	await expect(page.locator('#chart-container')).toHaveScreenshot(
+		`eeht_pf/biomass/nodes-only-DE.png`
+	);
 });
 
 test('production: years', async ({ page }) => {
@@ -94,5 +98,7 @@ test('production: years', async ({ page }) => {
 		.click();
 	await expect(page.locator('.plot')).toHaveText('No data with this selection.');
 	await page.getByRole('checkbox', { name: '2024' }).check();
-	await expect(page.locator('#chart')).toHaveScreenshot(`eeht_pf/biomass/years-only-2024.png`);
+	await expect(page.locator('#chart-container')).toHaveScreenshot(
+		`eeht_pf/biomass/years-only-2024.png`
+	);
 });

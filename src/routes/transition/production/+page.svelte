@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
 	import {
-		Chart as BaseChart,
+		type Chart as BaseChart,
 		type ChartDataset,
 		type ChartOptions,
 		type ChartTypeRegistry,
@@ -256,10 +256,10 @@
 	// Carriers and technologies
 	let carriers: string[] = $derived.by(() => {
 		if (hasSomeUnsetSolutions) return [];
-		
+
 		const setCarriers: Set<string> = new Set();
 		const solutions = selectedSolutions as ActivatedSolution[];
-		
+
 		solutions.forEach((solution) => {
 			solution.detail.system.set_carriers.forEach((carrier) => setCarriers.add(carrier));
 		});
@@ -268,10 +268,10 @@
 
 	let conversionTechnologies = $derived.by(() => {
 		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
-		
+
 		const setTechnologies: Set<string> = new Set();
 		const solutions = selectedSolutions as ActivatedSolution[];
-		
+
 		solutions.forEach((solution) => {
 			Object.entries(solution.detail.carriers_input)
 				.concat(Object.entries(solution.detail.carriers_output))
@@ -280,7 +280,7 @@
 		});
 		return Array.from(setTechnologies).sort();
 	});
-	
+
 	let storageTechnologies = $derived.by(() => {
 		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
 

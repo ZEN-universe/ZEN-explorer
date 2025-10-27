@@ -228,29 +228,29 @@
 	<p>When zoomed in, you can press and hold CTRL and drag the plot to move along the time axis.</p>
 	<p>The home button resets the zoom.</p>
 </Modal>
-<div class="canvas-container d-flex flex-column justify-content-between h-100 py-2">
-	{#if zoom || downloadable}
-		<div class="d-flex justify-content-end mb-2">
-			{#if zoom}
-				<div class={['btn-group', downloadable && 'me-2']}>
-					<button class="btn btn-outline-secondary d-flex" onclick={toggle}>
-						<i class="bi bi-info me-2"></i>
-						<div>Show Help</div>
-					</button>
-					<button class="btn btn-outline-secondary d-flex" onclick={resetZoom}>
-						<i class="bi bi-house me-2"></i>
-						<div>Reset zoom</div>
-					</button>
-				</div>
-			{/if}
-			{#if downloadable}
-				<button class="btn btn-outline-secondary d-flex" onclick={downloadData}>
-					<i class="bi bi-download me-2"></i>
-					<div>Download CSV Data</div>
+{#if zoom || downloadable}
+	<div class="d-flex justify-content-end mb-2">
+		{#if zoom}
+			<div class={['btn-group', downloadable && 'me-2']}>
+				<button class="btn btn-outline-secondary d-flex" onclick={toggle}>
+					<i class="bi bi-info me-2"></i>
+					<div>Show Help</div>
 				</button>
-			{/if}
-		</div>
-	{/if}
+				<button class="btn btn-outline-secondary d-flex" onclick={resetZoom}>
+					<i class="bi bi-house me-2"></i>
+					<div>Reset zoom</div>
+				</button>
+			</div>
+		{/if}
+		{#if downloadable}
+			<button class="btn btn-outline-secondary d-flex" onclick={downloadData}>
+				<i class="bi bi-download me-2"></i>
+				<div>Download CSV Data</div>
+			</button>
+		{/if}
+	</div>
+{/if}
+<div class="d-flex flex-column justify-content-between h-100 py-2" id={id + '-container'}>
 	<div class={['legend d-flex flex-wrap justify-content-center', patterns.length > 1 && 'mb-2']}>
 		{#each legendItems as item}
 			<button

@@ -51,12 +51,13 @@
 	let selectedCumulation: string = $state('Annual');
 	let selectedCarriers: string[] = $state([]);
 	let selectedTechnologies: string[] = $state([]);
-	let selectedAggregation: string = $state('location');
+	let selectedAggregation: 'location' | 'technology_carrier' = $state('location');
 	let selectedNormalization: boolean = $state(false);
 	let selectedLocations: string[] = $state([]);
 	let selectedYears: number[] = $state([]);
 
 	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
+	let isNormalized: boolean = $derived(selectedNormalization && selectedSubdivision);
 
 	let plotName = $derived.by(() => {
 		if (!selectedSolutions[0]?.solution_name) {
@@ -90,10 +91,10 @@
 				stacked: true,
 				title: {
 					display: true,
-					text: `Emissions` + (selectedNormalization ? '' : ` [${unit}]`)
+					text: `Emissions` + (isNormalized ? '' : ` [${unit}]`)
 				},
-				max: selectedNormalization ? 1 : undefined,
-				suggestedMin: selectedNormalization ? -1 : undefined
+				max: isNormalized ? 1 : undefined,
+				suggestedMin: isNormalized ? -1 : undefined
 			}
 		},
 		interaction: {
@@ -107,8 +108,7 @@
 		tooltip: {
 			callbacks: {
 				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-					`${item.dataset.label}: ${item.formattedValue}` +
-					(selectedNormalization ? '' : ` ${unit}`),
+					`${item.dataset.label}: ${item.formattedValue}` + (isNormalized ? '' : ` ${unit}`),
 				title: (items: TooltipItem<keyof ChartTypeRegistry>[]) => {
 					if (items.length > 0) {
 						return `${items[0].label} - ${items[0].dataset.stack}`;
@@ -163,8 +163,6 @@
 		});
 		return Array.from(setLocations).sort();
 	});
-
-	$inspect('locations', locations);
 
 	$effect(() => {
 		selectedTechnologies = technologies;
@@ -320,7 +318,7 @@
 				.groupBy(groupByColumns)
 				.filterDataByIndex(selectedYears.map((year) => years.indexOf(year)));
 
-			if (selectedNormalization) {
+			if (isNormalized) {
 				entries = entries.normalize();
 			}
 
@@ -353,7 +351,15 @@
 	});
 
 	let lineDatasets: ChartDataset<'line'>[] = $derived.by(() => {
-		if (selectedSolutions.length === 0 || hasSomeUnsetSolutions) {
+		if (
+			selectedSolutions.length === 0 ||
+			hasSomeUnsetSolutions ||
+			isNormalized ||
+			(selectedAggregation === 'location' && selectedLocations.length !== locations.length) ||
+			(selectedAggregation === 'technology_carrier' &&
+				(selectedCarriers.length !== carriers.length ||
+					selectedTechnologies.length !== technologies.length))
+		) {
 			return [];
 		}
 
@@ -382,7 +388,7 @@
 			const label =
 				(selectedSubdivision || selectedCumulation == 'Annual'
 					? 'Annual Emissions Limit'
-					: 'Carbon Emissions Budget') + ` (${suffix})`;
+					: 'Carbon Emissions Budget') + (selectedSolutions.length > 1 ? ` (${suffix})` : '');
 			const color = nextColor(label);
 
 			return [

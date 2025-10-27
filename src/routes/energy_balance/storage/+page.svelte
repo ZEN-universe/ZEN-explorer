@@ -46,8 +46,8 @@
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
-	let level_plot = $state<Chart>();
-	let flow_plot = $state<Chart>();
+	let level_plot = $state<Chart<any>>();
+	let flow_plot = $state<Chart<any>>();
 
 	let unit: string = $derived.by(() => (technologies.length > 0 ? units[technologies[0]] : ''));
 	let plot_name: string = $derived.by(() => {
@@ -124,33 +124,6 @@
 					}
 				}
 			},
-			plugins: {
-				zoom: {
-					pan: {
-						enabled: true,
-						modifierKey: 'ctrl',
-						mode: 'x'
-					},
-					zoom: {
-						drag: {
-							enabled: true
-						},
-						wheel: {
-							enabled: true
-						},
-						mode: 'x'
-					},
-					limits: {
-						x: { minRange: 10, min: 'original', max: 'original' }
-					}
-				},
-				tooltip: {
-					callbacks: {
-						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-							`${item.dataset.label}: ${item.formattedValue} ${unit}`
-					}
-				}
-			},
 			interaction: {
 				intersect: false,
 				mode: 'nearest',
@@ -158,6 +131,34 @@
 			}
 		};
 	}
+
+	const plotPluginOptions: ChartOptions['plugins'] = {
+		zoom: {
+			pan: {
+				enabled: true,
+				modifierKey: 'ctrl',
+				mode: 'x'
+			},
+			zoom: {
+				drag: {
+					enabled: true
+				},
+				wheel: {
+					enabled: true
+				},
+				mode: 'x'
+			},
+			limits: {
+				x: { minRange: 10, min: 'original', max: 'original' }
+			}
+		},
+		tooltip: {
+			callbacks: {
+				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+					`${item.dataset.label}: ${item.formattedValue} ${unit}`
+			}
+		}
+	};
 
 	let locations: string[] = $derived.by(() => {
 		response_update_trigger;
@@ -501,7 +502,7 @@
 				stepped: true,
 				borderColor: color,
 				backgroundColor: datasetBase.backgroundColor || (color as string)
-			};
+			} as ChartDataset<'bar' | 'line'>;
 		});
 	}
 </script>
@@ -582,8 +583,6 @@
 		<div class="text-center">No locations with this selection.</div>
 	{:else if level_datasets_length == 0}
 		<div class="text-center">No data available for this selection.</div>
-		<!-- {:else if flow_datasets_length == 0}
-		<div class="text-center">No flow data available for this selection.</div> -->
 	{:else}
 		<Chart
 			id="level_chart"
@@ -591,6 +590,7 @@
 			{labels}
 			datasets={[]}
 			options={plot_options}
+			pluginOptions={plotPluginOptions}
 			plotName={plot_name}
 			zoom={true}
 			bind:zoomLevel
@@ -602,6 +602,7 @@
 			{labels}
 			datasets={[]}
 			options={plot_options_flows}
+			pluginOptions={plotPluginOptions}
 			plotName={plot_name_flows}
 			zoom={true}
 			bind:zoomLevel
