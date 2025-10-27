@@ -9,7 +9,7 @@
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
-	import { all_colors } from '$lib/colors';
+	import { allColors } from '$lib/colors';
 	import Tooltip from './Tooltip.svelte';
 
 	let topology: Topology | null = $state(null);
@@ -134,7 +134,7 @@
 	});
 
 	let computePath = $derived(geoPath().projection(projection));
-	const computeColor = scaleOrdinal(all_colors());
+	const computeColor = scaleOrdinal(allColors());
 	const computePie = d3pie()
 		.sort(null)
 		.value((d: any) => d);

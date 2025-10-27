@@ -1,18 +1,18 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { Chart, ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
+	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 
-	import SolutionFilter from '$components/SolutionFilter.svelte';
+	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
-	import BarPlot from '$components/BarPlot.svelte';
+	import Chart from '$components/Chart.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_energy_balance, get_unit } from '$lib/temple';
-	import { to_options } from '$lib/utils';
+	import { toOptions } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
-	import { next_color, reset_color_state as reset_color_picker_state } from '$lib/colors';
+	import { nextColor, resetColorState as reset_color_picker_state } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes, Entry } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 
@@ -22,13 +22,13 @@
 	let solution_loading: boolean = $state(false);
 	let fetching = $state(false);
 
-	let plot = $state<BarPlot>();
-	let duals_plot = $state<BarPlot>();
+	let plot = $state<Chart<any>>();
+	let duals_plot = $state<Chart<any>>();
 
 	let nodes: string[] = $state([]);
 	let carriers: string[] = $state([]);
 	let years: number[] = $state([]);
-	const window_sizes = to_options(['Hourly', 'Daily', 'Weekly', 'Monthly']);
+	const window_sizes = toOptions(['Hourly', 'Daily', 'Weekly', 'Monthly']);
 
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_node: string | null = $state(null);
@@ -133,39 +133,37 @@
 				intersect: false,
 				mode: 'nearest',
 				axis: 'x'
-			},
-			plugins: {
-				legend: {
-					display: showLegend
-				},
-				zoom: {
-					pan: {
-						enabled: true,
-						modifierKey: 'ctrl',
-						mode: 'x'
-					},
-					zoom: {
-						drag: {
-							enabled: true
-						},
-						wheel: {
-							enabled: true
-						},
-						mode: 'x'
-					},
-					limits: {
-						x: { minRange: 10, min: 'original', max: 'original' }
-					}
-				},
-				tooltip: {
-					callbacks: {
-						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-							`${item.dataset.label}: ${item.formattedValue} ${unit}`
-					}
-				}
 			}
 		} as ChartOptions<'bar' | 'line'>;
 	}
+
+	const plotPluginOptions: ChartOptions['plugins'] = {
+		zoom: {
+			pan: {
+				enabled: true,
+				modifierKey: 'ctrl',
+				mode: 'x'
+			},
+			zoom: {
+				drag: {
+					enabled: true
+				},
+				wheel: {
+					enabled: true
+				},
+				mode: 'x'
+			},
+			limits: {
+				x: { minRange: 10, min: 'original', max: 'original' }
+			}
+		},
+		tooltip: {
+			callbacks: {
+				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+					`${item.dataset.label}: ${item.formattedValue} ${unit}`
+			}
+		}
+	};
 
 	$effect(() => {
 		years;
@@ -280,7 +278,7 @@
 	let duals_datasets_length: number = $state(0);
 	let number_of_time_steps: number = $state(0);
 
-	function compute_datasets() {
+	function compute_datasets(): ChartDataset<'bar' | 'line'>[] {
 		if (
 			!selected_solution ||
 			!selected_node ||
@@ -345,7 +343,7 @@
 					};
 
 					// Demand is plotted in a different way than the other plots
-					let color = next_color();
+					let color = nextColor();
 					let bg_color = color;
 					let dataset_data = Object.values(data).map((value, i) => ({ x: i, y: value }));
 
@@ -361,7 +359,7 @@
 							borderWidth: 2,
 							stepped: true,
 							pointRadius: Object.keys(data).length == 1 ? 2 : 0
-						} as ChartDataset<'line'>;
+						} as ChartDataset<'bar' | 'line'>;
 					} else {
 						return {
 							data: dataset_data,
@@ -459,7 +457,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(years.map((year) => year.toString()))}
+						options={toOptions(years.map((year) => year.toString()))}
 						bind:value={selected_year}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -469,7 +467,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(nodes)}
+						options={toOptions(nodes)}
 						bind:value={selected_node}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -479,7 +477,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(carriers)}
+						options={toOptions(carriers)}
 						bind:value={selected_carrier}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -508,29 +506,32 @@
 	{:else if datasets_length == 0 || selected_solution == null}
 		<div class="text-center">No data with this selection.</div>
 	{:else}
-		<BarPlot
+		<Chart
 			type={number_of_time_steps == 1 ? 'bar' : 'line'}
-			options={plot_options}
 			{labels}
 			datasets={[]}
-			{plot_name}
+			options={plot_options}
+			pluginOptions={plotPluginOptions}
+			plotName={plot_name}
 			zoom={true}
 			bind:zoomLevel
 			bind:this={plot}
-		></BarPlot>
+		></Chart>
 		{#if duals_datasets_length > 0}
-			<BarPlot
+			<Chart
 				id="chart-duals"
 				type={number_of_time_steps == 1 ? 'bar' : 'line'}
-				options={duals_plot_options}
 				{labels}
 				datasets={[]}
-				plot_name={duals_plot_name}
+				options={duals_plot_options}
+				pluginOptions={plotPluginOptions}
+				plotName={duals_plot_name}
 				zoom={true}
 				narrow
+				generateLabels={() => []}
 				bind:zoomLevel
 				bind:this={duals_plot}
-			></BarPlot>
+			></Chart>
 		{:else}
 			<div class="text-center text-muted mt-2">No dual data available.</div>
 		{/if}

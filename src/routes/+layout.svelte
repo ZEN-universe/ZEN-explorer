@@ -3,7 +3,7 @@
 	import 'bootstrap-icons/font/bootstrap-icons.min.css';
 	import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
-	import { base } from '$app/paths';
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { env } from '$env/dynamic/public';
 	import { addCurrentSolutionToURL } from '$lib/queryParams.svelte';
@@ -15,15 +15,15 @@
 	let { children }: Props = $props();
 
 	let transition_urls = {
-		Capacity: base + '/transition/capacity',
-		Production: base + '/transition/production',
-		Emissions: base + '/transition/emissions',
-		Costs: base + '/transition/costs'
+		Capacity: resolve('/transition/capacity'),
+		Production: resolve('/transition/production'),
+		Emissions: resolve('/transition/emissions'),
+		Costs: resolve('/transition/costs')
 	};
 
 	let energy_balance_urls = {
-		Nodal: base + '/energy_balance/nodal',
-		Storage: base + '/energy_balance/storage'
+		Nodal: resolve('/energy_balance/nodal'),
+		Storage: resolve('/energy_balance/storage')
 	};
 
 	let currentPage = $derived(page.url.pathname.slice(0, -1));
@@ -35,7 +35,7 @@
 
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
 	<div class="container">
-		<a class="navbar-brand" href="{base}/">ZEN</a>
+		<a class="navbar-brand" href={resolve('/')}>ZEN</a>
 		<button
 			class="navbar-toggler"
 			type="button"
@@ -65,7 +65,7 @@
 							<li>
 								<a
 									class={['dropdown-item', currentPage == url && 'active']}
-									href={addCurrentSolutionToURL(url)}>{title}</a
+									href={addCurrentSolutionToURL(url, true)}>{title}</a
 								>
 							</li>
 						{/each}
@@ -87,7 +87,7 @@
 							<li>
 								<a
 									class={['dropdown-item', currentPage == url && 'active']}
-									href={addCurrentSolutionToURL(url)}>{title}</a
+									href={addCurrentSolutionToURL(url, false)}>{title}</a
 								>
 							</li>
 						{/each}
@@ -95,13 +95,13 @@
 				</li>
 				<li class="nav-item">
 					<a
-						href={addCurrentSolutionToURL('/energy_system')}
+						href={addCurrentSolutionToURL('/energy_system', false)}
 						class={['nav-link', currentPage == '/energy_system' && 'active']}>The Energy System</a
 					>
 				</li>
 				<li class="nav-item">
 					<a
-						href={addCurrentSolutionToURL('/map')}
+						href={addCurrentSolutionToURL('/map', false)}
 						class={['nav-link', currentPage == '/map' && 'active']}>The Map</a
 					>
 				</li>

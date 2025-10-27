@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-		type Chart,
+		type Chart as BaseChart,
 		type ChartDataset,
 		type ChartOptions,
 		type ChartTypeRegistry,
@@ -9,19 +9,19 @@
 	import { onMount, tick, untrack } from 'svelte';
 
 	import ToggleButton from '$components/ToggleButton.svelte';
-	import SolutionFilter from '$components/SolutionFilter.svelte';
+	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import AllCheckbox from '$components/AllCheckbox.svelte';
-	import BarPlot from '$components/BarPlot.svelte';
+	import Chart from '$components/Chart.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_full_ts } from '$lib/temple';
-	import { remove_duplicates, to_options } from '$lib/utils';
+	import { removeDuplicates, toOptions } from '$lib/utils';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Entry } from '$lib/types';
-	import { next_color, reset_color_state } from '$lib/colors';
+	import { nextColor, resetColorState } from '$lib/colors';
 
 	// All but one data variable are non-reactive because of their size
 	let level_response: Entry[] | null = null;
@@ -46,8 +46,8 @@
 	let solution_loading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
-	let level_plot = $state<BarPlot>();
-	let flow_plot = $state<BarPlot>();
+	let level_plot = $state<Chart<any>>();
+	let flow_plot = $state<Chart<any>>();
 
 	let unit: string = $derived.by(() => (technologies.length > 0 ? units[technologies[0]] : ''));
 	let plot_name: string = $derived.by(() => {
@@ -124,33 +124,6 @@
 					}
 				}
 			},
-			plugins: {
-				zoom: {
-					pan: {
-						enabled: true,
-						modifierKey: 'ctrl',
-						mode: 'x'
-					},
-					zoom: {
-						drag: {
-							enabled: true
-						},
-						wheel: {
-							enabled: true
-						},
-						mode: 'x'
-					},
-					limits: {
-						x: { minRange: 10, min: 'original', max: 'original' }
-					}
-				},
-				tooltip: {
-					callbacks: {
-						label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-							`${item.dataset.label}: ${item.formattedValue} ${unit}`
-					}
-				}
-			},
 			interaction: {
 				intersect: false,
 				mode: 'nearest',
@@ -159,12 +132,40 @@
 		};
 	}
 
+	const plotPluginOptions: ChartOptions['plugins'] = {
+		zoom: {
+			pan: {
+				enabled: true,
+				modifierKey: 'ctrl',
+				mode: 'x'
+			},
+			zoom: {
+				drag: {
+					enabled: true
+				},
+				wheel: {
+					enabled: true
+				},
+				mode: 'x'
+			},
+			limits: {
+				x: { minRange: 10, min: 'original', max: 'original' }
+			}
+		},
+		tooltip: {
+			callbacks: {
+				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+					`${item.dataset.label}: ${item.formattedValue} ${unit}`
+			}
+		}
+	};
+
 	let locations: string[] = $derived.by(() => {
 		response_update_trigger;
 		if (!level_response) {
 			return [];
 		}
-		return remove_duplicates(level_response.map((a) => a.index.node)).sort();
+		return removeDuplicates(level_response.map((a) => a.index.node)).sort();
 	});
 
 	let carriers: string[] = $derived.by(() => {
@@ -173,7 +174,7 @@
 			return [];
 		}
 		let all_technologies = Array.from(level_response.map((a) => a.index.technology));
-		return remove_duplicates(
+		return removeDuplicates(
 			level_response
 				.filter((element) => all_technologies.includes(element.index.technology))
 				.map((element) => selected_solution!.detail.reference_carrier[element.index.technology])
@@ -185,7 +186,7 @@
 		if (!level_response || !selected_solution || carriers.length === 0) {
 			return [];
 		}
-		let all_technologies = remove_duplicates(level_response.map((a) => a.index.technology));
+		let all_technologies = removeDuplicates(level_response.map((a) => a.index.technology));
 		return all_technologies.filter(
 			(technology) => selected_solution!.detail.reference_carrier[technology] == selected_carrier
 		);
@@ -410,7 +411,7 @@
 	 * We do this because Svelte's reactivity does not work well with large datasets.
 	 */
 	async function update_datasets() {
-		reset_color_state();
+		resetColorState();
 		level_datasets = compute_level_datasets();
 		flow_datasets = compute_flow_datasets();
 		level_datasets_length = level_datasets.length;
@@ -490,7 +491,7 @@
 		// Map entries to datasets
 		return entries.map((entry) => {
 			const datasetBase = buildDatasetBase(entry);
-			const color = datasetBase.borderColor || next_color();
+			const color = datasetBase.borderColor || nextColor();
 
 			return {
 				...datasetBase,
@@ -501,7 +502,7 @@
 				stepped: true,
 				borderColor: color,
 				backgroundColor: datasetBase.backgroundColor || (color as string)
-			};
+			} as ChartDataset<'bar' | 'line'>;
 		});
 	}
 </script>
@@ -523,7 +524,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(years.map((year) => year.toString()))}
+						options={toOptions(years.map((year) => year.toString()))}
 						bind:value={selected_year}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -533,7 +534,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(carriers)}
+						options={toOptions(carriers)}
 						bind:value={selected_carrier}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -543,7 +544,7 @@
 				{#snippet content(formId)}
 					<Dropdown
 						{formId}
-						options={to_options(window_sizes)}
+						options={toOptions(window_sizes)}
 						bind:value={selected_window_size}
 						disabled={fetching || solution_loading}
 					></Dropdown>
@@ -582,30 +583,30 @@
 		<div class="text-center">No locations with this selection.</div>
 	{:else if level_datasets_length == 0}
 		<div class="text-center">No data available for this selection.</div>
-		<!-- {:else if flow_datasets_length == 0}
-		<div class="text-center">No flow data available for this selection.</div> -->
 	{:else}
-		<BarPlot
+		<Chart
 			id="level_chart"
 			type="line"
 			{labels}
 			datasets={[]}
 			options={plot_options}
-			{plot_name}
+			pluginOptions={plotPluginOptions}
+			plotName={plot_name}
 			zoom={true}
 			bind:zoomLevel
 			bind:this={level_plot}
-		></BarPlot>
-		<BarPlot
+		></Chart>
+		<Chart
 			id="flow_chart"
 			type="line"
 			{labels}
 			datasets={[]}
 			options={plot_options_flows}
-			plot_name={plot_name_flows}
+			pluginOptions={plotPluginOptions}
+			plotName={plot_name_flows}
 			zoom={true}
 			bind:zoomLevel
 			bind:this={flow_plot}
-		></BarPlot>
+		></Chart>
 	{/if}
 </div>

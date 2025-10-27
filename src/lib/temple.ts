@@ -27,7 +27,7 @@ export async function get_solutions(): Promise<Solution[]> {
 	let solution_list: Array<Solution> = await solution_list_request.json();
 
 	solution_list.sort((a, b) => {
-		return a.name < b.name ? -1 : a.name > b.name ? 1 : 0;
+		return a.name.localeCompare(b.name);
 	});
 	return solution_list;
 }

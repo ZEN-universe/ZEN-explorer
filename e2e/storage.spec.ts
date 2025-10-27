@@ -6,8 +6,10 @@ test('storage: default', async ({ page }) => {
 		.getByLabel('Solution', { exact: true })
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
-	await expect(page.locator('#level_chart')).toHaveScreenshot(`eeht_pf/default/level.png`);
-	await expect(page.locator('#flow_chart')).toHaveScreenshot(`eeht_pf/default/flow.png`);
+	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
+		`eeht_pf/default/level.png`
+	);
+	await expect(page.locator('#flow_chart-container')).toHaveScreenshot(`eeht_pf/default/flow.png`);
 });
 
 test('storage: year', async ({ page }) => {
@@ -17,8 +19,12 @@ test('storage: year', async ({ page }) => {
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
 	await page.getByLabel('Year').selectOption('2050');
-	await expect(page.locator('#level_chart')).toHaveScreenshot(`eeht_pf/year-2050/level.png`);
-	await expect(page.locator('#flow_chart')).toHaveScreenshot(`eeht_pf/year-2050/flow.png`);
+	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
+		`eeht_pf/year-2050/level.png`
+	);
+	await expect(page.locator('#flow_chart-container')).toHaveScreenshot(
+		`eeht_pf/year-2050/flow.png`
+	);
 });
 
 test('storage: carrier', async ({ page }) => {
@@ -28,10 +34,10 @@ test('storage: carrier', async ({ page }) => {
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
 	await page.getByLabel('Carrier').selectOption('natural_gas');
-	await expect(page.locator('#level_chart')).toHaveScreenshot(
+	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
 		`eeht_pf/carrier-natural_gas/level.png`
 	);
-	await expect(page.locator('#flow_chart')).toHaveScreenshot(
+	await expect(page.locator('#flow_chart-container')).toHaveScreenshot(
 		`eeht_pf/carrier-natural_gas/flow.png`
 	);
 });
@@ -43,10 +49,10 @@ test('storage: smoothing window size', async ({ page }) => {
 		.selectOption('european_electricity_heating_transition');
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
 	await page.getByLabel('Smoothing Window Size').selectOption('Monthly');
-	await expect(page.locator('#level_chart')).toHaveScreenshot(
+	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
 		`eeht_pf/smoothing-window-size-monthly/level.png`
 	);
-	await expect(page.locator('#flow_chart')).toHaveScreenshot(
+	await expect(page.locator('#flow_chart-container')).toHaveScreenshot(
 		`eeht_pf/smoothing-window-size-monthly/flow.png`
 	);
 });
@@ -59,10 +65,10 @@ test('storage: technology subdivision', async ({ page }) => {
 	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
 	await page.waitForSelector('#level_chart');
 	await page.getByRole('switch', { name: 'Technology Subdivision on' }).uncheck();
-	await expect(page.locator('#level_chart')).toHaveScreenshot(
+	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
 		`eeht_pf/technology-subdivision/level.png`
 	);
-	await expect(page.locator('#flow_chart')).toHaveScreenshot(
+	await expect(page.locator('#flow_chart-container')).toHaveScreenshot(
 		`eeht_pf/technology-subdivision/flow.png`
 	);
 });
@@ -81,10 +87,10 @@ test('storage: technologies', async ({ page }) => {
 		.getByRole('button')
 		.click();
 	await page.getByRole('checkbox', { name: 'battery' }).check();
-	await expect(page.locator('#level_chart')).toHaveScreenshot(
+	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
 		`eeht_pf/technologies-battery-2050/level.png`
 	);
-	await expect(page.locator('#flow_chart')).toHaveScreenshot(
+	await expect(page.locator('#flow_chart-container')).toHaveScreenshot(
 		`eeht_pf/technologies-battery-2050/flow.png`
 	);
 });
@@ -102,6 +108,10 @@ test('storage: nodes', async ({ page }) => {
 		.getByRole('button')
 		.click();
 	await page.getByRole('checkbox', { name: 'DE' }).check();
-	await expect(page.locator('#level_chart')).toHaveScreenshot(`eeht_pf/nodes-only-de/level.png`);
-	await expect(page.locator('#flow_chart')).toHaveScreenshot(`eeht_pf/nodes-only-de/flow.png`);
+	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
+		`eeht_pf/nodes-only-de/level.png`
+	);
+	await expect(page.locator('#flow_chart-container')).toHaveScreenshot(
+		`eeht_pf/nodes-only-de/flow.png`
+	);
 });

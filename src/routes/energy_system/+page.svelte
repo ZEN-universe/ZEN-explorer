@@ -11,9 +11,9 @@
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import SankeyDiagram from '$components/SankeyDiagram.svelte';
-	import SolutionFilter from '$components/SolutionFilter.svelte';
-	import { next_color, reset_color_state } from '$lib/colors';
-	import { to_options } from '$lib/utils';
+	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
+	import { nextColor, resetColorState } from '$lib/colors';
+	import { toOptions } from '$lib/utils';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
 	let years: number[] = $state([]);
@@ -219,10 +219,10 @@
 			};
 		}
 
-		reset_color_state();
+		resetColorState();
 
 		const carrierNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + ' [' + getUnit(carrier) + ']', next_color(), getUnit(carrier))
+			newNode(carrier, carrier + ' [' + getUnit(carrier) + ']', nextColor(), getUnit(carrier))
 		);
 		const conversionTechNodes = conversionTechs.map((tech) =>
 			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)))
@@ -236,19 +236,19 @@
 		const spillageNodes = storageTechs.map((tech) =>
 			newNode(tech, tech + '_spillage', grey, getUnit(getReferenceCarrier(tech)))
 		);
-		let currentColor = next_color();
+		let currentColor = nextColor();
 		const importNodes = carriers.map((carrier) =>
 			newNode(carrier, carrier + '_import', currentColor, getUnit(carrier))
 		);
-		currentColor = next_color();
+		currentColor = nextColor();
 		const exportNodes = carriers.map((carrier) =>
 			newNode(carrier, carrier + '_export', currentColor, getUnit(carrier))
 		);
-		currentColor = next_color();
+		currentColor = nextColor();
 		const shedDemandNodes = carriers.map((carrier) =>
 			newNode(carrier, carrier + '_shed_demand', currentColor, getUnit(carrier))
 		);
-		currentColor = next_color();
+		currentColor = nextColor();
 		const demandNodes = carriers.map((carrier) =>
 			newNode(
 				carrier,
@@ -393,7 +393,7 @@
 			bind:carriers
 			bind:nodes
 			bind:loading={solutionLoading}
-			solution_selected={solutionChanged}
+			solutionSelected={solutionChanged}
 			disabled={fetching || solutionLoading}
 		/>
 	</FilterSection>
@@ -406,7 +406,7 @@
 				<Dropdown
 					{formId}
 					bind:value={selectedYear}
-					options={to_options(years.map((year) => year.toString()))}
+					options={toOptions(years.map((year) => year.toString()))}
 					disabled={fetching || solutionLoading}
 				></Dropdown>
 			{/snippet}

@@ -18,6 +18,12 @@ export function getURLParam(key: string): string | null {
 	return value ? decodeURIComponent(value) : null;
 }
 
+export function getURLParamAsArray(key: string): string[] {
+	const param = getRawURLParam(key);
+	if (!param) return [];
+	return param.split('~').map((i) => decodeURIComponent(i));
+}
+
 export function getURLParamAsIntArray(key: string): number[] | null {
 	const param = getRawURLParam(key);
 	if (param === null) return null;
@@ -49,14 +55,26 @@ function buildURL(params: URLParams, base_url?: string): URL {
 	return url;
 }
 
-export function addCurrentSolutionToURL(url?: string): string {
-	return buildURL(
-		{
-			solution: urlParams['solution'] || getURLParam('solution') || '',
-			scenario: urlParams['scenario'] || getURLParam('scenario') || ''
-		},
-		url
-	).href;
+export function addCurrentSolutionToURL(
+	url?: string,
+	hasMultipleSolutions: boolean = false
+): string {
+	let params: URLParams = {};
+	const singleSolution = getURLParam('solution');
+	const singleScenario = getURLParam('scenario');
+	const multipleSolutions = getURLParamAsArray('solutions');
+	const multipleScenarios = getURLParamAsArray('scenarios');
+
+	if (hasMultipleSolutions) {
+		params['solutions'] = multipleSolutions.join('~') || singleSolution || '';
+		params['scenarios'] =
+			multipleScenarios.join('~') || singleScenario || (singleSolution ? 'none' : '');
+	} else {
+		params['solution'] = singleSolution || multipleSolutions[0] || '';
+		params['scenario'] = singleScenario || multipleScenarios[0] || '';
+	}
+
+	return buildURL(params, url).href;
 }
 
 export function updateURLParams(params: URLParams): void {
