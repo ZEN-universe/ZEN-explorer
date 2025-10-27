@@ -22,9 +22,14 @@ export const CYCLE_LANE_DIST_FROM_FWD_PATHS = -10;
 export const CYCLE_LANE_SMALL_WIDTH_BUFFER = 2;
 /** horizontal distance of control points from vertical */
 export const CYCLE_CONTROL_POINT_DIST = 16;
+/** Node's max height used for structure-only mode */
+export const NODE_MAX_HEIGHT_STRUCTURE_ONLY = 40;
+/** Link height used for structure-only mode */
+export const LINK_HEIGHT_STRUCTURE_ONLY = 6;
 
 let nodes: SankeyNode[] = [];
 let links: SankeyLink[] = [];
+let showStructureOnly: boolean = false;
 
 // ==========================
 // Section: Utility functions
@@ -60,10 +65,12 @@ function computeNodeLinks() {
  */
 function computeNodeValues() {
 	nodes.forEach((node) => {
-		node.value = Math.max(
-			sum(node.linksIn, (link) => link.value),
-			sum(node.linksOut, (link) => link.value)
-		);
+		node.value = showStructureOnly
+			? 1
+			: Math.max(
+					sum(node.linksIn, (link) => link.value),
+					sum(node.linksOut, (link) => link.value)
+				);
 	});
 }
 
@@ -233,8 +240,9 @@ function computeNodeDepths() {
 	function initializeNodeDepth() {
 		// ky is the scaling factor to fit nodes within the height
 		// It is determined by the node with the largest value and the max node height
+		const maxHeight = showStructureOnly ? NODE_MAX_HEIGHT_STRUCTURE_ONLY : NODE_MAX_HEIGHT;
 		const ky = Math.min(
-			...nodes.map((node) => (node.value > 1e-6 ? NODE_MAX_HEIGHT / node.value : Infinity))
+			...nodes.map((node) => (node.value > 1e-6 ? maxHeight / node.value : Infinity))
 		);
 
 		nodesByBreadth.forEach((nodes) => {
@@ -247,8 +255,21 @@ function computeNodeDepths() {
 		});
 
 		links.forEach((link) => {
-			link.dy = link.value * ky;
+			link.dy = showStructureOnly ? 6 : link.value * ky;
 		});
+	}
+
+	/**
+	 * Accessor to get the value of a link, considering structure-only mode and link value.
+	 * @param link The link whose value is to be retrieved.
+	 * @returns The value of the link.
+	 */
+	function getLinkValue(link: SankeyLink) {
+		if (showStructureOnly) {
+			return 1;
+		} else {
+			return Math.max(link.value, 1e-6);
+		}
 	}
 
 	/**
@@ -259,10 +280,11 @@ function computeNodeDepths() {
 	function relaxLeftToRight(alpha: number) {
 		nodesByBreadth.forEach((nodes) => {
 			nodes.forEach((node) => {
-				if (node.linksIn.length == 0) return;
+				if (node.linksIn.length === 0) return;
+				const links = node.linksIn;
 				const y =
-					sum(node.linksIn, (link) => center(link.source) * link.value) /
-					sum(node.linksIn, (link) => link.value);
+					sum(links, (link) => center(link.source) * getLinkValue(link)) /
+					sum(links, (link) => getLinkValue(link));
 				node.y += (y - center(node)) * alpha;
 			});
 		});
@@ -279,10 +301,11 @@ function computeNodeDepths() {
 			.reverse()
 			.forEach((nodes) => {
 				nodes.forEach((node) => {
-					if (node.linksOut.length == 0) return;
+					if (node.linksOut.length === 0) return;
+					const links = node.linksOut;
 					const y =
-						sum(node.linksOut, (link) => center(link.target) * link.value) /
-						sum(node.linksOut, (link) => link.value);
+						sum(links, (link) => center(link.target) * getLinkValue(link)) /
+						sum(links, (link) => getLinkValue(link));
 					node.y += (y - center(node)) * alpha;
 				});
 			});
@@ -346,12 +369,20 @@ function computeLinkDepths() {
 		let sy = 0;
 		let ty = 0;
 		node.linksOut.forEach((link) => {
-			link.sy = sy;
-			sy += link.dy;
+			if (showStructureOnly) {
+				link.sy = (node.dy - link.dy) / 2;
+			} else {
+				link.sy = sy;
+				sy += link.dy;
+			}
 		});
 		node.linksIn.forEach((link) => {
-			link.ty = ty;
-			ty += link.dy;
+			if (showStructureOnly) {
+				link.ty = (node.dy - link.dy) / 2;
+			} else {
+				link.ty = ty;
+				ty += link.dy;
+			}
 		});
 	});
 }
@@ -365,9 +396,14 @@ function computeLinkDepths() {
  * @param inputNodes The updated nodes of the diagram.
  * @param inputLinks The updated links of the diagram.
  */
-export function updateSankeyLayout(inputNodes: SankeyNode[], inputLinks: SankeyLink[]) {
+export function updateSankeyLayout(
+	inputNodes: SankeyNode[],
+	inputLinks: SankeyLink[],
+	inputShowStructureOnly: boolean
+) {
 	nodes = inputNodes;
 	links = inputLinks;
+	showStructureOnly = inputShowStructureOnly;
 
 	computeNodeLinks();
 	computeNodeValues();
@@ -400,6 +436,7 @@ export function getFinalNodesAndLinks(): [RawSankeyNode[], RawSankeyLink[]] {
 		value: node.value,
 		unit: node.unit,
 		unitSuffix: node.unitSuffix,
+		showTotal: node.showTotal,
 		x: node.x,
 		y: node.y,
 		dy: node.dy,

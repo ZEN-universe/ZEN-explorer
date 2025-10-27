@@ -49,6 +49,7 @@
 	let debounceLayoutDiagram = debounce(layoutDiagram, 100);
 
 	$effect(() => {
+		showStructureOnly;
 		if (initialNodes.length) {
 			untrack(() => {
 				toFullNodesAndLinks(initialNodes, initialLinks);
@@ -83,6 +84,7 @@
 			unit: node.unit ?? '',
 			unitSuffix: node.unitSuffix ?? false,
 			stickTo: node.stickTo ?? null,
+			showTotal: node.showTotal ?? true,
 			linksIn: [],
 			linksOut: [],
 			x: 0,
@@ -90,6 +92,9 @@
 			dy: 0
 		}));
 		fullLinks = partialLinks.flatMap((link) => {
+			if (!showStructureOnly && link.value < 1e-6) {
+				return [];
+			}
 			let source = fullNodes.find((n) => n.id === link.source.id && n.label === link.source.label);
 			let target = fullNodes.find((n) => n.id === link.target.id && n.label === link.target.label);
 			if (!source || !target) {
@@ -117,7 +122,7 @@
 	 * Layout the diagram by computing node and link positions.
 	 */
 	function layoutDiagram() {
-		updateSankeyLayout(fullNodes, fullLinks);
+		updateSankeyLayout(fullNodes, fullLinks, showStructureOnly);
 		[nodes, links] = getFinalNodesAndLinks();
 	}
 
@@ -377,7 +382,7 @@
 	function onDragNode(event: any, idx: number) {
 		if (event.clientY === 0 || idx < 0 || idx >= nodes.length) return;
 		const new_y = nodes[idx].y + event.dy;
-		const constrained_y = Math.max(0, Math.min(height - nodes[idx].dy, new_y));
+		const constrained_y = Math.max(0, new_y);
 		updateNodePosition(idx, constrained_y);
 		[nodes, links] = getFinalNodesAndLinks();
 	}
@@ -469,10 +474,30 @@
 	function linkTitle(link: RawSankeyLink): string {
 		return `${link.source.label} → ${link.target.label}:\n${link.value.toFixed(3)} ${link.unit}`;
 	}
+
+	// ===================
+	// Show only structure
+	// ===================
+
+	let showStructureOnly = $state(false);
 </script>
 
 <svelte:window onresize={handleSize} onscroll={updateSvgRect} />
 
+<!-- Reset zoom button -->
+<div class="d-flex justify-content-end mb-2">
+	<button class="btn btn-outline-secondary d-flex" onclick={resetZoom}>
+		<i class="bi bi-house me-2"></i>
+		<div>Reset zoom</div>
+	</button>
+	<button
+		class="btn btn-outline-secondary d-flex ms-2"
+		onclick={() => (showStructureOnly = !showStructureOnly)}
+	>
+		<i class="bi bi-diagram-3 me-2"></i>
+		<div>Show only structure: {showStructureOnly ? 'On' : 'Off'}</div>
+	</button>
+</div>
 <div>
 	<!-- Legend -->
 	{#if legendItems && legendItems.length > 0}
@@ -527,9 +552,9 @@
 					<g class="node" data-idx={idx}>
 						<rect
 							x={node.x}
-							y={node.y + 1}
+							y={node.y + 0.5}
 							width={NODE_WIDTH}
-							height={Math.max(0.1, node.dy - 2)}
+							height={Math.max(0.1, node.dy - 1)}
 							fill={node.color}
 						></rect>
 						<text
@@ -547,13 +572,6 @@
 			</g>
 		</g>
 	</svg>
-	<!-- Reset zoom button -->
-	<div class="position-absolute top-0 end-0 m-2">
-		<button class="btn btn-secondary" onclick={resetZoom}>
-			<i class="bi bi-house"></i>
-			<div class="visually-hidden">Reset zoom</div>
-		</button>
-	</div>
 	<!-- Tooltip -->
 	{#if activeNode !== null}
 		<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
@@ -562,34 +580,33 @@
 					{activeNode.label}
 				</div>
 				{#if activeNode.linksIn.length > 0}
-					<div class="fw-bold mt-1 fs-7 px-2">Inflows:</div>
-					{#each activeNode.linksIn as linkInIdx}
-						{#if links[linkInIdx].value}
-							<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
-								<div class="me-1">
-									<svg width="12" height="12">
-										<rect width="12" height="12" fill={links[linkInIdx].source.color} />
-									</svg>
-									{links[linkInIdx].source.label}:
+					<div class={[activeNode.linksOut.length > 0 && 'border-bottom border-secondary pb-1']}>
+						<div class="fw-bold mt-1 fs-7 px-2">Inflows:</div>
+						{#each activeNode.linksIn as linkInIdx}
+							{#if links[linkInIdx].value}
+								<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
+									<div class="me-1">
+										<svg width="12" height="12">
+											<rect width="12" height="12" fill={links[linkInIdx].source.color} />
+										</svg>
+										{links[linkInIdx].source.label}:
+									</div>
+									<div>
+										{links[linkInIdx].value.toFixed(3)}
+										{links[linkInIdx].unit}
+									</div>
 								</div>
+							{/if}
+						{/each}
+						{#if activeNode.showTotal && activeNode.linksIn.length > 1}
+							<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
+								<strong>Total:</strong>
 								<div>
-									{links[linkInIdx].value.toFixed(3)}
-									{links[linkInIdx].unit}
+									{sum(activeNode.linksIn.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
+									{activeNode.unit}
 								</div>
 							</div>
 						{/if}
-					{/each}
-					<div
-						class={[
-							'd-flex justify-content-between fs-8 px-2 text-no-break',
-							activeNode.linksOut.length > 0 && 'border-bottom border-secondary pb-1'
-						]}
-					>
-						<strong>Total:</strong>
-						<div>
-							{sum(activeNode.linksIn.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
-							{activeNode.unit}
-						</div>
 					</div>
 				{/if}
 				{#if activeNode.linksOut.length > 0}
@@ -610,13 +627,15 @@
 							</div>
 						{/if}
 					{/each}
-					<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
-						<strong>Total:</strong>
-						<div>
-							{sum(activeNode.linksOut.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
-							{activeNode.unit}
+					{#if activeNode.showTotal && activeNode.linksOut.length > 1}
+						<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
+							<strong>Total:</strong>
+							<div>
+								{sum(activeNode.linksOut.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
+								{activeNode.unit}
+							</div>
 						</div>
-					</div>
+					{/if}
 				{/if}
 			{/snippet}
 		</Tooltip>
@@ -634,7 +653,7 @@
 
 	.node rect {
 		stroke: #000;
-		stroke-width: 2px;
+		stroke-width: 1px;
 	}
 
 	.link {

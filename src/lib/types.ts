@@ -148,6 +148,8 @@ export interface SankeyNode {
 	unitSuffix: boolean;
 	/** Whether to stick to left or right */
 	stickTo: 'left' | 'right' | null;
+	/** Whether to include the total value */
+	showTotal: boolean;
 	/** Incoming links to the node */
 	linksIn: SankeyLink[];
 	/** Outgoing links from the node */
@@ -197,6 +199,7 @@ export interface RawSankeyNode {
 	value: number;
 	unit: string;
 	unitSuffix: boolean;
+	showTotal: boolean;
 	x: number;
 	y: number;
 	dy: number;
