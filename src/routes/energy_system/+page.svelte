@@ -5,16 +5,17 @@
 	import { get_component_total } from '$lib/temple';
 	import type { ActivatedSolution, Row, Entry, SankeyNode, PartialSankeyLink } from '$lib/types';
 	import { getURLParam, getURLParamAsIntArray, updateURLParams } from '$lib/queryParams.svelte';
+	import { nextColor, resetColorState } from '$lib/colors';
+	import { toOptions } from '$lib/utils';
+	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
+
 	import AllCheckbox from '$components/AllCheckbox.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
-	import SankeyDiagram from '$components/SankeyDiagram.svelte';
+	import SankeyDiagram, { type LegendItem } from '$components/SankeyDiagram.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
-	import { nextColor, resetColorState } from '$lib/colors';
-	import { toOptions } from '$lib/utils';
-	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
 	let years: number[] = $state([]);
 	let solutionLoading: boolean = $state(false);
@@ -54,6 +55,8 @@
 
 	let carriers: string[] = $state([]);
 	let nodes: string[] = $state([]);
+
+	let legendItems: LegendItem[] = $state([]);
 
 	$effect(() => {
 		if (!years.length) {
@@ -229,10 +232,13 @@
 		}
 
 		resetColorState();
+		const colors: LegendItem[] = [];
 
-		const carrierNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier, nextColor(), getUnit(carrier), true, null)
-		);
+		const carrierNodes = carriers.map((carrier) => {
+			const color = nextColor(carrier);
+			colors.push({ color, carrier });
+			return newNode(carrier, carrier, color, getUnit(carrier), true, null);
+		});
 		const conversionTechNodes = conversionTechs.map((tech) =>
 			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)), false, null)
 		);
@@ -384,6 +390,7 @@
 			...demandNodes
 		];
 		sankeyLinks = links;
+		legendItems = colors;
 	}
 </script>
 
@@ -437,6 +444,6 @@
 	{:else if sankeyNodes.length === 0}
 		<div class="text-center">No data available for the selected filters</div>
 	{:else}
-		<SankeyDiagram nodes={sankeyNodes} links={sankeyLinks} />
+		<SankeyDiagram nodes={sankeyNodes} links={sankeyLinks} {legendItems} />
 	{/if}
 </div>

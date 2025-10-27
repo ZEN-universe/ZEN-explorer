@@ -15,6 +15,7 @@
 		CYCLE_LANE_NARROW_WIDTH,
 		CYCLE_LANE_SMALL_WIDTH_BUFFER,
 		getFinalNodesAndLinks,
+		NODE_DISTANCE_BETWEEN,
 		NODE_WIDTH,
 		updateNodePosition,
 		updateSankeyLayout
@@ -31,13 +32,19 @@
 
 	let svg = $state<SVGSVGElement>();
 
+	export interface LegendItem {
+		color: string;
+		carrier: string;
+	}
+
 	interface Props {
 		id?: string;
 		nodes: Partial<SankeyNode>[];
 		links: PartialSankeyLink[];
+		legendItems?: LegendItem[];
 	}
 
-	let { id = 'diagram', nodes: initialNodes, links: initialLinks }: Props = $props();
+	let { id = 'diagram', nodes: initialNodes, links: initialLinks, legendItems }: Props = $props();
 
 	let debounceLayoutDiagram = debounce(layoutDiagram, 100);
 
@@ -312,6 +319,26 @@
 		select(svg).call(zoomBehavior.transform as any, zoomIdentity);
 	}
 
+	/**
+	 * Focus the view on a specific carrier by zooming and centering on its node.
+	 * @param carrier
+	 */
+	function focusCarrier(carrier: string) {
+		// Find the target node by carrier label
+		const targetNode = nodes.find((node) => node.label === carrier);
+		if (!targetNode || !svg) return;
+
+		// Compute the scale and translation to center the target node
+		const rectWidth = 3 * NODE_WIDTH + 2 * NODE_DISTANCE_BETWEEN + 8;
+		const scale = maxWidth / rectWidth;
+		const translateX = -(targetNode.x + NODE_WIDTH / 2) * scale + maxWidth / 2;
+		const translateY = -(targetNode.y + targetNode.dy / 2) * scale + maxHeight / 2;
+
+		// Apply the zoom transformation
+		const selection = select(svg as Element);
+		zoomBehavior.transform(selection, zoomIdentity.translate(translateX, translateY).scale(scale));
+	}
+
 	// ==================
 	// Drag node behavior
 	// ==================
@@ -446,6 +473,25 @@
 
 <svelte:window onresize={handleSize} onscroll={updateSvgRect} />
 
+<div>
+	<!-- Legend -->
+	{#if legendItems && legendItems.length > 0}
+		<div class="mb-2 d-flex flex-wrap justify-content-center">
+			{#each legendItems as item}
+				<button
+					class="btn btn-text rounded-0 d-flex align-items-center p-0 me-2 text-secondary"
+					style:font-size="12px"
+					onclick={() => focusCarrier(item.carrier)}
+				>
+					<svg width="40" height="12" class="me-1">
+						<rect width="40" height="12" fill={item.color} />
+					</svg>
+					<span class="fs-7">{item.carrier}</span>
+				</button>
+			{/each}
+		</div>
+	{/if}
+</div>
 <div class="position-relative border rounded">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<svg
