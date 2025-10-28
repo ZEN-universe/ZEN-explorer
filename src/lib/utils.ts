@@ -1,3 +1,5 @@
+import type { ScenarioDetail } from './types';
+
 /**
  * Remove duplicates from an array
  * @param array array to be filtered
@@ -17,4 +19,20 @@ export function toOptions(array: string[]): { value: string; label: string }[] {
 		value: item,
 		label: item
 	}));
+}
+
+export function getTransportEdges(
+	edges: Record<string, string>,
+	selectedNodes: string[],
+	directionIn: boolean
+): string[] {
+	return Object.entries(edges)
+		.filter(([_, csvNodes]) => {
+			const nodes = csvNodes.split(',');
+			return (
+				(directionIn && !selectedNodes.includes(nodes[0]) && selectedNodes.includes(nodes[1])) ||
+				(!directionIn && selectedNodes.includes(nodes[0]) && !selectedNodes.includes(nodes[1]))
+			);
+		})
+		.map(([edgeId, _]) => edgeId);
 }

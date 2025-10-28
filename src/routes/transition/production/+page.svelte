@@ -25,7 +25,7 @@
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
 	} from '$lib/compareSolutions';
-	import { removeDuplicates, toOptions } from '$lib/utils';
+	import { getTransportEdges, removeDuplicates, toOptions } from '$lib/utils';
 	import {
 		getURLParam,
 		getURLParamAsBoolean,
@@ -41,7 +41,7 @@
 	import Entries, { type FilterCriteria } from '$lib/entries';
 
 	// Data
-	let data: (Row[] | null)[][] = $state([]);
+	let data: Row[][][] = $state([]);
 	let years: number[] = $state([]);
 	let nodes: string[] = $state([]);
 
@@ -91,6 +91,21 @@
 			negative_suffix: ' (charge)'
 		},
 		{
+			id: 'transport',
+			short_id: 'tran',
+			title: 'Transport',
+			show: true,
+			subdivision: false,
+			show_subdivision: true,
+			filter_by_technologies: true,
+			positive: 'flow_transport',
+			positive_label: 'Transport out',
+			positive_suffix: ' (transport out)',
+			negative: 'flow_transport_loss',
+			negative_label: 'Transport in',
+			negative_suffix: ' (transport in)'
+		},
+		{
 			id: 'import_export',
 			short_id: 'imp_exp',
 			title: 'Import/Export',
@@ -123,9 +138,11 @@
 	let selectedCarrier: string | null = $state(null);
 	let selectedConversionTechnologies: string[] = $state([]);
 	let selectedStorageTechnologies: string[] = $state([]);
+	let selectedTransportTechnologies: string[] = $state([]);
 	let selectedTechnologies = $derived([
 		...selectedConversionTechnologies,
-		...selectedStorageTechnologies
+		...selectedStorageTechnologies,
+		...selectedTransportTechnologies
 	]);
 	let selectedNormalization: boolean = $state(false);
 	let selectedNodes: string[] = $state([]);
@@ -136,15 +153,17 @@
 	// Temporary objects to store previous values and URL values
 	let urlConversionTechnologies: number[] | null = null;
 	let urlStorageTechnologies: number[] | null = null;
+	let urlTransportTechnologies: number[] | null = null;
 	let previousConversionTechnologies: string = '';
 	let previousStorageTechnologies: string = '';
+	let previousTransportTechnologies: string = '';
 	let previousNodes: string = '';
 	let previousYears: string = '';
 
 	// States
-	let solution_loading: boolean = $state(false);
+	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
-	let plot_name: string = $derived.by(() => {
+	let plotName: string = $derived.by(() => {
 		if (!selectedSolutions[0]?.solution_name || !selectedCarrier) return '';
 		// Define filename of the plot when downloading.
 		let solution_names = selectedSolutions[0].solution_name.split('.');
@@ -298,6 +317,21 @@
 		return Array.from(setStorageTechnologies).sort();
 	});
 
+	let transportTechnologies = $derived.by(() => {
+		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
+
+		const setTransportTechnologies: Set<string> = new Set();
+		const solutions = selectedSolutions as ActivatedSolution[];
+
+		solutions.forEach((solution) => {
+			solution.detail.system.set_transport_technologies.forEach((tech) => {
+				if (solution.detail.reference_carrier[tech] !== selectedCarrier) return;
+				setTransportTechnologies.add(tech);
+			});
+		});
+		return Array.from(setTransportTechnologies).sort();
+	});
+
 	// Update selected values when the corresponding options change
 	$effect(() => {
 		carriers;
@@ -332,6 +366,15 @@
 		(value) => (urlStorageTechnologies = value)
 	);
 	updateSelectionOnStateChanges(
+		() => transportTechnologies,
+		() => !!selectedSolutions,
+		() => previousTransportTechnologies,
+		() => urlTransportTechnologies,
+		(value) => (selectedTransportTechnologies = value),
+		(value) => (previousTransportTechnologies = value),
+		(value) => (urlTransportTechnologies = value)
+	);
+	updateSelectionOnStateChanges(
 		() => nodes,
 		() => !!selectedSolutions,
 		() => previousNodes,
@@ -359,6 +402,7 @@
 		});
 		urlConversionTechnologies = getURLParamAsIntArray('conv_tech');
 		urlStorageTechnologies = getURLParamAsIntArray('stor_tech');
+		urlTransportTechnologies = getURLParamAsIntArray('tran_tech');
 	});
 
 	$effect(() => {
@@ -378,7 +422,10 @@
 				conv_tech: selectedConversionTechnologies
 					.map((t) => conversionTechnologies.indexOf(t))
 					.join('~'),
-				stor_tech: selectedStorageTechnologies.map((t) => storageTechnologies.indexOf(t)).join('~')
+				stor_tech: selectedStorageTechnologies.map((t) => storageTechnologies.indexOf(t)).join('~'),
+				tran_tech: selectedTransportTechnologies
+					.map((t) => transportTechnologies.indexOf(t))
+					.join('~')
 			};
 			variables.forEach((variable) => {
 				params[variable.short_id] = variable.show ? '1' : '0';
@@ -430,6 +477,8 @@
 						'flow_storage_charge',
 						'flow_import',
 						'flow_export',
+						'flow_transport',
+						'flow_transport_loss',
 						'shed_demand',
 						'demand'
 					],
@@ -441,10 +490,7 @@
 
 		data = responses.map((response) => {
 			return variables.flatMap((variable) => {
-				return [
-					response[variable.positive]?.data || null,
-					response[variable.negative]?.data || null
-				];
+				return [response[variable.positive]?.data || [], response[variable.negative]?.data || []];
 			});
 		});
 
@@ -456,55 +502,15 @@
 	}
 
 	// Process plot data
-	function group_data(data: any, variable: any, technologies?: string[]) {
-		if (variable.subdivision) {
-			return data;
-		}
-
-		// Aggregate all data with the same node
-		return Object.entries(
-			data.reduce(
-				(
-					acc: { [node: string]: { technology: string; data: { [year: string]: number } } },
-					curr: any
-				) => {
-					const node = curr['node'];
-					const technology = curr['technology'];
-					if (technologies && !technologies.includes(technology)) {
-						return acc;
-					}
-					let values = Object.fromEntries(
-						Object.entries(curr)
-							.filter(([key]) => !isNaN(Number(key)))
-							.map(([key, value]) => [key, Number(value)])
-					);
-
-					acc[node] = acc[node] || { technology: variable.title, data: {} };
-					acc[node].data = Object.fromEntries(
-						Object.entries(values).map(([key, value]) => {
-							return [key, (value || 0) + (acc[node].data[key] || 0)];
-						})
-					);
-					return acc;
-				},
-				{}
-			)
-		).map(([node, value]: any) => ({
-			...value.data,
-			technology: value.technology,
-			node: node
-		}));
-	}
-
 	function process_data(
-		rows: Row[] | null,
+		initialEntries: Entries,
 		variable: Variable,
 		label: string,
 		suffix: string | undefined,
 		map_fn?: (d: number) => number
 	): Entries {
-		if (rows === null || !selectedCarrier) {
-			return new Entries([]);
+		if (!selectedCarrier) {
+			return Entries.empty();
 		}
 
 		const filterCriteria: FilterCriteria = {
@@ -516,7 +522,7 @@
 		}
 		const groupByColumns = variable.subdivision ? ['technology'] : [];
 
-		let entries = Entries.fromRows(rows)
+		let entries = initialEntries
 			.filterByCriteria(filterCriteria)
 			.filterDataByIndex(selectedYears.map((year) => years.indexOf(year)))
 			.groupBy(groupByColumns)
@@ -551,14 +557,46 @@
 					return [];
 				}
 
+				let positiveData = Entries.fromRows(rows[2 * j]);
+				let negativeData = Entries.fromRows(rows[2 * j + 1]);
+				if (variable.id === 'transport') {
+					const transport = positiveData;
+					const transportLoss = negativeData;
+
+					const transportInLoss = transportLoss.filterByCriteria({
+						technology: selectedTransportTechnologies,
+						edge: getTransportEdges(solution.detail.edges, selectedNodes, true)
+					});
+					// transport in
+					negativeData = transport
+						.filterByCriteria({
+							technology: selectedTransportTechnologies,
+							edge: getTransportEdges(solution.detail.edges, selectedNodes, true)
+						})
+						.mapEntries((index, data) => {
+							const lossData = transportInLoss.find(
+								(entry) =>
+									entry.index.technology === index.technology && entry.index.edge === index.edge
+							)?.data;
+							if (!lossData || lossData.length !== data.length) return { index, data };
+							const newData = data.map((n, i) => n - lossData[i]);
+							return { data: newData, index };
+						});
+					// transport out
+					positiveData = transport.filterByCriteria({
+						technology: selectedTransportTechnologies,
+						edge: getTransportEdges(solution.detail.edges, selectedNodes, false)
+					});
+				}
+
 				let filteredPos: Entries = process_data(
-					rows[2 * j],
+					positiveData,
 					variable,
 					variable.positive_label,
 					variable.positive_suffix
 				);
 				let filteredNeg: Entries = process_data(
-					rows[2 * j + 1],
+					negativeData,
 					variable,
 					variable.negative_label,
 					variable.negative_suffix,
@@ -604,12 +642,12 @@
 			bind:solutions={selectedSolutions}
 			bind:years
 			bind:nodes
-			bind:loading={solution_loading}
+			bind:loading={solutionLoading}
 			onSelected={onSolutionChanged}
-			disabled={fetching || solution_loading}
+			disabled={fetching || solutionLoading}
 		/>
 	</FilterSection>
-	{#if !solution_loading && selectedSolutions[0] !== null}
+	{#if !solutionLoading && selectedSolutions[0] !== null}
 		<FilterSection title="Carrier Selection">
 			{#if carriers.length > 0}
 				<FilterRow label="Carrier">
@@ -618,7 +656,7 @@
 							formId={id}
 							options={toOptions(carriers)}
 							bind:value={selectedCarrier}
-							disabled={solution_loading || fetching}
+							disabled={solutionLoading || fetching}
 						></Dropdown>
 					{/snippet}
 				</FilterRow>
@@ -647,13 +685,19 @@
 				label="Conversion"
 				bind:value={selectedConversionTechnologies}
 				elements={conversionTechnologies}
-				disabled={solution_loading || fetching}
+				disabled={solutionLoading || fetching}
 			></AllCheckbox>
 			<AllCheckbox
 				label="Storage"
 				bind:value={selectedStorageTechnologies}
 				elements={storageTechnologies}
-				disabled={solution_loading || fetching}
+				disabled={solutionLoading || fetching}
+			></AllCheckbox>
+			<AllCheckbox
+				label="Transport"
+				bind:value={selectedTransportTechnologies}
+				elements={transportTechnologies}
+				disabled={solutionLoading || fetching}
 			></AllCheckbox>
 		</FilterSection>
 		{#if !fetching && selectedCarrier != null}
@@ -667,13 +711,13 @@
 					label="Nodes"
 					bind:value={selectedNodes}
 					elements={nodes}
-					disabled={solution_loading || fetching}
+					disabled={solutionLoading || fetching}
 				></AllCheckbox>
 				<AllCheckbox
 					label="Years"
 					bind:value={selectedYears}
 					elements={years}
-					disabled={solution_loading || fetching}
+					disabled={solutionLoading || fetching}
 				></AllCheckbox>
 			</FilterSection>
 		{/if}
@@ -681,7 +725,7 @@
 </Filters>
 <h2 class="visually-hidden">Plots</h2>
 <div class="plot">
-	{#if solution_loading || fetching}
+	{#if solutionLoading || fetching}
 		<div class="text-center">
 			<div class="spinner-border center" role="status">
 				<span class="visually-hidden">Loading...</span>
@@ -700,7 +744,7 @@
 			{labels}
 			options={plot_options}
 			pluginOptions={plotPluginOptions}
-			plotName={plot_name}
+			{plotName}
 			{patterns}
 			{generateLabels}
 			onClickLegend={onClickLegendForSolutionComparison}

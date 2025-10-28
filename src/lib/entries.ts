@@ -43,6 +43,10 @@ export default class Entries {
 		);
 	}
 
+	static empty(): Entries {
+		return new Entries([]);
+	}
+
 	/**
 	 * Concatenates multiple Entries instances into a single Entries instance.
 	 * @param entriesList Array of Entries instances to concatenate.

@@ -6,7 +6,7 @@
 	import type { ActivatedSolution, Row, Entry, SankeyNode, PartialSankeyLink } from '$lib/types';
 	import { getURLParam, getURLParamAsIntArray, updateURLParams } from '$lib/queryParams.svelte';
 	import { nextColor, resetColorState } from '$lib/colors';
-	import { toOptions } from '$lib/utils';
+	import { getTransportEdges, toOptions } from '$lib/utils';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
 	import AllCheckbox from '$components/AllCheckbox.svelte';
@@ -125,33 +125,6 @@
 		selectedYear = getURLParam('year');
 		urlCarriers = getURLParamAsIntArray('car');
 		urlNodes = getURLParamAsIntArray('nodes');
-	});
-
-	function getEdges(): [string, [string, string]][] {
-		if (!selectedSolution) return [];
-		return Object.entries(selectedSolution.detail.edges).map(([edgeId, csvNodes]) => {
-			return [edgeId, csvNodes.split(',')] as [string, [string, string]];
-		});
-	}
-
-	let transportInEdges: string[] = $derived.by(() => {
-		if (!selectedSolution) return [];
-		return getEdges()
-			.filter(([_, nodes]) => {
-				// include all edges where only the target node is selected
-				return !selectedNodes.includes(nodes[0]) && selectedNodes.includes(nodes[1]);
-			})
-			.map(([edgeId, _]) => edgeId);
-	});
-
-	let transportOutEdges: string[] = $derived.by(() => {
-		if (!selectedSolution) return [];
-		return getEdges()
-			.filter(([_, nodes]) => {
-				// include all edges where only the source node is selected
-				return selectedNodes.includes(nodes[0]) && !selectedNodes.includes(nodes[1]);
-			})
-			.map(([edgeId, _]) => edgeId);
 	});
 
 	async function fetchData() {
@@ -455,6 +428,7 @@
 				addLink(carrierNodes, 'carrier', demandNodes, 'carrier', shedValue)(entry);
 			});
 		// transport in = transport - transport loss: transport in -> carrier:
+		const transportInEdges = getTransportEdges(selectedSolution.detail.edges, selectedNodes, true);
 		const aggregatedTransportIn = dataTransportLoss
 			.filterByCriteria({
 				...filterCriteria,
@@ -479,7 +453,7 @@
 		dataTransport
 			.filterByCriteria({
 				...filterCriteria,
-				edge: transportOutEdges
+				edge: getTransportEdges(selectedSolution.detail.edges, selectedNodes, false)
 			})
 			.groupBy(['technology'])
 			.forEach(addCarrierToEntry)
