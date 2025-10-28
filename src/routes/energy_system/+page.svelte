@@ -286,11 +286,12 @@
 		const demandNodes = carriers.map((carrier) =>
 			newNode(carrier, carrier + ' demand', currentColor, getUnit(carrier), true, 'right', true)
 		);
+		currentColor = nextColor();
 		const transportInNodes = transportTechs.map((tech) =>
 			newNode(
 				tech,
 				tech + ' transport in',
-				grey,
+				currentColor,
 				getUnit(getReferenceCarrier(tech)),
 				false,
 				null,
@@ -301,7 +302,7 @@
 			newNode(
 				tech,
 				tech + ' transport out',
-				grey,
+				currentColor,
 				getUnit(getReferenceCarrier(tech)),
 				false,
 				null,

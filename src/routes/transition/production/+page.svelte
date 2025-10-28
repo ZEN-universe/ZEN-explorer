@@ -99,11 +99,11 @@
 			show_subdivision: true,
 			filter_by_technologies: true,
 			positive: 'flow_transport',
-			positive_label: 'Transport out',
-			positive_suffix: ' (transport out)',
+			positive_label: 'Transport in',
+			positive_suffix: ' (transport in)',
 			negative: 'flow_transport_loss',
-			negative_label: 'Transport in',
-			negative_suffix: ' (transport in)'
+			negative_label: 'Transport out',
+			negative_suffix: ' (transport out)'
 		},
 		{
 			id: 'import_export',
@@ -570,7 +570,7 @@
 						edge: getTransportEdges(solution.detail.edges, selectedNodes, true)
 					});
 					// transport in
-					negativeData = transport
+					positiveData = transport
 						.filterByCriteria({
 							technology: selectedTransportTechnologies,
 							edge: getTransportEdges(solution.detail.edges, selectedNodes, true)
@@ -585,7 +585,7 @@
 							return { data: newData, index };
 						});
 					// transport out
-					positiveData = transport.filterByCriteria({
+					negativeData = transport.filterByCriteria({
 						technology: selectedTransportTechnologies,
 						edge: getTransportEdges(solution.detail.edges, selectedNodes, false)
 					});
