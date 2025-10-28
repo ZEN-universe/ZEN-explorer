@@ -437,6 +437,8 @@
 
 	// Update functions
 	async function onSolutionChanged() {
+		activeYear = null;
+		activeSolution = null;
 		await fetchData();
 	}
 
