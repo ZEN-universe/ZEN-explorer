@@ -44,6 +44,8 @@
 	let dataShedDemand: Entries | null = $state(null);
 	let dataStorageInflow: Entries | null = $state(null);
 	let dataStorageSpillage: Entries | null = $state(null);
+	let dataTransport: Entries | null = $state(null);
+	let dataTransportLoss: Entries | null = $state(null);
 	let units: Row[] = $state([]);
 
 	let sankeyNodes: Partial<SankeyNode>[] = $state([]);
@@ -125,6 +127,33 @@
 		urlNodes = getURLParamAsIntArray('nodes');
 	});
 
+	function getEdges(): [string, [string, string]][] {
+		if (!selectedSolution) return [];
+		return Object.entries(selectedSolution.detail.edges).map(([edgeId, csvNodes]) => {
+			return [edgeId, csvNodes.split(',')] as [string, [string, string]];
+		});
+	}
+
+	let transportInEdges: string[] = $derived.by(() => {
+		if (!selectedSolution) return [];
+		return getEdges()
+			.filter(([_, nodes]) => {
+				// include all edges where only the target node is selected
+				return !selectedNodes.includes(nodes[0]) && selectedNodes.includes(nodes[1]);
+			})
+			.map(([edgeId, _]) => edgeId);
+	});
+
+	let transportOutEdges: string[] = $derived.by(() => {
+		if (!selectedSolution) return [];
+		return getEdges()
+			.filter(([_, nodes]) => {
+				// include all edges where only the source node is selected
+				return selectedNodes.includes(nodes[0]) && !selectedNodes.includes(nodes[1]);
+			})
+			.map(([edgeId, _]) => edgeId);
+	});
+
 	async function fetchData() {
 		if (!selectedSolution) {
 			return;
@@ -144,7 +173,9 @@
 				'demand',
 				'shed_demand',
 				'flow_storage_inflow',
-				'flow_storage_spillage'
+				'flow_storage_spillage',
+				'flow_transport',
+				'flow_transport_loss'
 			],
 			selectedSolution.scenario_name,
 			'demand'
@@ -160,6 +191,8 @@
 		dataShedDemand = Entries.fromRows(response['shed_demand']?.data ?? []);
 		dataStorageInflow = Entries.fromRows(response['flow_storage_inflow']?.data ?? []);
 		dataStorageSpillage = Entries.fromRows(response['flow_storage_spillage']?.data ?? []);
+		dataTransport = Entries.fromRows(response['flow_transport']?.data ?? []);
+		dataTransportLoss = Entries.fromRows(response['flow_transport_loss']?.data ?? []);
 
 		units = response.unit?.data || [];
 
@@ -203,7 +236,9 @@
 			!dataDemand ||
 			!dataShedDemand ||
 			!dataStorageInflow ||
-			!dataStorageSpillage
+			!dataStorageSpillage ||
+			!dataTransport ||
+			!dataTransportLoss
 		) {
 			return [];
 		}
@@ -212,6 +247,7 @@
 		const grey = 'rgb(180,180,180)';
 		const storageTechs = selectedSolution?.detail.system.set_storage_technologies || [];
 		const conversionTechs = selectedSolution?.detail.system.set_conversion_technologies || [];
+		const transportTechs = selectedSolution?.detail.system.set_transport_technologies || [];
 
 		function newNode(
 			id: string,
@@ -277,6 +313,28 @@
 		const demandNodes = carriers.map((carrier) =>
 			newNode(carrier, carrier + ' demand', currentColor, getUnit(carrier), true, 'right', true)
 		);
+		const transportInNodes = transportTechs.map((tech) =>
+			newNode(
+				tech,
+				tech + ' transport in',
+				grey,
+				getUnit(getReferenceCarrier(tech)),
+				false,
+				null,
+				false
+			)
+		);
+		const transportOutNodes = transportTechs.map((tech) =>
+			newNode(
+				tech,
+				tech + ' transport out',
+				grey,
+				getUnit(getReferenceCarrier(tech)),
+				false,
+				null,
+				false
+			)
+		);
 
 		// Stage 2: Define links
 		const filterCriteria = {
@@ -303,7 +361,14 @@
 
 				const sourceNode = sourceNodes.find((node) => node.id === entry.index[sourceId]);
 				const targetNode = targetNodes.find((node) => node.id === entry.index[targetId]);
-				if (!sourceNode || !targetNode) return;
+				if (!sourceNode || !targetNode) {
+					console.warn(
+						'Missing source or target node',
+						{ sourceNode, targetNode },
+						{ sourceId, targetId }
+					);
+					return;
+				}
 
 				let color = grey;
 				const carrierNode = carrierNodes.find((node) => node.id === entry.index.carrier);
@@ -389,6 +454,36 @@
 				const shedValue = shedEntry ? shedEntry.data[indexOfYear] : 0;
 				addLink(carrierNodes, 'carrier', demandNodes, 'carrier', shedValue)(entry);
 			});
+		// transport in = transport - transport loss: transport in -> carrier:
+		const aggregatedTransportIn = dataTransportLoss
+			.filterByCriteria({
+				...filterCriteria,
+				edge: transportInEdges
+			})
+			.groupBy(['technology']);
+		dataTransport
+			.filterByCriteria({
+				...filterCriteria,
+				edge: transportInEdges
+			})
+			.groupBy(['technology'])
+			.forEach(addCarrierToEntry)
+			.forEach((entry) => {
+				const lossEntry = aggregatedTransportIn.find(
+					(e) => e.index.technology === entry.index.technology
+				);
+				const lossValue = lossEntry ? lossEntry.data[indexOfYear] : 0;
+				addLink(transportInNodes, 'technology', carrierNodes, 'carrier', lossValue)(entry);
+			});
+		// transport out = transport: carrier -> transport out
+		dataTransport
+			.filterByCriteria({
+				...filterCriteria,
+				edge: transportOutEdges
+			})
+			.groupBy(['technology'])
+			.forEach(addCarrierToEntry)
+			.forEach(addLink(carrierNodes, 'carrier', transportOutNodes, 'technology'));
 
 		sankeyNodes = [
 			...carrierNodes,
@@ -399,7 +494,9 @@
 			...importNodes,
 			...exportNodes,
 			...shedDemandNodes,
-			...demandNodes
+			...demandNodes,
+			...transportInNodes,
+			...transportOutNodes
 		];
 		sankeyLinks = links;
 		legendItems = colors;
