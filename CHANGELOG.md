@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.7 (2025-10-30)
+
+- [Sankey] Give carriers their own row.
+- [Sankey] Show cycles on the bottom if that's closer.
+- [Production] Hide pie plots after changing solutions.
+- [Sankey, Production] Add transport in and out.
+
 ## 0.7.6 (2025-10-27)
 
 - The Transition Pathway: compare multiple solutions on one page.
