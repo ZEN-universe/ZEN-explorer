@@ -150,6 +150,8 @@ export interface SankeyNode {
 	stickTo: 'left' | 'right' | null;
 	/** Whether to include the total value */
 	showTotal: boolean;
+	/** Whether this node should have a distinct vertical position */
+	distinctRow: boolean;
 	/** Incoming links to the node */
 	linksIn: SankeyLink[];
 	/** Outgoing links from the node */

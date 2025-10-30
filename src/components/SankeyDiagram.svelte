@@ -85,6 +85,7 @@
 			unitSuffix: node.unitSuffix ?? false,
 			stickTo: node.stickTo ?? null,
 			showTotal: node.showTotal ?? true,
+			distinctRow: node.distinctRow ?? false,
 			linksIn: [],
 			linksOut: [],
 			x: 0,
@@ -155,7 +156,7 @@
 							s--/ <-(eq)
 			*/
 			// Enclosed shape using curves and straight lines
-			const smallWidth = CYCLE_LANE_NARROW_WIDTH,
+			let ip_ny = CYCLE_LANE_NARROW_WIDTH, // northern y-coordinate of the inner path
 				s_x = link.source.x + NODE_WIDTH,
 				s_y = link.source.y + link.sy + link.dy,
 				t_x = link.target.x,
@@ -163,30 +164,41 @@
 				se_x = s_x + CYCLE_DIST_FROM_NODE,
 				se_y = s_y,
 				ne_x = se_x,
-				ne_y =
-					CYCLE_LANE_DIST_FROM_FWD_PATHS -
-					link.cycleIndex * (smallWidth + CYCLE_LANE_SMALL_WIDTH_BUFFER), // above regular paths, in it's own 'cycle lane', with a buffer around it
+				n_y =
+					-CYCLE_LANE_DIST_FROM_FWD_PATHS -
+					link.cycleIndex * (ip_ny + CYCLE_LANE_SMALL_WIDTH_BUFFER), // above regular paths, in it's own 'cycle lane', with a buffer around it
 				nw_x = t_x - CYCLE_DIST_FROM_NODE,
-				nw_y = ne_y,
 				sw_x = nw_x,
 				sw_y = t_y + link.ty + link.dy,
+				ip_se_y = se_y - link.dy,
+				ip_sw_y = sw_y - link.dy,
 				ip_cpd = CYCLE_CONTROL_POINT_DIST / 2 - CYCLE_LANE_NARROW_WIDTH; // inner path control point distance
+
+			// If the target node is in the lower half, draw the cycle below the regular paths
+			if (link.target.y > maxHeight / 2) {
+				n_y = maxHeight - n_y;
+				se_y = link.source.y + link.sy;
+				sw_y = link.target.y + link.ty;
+				ip_se_y = se_y + link.dy;
+				ip_sw_y = sw_y + link.dy;
+				ip_ny = -CYCLE_LANE_NARROW_WIDTH;
+			}
 
 			return (
 				// outer path boundary
-				`M${s_x},${s_y}` +
+				`M${s_x},${se_y}` +
 				`L${se_x},${se_y}` +
-				`C${se_x + CYCLE_CONTROL_POINT_DIST},${se_y} ${ne_x + CYCLE_CONTROL_POINT_DIST},${ne_y} ${ne_x},${ne_y}` +
-				`H${nw_x - smallWidth}` +
-				`C${nw_x - CYCLE_CONTROL_POINT_DIST},${nw_y} ${sw_x - CYCLE_CONTROL_POINT_DIST},${sw_y} ${sw_x},${sw_y}` +
+				`C${se_x + CYCLE_CONTROL_POINT_DIST},${se_y} ${ne_x + CYCLE_CONTROL_POINT_DIST},${n_y} ${ne_x},${n_y}` +
+				`H${nw_x - CYCLE_LANE_NARROW_WIDTH}` +
+				`C${nw_x - CYCLE_CONTROL_POINT_DIST},${n_y} ${sw_x - CYCLE_CONTROL_POINT_DIST},${sw_y} ${sw_x},${sw_y}` +
 				`H${t_x}` +
 				// inner path boundary
-				`V${t_y + link.ty}` +
+				`V${ip_sw_y}` +
 				`H${sw_x}` +
-				`C${sw_x - ip_cpd},${t_y} ${nw_x - ip_cpd},${nw_y + smallWidth} ${nw_x},${nw_y + smallWidth}` +
-				`H${ne_x - smallWidth}` +
-				`C${ne_x + ip_cpd},${ne_y + smallWidth} ${se_x + ip_cpd},${se_y - link.dy} ${se_x},${se_y - link.dy}` +
-				`L${s_x},${s_y - link.dy}`
+				`C${sw_x - ip_cpd},${ip_sw_y} ${nw_x - ip_cpd},${n_y + ip_ny} ${nw_x},${n_y + ip_ny}` +
+				`H${ne_x - CYCLE_LANE_NARROW_WIDTH}` +
+				`C${ne_x + ip_cpd},${n_y + ip_ny} ${se_x + ip_cpd},${se_y - link.dy} ${se_x},${ip_se_y}` +
+				`L${s_x},${ip_se_y}`
 			);
 		}
 
@@ -212,7 +224,7 @@
 		const maxCycleIndex = Math.max(...links.map((link) => link.cycleIndex));
 		if (maxCycleIndex == 0) return 0;
 		return (
-			CYCLE_LANE_DIST_FROM_FWD_PATHS -
+			CYCLE_LANE_DIST_FROM_FWD_PATHS +
 			maxCycleIndex * (CYCLE_LANE_NARROW_WIDTH + CYCLE_LANE_SMALL_WIDTH_BUFFER)
 		);
 	});
@@ -303,8 +315,8 @@
 	 */
 	$effect(() => {
 		zoomBehavior = zoomBehavior.translateExtent([
-			[minX - 5, cycleLaneHeight - 5],
-			[maxWidth + 5, maxHeight + 5]
+			[minX - 5, -cycleLaneHeight - 5],
+			[maxWidth + 5, maxHeight + cycleLaneHeight + 5]
 		]);
 	});
 
@@ -524,7 +536,7 @@
 		{width}
 		{height}
 		bind:this={svg}
-		viewBox={`${minX - 1} ${cycleLaneHeight} ${maxWidth + 4} ${maxHeight}`}
+		viewBox={`${minX - 1} ${-cycleLaneHeight} ${maxWidth + 4} ${maxHeight + 2 * cycleLaneHeight + 20}`}
 		onmousemove={updatePointerPosition}
 		onmouseleave={() => (pointerPosition = null)}
 	>

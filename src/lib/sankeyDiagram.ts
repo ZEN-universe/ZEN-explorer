@@ -6,6 +6,8 @@ import type { RawSankeyLink, RawSankeyNode, SankeyLink, SankeyNode } from './typ
 export const NODE_WIDTH = 140;
 /** minimum vertical padding between nodes */
 export const NODE_PADDING = 16;
+/** vertical padding between fixed nodes */
+export const NODE_PADDING_FIXED_NODES = 50;
 /** max height of a node */
 export const NODE_MAX_HEIGHT = 200;
 /** horizontal distance between nodes */
@@ -17,7 +19,7 @@ export const CYCLE_LANE_NARROW_WIDTH = 5;
 /** horizontal distance from node to start of cycle lane */
 export const CYCLE_DIST_FROM_NODE = 20;
 /** vertical distance from forward paths to cycle lane */
-export const CYCLE_LANE_DIST_FROM_FWD_PATHS = -10;
+export const CYCLE_LANE_DIST_FROM_FWD_PATHS = 10;
 /** vertical buffer around cycle lane */
 export const CYCLE_LANE_SMALL_WIDTH_BUFFER = 2;
 /** horizontal distance of control points from vertical */
@@ -226,13 +228,12 @@ function computeNodeDepths() {
 
 	initializeNodeDepth();
 	resolveCollisions();
-	for (let alpha = 1, i = 0; i < NUM_DEPTH_LAYOUT_ITERATIONS; ++i, alpha *= 0.99) {
+	for (let alpha = 1, i = 0; i < NUM_DEPTH_LAYOUT_ITERATIONS; ++i, alpha *= 0.95) {
 		relaxRightToLeft(alpha);
 		resolveCollisions();
 		relaxLeftToRight(alpha);
 		resolveCollisions();
 	}
-	bringBackToTop();
 
 	/**
 	 * Set the initial vertical position (depth) of each node.
@@ -245,13 +246,25 @@ function computeNodeDepths() {
 			...nodes.map((node) => (node.value > 1e-6 ? maxHeight / node.value : Infinity))
 		);
 
-		nodesByBreadth.forEach((nodes) => {
-			let sum = 0;
-			nodes.forEach((node) => {
+		let sum = 0;
+		nodes
+			.filter((node) => node.distinctRow)
+			.sort((a, b) => a.x - b.x)
+			.forEach((node) => {
 				node.y = sum;
 				node.dy = node.value * ky;
-				sum += node.dy + NODE_PADDING;
+				sum += node.dy + NODE_PADDING_FIXED_NODES;
 			});
+
+		nodesByBreadth.forEach((nodes) => {
+			let sum = 0;
+			nodes
+				.filter((node) => !node.distinctRow)
+				.forEach((node) => {
+					node.y = sum;
+					node.dy = node.value * ky;
+					sum += node.dy + NODE_PADDING;
+				});
 		});
 
 		links.forEach((link) => {
@@ -280,7 +293,7 @@ function computeNodeDepths() {
 	function relaxLeftToRight(alpha: number) {
 		nodesByBreadth.forEach((nodes) => {
 			nodes.forEach((node) => {
-				if (node.linksIn.length === 0) return;
+				if (node.linksIn.length === 0 || node.distinctRow) return;
 				const links = node.linksIn;
 				const y =
 					sum(links, (link) => center(link.source) * getLinkValue(link)) /
@@ -301,7 +314,7 @@ function computeNodeDepths() {
 			.reverse()
 			.forEach((nodes) => {
 				nodes.forEach((node) => {
-					if (node.linksOut.length === 0) return;
+					if (node.linksOut.length === 0 || node.distinctRow) return;
 					const links = node.linksOut;
 					const y =
 						sum(links, (link) => center(link.target) * getLinkValue(link)) /
@@ -328,19 +341,20 @@ function computeNodeDepths() {
 			for (i = 0; i < n; ++i) {
 				node = nodes[i];
 				dy = y0 - node.y;
-				if (dy > 0) node.y += dy;
-				y0 = node.y + node.dy + NODE_PADDING;
+				if (node.distinctRow) {
+					if (dy > 0) {
+						nodes[i - 1].y = node.y + node.dy + NODE_PADDING;
+						y0 = nodes[i - 1].y + nodes[i - 1].dy + NODE_PADDING;
+					} else {
+						y0 = node.y + node.dy + NODE_PADDING;
+					}
+				} else {
+					if (dy > 0) {
+						node.y += dy;
+					}
+					y0 = node.y + node.dy + NODE_PADDING;
+				}
 			}
-		});
-	}
-
-	/**
-	 * Bring all nodes back to the top of the diagram.
-	 */
-	function bringBackToTop() {
-		let minY = Math.min(...nodes.map((node) => node.y));
-		nodes.forEach((node) => {
-			node.y -= minY;
 		});
 	}
 }
@@ -349,20 +363,23 @@ function computeNodeDepths() {
  * Compute the vertical offsets (sy, ty) of each link within their source and target nodes.
  */
 function computeLinkDepths() {
-	let compareFn = (property: 'source' | 'target') => (a: SankeyLink, b: SankeyLink) => {
-		if (a.causesCycle && b.causesCycle) {
-			return a.cycleIndex - b.cycleIndex; // both cause cycles, sort by cycle index
-		} else if (a.causesCycle) {
-			return -1; // a causes a cycle, b doesn't, so a comes first
-		} else if (b.causesCycle) {
-			return 1; // b causes a cycle, a doesn't, so b comes first
-		}
-		return a[property].y - b[property].y; // neither cause cycles, sort by target y position
-	};
+	let compareFn =
+		(property: 'source' | 'target', isOnTop: boolean) => (a: SankeyLink, b: SankeyLink) => {
+			const onTopFactor = isOnTop ? 1 : -1;
+			if (a.causesCycle && b.causesCycle) {
+				return onTopFactor * (a.cycleIndex - b.cycleIndex); // both cause cycles, sort by cycle index
+			} else if (a.causesCycle) {
+				return -onTopFactor; // a causes a cycle, b doesn't, so a comes first
+			} else if (b.causesCycle) {
+				return onTopFactor; // b causes a cycle, a doesn't, so b comes first
+			}
+			return a[property].y - b[property].y; // neither cause cycles, sort by target y position
+		};
 
+	let maxHeight = Math.max(...nodes.map((node) => node.y + node.dy));
 	nodes.forEach((node) => {
-		node.linksIn.sort(compareFn('source'));
-		node.linksOut.sort(compareFn('target'));
+		node.linksIn.sort(compareFn('source', node.y < maxHeight / 2));
+		node.linksOut.sort(compareFn('target', node.y < maxHeight / 2));
 	});
 
 	nodes.forEach((node) => {

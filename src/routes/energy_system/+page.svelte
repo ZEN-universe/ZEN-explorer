@@ -227,9 +227,10 @@
 			label: string,
 			color: string,
 			unit: string,
-			unitSuffix: boolean,
-			stickTo: 'left' | 'right' | null,
-			showTotal: boolean
+			unitSuffix: boolean = false,
+			stickTo: 'left' | 'right' | null = null,
+			showTotal: boolean = true,
+			distinctRow: boolean = false
 		): Partial<SankeyNode> {
 			return {
 				id,
@@ -238,7 +239,8 @@
 				unit,
 				unitSuffix,
 				stickTo,
-				showTotal
+				showTotal,
+				distinctRow
 			};
 		}
 
@@ -248,7 +250,7 @@
 		const carrierNodes = carriers.map((carrier) => {
 			const color = nextColor(carrier);
 			colors.push({ color, carrier });
-			return newNode(carrier, carrier, color, getUnit(carrier), true, null, true);
+			return newNode(carrier, carrier, color, getUnit(carrier), true, null, true, true);
 		});
 		const conversionTechNodes = conversionTechs.map((tech) =>
 			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)), false, null, false)
@@ -257,7 +259,7 @@
 			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)), false, null, false)
 		);
 		const inflowNodes = storageTechs.map((tech) =>
-			newNode(tech, tech + '_inflow', grey, getUnit(getReferenceCarrier(tech)), false, null, true)
+			newNode(tech, tech + '_inflow', grey, getUnit(getReferenceCarrier(tech)))
 		);
 		const spillageNodes = storageTechs.map((tech) =>
 			newNode(
@@ -272,19 +274,19 @@
 		);
 		let currentColor = nextColor();
 		const importNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + ' import', currentColor, getUnit(carrier), true, 'left', true)
+			newNode(carrier, carrier + ' import', currentColor, getUnit(carrier), true, 'left')
 		);
 		currentColor = nextColor();
 		const exportNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + ' export', currentColor, getUnit(carrier), true, 'right', true)
+			newNode(carrier, carrier + ' export', currentColor, getUnit(carrier), true, 'right')
 		);
 		currentColor = nextColor();
 		const shedDemandNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + ' shed demand', currentColor, getUnit(carrier), false, null, true)
+			newNode(carrier, carrier + ' shed demand', currentColor, getUnit(carrier))
 		);
 		currentColor = nextColor();
 		const demandNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + ' demand', currentColor, getUnit(carrier), true, 'right', true)
+			newNode(carrier, carrier + ' demand', currentColor, getUnit(carrier), true, 'right')
 		);
 		currentColor = nextColor();
 		const transportInNodes = transportTechs.map((tech) =>
