@@ -1,12 +1,12 @@
-<script lang="ts" generics="Type extends ChartType">
+<script lang="ts" generics="Type extends ChartType = ChartType">
 	import BaseChart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
 
-	import Modal from '$components/Modal.svelte';
 	import ColorBox, { type ColorBoxItem } from '$components/ColorBox.svelte';
+	import HelpTooltip from './HelpTooltip.svelte';
 
 	BaseChart.register(zoomPlugin);
 
@@ -20,7 +20,6 @@
 		pluginOptions?: ChartOptions<ChartType>['plugins'];
 		zoom?: boolean;
 		plotName?: string;
-		downloadable?: boolean;
 		narrow?: boolean;
 		zoomLevel?: [number, number] | null;
 		patterns?: ColorBoxItem[];
@@ -39,7 +38,6 @@
 		plugins = [],
 		zoom = false,
 		plotName = 'plot_data',
-		downloadable = true,
 		narrow = false,
 		zoomLevel = $bindable(null),
 		patterns = [],
@@ -51,6 +49,8 @@
 	let chart: BaseChart | undefined = undefined;
 
 	const handleChart: Action<HTMLCanvasElement> = (element) => {
+		BaseChart.defaults.color =
+			window.localStorage.getItem('theme') === 'dark' ? '#FFFFFF' : '#000000';
 		chart = new BaseChart(element, {
 			type: type,
 			data: {
@@ -88,11 +88,13 @@
 	});
 
 	function getOptions(): ChartOptions {
-		const optionsSnapshot = $state.snapshot(options as ChartOptions);
-		optionsSnapshot.plugins = {
-			...(optionsSnapshot.plugins ?? {}),
-			...pluginOptions
-		} as Record<string, any>;
+		const optionsSnapshot = {
+			...$state.snapshot(options as ChartOptions),
+			plugins: {
+				...(options?.plugins ?? {}),
+				...pluginOptions
+			} as Record<string, any>
+		};
 
 		optionsSnapshot.plugins.legend = {
 			display: false
@@ -114,6 +116,18 @@
 		return optionsSnapshot as ChartOptions;
 	}
 
+	onMount(() => {
+		updateDefaultColor();
+	});
+
+	function updateDefaultColor() {
+		BaseChart.defaults.color = window.localStorage.getItem('theme') === 'dark' ? '#ddd' : '#222';
+		BaseChart.defaults.borderColor =
+			window.localStorage.getItem('theme') === 'dark'
+				? 'rgba(255, 255, 255, 0.1)'
+				: 'rgba(0, 0, 0, 0.1)';
+	}
+
 	function setZoomLevel({ chart }: { chart: BaseChart }) {
 		if (chart == undefined || chart.canvas == null) {
 			return;
@@ -129,8 +143,16 @@
 	}
 	$effect(updateZoomLevel);
 
-	function resetZoom() {
+	export function resetZoom() {
 		chart?.resetZoom();
+	}
+
+	export function zoomIn() {
+		chart?.zoom(1.2);
+	}
+
+	export function zoomOut() {
+		chart?.zoom(0.8);
 	}
 
 	let legendItems: ColorBoxItem[] = $state([]);
@@ -171,12 +193,7 @@
 		chart.update();
 	}
 
-	let modal_open = $state(false);
-	const toggle = () => {
-		modal_open = !modal_open;
-	};
-
-	function downloadData() {
+	export function downloadData() {
 		const data = chart?.data.datasets;
 
 		if (!data || data.length === 0) {
@@ -219,42 +236,15 @@
 	}
 </script>
 
-<!-- Modal -->
-<Modal header="Zoom Controls" isOpen={modal_open} {toggle}>
-	<p>
-		You can zoom in the graph into the chart by either highlighting an area with your mouse or by
-		scrolling.
-	</p>
-	<p>When zoomed in, you can press and hold CTRL and drag the plot to move along the time axis.</p>
-	<p>The home button resets the zoom.</p>
-</Modal>
-{#if zoom || downloadable}
-	<div class="d-flex justify-content-end mb-2">
-		{#if zoom}
-			<div class={['btn-group', downloadable && 'me-2']}>
-				<button class="btn btn-outline-secondary d-flex" onclick={toggle}>
-					<i class="bi bi-info me-2"></i>
-					<div>Show Help</div>
-				</button>
-				<button class="btn btn-outline-secondary d-flex" onclick={resetZoom}>
-					<i class="bi bi-house me-2"></i>
-					<div>Reset zoom</div>
-				</button>
-			</div>
-		{/if}
-		{#if downloadable}
-			<button class="btn btn-outline-secondary d-flex" onclick={downloadData}>
-				<i class="bi bi-download me-2"></i>
-				<div>Download CSV Data</div>
-			</button>
-		{/if}
-	</div>
-{/if}
-<div class="d-flex flex-column justify-content-between h-100 py-2" id={id + '-container'}>
-	<div class={['legend d-flex flex-wrap justify-content-center', patterns.length > 1 && 'mb-2']}>
+<div class="flex bg-white dark:bg-gray-800 shadow-lg shadow-black/10 dark:shadow-white/5 rounded-lg p-4 mb-2" id={id + '-container'}>
+	<h2 class="font-bold text-lg me-4">
+		Legend
+		<HelpTooltip content="Click on legend items to show/hide them in the chart." />
+	</h2>
+	<div class={['legend flex justify-center wrap gap-2 ', patterns.length > 1 && 'mb-2']}>
 		{#each legendItems as item}
 			<button
-				class="btn btn-text rounded-0 d-flex align-items-center p-0 me-2 text-secondary"
+				class="flex items-center p-0 text-gray-600 dark:text-gray-400"
 				style:font-size="12px"
 				style:letter-spacing="0.0em"
 				style:font-family="Arial, sans-serif"
@@ -265,11 +255,17 @@
 			</button>
 		{/each}
 	</div>
+</div>
+
+<div
+	class="flex flex-col justify-between bg-white dark:bg-gray-800 shadow-lg shadow-black/10 dark:shadow-white/5 rounded-lg p-4"
+	id={id + '-container'}
+>
 	{#if patterns.length > 1}
-		<div class="legend d-flex flex-wrap justify-content-center">
+		<div class="legend flex wrap justify-center">
 			{#each patterns as pattern}
 				<div
-					class="d-flex align-items-center me-2 text-secondary"
+					class="flex items-center me-2 text-secondary"
 					style:font-size="12px"
 					style:letter-spacing="0.0em"
 					style:font-family="Arial, sans-serif"

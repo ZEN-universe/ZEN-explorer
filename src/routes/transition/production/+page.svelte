@@ -10,7 +10,7 @@
 	import { draw as drawPattern } from 'patternomaly';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
-	import AllCheckbox from '$components/AllCheckbox.svelte';
+	import MultiSelect from '$components/MultiSelect.svelte';
 	import Chart from '$components/Chart.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
@@ -683,24 +683,24 @@
 			{/each}
 		</FilterSection>
 		<FilterSection title="Technology Selection">
-			<AllCheckbox
+			<MultiSelect
 				label="Conversion"
 				bind:value={selectedConversionTechnologies}
-				elements={conversionTechnologies}
+				options={conversionTechnologies}
 				disabled={solutionLoading || fetching}
-			></AllCheckbox>
-			<AllCheckbox
+			></MultiSelect>
+			<MultiSelect
 				label="Storage"
 				bind:value={selectedStorageTechnologies}
-				elements={storageTechnologies}
+				options={storageTechnologies}
 				disabled={solutionLoading || fetching}
-			></AllCheckbox>
-			<AllCheckbox
+			></MultiSelect>
+			<MultiSelect
 				label="Transport"
 				bind:value={selectedTransportTechnologies}
-				elements={transportTechnologies}
+				options={transportTechnologies}
 				disabled={solutionLoading || fetching}
-			></AllCheckbox>
+			></MultiSelect>
 		</FilterSection>
 		{#if !fetching && selectedCarrier != null}
 			<FilterSection title="Data Selection">
@@ -709,18 +709,18 @@
 						<ToggleButton formId={id} bind:value={selectedNormalization}></ToggleButton>
 					{/snippet}
 				</FilterRow>
-				<AllCheckbox
+				<MultiSelect
 					label="Nodes"
 					bind:value={selectedNodes}
-					elements={nodes}
+					options={nodes}
 					disabled={solutionLoading || fetching}
-				></AllCheckbox>
-				<AllCheckbox
+				></MultiSelect>
+				<MultiSelect
 					label="Years"
 					bind:value={selectedYears}
-					elements={years}
+					options={years}
 					disabled={solutionLoading || fetching}
-				></AllCheckbox>
+				></MultiSelect>
 			</FilterSection>
 		{/if}
 	{/if}

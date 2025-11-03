@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { page } from "$app/state";
-	import { resolve } from "$app/paths";
-	import { addCurrentSolutionToURL } from "$lib/queryParams.svelte";
+	import { page } from '$app/state';
+	import { resolve } from '$app/paths';
+	import { addCurrentSolutionToURL } from '$lib/queryParams.svelte';
 
 	const transition_urls = {
 		Capacity: resolve('/transition/capacity'),
@@ -41,7 +41,7 @@
 </script>
 
 <svelte:head>
-    <script>
+	<script>
 		updateTheme = () => {
 			document.documentElement.classList.toggle(
 				'dark',
@@ -54,13 +54,13 @@
 </svelte:head>
 
 <nav
-	class="flex justify-between bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2"
+	class="grid grid-cols-8 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2"
 >
-	<a class="text-xl font-semibold flex items-center" href={resolve('/')}>
+	<a class="col-span-2 text-xl font-semibold flex items-center" href={resolve('/')}>
 		<img src="/logo.png" alt="ZEN-garden Logo" class="inline h-8 mr-2" />
 		ZEN-garden
 	</a>
-	<div class="col-span-2">
+	<div class="col-span-5 px-2">
 		<ul class="flex items-end gap-8 xl:gap-12 hidden lg:flex">
 			<li>
 				<div class="uppercase tracking-wide text-sm text-gray-400">The Transition Pathway</div>

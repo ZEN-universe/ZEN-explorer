@@ -3,7 +3,7 @@
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import { draw as drawPattern } from 'patternomaly';
 
-	import AllCheckbox from '$components/AllCheckbox.svelte';
+	import MultiSelect from '$components/MultiSelect.svelte';
 	import Radio from '$components/Radio.svelte';
 	import Chart from '$components/Chart.svelte';
 	import Filters from '$components/Filters.svelte';
@@ -457,23 +457,23 @@
 					{/snippet}
 				</FilterRow>
 				{#if selectedAggregation == 'location'}
-					<AllCheckbox label="Locations" bind:value={selectedLocations} elements={locations}
-					></AllCheckbox>
+					<MultiSelect label="Locations" bind:value={selectedLocations} options={locations}
+					></MultiSelect>
 				{:else}
 					{#if technologies.length > 0}
-						<AllCheckbox
+						<MultiSelect
 							label="Technologies"
 							bind:value={selectedTechnologies}
-							elements={technologies}
-						></AllCheckbox>
+							options={technologies}
+						></MultiSelect>
 					{/if}
 					{#if carriers.length > 0}
-						<AllCheckbox label="Carriers" bind:value={selectedCarriers} elements={carriers}
-						></AllCheckbox>
+						<MultiSelect label="Carriers" bind:value={selectedCarriers} options={carriers}
+						></MultiSelect>
 					{/if}
 				{/if}
 			{/if}
-			<AllCheckbox label="Years" bind:value={selectedYears} elements={years}></AllCheckbox>
+			<MultiSelect label="Years" bind:value={selectedYears} options={years}></MultiSelect>
 		</FilterSection>
 	{/if}
 </Filters>

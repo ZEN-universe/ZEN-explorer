@@ -9,11 +9,11 @@
 	let id: string = $props.id();
 </script>
 
-<div class="row mb-2">
-	<div class="col-sm-3">
+<div class="mb-2">
+	<div class="uppercase text-gray-600 dark:text-gray-400 tracking-wide mb-1">
 		<label for={id} class="fw-medium fs-4">{label}</label>
 	</div>
-	<div class="col-sm-9">
+	<div class="">
 		{@render children(id)}
 	</div>
 </div>

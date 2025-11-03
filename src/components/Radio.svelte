@@ -1,7 +1,7 @@
 <script lang="ts">
 	interface Props {
 		formId: string;
-		options: { value: string; label: string }[];
+		options: ({ value: string; label: string } | string)[];
 		value?: any;
 		disabled?: boolean;
 		onUpdate?: (selected_option: any) => void;
@@ -9,11 +9,21 @@
 
 	let {
 		formId,
-		options,
-		value = $bindable(options[0]),
+		options: initialOptions,
+		value = $bindable(),
 		disabled = false,
 		onUpdate = () => {}
 	}: Props = $props();
+
+	let options = $derived.by(() => {
+		return initialOptions.map((option) => {
+			if (typeof option === 'string') {
+				return { label: option, value: option };
+			} else {
+				return option;
+			}
+		});
+	});
 
 	function updateSelection() {
 		onUpdate(value);

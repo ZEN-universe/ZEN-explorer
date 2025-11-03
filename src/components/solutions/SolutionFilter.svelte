@@ -3,7 +3,7 @@
 
 	import type { ActivatedSolution } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
-	import { removeDuplicates } from '$lib/utils';
+	import { removeDuplicates, toOptions } from '$lib/utils';
 
 	import FilterRow from '$components/FilterRow.svelte';
 
@@ -14,6 +14,7 @@
 		getActivatedSolution,
 		generateScenarioYears
 	} from './manager.svelte';
+	import Dropdown from '$components/Dropdown.svelte';
 	initSolutionList();
 
 	interface Props {
@@ -159,7 +160,7 @@
 			activeSecondLevel = secondLevels[0];
 		}
 	});
-
+$inspect('activeSolutionName', activeSolutionName);
 	async function updateSolutionDetails() {
 		// Wait for all effects to finish, e.g. to reset activeSecondLevel, activeScenario
 		await tick();
@@ -200,6 +201,7 @@
 		selectedSolution = getActivatedSolution(activeSolutionName, activeScenario, solutionDetail);
 
 		// Notify parent component of selected solution change
+		console.log('[SolutionFilter] selected solution changed', $state.snapshot(selectedSolution));
 		solutionSelected?.(selectedSolution);
 		loading = false;
 	}
@@ -212,41 +214,24 @@
 
 {#if !withoutSolution}
 	<FilterRow label="Solution">
-		{#snippet content(id)}
-			<select {id} class="form-select" bind:value={activeFirstLevel} {disabled}>
-				{#each firstLevels as solution}
-					<option value={solution}>
-						{solution}
-					</option>
-				{/each}
-			</select>
+		{#snippet content(formId)}
+			<Dropdown {formId} bind:value={activeFirstLevel} {disabled} options={firstLevels}></Dropdown>
 		{/snippet}
 	</FilterRow>
 {/if}
 {#if secondLevels.length > 0}
 	<FilterRow label="Subsolution">
-		{#snippet content(id)}
-			<select {id} class="form-select" bind:value={activeSecondLevel} {disabled}>
-				{#each secondLevels as solution}
-					<option value={solution}>
-						{solution}
-					</option>
-				{/each}
-			</select>
+		{#snippet content(formId)}
+			<Dropdown {formId} bind:value={activeSecondLevel} {disabled} options={secondLevels}
+			></Dropdown>
 		{/snippet}
 	</FilterRow>
 {/if}
 
 {#if allScenarios.length > 1}
 	<FilterRow label="Scenario">
-		{#snippet content(id)}
-			<select {id} class="form-select" bind:value={activeScenario} {disabled}>
-				{#each scenarios as scenario}
-					<option value={scenario}>
-						{scenario}
-					</option>
-				{/each}
-			</select>
+		{#snippet content(formId)}
+			<Dropdown {formId} bind:value={activeScenario} {disabled} options={scenarios}></Dropdown>
 		{/snippet}
 	</FilterRow>
 {/if}

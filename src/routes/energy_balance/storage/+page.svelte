@@ -10,7 +10,7 @@
 
 	import ToggleButton from '$components/ToggleButton.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
-	import AllCheckbox from '$components/AllCheckbox.svelte';
+	import MultiSelect from '$components/MultiSelect.svelte';
 	import Chart from '$components/Chart.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
 	import Filters from '$components/Filters.svelte';
@@ -558,10 +558,10 @@
 						<ToggleButton {formId} bind:value={selected_subdivision}></ToggleButton>
 					{/snippet}
 				</FilterRow>
-				<AllCheckbox label="Technologies" elements={technologies} bind:value={selected_technologies}
-				></AllCheckbox>
-				<AllCheckbox label="Nodes" elements={locations} bind:value={selected_locations}
-				></AllCheckbox>
+				<MultiSelect label="Technologies" options={technologies} bind:value={selected_technologies}
+				></MultiSelect>
+				<MultiSelect label="Nodes" options={locations} bind:value={selected_locations}
+				></MultiSelect>
 			</FilterSection>
 		{/if}
 	{/if}

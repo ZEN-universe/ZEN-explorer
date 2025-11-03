@@ -10,10 +10,10 @@
 	let id = $props.id();
 </script>
 
-<div class="accordion-item">
-	<h2 class="accordion-header">
+<div class="">
+	<h3 class="sr-only">
 		<button
-			class="accordion-button"
+			class=""
 			type="button"
 			data-bs-toggle="collapse"
 			data-bs-target={'#collapse' + id}
@@ -22,9 +22,9 @@
 		>
 			{title}
 		</button>
-	</h2>
-	<div id={'collapse' + id} class="accordion-collapse collapse show">
-		<div class="accordion-body">
+	</h3>
+	<div id={'collapse' + id}>
+		<div class="">
 			{@render children?.()}
 		</div>
 	</div>

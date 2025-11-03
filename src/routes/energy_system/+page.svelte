@@ -9,7 +9,7 @@
 	import { getTransportEdges, toOptions } from '$lib/utils';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
-	import AllCheckbox from '$components/AllCheckbox.svelte';
+	import MultiSelect from '$components/MultiSelect.svelte';
 	import Dropdown from '$components/Dropdown.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 	import Filters from '$components/Filters.svelte';
@@ -495,7 +495,7 @@
 		/>
 	</FilterSection>
 	<FilterSection title="Carrier Selection">
-		<AllCheckbox label="Carriers" bind:value={selectedCarriers} elements={carriers}></AllCheckbox>
+		<MultiSelect label="Carriers" bind:value={selectedCarriers} options={carriers}></MultiSelect>
 	</FilterSection>
 	<FilterSection title="Data Selection">
 		<FilterRow label="Year">
@@ -508,7 +508,7 @@
 				></Dropdown>
 			{/snippet}
 		</FilterRow>
-		<AllCheckbox label="Nodes" bind:value={selectedNodes} elements={nodes}></AllCheckbox>
+		<MultiSelect label="Nodes" bind:value={selectedNodes} options={nodes}></MultiSelect>
 	</FilterSection>
 </Filters>
 

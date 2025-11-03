@@ -136,6 +136,8 @@
 	}
 
 	function emitUpdateEvent() {
+		console.log('[MSF] solutions updated', $state.snapshot(solutions));
+		
 		onSelected?.(solutions);
 	}
 </script>

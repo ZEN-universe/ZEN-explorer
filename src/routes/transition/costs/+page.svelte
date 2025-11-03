@@ -4,7 +4,7 @@
 	import { draw as drawPattern } from 'patternomaly';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
-	import AllCheckbox from '$components/AllCheckbox.svelte';
+	import MultiSelect from '$components/MultiSelect.svelte';
 	import Radio from '$components/Radio.svelte';
 	import ToggleButton from '$components/ToggleButton.svelte';
 	import Chart from '$components/Chart.svelte';
@@ -622,39 +622,39 @@
 		<FilterSection title="Technology Selection">
 			<h3>Technologies (for Capex/Opex)</h3>
 			{#if transportTechnologies.length > 0}
-				<AllCheckbox
+				<MultiSelect
 					label="Transport"
 					bind:value={selectedTransportTechnologies}
-					elements={transportTechnologies}
-				></AllCheckbox>
+					options={transportTechnologies}
+				></MultiSelect>
 			{/if}
 			{#if storageTechnologies.length > 0}
-				<AllCheckbox
+				<MultiSelect
 					label="Storage"
 					bind:value={selectedStorageTechnologies}
-					elements={storageTechnologies}
-				></AllCheckbox>
+					options={storageTechnologies}
+				></MultiSelect>
 			{/if}
 			{#if conversionTechnologies.length > 0}
-				<AllCheckbox
+				<MultiSelect
 					label="Conversion"
 					bind:value={selectedConversionTechnologies}
-					elements={conversionTechnologies}
-				></AllCheckbox>
+					options={conversionTechnologies}
+				></MultiSelect>
 			{/if}
 			{#if costCarriers.length > 0}
-				<AllCheckbox
+				<MultiSelect
 					label="Cost of Carrier"
 					bind:value={selectedCostCarriers}
-					elements={costCarriers}
-				></AllCheckbox>
+					options={costCarriers}
+				></MultiSelect>
 			{/if}
 			{#if demandCarriers.length > 0}
-				<AllCheckbox
+				<MultiSelect
 					label="Shed Demand"
 					bind:value={selectedDemandCarriers}
-					elements={demandCarriers}
-				></AllCheckbox>
+					options={demandCarriers}
+				></MultiSelect>
 			{/if}
 		</FilterSection>
 		<FilterSection title="Data Selection">
@@ -665,11 +665,11 @@
 				{/snippet}
 			</FilterRow>
 			{#if selectedAggregation == aggregationOptions[1]}
-				<AllCheckbox label="Locations" bind:value={selectedLocations} elements={locations}
-				></AllCheckbox>
+				<MultiSelect label="Locations" bind:value={selectedLocations} options={locations}
+				></MultiSelect>
 			{/if}
 			{#if selectedYears}
-				<AllCheckbox label="Years" bind:value={selectedYears} elements={years}></AllCheckbox>
+				<MultiSelect label="Years" bind:value={selectedYears} options={years}></MultiSelect>
 			{/if}
 		</FilterSection>
 	{/if}
