@@ -23,17 +23,25 @@
 		}
 	}
 
-    onMount(() => {
-        updateButtonPosition();
-    })
+	onMount(() => {
+		updateButtonPosition();
+	});
 </script>
 
 <button
 	aria-label="Help tooltip"
-	onmouseover={() => {isHovered = true}}
-	onfocus={() => {isFocused = true, updateButtonPosition()}}
-	onmouseleave={() => {isHovered = false}}
-	onfocusout={() => {isFocused = false}}
+	onmouseover={() => {
+		isHovered = true;
+	}}
+	onfocus={() => {
+		((isFocused = true), updateButtonPosition());
+	}}
+	onmouseleave={() => {
+		isHovered = false;
+	}}
+	onfocusout={() => {
+		isFocused = false;
+	}}
 	bind:this={button}
 >
 	<i
@@ -48,14 +56,9 @@
 		style:left={`${buttonCenter}px`}
 	>
 		{content}
-        <svg
-			class="absolute -translate-x-1/2 left-1/2"
-			style:bottom="-10px"
-			width="20"
-			height="10"
-		>
+		<svg class="absolute -translate-x-1/2 left-1/2" style:bottom="-10px" width="20" height="10">
 			<polygon points="0,0 20,0 10,10" class="fill-gray-200 dark:fill-gray-800" />
-            <path d="M0,0 L10,10 L20,0" class="fill-none stroke-black dark:stroke-white" />
+			<path d="M0,0 L10,10 L20,0" class="fill-none stroke-black dark:stroke-white" />
 		</svg>
 	</div>
 {/if}

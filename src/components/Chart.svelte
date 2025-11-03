@@ -236,12 +236,15 @@
 	}
 </script>
 
-<div class="flex bg-white dark:bg-gray-800 shadow-lg shadow-black/10 dark:shadow-white/5 rounded-lg p-4 mb-2" id={id + '-container'}>
+<div
+	class="flex bg-white dark:bg-gray-800 shadow-lg shadow-black/10 dark:shadow-white/5 rounded-lg p-4 mb-4"
+	id={id + '-container'}
+>
 	<h2 class="font-bold text-lg me-4">
 		Legend
 		<HelpTooltip content="Click on legend items to show/hide them in the chart." />
 	</h2>
-	<div class={['legend flex justify-center wrap gap-2 ', patterns.length > 1 && 'mb-2']}>
+	<div class={['legend flex flex-wrap gap-2 ', patterns.length > 1 && 'mb-2']}>
 		{#each legendItems as item}
 			<button
 				class="flex items-center p-0 text-gray-600 dark:text-gray-400"

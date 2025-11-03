@@ -54,7 +54,7 @@
 </svelte:head>
 
 <nav
-	class="grid grid-cols-8 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2"
+	class="grid grid-cols-8 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2"
 >
 	<a class="col-span-2 text-xl font-semibold flex items-center" href={resolve('/')}>
 		<img src="/logo.png" alt="ZEN-garden Logo" class="inline h-8 mr-2" />

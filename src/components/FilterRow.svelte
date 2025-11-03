@@ -10,10 +10,10 @@
 </script>
 
 <div class="mb-2">
-	<div class="uppercase text-gray-600 dark:text-gray-400 tracking-wide mb-1">
+	<div class="uppercase text-gray-600 dark:text-gray-400 tracking-wide text-sm mb-1">
 		<label for={id} class="fw-medium fs-4">{label}</label>
 	</div>
-	<div class="">
+	<div>
 		{@render children(id)}
 	</div>
 </div>

@@ -160,7 +160,7 @@
 			activeSecondLevel = secondLevels[0];
 		}
 	});
-$inspect('activeSolutionName', activeSolutionName);
+
 	async function updateSolutionDetails() {
 		// Wait for all effects to finish, e.g. to reset activeSecondLevel, activeScenario
 		await tick();
@@ -201,7 +201,6 @@ $inspect('activeSolutionName', activeSolutionName);
 		selectedSolution = getActivatedSolution(activeSolutionName, activeScenario, solutionDetail);
 
 		// Notify parent component of selected solution change
-		console.log('[SolutionFilter] selected solution changed', $state.snapshot(selectedSolution));
 		solutionSelected?.(selectedSolution);
 		loading = false;
 	}
@@ -213,25 +212,14 @@ $inspect('activeSolutionName', activeSolutionName);
 </script>
 
 {#if !withoutSolution}
-	<FilterRow label="Solution">
-		{#snippet content(formId)}
-			<Dropdown {formId} bind:value={activeFirstLevel} {disabled} options={firstLevels}></Dropdown>
-		{/snippet}
-	</FilterRow>
+	<Dropdown bind:value={activeFirstLevel} label="Solution" {disabled} options={firstLevels}
+	></Dropdown>
 {/if}
 {#if secondLevels.length > 0}
-	<FilterRow label="Subsolution">
-		{#snippet content(formId)}
-			<Dropdown {formId} bind:value={activeSecondLevel} {disabled} options={secondLevels}
-			></Dropdown>
-		{/snippet}
-	</FilterRow>
+	<Dropdown bind:value={activeSecondLevel} label="Subsolution" {disabled} options={secondLevels}
+	></Dropdown>
 {/if}
 
 {#if allScenarios.length > 1}
-	<FilterRow label="Scenario">
-		{#snippet content(formId)}
-			<Dropdown {formId} bind:value={activeScenario} {disabled} options={scenarios}></Dropdown>
-		{/snippet}
-	</FilterRow>
+	<Dropdown bind:value={activeScenario} label="Scenario" {disabled} options={scenarios}></Dropdown>
 {/if}

@@ -136,8 +136,6 @@
 	}
 
 	function emitUpdateEvent() {
-		console.log('[MSF] solutions updated', $state.snapshot(solutions));
-		
 		onSelected?.(solutions);
 	}
 </script>
@@ -149,7 +147,7 @@
 		{#if idx > 0}
 			<hr />
 		{/if}
-		<!-- This if is necessary to prevent weird loading issues when switching between solutions -->
+		<!-- This is necessary to prevent weird loading issues when switching between solutions -->
 		{#if activeSecondLevels[idx] !== undefined && activeScenarios[idx] !== undefined}
 			<SolutionFilter
 				bind:this={solutionFilters[idx]}
@@ -177,12 +175,11 @@
 		{/if}
 	{/each}
 	{#if moreSolutionsExist && !solutions.includes(null)}
-		<div class="row mt-3">
-			<div class="offset-md-3 col-md-9">
-				<button class="btn btn-sm btn-outline-primary" onclick={addSolution}
-					>Add solution to compare</button
-				>
-			</div>
+		<div class="mb-2">
+			<button class="" onclick={addSolution}>
+				<i class="bi bi-plus-lg me-1"></i>
+				Add solution to compare
+			</button>
 		</div>
 	{/if}
 {/if}

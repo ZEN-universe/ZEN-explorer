@@ -56,7 +56,7 @@
 	let selectedNormalization: boolean = $state(false);
 	let selectedLocations: string[] = $state([]);
 	let selectedTechnologies: string[] = $state([]);
-	let selectedYears: number[] = $state([]);
+	let selectedYears: string[] = $state([]);
 
 	let preferredCarrier: string | null = null;
 
@@ -360,7 +360,7 @@
 
 		let entries = Entries.fromRows(data)
 			.filterByCriteria(filterCriteria)
-			.filterDataByIndex(selectedYears.map((year) => years.indexOf(year)))
+			.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))))
 			.groupBy(groupByColumns);
 
 		if (selectedNormalization) {
@@ -425,98 +425,61 @@
 		</FilterSection>
 		{#if !solutionLoading && selectedSolutions[0]}
 			<FilterSection title="Variable Selection">
-				<FilterRow label="Variable">
-					{#snippet content(formId)}
-						<Dropdown
-							{formId}
-							options={variables}
-							bind:value={selectedVariable}
-							disabled={fetching || solutionLoading}
-							onUpdate={onVariableChanged}
-						></Dropdown>
-					{/snippet}
-				</FilterRow>
+				<Dropdown
+					label="Variable"
+					options={variables}
+					bind:value={selectedVariable}
+					disabled={fetching || solutionLoading}
+					onUpdate={onVariableChanged}
+				></Dropdown>
 				{#if selectedVariable != null}
-					<FilterRow label="Technology Type">
-						{#snippet content(formId)}
-							<Dropdown
-								{formId}
-								options={technologyTypes}
-								bind:value={selectedTechnologyType}
-								disabled={fetching || solutionLoading}
-								onUpdate={onTechnologyTypeChanged}
-							></Dropdown>
-						{/snippet}
-					</FilterRow>
+					<Dropdown
+						label="Technology Type"
+						options={technologyTypes}
+						bind:value={selectedTechnologyType}
+						disabled={fetching || solutionLoading}
+						onUpdate={onTechnologyTypeChanged}
+					></Dropdown>
 					{#if selectedTechnologyType == 'storage'}
-						<FilterRow label="">
-							{#snippet content(formId)}
-								<Radio
-									{formId}
-									options={storageTypeOptions}
-									bind:value={selectedStorageType}
-									onUpdate={onTechnologyTypeChanged}
-									disabled={fetching || solutionLoading}
-								></Radio>
-							{/snippet}
-						</FilterRow>
+						<Radio
+							label="Storage Type"
+							options={storageTypeOptions}
+							bind:value={selectedStorageType}
+							onUpdate={onTechnologyTypeChanged}
+							disabled={fetching || solutionLoading}
+						></Radio>
 					{/if}
 				{/if}
 				{#if selectedTechnologyType != null && carriers.length > 0}
-					<FilterRow label="Carrier">
-						{#snippet content(formId)}
-							<Dropdown
-								{formId}
-								options={carriers}
-								bind:value={selectedCarrier}
-								disabled={fetching || solutionLoading}
-								onUpdate={onCarrierChanged}
-							></Dropdown>
-						{/snippet}
-					</FilterRow>
+					<Dropdown
+						label="Carrier"
+						options={carriers}
+						bind:value={selectedCarrier}
+						disabled={fetching || solutionLoading}
+						onUpdate={onCarrierChanged}
+					></Dropdown>
 				{/if}
 			</FilterSection>
 			{#if data && selectedTechnologyType && selectedCarrier && technologies.length > 0 && locations.length > 0}
 				<FilterSection title="Data Selection">
-					<FilterRow label="Aggregation">
-						{#snippet content(formId)}
-							<Radio {formId} options={aggregationOptions} bind:value={selectedAggregation}></Radio>
-						{/snippet}
-					</FilterRow>
-					<FilterRow label="Normalization">
-						{#snippet content(formId)}
-							<ToggleButton {formId} bind:value={selectedNormalization}></ToggleButton>
-						{/snippet}
-					</FilterRow>
+					<Radio label="Aggregation" options={aggregationOptions} bind:value={selectedAggregation}
+					></Radio>
+					<ToggleButton label="Normalization" bind:value={selectedNormalization}></ToggleButton>
 					{#if selectedAggregation == 'technology'}
-						<FilterRow label="Technologies">
-							{#snippet content(formId)}
-								<MultiSelect
-									{formId}
-									label="Technologies"
-									bind:value={selectedTechnologies}
-									options={technologies}
-								></MultiSelect>
-							{/snippet}
-						</FilterRow>
+						<MultiSelect
+							label="Technologies"
+							bind:value={selectedTechnologies}
+							options={technologies}
+						></MultiSelect>
 					{:else}
-						<FilterRow label="Nodes">
-							{#snippet content(formId)}
-								<MultiSelect
-									{formId}
-									label="Nodes"
-									bind:value={selectedLocations}
-									options={locations}
-								></MultiSelect>
-							{/snippet}
-						</FilterRow>
+						<MultiSelect label="Nodes" bind:value={selectedLocations} options={locations}
+						></MultiSelect>
 					{/if}
-					<FilterRow label="Years">
-						{#snippet content(formId)}
-							<MultiSelect {formId} label="Years" bind:value={selectedYears} options={years}
-							></MultiSelect>
-						{/snippet}
-					</FilterRow>
+					<MultiSelect
+						label="Years"
+						bind:value={selectedYears}
+						options={years.map((y) => y.toString())}
+					></MultiSelect>
 				</FilterSection>
 			{/if}
 		{/if}

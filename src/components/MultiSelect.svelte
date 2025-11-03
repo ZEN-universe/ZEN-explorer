@@ -1,24 +1,110 @@
-<script lang="ts" generics="T extends number | string">
-	import SlimSelect from 'slim-select';
+<script lang="ts">
+	import SlimSelect, { Option } from 'slim-select';
+	import { untrack } from 'svelte';
 
 	interface Props {
-		formId: string;
 		label: string;
-		options: T[];
-		value: T[];
+		options: string[];
+		value: string[];
 		disabled?: boolean;
-		onUpdate?: (value: T[]) => void;
+		onUpdate?: (value: string[]) => void;
 	}
 
 	let {
-		formId,
+		options: initialOptions,
+		value = $bindable(initialOptions),
 		label,
-		options: options,
-		value = $bindable(options),
 		disabled = false,
 		onUpdate = () => {}
 	}: Props = $props();
-	let id: string = $props.id();
+	const formId = $props.id();
+
+	let slimSelect: SlimSelect | undefined = undefined;
+
+	let flip: boolean = $state(false);
+	let lastOptions: string = '';
+
+	let options = $derived.by(() => {
+		return initialOptions.map((option) => {
+			if (typeof option === 'string') {
+				return { text: option, value: option };
+			} else {
+				return option;
+			}
+		});
+	});
+
+	function updateValue(newVal: string[]) {
+		value = newVal;
+		flip = true;
+		onUpdate?.(newVal);
+	}
+
+	function renderDropdown(element: HTMLSelectElement) {
+		slimSelect = new SlimSelect({
+			select: element,
+			settings: {
+				id: formId,
+				isMultiple: true,
+				showSearch: false,
+				maxValuesShown: 100
+			},
+			cssClasses: {
+				// option: 'bg-white dark:bg-gray-800',
+				// selected: 'bg-blue-500 dark:bg-blue-600'
+			},
+			data: options,
+			events: {
+				afterChange: (selected) => {
+					updateValue(selected.map((s) => s.value));
+				}
+			}
+		});
+		lastOptions = JSON.stringify(options);
+		slimSelect.setSelected(
+			value.map((v) => v.toString()),
+			false
+		);
+
+		return () => {
+			slimSelect?.destroy();
+		};
+	}
+
+	$effect(() => {
+		value;
+		untrack(async () => {
+			if (flip) {
+				flip = false;
+				return;
+			}
+			if (!slimSelect) return;
+			slimSelect.setSelected(value || [], false);
+		});
+	});
+
+	$effect(() => {
+		options;
+
+		untrack(async () => {
+			if (JSON.stringify(options) === lastOptions) return;
+			lastOptions = JSON.stringify(options);
+
+			if (!slimSelect) return;
+			slimSelect.setData($state.snapshot(options.map((opt) => new Option(opt))));
+		});
+	});
+
+	$effect(() => {
+		disabled;
+
+		untrack(() => {
+			if (!slimSelect) return;
+
+			if (!disabled) slimSelect.enable();
+			else slimSelect.disable();
+		});
+	});
 
 	let areAllSelected: boolean = $derived(value.length == options.length);
 
@@ -26,51 +112,25 @@
 		if (areAllSelected) {
 			value = [];
 		} else {
-			value = options;
+			value = options.map((o) => o.value);
 		}
 		onUpdate(value);
 	}
-
-	function emitUpdate() {
-		onUpdate(value);
-	}
-
-	function renderDropdown(element: HTMLSelectElement) {
-		const slimSelect = new SlimSelect({
-			select: element,
-			settings: {
-				showSearch: false
-			},
-			cssClasses: {
-				// option: 'bg-white dark:bg-gray-800',
-				// selected: 'bg-blue-500 dark:bg-blue-600'
-			}
-		});
-
-		return () => {
-			slimSelect.destroy();
-		};
-	}
 </script>
 
-<div class="">
-	{#if options.length == 0}
-		<div class="text-gray-500">No elements available to select.</div>
-	{:else}
-		<select
-			id={formId}
-			class="bg-white dark:bg-gray-800"
-			bind:value
-			{disabled}
-			multiple
-			onchange={emitUpdate}
-			{@attach renderDropdown}
-		>
-			{#each options as option}
-				<option value={option}>
-					{option}
-				</option>
-			{/each}
-		</select>
-	{/if}
+<div class="flex justify-between items-center">
+	<div class="uppercase text-gray-600 dark:text-gray-400 tracking-wide text-sm mb-1">
+		<label for={formId} class="fw-medium fs-4">{label}</label>
+	</div>
+
+	<button class="text-blue-500 block ml-auto" onclick={toggleAll}>
+		{#if areAllSelected}
+			<i class="bi bi-x"></i>
+		{:else}
+			<i class="bi bi-check2-all"></i>
+		{/if}
+		{areAllSelected ? 'Deselect all' : 'Select all'}
+	</button>
 </div>
+
+<select class="slim mb-2" multiple {@attach renderDropdown}></select>

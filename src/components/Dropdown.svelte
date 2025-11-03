@@ -3,29 +3,33 @@
 	import { tick, untrack } from 'svelte';
 
 	interface Props {
-		formId: string;
 		options: ({ label: string; value: string } | string)[];
 		value: string | null;
+		label: string;
 		disabled?: boolean;
 		onUpdate?: (value: any) => void;
 	}
 
 	let {
-		formId,
 		options: initialOptions,
 		value = $bindable(),
+		label,
 		disabled = false,
 		onUpdate
 	}: Props = $props();
+	const formId = $props.id();
+
+	let slimSelect: SlimSelect | undefined = undefined;
 
 	let flip: boolean = $state(false);
+	let lastOptions: string = '';
 
 	let options = $derived.by(() => {
 		return initialOptions.map((option) => {
 			if (typeof option === 'string') {
 				return { text: option, value: option };
 			} else {
-				return option;
+				return { text: option.label, value: option.value };
 			}
 		});
 	});
@@ -34,10 +38,7 @@
 		value = newVal;
 		flip = true;
 		onUpdate?.(newVal);
-		console.log('[Dropdown] value updated', newVal);
 	}
-
-	let slimSelect: SlimSelect | undefined = undefined;
 
 	function renderDropdown(element: HTMLSelectElement) {
 		slimSelect = new SlimSelect({
@@ -53,6 +54,8 @@
 				}
 			}
 		});
+		lastOptions = JSON.stringify(options);
+		slimSelect.setSelected(value || '', false);
 
 		return () => {
 			slimSelect?.destroy();
@@ -75,13 +78,11 @@
 		options;
 
 		untrack(async () => {
-			console.log('[Dropdown] options changed', $state.snapshot(options));
-			
+			if (JSON.stringify(options) === lastOptions) return;
+			lastOptions = JSON.stringify(options);
+
 			if (!slimSelect) return;
-			await tick();
-			slimSelect.setData($state.snapshot(options.map((opt) => (new Option(opt)))));
-			console.log('[Dropdown] options set in SlimSelect', slimSelect.getData());
-			
+			slimSelect.setData($state.snapshot(options.map((opt) => new Option(opt))));
 		});
 	});
 
@@ -95,21 +96,10 @@
 			else slimSelect.disable();
 		});
 	});
-
-	$inspect('[Dropdown] value', value);
-	$inspect('[Dropdown] options', options);
 </script>
 
-<select
-	class="bg-white dark:bg-gray-800"
-	{disabled}
-	style:color="inherit"
-	style:background-color="inherit"
-	{@attach renderDropdown}
->
-	<!-- {#each options as option}
-		<option value={option.value} style:color="inherit" style:background-color="inherit">
-			{option.label}
-		</option>
-	{/each} -->
-</select>
+<div class="uppercase text-gray-600 dark:text-gray-400 tracking-wide text-sm mb-1">
+	<label for={formId} class="fw-medium fs-4">{label}</label>
+</div>
+
+<select class="slim mb-2" {disabled} {@attach renderDropdown}> </select>

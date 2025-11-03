@@ -1,16 +1,16 @@
 <script lang="ts">
 	interface Props {
-		formId: string;
 		options: ({ value: string; label: string } | string)[];
-		value?: any;
+		value: string;
+		label: string;
 		disabled?: boolean;
-		onUpdate?: (selected_option: any) => void;
+		onUpdate?: (newValue: string) => void;
 	}
 
 	let {
-		formId,
 		options: initialOptions,
 		value = $bindable(),
+		label,
 		disabled = false,
 		onUpdate = () => {}
 	}: Props = $props();
@@ -30,11 +30,15 @@
 	}
 </script>
 
-<div role="radiogroup">
+<div class="uppercase text-gray-600 dark:text-gray-400 tracking-wide text-sm mb-1">
+	<div class="fw-medium fs-4">{label}</div>
+</div>
+
+<div class="flex gap-2 mb-2" role="radiogroup">
 	{#each options as option}
-		<div class="form-check form-check-inline">
+		<div class="relative">
 			<input
-				class="form-check-input"
+				class="appearance-none absolute inset-y-0 w-4"
 				id={'radio-' + option.value}
 				type="radio"
 				bind:group={value}
@@ -42,7 +46,19 @@
 				{disabled}
 				onchange={updateSelection}
 			/>
-			<label class="form-check-label" for={'radio-' + option.value}>
+			<label class="flex items-center" for={'radio-' + option.value}>
+				<div
+					class={[
+						'h-4 w-4 border-2 rounded-full me-2 flex items-center justify-center',
+						!disabled && value === option.value
+							? 'border-blue-500'
+							: 'border-gray-400 dark:border-gray-600'
+					]}
+				>
+					{#if value === option.value}
+						<div class="bg-blue-500 h-2 w-2 rounded-full"></div>
+					{/if}
+				</div>
 				{option.label}
 			</label>
 		</div>
