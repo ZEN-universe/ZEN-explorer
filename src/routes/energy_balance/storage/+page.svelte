@@ -8,11 +8,11 @@
 	} from 'chart.js';
 	import { onMount, tick, untrack } from 'svelte';
 
-	import ToggleButton from '$components/ToggleButton.svelte';
+	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
-	import MultiSelect from '$components/MultiSelect.svelte';
+	import MultiSelect from '$components/forms/MultiSelect.svelte';
 	import Chart from '$components/Chart.svelte';
-	import Dropdown from '$components/Dropdown.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import FilterRow from '$components/FilterRow.svelte';

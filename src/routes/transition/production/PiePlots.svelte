@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Chart from '$components/Chart.svelte';
+	import ContentBox from '$components/ContentBox.svelte';
 	import type { ChartDataset, ChartTypeRegistry, TooltipItem } from 'chart.js';
 
 	interface Props {
@@ -95,30 +96,42 @@
 </script>
 
 {#if year == null || solution == null}
-	<div class="text-center text-muted mb-2">
-		Click on a bar to see a production and consumption breakdown.
-	</div>
+	<ContentBox>
+		{#snippet content()}
+			<div class="text-center text-muted my-4">
+				Click on a bar to see a production and consumption breakdown.
+			</div>
+		{/snippet}
+	</ContentBox>
 {:else}
-	<div class="row mb-2">
-		<div class="col-lg-6">
-			<h3 class="text-center h5">Breakdown of Production for {year} ({solution})</h3>
-			<Chart
-				type="pie"
-				datasets={productionDatasets}
-				labels={productionLabels}
-				options={productionOptions}
-				downloadable={false}
-			></Chart>
-		</div>
-		<div class="col-lg-6">
-			<h3 class="text-center h5">Breakdown of Consumption for {year} ({solution})</h3>
-			<Chart
-				type="pie"
-				datasets={consumptionDatasets}
-				labels={consumptionLabels}
-				options={consumptionOptions}
-				downloadable={false}
-			></Chart>
-		</div>
+	<div class="grid grid-cols-2 gap-4">
+		<ContentBox>
+			{#snippet content()}
+				<h3 class="font-semibold text-lg mb-4">
+					Breakdown of Production for {year} ({solution})
+				</h3>
+				<Chart
+					type="pie"
+					datasets={productionDatasets}
+					labels={productionLabels}
+					options={productionOptions}
+					boxed={false}
+				></Chart>
+			{/snippet}
+		</ContentBox>
+		<ContentBox>
+			{#snippet content()}
+				<h3 class="font-semibold text-lg mb-4">
+					Breakdown of Consumption for {year} ({solution})
+				</h3>
+				<Chart
+					type="pie"
+					datasets={consumptionDatasets}
+					labels={consumptionLabels}
+					options={consumptionOptions}
+					boxed={false}
+				></Chart>
+			{/snippet}
+		</ContentBox>
 	</div>
 {/if}

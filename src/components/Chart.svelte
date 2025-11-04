@@ -7,6 +7,7 @@
 
 	import ColorBox, { type ColorBoxItem } from '$components/ColorBox.svelte';
 	import HelpTooltip from './HelpTooltip.svelte';
+	import ContentBox from './ContentBox.svelte';
 
 	BaseChart.register(zoomPlugin);
 
@@ -23,6 +24,7 @@
 		narrow?: boolean;
 		zoomLevel?: [number, number] | null;
 		patterns?: ColorBoxItem[];
+		boxed?: boolean;
 		generateLabels?: (chart: BaseChart) => LegendItem[];
 		onClickLegend?: (item: LegendItem, chart: BaseChart) => void;
 		onClickBar?: (label: string, datasetIndex: number) => void;
@@ -41,6 +43,7 @@
 		narrow = false,
 		zoomLevel = $bindable(null),
 		patterns = [],
+		boxed = true,
 		generateLabels,
 		onClickLegend,
 		onClickBar
@@ -236,15 +239,12 @@
 	}
 </script>
 
-<div
-	class="flex bg-white dark:bg-gray-800 shadow-lg shadow-black/10 dark:shadow-white/5 rounded-lg p-4 mb-4"
-	id={id + '-container'}
->
-	<h2 class="font-bold text-lg me-4">
-		Legend
+{#snippet legend()}
+	<h2 class="flex items-start font-bold text-lg me-4">
+		<span class="me-2">Legend</span>
 		<HelpTooltip content="Click on legend items to show/hide them in the chart." />
 	</h2>
-	<div class={['legend flex flex-wrap gap-2 ', patterns.length > 1 && 'mb-2']}>
+	<div class="flex flex-wrap gap-2">
 		{#each legendItems as item}
 			<button
 				class="flex items-center p-0 text-gray-600 dark:text-gray-400"
@@ -258,17 +258,15 @@
 			</button>
 		{/each}
 	</div>
-</div>
+{/snippet}
 
-<div
-	class="flex flex-col justify-between bg-white dark:bg-gray-800 shadow-lg shadow-black/10 dark:shadow-white/5 rounded-lg p-4"
-	id={id + '-container'}
->
+{#snippet patternSnippet()}
 	{#if patterns.length > 1}
-		<div class="legend flex wrap justify-center">
+		<h2 class="font-bold text-lg me-4">Patterns</h2>
+		<div class="legend flex wrap gap-2">
 			{#each patterns as pattern}
 				<div
-					class="flex items-center me-2 text-secondary"
+					class="flex items-center text-gray-600 dark:text-gray-400"
 					style:font-size="12px"
 					style:letter-spacing="0.0em"
 					style:font-family="Arial, sans-serif"
@@ -279,7 +277,26 @@
 			{/each}
 		</div>
 	{/if}
+{/snippet}
+
+{#snippet chartSnippet()}
 	<div class="position-relative" style:min-height={narrow ? '259px' : '558px'}>
 		<canvas {id} use:handleChart onclick={emitClickBarEvent}></canvas>
 	</div>
-</div>
+{/snippet}
+
+{#if boxed}
+	<ContentBox content={legend} class="flex"></ContentBox>
+	{#if patterns.length > 1}
+		<ContentBox class="flex" content={patternSnippet}></ContentBox>
+	{/if}
+	<ContentBox content={chartSnippet}></ContentBox>
+{:else}
+	<div class="flex mb-4">
+		{@render legend()}
+	</div>
+	<div class="flex mb-4">
+		{@render patternSnippet()}
+	</div>
+	{@render chartSnippet()}
+{/if}

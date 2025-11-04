@@ -3,9 +3,9 @@
 
 	import type { ActivatedSolution } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
-	import { removeDuplicates, toOptions } from '$lib/utils';
+	import { removeDuplicates } from '$lib/utils';
 
-	import FilterRow from '$components/FilterRow.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
 
 	import {
 		getSolutionList,
@@ -14,7 +14,6 @@
 		getActivatedSolution,
 		generateScenarioYears
 	} from './manager.svelte';
-	import Dropdown from '$components/Dropdown.svelte';
 	initSolutionList();
 
 	interface Props {

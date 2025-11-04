@@ -10,14 +10,13 @@
 	import { draw as drawPattern } from 'patternomaly';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
-	import MultiSelect from '$components/MultiSelect.svelte';
+	import MultiSelect from '$components/forms/MultiSelect.svelte';
 	import Chart from '$components/Chart.svelte';
-	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
-	import Dropdown from '$components/Dropdown.svelte';
-	import ToggleButton from '$components/ToggleButton.svelte';
-	import FilterRow from '$components/FilterRow.svelte';
-	import type { ColorBoxItem } from '$components/ColorBox.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
+	import ToggleButton from '$components/forms/ToggleButton.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import ChartButtons from '$components/ChartButtons.svelte';
 
 	import { get_component_total } from '$lib/temple';
 	import {
@@ -25,7 +24,7 @@
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
 	} from '$lib/compareSolutions';
-	import { getTransportEdges, removeDuplicates, toOptions } from '$lib/utils';
+	import { getTransportEdges } from '$lib/utils';
 	import {
 		getURLParam,
 		getURLParamAsBoolean,
@@ -146,7 +145,7 @@
 	]);
 	let selectedNormalization: boolean = $state(false);
 	let selectedNodes: string[] = $state([]);
-	let selectedYears: number[] = $state([]);
+	let selectedYears: string[] = $state([]);
 	let activeYear: string | null = $state(null);
 	let activeSolution: string | null = $state(null);
 
@@ -187,8 +186,11 @@
 		return row[0] || row.units || '';
 	});
 
-	// Plot config
-	let labels: string[] = $derived(selectedYears.map((year) => year.toString()));
+	let chart = $state<Chart<'bar'>>();
+
+	//#region Plot config
+
+	let labels: string[] = $derived(selectedYears);
 	let tooltipSuffix = $derived(selectedNormalization ? '' : ` ${unit}`);
 	let plot_options: ChartOptions<'bar'> = $derived.by(() => {
 		return {
@@ -272,6 +274,10 @@
 		}));
 	}
 
+	//#endregion
+
+	//#region Carriers and technologies
+
 	// Carriers and technologies
 	let carriers: string[] = $derived.by(() => {
 		if (hasSomeUnsetSolutions) return [];
@@ -332,6 +338,8 @@
 		return Array.from(setTransportTechnologies).sort();
 	});
 
+	//#endregion
+
 	// Update selected values when the corresponding options change
 	$effect(() => {
 		carriers;
@@ -346,6 +354,8 @@
 			}
 		});
 	});
+
+	//#region Update selection based on URL and previous selections
 
 	updateSelectionOnStateChanges(
 		() => conversionTechnologies,
@@ -384,7 +394,7 @@
 		() => {}
 	);
 	updateSelectionOnStateChanges(
-		() => years,
+		() => years.map((y) => y.toString()),
 		() => !!selectedSolutions,
 		() => previousYears,
 		() => null,
@@ -435,6 +445,8 @@
 		});
 	});
 
+	//#endregion
+
 	// Update functions
 	async function onSolutionChanged() {
 		activeYear = null;
@@ -455,6 +467,8 @@
 		activeYear = year;
 		activeSolution = stack || null;
 	}
+
+	//#region Fetch and process data
 
 	/**
 	 * Fetch data from the API server for the current selection.
@@ -526,7 +540,7 @@
 
 		let entries = initialEntries
 			.filterByCriteria(filterCriteria)
-			.filterDataByIndex(selectedYears.map((year) => years.indexOf(year)))
+			.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))))
 			.groupBy(groupByColumns)
 			.mapIndex((index) => ({
 				...index,
@@ -635,126 +649,124 @@
 
 		return [datasets, patterns];
 	});
+
+	//#endregion
 </script>
 
-<h1 class="mt-2 mb-4">The Transition Pathway &ndash; Production</h1>
-<Filters>
-	<FilterSection title="Solution Selection">
-		<MultiSolutionFilter
-			bind:solutions={selectedSolutions}
-			bind:years
-			bind:nodes
-			bind:loading={solutionLoading}
-			onSelected={onSolutionChanged}
-			disabled={fetching || solutionLoading}
-		/>
-	</FilterSection>
-	{#if !solutionLoading && selectedSolutions[0] !== null}
-		<FilterSection title="Carrier Selection">
-			{#if carriers.length > 0}
-				<FilterRow label="Carrier">
-					{#snippet content(id)}
-						<Dropdown
-							formId={id}
-							options={toOptions(carriers)}
-							bind:value={selectedCarrier}
-							disabled={solutionLoading || fetching}
-						></Dropdown>
-					{/snippet}
-				</FilterRow>
-			{/if}
+<DiagramPage parentTitle="The Transition Pathway" pageTitle="Production">
+	{#snippet filters()}
+		<FilterSection title="Solution Selection">
+			<MultiSolutionFilter
+				bind:solutions={selectedSolutions}
+				bind:years
+				bind:nodes
+				bind:loading={solutionLoading}
+				onSelected={onSolutionChanged}
+				disabled={fetching || solutionLoading}
+			/>
 		</FilterSection>
-		<FilterSection title="Production Component Selection">
-			{#each variables as variable, i}
-				<div class="row align-items-baseline">
-					<label class="col-6 col-md-3 fw-medium fs-4" for={'variables' + i}>{variable.title}</label
-					>
-					<div class="col-4 col-md-3">
-						<ToggleButton formId={'variables' + i} bind:value={variable.show}></ToggleButton>
-					</div>
-					{#if variable.show && variable.show_subdivision}
-						<label class="col-6 col-md-2 fw-medium fs-5" for={'subdivision' + i}>Subdivision</label>
-						<div class="col-4 col-md-2">
-							<ToggleButton formId={'subdivision' + i} bind:value={variable.subdivision}
-							></ToggleButton>
+		{#if !solutionLoading && selectedSolutions[0] !== null}
+			<FilterSection title="Carrier Selection">
+				{#if carriers.length > 0}
+					<Dropdown
+						label="Carrier"
+						options={carriers}
+						bind:value={selectedCarrier}
+						disabled={solutionLoading || fetching}
+					></Dropdown>
+				{/if}
+			</FilterSection>
+			<FilterSection title="Production Component Selection">
+				{#each variables as variable}
+					<div class="grid grid-cols-2">
+						<div>
+							<ToggleButton bind:value={variable.show} label={variable.title}></ToggleButton>
 						</div>
-					{/if}
-				</div>
-			{/each}
-		</FilterSection>
-		<FilterSection title="Technology Selection">
-			<MultiSelect
-				label="Conversion"
-				bind:value={selectedConversionTechnologies}
-				options={conversionTechnologies}
-				disabled={solutionLoading || fetching}
-			></MultiSelect>
-			<MultiSelect
-				label="Storage"
-				bind:value={selectedStorageTechnologies}
-				options={storageTechnologies}
-				disabled={solutionLoading || fetching}
-			></MultiSelect>
-			<MultiSelect
-				label="Transport"
-				bind:value={selectedTransportTechnologies}
-				options={transportTechnologies}
-				disabled={solutionLoading || fetching}
-			></MultiSelect>
-		</FilterSection>
-		{#if !fetching && selectedCarrier != null}
-			<FilterSection title="Data Selection">
-				<FilterRow label="Normalization">
-					{#snippet content(id)}
-						<ToggleButton formId={id} bind:value={selectedNormalization}></ToggleButton>
-					{/snippet}
-				</FilterRow>
+						{#if variable.show && variable.show_subdivision}
+							<div>
+								<ToggleButton
+									bind:value={variable.subdivision}
+									label={'with Subdivision'}
+								/>
+							</div>
+						{/if}
+					</div>
+				{/each}
+			</FilterSection>
+			<FilterSection title="Technology Selection">
 				<MultiSelect
-					label="Nodes"
-					bind:value={selectedNodes}
-					options={nodes}
+					bind:value={selectedConversionTechnologies}
+					options={conversionTechnologies}
+					label="Conversion"
 					disabled={solutionLoading || fetching}
 				></MultiSelect>
 				<MultiSelect
-					label="Years"
-					bind:value={selectedYears}
-					options={years}
+					bind:value={selectedStorageTechnologies}
+					options={storageTechnologies}
+					label="Storage"
+					disabled={solutionLoading || fetching}
+				></MultiSelect>
+				<MultiSelect
+					bind:value={selectedTransportTechnologies}
+					options={transportTechnologies}
+					label="Transport"
 					disabled={solutionLoading || fetching}
 				></MultiSelect>
 			</FilterSection>
+			{#if !fetching && selectedCarrier != null}
+				<FilterSection title="Data Selection">
+					<ToggleButton label="Normalization" bind:value={selectedNormalization}></ToggleButton>
+					<MultiSelect
+						bind:value={selectedNodes}
+						options={nodes}
+						label="Nodes"
+						disabled={solutionLoading || fetching}
+					></MultiSelect>
+					<MultiSelect
+						bind:value={selectedYears}
+						options={years.map((y) => y.toString())}
+						label="Years"
+						disabled={solutionLoading || fetching}
+					></MultiSelect>
+				</FilterSection>
+			{/if}
 		{/if}
-	{/if}
-</Filters>
-<h2 class="visually-hidden">Plots</h2>
-<div class="plot">
-	{#if solutionLoading || fetching}
-		<div class="text-center">
-			<div class="spinner-border center" role="status">
-				<span class="visually-hidden">Loading...</span>
+	{/snippet}
+
+	{#snippet buttons()}
+		<ChartButtons chart={chart as Chart} downloadable></ChartButtons>
+	{/snippet}
+
+	{#snippet mainContent()}
+		{#if solutionLoading || fetching}
+			<div class="text-center">
+				<div class="spinner-border center" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
 			</div>
-		</div>
-	{:else if selectedSolutions == null}
-		<div></div>
-	{:else if carriers.length == 0}
-		<div class="text-center">No carriers with this selection.</div>
-	{:else if datasets.length == 0}
-		<div class="text-center">No data with this selection.</div>
-	{:else}
-		<Chart
-			type="bar"
-			{datasets}
-			{labels}
-			options={plot_options}
-			pluginOptions={plotPluginOptions}
-			{plotName}
-			{patterns}
-			{generateLabels}
-			onClickLegend={onClickLegendForSolutionComparison}
-			onClickBar={onBarClick}
-		></Chart>
-		<div>
+		{:else if selectedSolutions == null}
+			<div></div>
+		{:else if carriers.length == 0}
+			<div class="text-center">No carriers with this selection.</div>
+		{:else if datasets.length == 0}
+			<div class="text-center">No data with this selection.</div>
+		{:else}
+			<Chart
+				type="bar"
+				{datasets}
+				{labels}
+				options={plot_options}
+				pluginOptions={plotPluginOptions}
+				{plotName}
+				{patterns}
+				{generateLabels}
+				onClickLegend={onClickLegendForSolutionComparison}
+				onClickBar={onBarClick}
+				bind:this={chart}
+			></Chart>
+
 			<PiePlots {datasets} {labels} year={activeYear} solution={activeSolution} {tooltipSuffix}
 			></PiePlots>
-		</div>
-	{/if}
-</div>
+		{/if}
+	{/snippet}
+</DiagramPage>

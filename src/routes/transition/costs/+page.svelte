@@ -4,9 +4,9 @@
 	import { draw as drawPattern } from 'patternomaly';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
-	import MultiSelect from '$components/MultiSelect.svelte';
-	import Radio from '$components/Radio.svelte';
-	import ToggleButton from '$components/ToggleButton.svelte';
+	import MultiSelect from '$components/forms/MultiSelect.svelte';
+	import Radio from '$components/forms/Radio.svelte';
+	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import Chart from '$components/Chart.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';

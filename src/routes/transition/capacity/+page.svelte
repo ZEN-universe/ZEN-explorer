@@ -4,14 +4,15 @@
 	import { draw as drawPattern } from 'patternomaly';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
-	import MultiSelect from '$components/MultiSelect.svelte';
-	import Radio from '$components/Radio.svelte';
+	import MultiSelect from '$components/forms/MultiSelect.svelte';
+	import Radio from '$components/forms/Radio.svelte';
 	import Chart from '$components/Chart.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
-	import Dropdown from '$components/Dropdown.svelte';
-	import ToggleButton from '$components/ToggleButton.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
+	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
-	import FilterRow from '$components/FilterRow.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import ChartButtons from '$components/ChartButtons.svelte';
 
 	import { get_component_total as getComponentTotal } from '$lib/temple';
 	import {
@@ -29,8 +30,6 @@
 		resetPatternState,
 		type ShapeType
 	} from '$lib/patterns';
-	import PageTemplate from '$components/PageTemplate.svelte';
-	import ChartButtons from '$components/ChartButtons.svelte';
 
 	let data: Row[][] = $state([]);
 
@@ -72,7 +71,7 @@
 		return units[technologies[0] + '_' + capacity_type] || '';
 	});
 
-	let chart = $state<Chart>();
+	let chart = $state<Chart<'bar'>>();
 
 	//#region Plot config
 
@@ -277,7 +276,7 @@
 		selectedNormalization = false;
 		selectedLocations = locations;
 		selectedTechnologies = technologies;
-		selectedYears = years;
+		selectedYears = years.map((y) => y.toString());
 	}
 
 	async function onSolutionChanged() {
@@ -412,7 +411,7 @@
 	//#endregion
 </script>
 
-<PageTemplate parentTitle="The Transition Pathway" pageTitle="Capacity">
+<DiagramPage parentTitle="The Transition Pathway" pageTitle="Capacity">
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<MultiSolutionFilter
@@ -486,7 +485,7 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons {chart} downloadable></ChartButtons>
+		<ChartButtons chart={chart as Chart} downloadable></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}
@@ -521,4 +520,4 @@
 			></Chart>
 		{/if}
 	{/snippet}
-</PageTemplate>
+</DiagramPage>

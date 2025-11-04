@@ -2,8 +2,8 @@
 	import { onMount, tick, untrack } from 'svelte';
 	import type { ParseResult } from 'papaparse';
 
-	import Radio from '$components/Radio.svelte';
-	import Dropdown from '$components/Dropdown.svelte';
+	import Radio from '$components/forms/Radio.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import MapPlot from '$components/MapPlot.svelte';
 	import Filters from '$components/Filters.svelte';

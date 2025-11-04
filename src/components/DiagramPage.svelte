@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import ContentBox from './ContentBox.svelte';
 
 	interface Props {
 		parentTitle: string;
@@ -24,14 +25,14 @@
 		{@render buttons?.()}
 	</div>
 	<div>
-		<div
-			class="bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-800 shadow-lg shadow-black/10 dark:shadow-white/5 rounded-lg p-4"
-		>
-			<h2 class="font-bold text-lg mb-4">Filters</h2>
-			<div>
-				{@render filters()}
-			</div>
-		</div>
+		<ContentBox>
+			{#snippet content()}
+				<h2 class="font-bold text-lg mb-4">Filters</h2>
+				<div>
+					{@render filters()}
+				</div>
+			{/snippet}
+		</ContentBox>
 	</div>
 	<main class="col-span-3">
 		{@render mainContent()}

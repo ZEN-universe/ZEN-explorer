@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FilterLabel from '$components/FilterLabel.svelte';
 	import SlimSelect, { Option } from 'slim-select';
 	import { tick, untrack } from 'svelte';
 
@@ -98,8 +99,6 @@
 	});
 </script>
 
-<div class="uppercase text-gray-600 dark:text-gray-400 tracking-wide text-sm mb-1">
-	<label for={formId} class="fw-medium fs-4">{label}</label>
-</div>
+<FilterLabel {label} {formId}></FilterLabel>
 
 <select class="slim mb-2" {disabled} {@attach renderDropdown}> </select>

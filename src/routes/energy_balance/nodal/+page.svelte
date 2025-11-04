@@ -3,7 +3,7 @@
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
-	import Dropdown from '$components/Dropdown.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
 	import Chart from '$components/Chart.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';

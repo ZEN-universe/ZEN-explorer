@@ -1,4 +1,6 @@
 <script lang="ts">
+	import FilterLabel from "$components/FilterLabel.svelte";
+
 	interface Props {
 		options: ({ value: string; label: string } | string)[];
 		value: string;
@@ -30,9 +32,7 @@
 	}
 </script>
 
-<div class="uppercase text-gray-600 dark:text-gray-400 tracking-wide text-sm mb-1">
-	<div class="fw-medium fs-4">{label}</div>
-</div>
+<FilterLabel {label}></FilterLabel>
 
 <div class="flex gap-2 mb-2" role="radiogroup">
 	{#each options as option}

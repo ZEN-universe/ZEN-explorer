@@ -1,4 +1,5 @@
 <script lang="ts">
+	import FilterLabel from '$components/FilterLabel.svelte';
 	import SlimSelect, { Option } from 'slim-select';
 	import { untrack } from 'svelte';
 
@@ -118,19 +119,17 @@
 	}
 </script>
 
-<div class="flex justify-between items-center">
-	<div class="uppercase text-gray-600 dark:text-gray-400 tracking-wide text-sm mb-1">
-		<label for={formId} class="fw-medium fs-4">{label}</label>
-	</div>
-
-	<button class="text-blue-500 block ml-auto" onclick={toggleAll}>
-		{#if areAllSelected}
-			<i class="bi bi-x"></i>
-		{:else}
-			<i class="bi bi-check2-all"></i>
-		{/if}
-		{areAllSelected ? 'Deselect all' : 'Select all'}
-	</button>
-</div>
+<FilterLabel {label} {formId}>
+	{#snippet rightSide()}
+		<button class="text-blue-500 block ml-auto" onclick={toggleAll}>
+			{#if areAllSelected}
+				<i class="bi bi-x"></i>
+			{:else}
+				<i class="bi bi-check2-all"></i>
+			{/if}
+			{areAllSelected ? 'Deselect all' : 'Select all'}
+		</button>
+	{/snippet}
+</FilterLabel>
 
 <select class="slim mb-2" multiple {@attach renderDropdown}></select>

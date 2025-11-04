@@ -9,8 +9,8 @@
 	import { getTransportEdges, toOptions } from '$lib/utils';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
-	import MultiSelect from '$components/MultiSelect.svelte';
-	import Dropdown from '$components/Dropdown.svelte';
+	import MultiSelect from '$components/forms/MultiSelect.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
 	import FilterRow from '$components/FilterRow.svelte';
 	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
