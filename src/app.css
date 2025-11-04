@@ -16,7 +16,7 @@
 		--ss-bg-color: var(--color-white);
 		--ss-font-color: var(--color-gray-800);
 		--ss-border-color: var(--color-gray-400);
-		--ss-disabled-color: var(--color-gray-300);
+		--ss-disabled-color: var(--color-gray-200);
 
 		/* Heights */
 		--ss-main-height: 40px;

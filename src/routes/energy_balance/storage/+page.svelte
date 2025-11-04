@@ -13,12 +13,12 @@
 	import MultiSelect from '$components/forms/MultiSelect.svelte';
 	import Chart from '$components/Chart.svelte';
 	import Dropdown from '$components/forms/Dropdown.svelte';
-	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
-	import FilterRow from '$components/FilterRow.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import ChartButtons from '$components/ChartButtons.svelte';
 
 	import { get_full_ts } from '$lib/temple';
-	import { removeDuplicates, toOptions } from '$lib/utils';
+	import { removeDuplicates } from '$lib/utils';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Entry } from '$lib/types';
 	import { nextColor, resetColorState } from '$lib/colors';
@@ -50,6 +50,9 @@
 	let flow_plot = $state<Chart<any>>();
 
 	let unit: string = $derived.by(() => (technologies.length > 0 ? units[technologies[0]] : ''));
+
+	//#region Plot configuration
+
 	let plot_name: string = $derived.by(() => {
 		if (!selected_solution || !selected_solution.solution_name) {
 			return '';
@@ -160,6 +163,10 @@
 		}
 	};
 
+	//#endregion
+
+	//#region Options for filters
+
 	let locations: string[] = $derived.by(() => {
 		response_update_trigger;
 		if (!level_response) {
@@ -235,6 +242,10 @@
 		untrack(update_datasets);
 	});
 
+	//#endregion
+
+	//#region Synchronize URL Parameters
+
 	// Set URL parameters
 	onMount(() => {
 		selected_carrier = getURLParam('car') || selected_carrier;
@@ -257,9 +268,13 @@
 		});
 	});
 
+	//#endregion
+
 	$effect(() => {
 		fetch_data();
 	});
+
+	//#region Data fetching and processing
 
 	async function fetch_data() {
 		if (selected_solution === null || !selected_year) {
@@ -505,108 +520,103 @@
 			} as ChartDataset<'bar' | 'line'>;
 		});
 	}
+
+	//#endregion
 </script>
 
-<h1 class="mt-2 mb-4">The Energy Balance &ndash; Storage</h1>
-
-<Filters>
-	<FilterSection title="Solution Selection">
-		<SolutionFilter
-			bind:selected_solution
-			bind:loading={solution_loading}
-			bind:years
-			disabled={fetching || solution_loading}
-		/>
-	</FilterSection>
-	{#if selected_solution}
-		<FilterSection title="Variable Selection">
-			<FilterRow label="Year">
-				{#snippet content(formId)}
-					<Dropdown
-						{formId}
-						options={toOptions(years.map((year) => year.toString()))}
-						bind:value={selected_year}
-						disabled={fetching || solution_loading}
-					></Dropdown>
-				{/snippet}
-			</FilterRow>
-			<FilterRow label="Carrier">
-				{#snippet content(formId)}
-					<Dropdown
-						{formId}
-						options={toOptions(carriers)}
-						bind:value={selected_carrier}
-						disabled={fetching || solution_loading}
-					></Dropdown>
-				{/snippet}
-			</FilterRow>
-			<FilterRow label="Smoothing Window Size">
-				{#snippet content(formId)}
-					<Dropdown
-						{formId}
-						options={toOptions(window_sizes)}
-						bind:value={selected_window_size}
-						disabled={fetching || solution_loading}
-					></Dropdown>
-				{/snippet}
-			</FilterRow>
+<DiagramPage parentTitle="The Energy Balance" pageTitle="Storage">
+	{#snippet filters()}
+		<FilterSection title="Solution Selection">
+			<SolutionFilter
+				bind:selected_solution
+				bind:loading={solution_loading}
+				bind:years
+				disabled={fetching || solution_loading}
+			/>
 		</FilterSection>
-		{#if selected_carrier && locations.length > 0}
-			<FilterSection title="Data Selection">
-				<FilterRow label="Technology Subdivision">
-					{#snippet content(formId)}
-						<ToggleButton {formId} bind:value={selected_subdivision}></ToggleButton>
-					{/snippet}
-				</FilterRow>
-				<MultiSelect label="Technologies" options={technologies} bind:value={selected_technologies}
-				></MultiSelect>
-				<MultiSelect label="Nodes" options={locations} bind:value={selected_locations}
-				></MultiSelect>
+		{#if selected_solution}
+			<FilterSection title="Variable Selection">
+				<Dropdown
+					options={years.map((year) => year.toString())}
+					bind:value={selected_year}
+					label="Year"
+					disabled={fetching || solution_loading}
+				></Dropdown>
+				<Dropdown
+					options={carriers}
+					bind:value={selected_carrier}
+					label="Carrier"
+					disabled={fetching || solution_loading}
+				></Dropdown>
+				<Dropdown
+					options={window_sizes}
+					bind:value={selected_window_size}
+					label="Smoothing Window Size"
+					disabled={fetching || solution_loading}
+				></Dropdown>
 			</FilterSection>
+			{#if selected_carrier && locations.length > 0}
+				<FilterSection title="Data Selection">
+					<ToggleButton bind:value={selected_subdivision} label="Technology Subdivision"
+					></ToggleButton>
+					<MultiSelect
+						options={technologies}
+						bind:value={selected_technologies}
+						label="Technologies"
+					></MultiSelect>
+					<MultiSelect options={locations} bind:value={selected_locations} label="Nodes"
+					></MultiSelect>
+				</FilterSection>
+			{/if}
 		{/if}
-	{/if}
-</Filters>
-<div class="mt-4 plot">
-	{#if solution_loading || fetching}
-		<div class="text-center">
-			<div class="spinner-border center" role="status">
-				<span class="visually-hidden">Loading...</span>
+	{/snippet}
+
+	{#snippet buttons()}
+		<ChartButtons chart={level_plot as Chart} downloadable zoomable></ChartButtons>
+	{/snippet}
+
+	{#snippet mainContent()}
+		{#if solution_loading || fetching}
+			<div class="text-center">
+				<div class="spinner-border center" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
 			</div>
-		</div>
-	{:else if technologies.length == 0}
-		<div class="text-center">No technologies with this selection.</div>
-	{:else if carriers.length == 0}
-		<div class="text-center">No carriers with this selection.</div>
-	{:else if selected_solution == null}
-		<div class="text-center">No solution selected.</div>
-	{:else if locations.length == 0}
-		<div class="text-center">No locations with this selection.</div>
-	{:else if level_datasets_length == 0}
-		<div class="text-center">No data available for this selection.</div>
-	{:else}
-		<Chart
-			id="level_chart"
-			type="line"
-			{labels}
-			datasets={[]}
-			options={plot_options}
-			pluginOptions={plotPluginOptions}
-			plotName={plot_name}
-			zoom={true}
-			bind:zoomLevel
-			bind:this={level_plot}
-		></Chart>
-		<Chart
-			id="flow_chart"
-			type="line"
-			{labels}
-			datasets={[]}
-			options={plot_options_flows}
-			pluginOptions={plotPluginOptions}
-			plotName={plot_name_flows}
-			zoom={true}
-			bind:zoomLevel
-			bind:this={flow_plot}
-		></Chart>
-	{/if}
-</div>
+		{:else if technologies.length == 0}
+			<div class="text-center">No technologies with this selection.</div>
+		{:else if carriers.length == 0}
+			<div class="text-center">No carriers with this selection.</div>
+		{:else if selected_solution == null}
+			<div class="text-center">No solution selected.</div>
+		{:else if locations.length == 0}
+			<div class="text-center">No locations with this selection.</div>
+		{:else if level_datasets_length == 0}
+			<div class="text-center">No data available for this selection.</div>
+		{:else}
+			<Chart
+				id="level_chart"
+				type="line"
+				{labels}
+				datasets={[]}
+				options={plot_options}
+				pluginOptions={plotPluginOptions}
+				plotName={plot_name}
+				zoom={true}
+				bind:zoomLevel
+				bind:this={level_plot}
+			></Chart>
+			<Chart
+				id="flow_chart"
+				type="line"
+				{labels}
+				datasets={[]}
+				options={plot_options_flows}
+				pluginOptions={plotPluginOptions}
+				plotName={plot_name_flows}
+				zoom={true}
+				bind:zoomLevel
+				bind:this={flow_plot}
+			></Chart>
+		{/if}
+	{/snippet}
+</DiagramPage>
