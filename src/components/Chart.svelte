@@ -286,7 +286,9 @@
 {/snippet}
 
 {#if boxed}
-	<ContentBox content={legend} class="flex"></ContentBox>
+	{#if legendItems.length > 0}
+		<ContentBox content={legend} class="flex"></ContentBox>
+	{/if}
 	{#if patterns.length > 1}
 		<ContentBox class="flex" content={patternSnippet}></ContentBox>
 	{/if}
