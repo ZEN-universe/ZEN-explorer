@@ -38,6 +38,7 @@
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import Entries, { type FilterCriteria } from '$lib/entries';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 
 	// Data
 	let data: Row[][][] = $state([]);

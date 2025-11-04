@@ -55,7 +55,7 @@
 	let selectedLocations: string[] = $state([]);
 	let selectedYears: string[] = $state([]);
 
-	let chart = $state<Chart<'bar'>>();
+	let chart = $state<Chart>();
 
 	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
 	let isNormalized: boolean = $derived(selectedNormalization && selectedSubdivision);
