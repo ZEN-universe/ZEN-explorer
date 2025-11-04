@@ -6,14 +6,14 @@
 	import MultiSelect from '$components/forms/MultiSelect.svelte';
 	import Radio from '$components/forms/Radio.svelte';
 	import Chart from '$components/Chart.svelte';
-	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
-	import FilterRow from '$components/FilterRow.svelte';
 	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import ChartButtons from '$components/ChartButtons.svelte';
 
 	import { get_component_total, get_unit } from '$lib/temple';
-	import { removeDuplicates, toOptions } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { getURLParam, getURLParamAsBoolean, updateURLParams } from '$lib/queryParams.svelte';
@@ -25,7 +25,6 @@
 		onClickLegendForSolutionComparison
 	} from '$lib/compareSolutions';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
-	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 
 	let technologyData: Row[][] = $state([]);
 	let carrierData: Row[][] = $state([]);
@@ -54,10 +53,14 @@
 	let selectedAggregation: 'location' | 'technology_carrier' = $state('location');
 	let selectedNormalization: boolean = $state(false);
 	let selectedLocations: string[] = $state([]);
-	let selectedYears: number[] = $state([]);
+	let selectedYears: string[] = $state([]);
+
+	let chart = $state<Chart<'bar'>>();
 
 	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
 	let isNormalized: boolean = $derived(selectedNormalization && selectedSubdivision);
+
+	//#region Plot options
 
 	let plotName = $derived.by(() => {
 		if (!selectedSolutions[0]?.solution_name) {
@@ -118,6 +121,10 @@
 		}
 	};
 
+	//#endregion
+
+	//#region Derived options for filters
+
 	let divisionVariable = $derived.by(() => {
 		if (selectedSubdivision) {
 			return get_variable_name('carbon_emissions_carrier', selectedSolutions[0]?.version);
@@ -174,8 +181,12 @@
 		selectedLocations = locations;
 	});
 	$effect(() => {
-		selectedYears = years;
+		selectedYears = years.map((year) => year.toString());
 	});
+
+	//#endregion
+
+	//#region Store selections in URL
 
 	// Store parts of the selected variables in the URL
 	onMount(() => {
@@ -197,9 +208,13 @@
 		});
 	});
 
+	//#endregion
+
 	function onSolutionSelected() {
 		fetchData();
 	}
+
+	//#region Fetch and process data
 
 	async function fetchData() {
 		if (selectedSolutions.length === 0 || selectedSolutions.some((s) => s == null)) {
@@ -316,7 +331,7 @@
 			entries = entries
 				.filterByCriteria(filterCriteria)
 				.groupBy(groupByColumns)
-				.filterDataByIndex(selectedYears.map((year) => years.indexOf(year)));
+				.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))));
 
 			if (isNormalized) {
 				entries = entries.normalize();
@@ -408,97 +423,94 @@
 			lineDatasets as ChartDataset<'bar' | 'line'>[]
 		);
 	});
+
+	//#endregion
 </script>
 
-<h1 class="mt-2 mb-4">The Transition Pathway &ndash; Emissions</h1>
-
-<Filters>
-	<FilterSection title="Solution Selection">
-		<MultiSolutionFilter
-			bind:solutions={selectedSolutions}
-			bind:years
-			bind:loading={solutionLoading}
-			disabled={fetching || solutionLoading}
-			onSelected={onSolutionSelected}
-		/>
-	</FilterSection>
-	{#if !solutionLoading && !hasSomeUnsetSolutions}
-		<FilterSection title="Variable Selection">
-			<FilterRow label="Subdivision">
-				{#snippet content(formId)}
-					<ToggleButton {formId} bind:value={selectedSubdivision}></ToggleButton>
-				{/snippet}
-			</FilterRow>
-			{#if !selectedSubdivision}
-				<FilterRow label="Cumulation">
-					{#snippet content(formId)}
-						<Radio
-							{formId}
-							options={toOptions(cumulationOptions)}
-							bind:value={selectedCumulation}
-							disabled={fetching || solutionLoading}
-						></Radio>
-					{/snippet}
-				</FilterRow>
-			{/if}
+<DiagramPage parentTitle="The Transition Pathway" pageTitle="Emissions">
+	{#snippet filters()}
+		<FilterSection title="Solution Selection">
+			<MultiSolutionFilter
+				bind:solutions={selectedSolutions}
+				bind:years
+				bind:loading={solutionLoading}
+				disabled={fetching || solutionLoading}
+				onSelected={onSolutionSelected}
+			/>
 		</FilterSection>
-	{/if}
-	{#if !solutionLoading && !hasSomeUnsetSolutions && !fetching}
-		<FilterSection title="Data Selection">
-			{#if selectedSubdivision}
-				<FilterRow label="Aggregation">
-					{#snippet content(formId)}
-						<Radio {formId} options={aggregationOptions} bind:value={selectedAggregation}></Radio>
-					{/snippet}
-				</FilterRow>
-				<FilterRow label="Normalization">
-					{#snippet content(formId)}
-						<ToggleButton {formId} bind:value={selectedNormalization}></ToggleButton>
-					{/snippet}
-				</FilterRow>
-				{#if selectedAggregation == 'location'}
-					<MultiSelect label="Locations" bind:value={selectedLocations} options={locations}
-					></MultiSelect>
-				{:else}
-					{#if technologies.length > 0}
-						<MultiSelect
-							label="Technologies"
-							bind:value={selectedTechnologies}
-							options={technologies}
+		{#if !solutionLoading && !hasSomeUnsetSolutions}
+			<FilterSection title="Variable Selection">
+				<ToggleButton bind:value={selectedSubdivision} label="Subdivision"></ToggleButton>
+				{#if !selectedSubdivision}
+					<Radio
+						options={cumulationOptions}
+						bind:value={selectedCumulation}
+						label="Cumulation"
+						disabled={fetching || solutionLoading}
+					></Radio>
+				{/if}
+			</FilterSection>
+		{/if}
+		{#if !solutionLoading && !hasSomeUnsetSolutions && !fetching}
+			<FilterSection title="Data Selection">
+				{#if selectedSubdivision}
+					<Radio options={aggregationOptions} bind:value={selectedAggregation} label="Aggregation"
+					></Radio>
+					<ToggleButton bind:value={selectedNormalization} label="Normalization"></ToggleButton>
+					{#if selectedAggregation == 'location'}
+						<MultiSelect bind:value={selectedLocations} options={locations} label="Locations"
 						></MultiSelect>
-					{/if}
-					{#if carriers.length > 0}
-						<MultiSelect label="Carriers" bind:value={selectedCarriers} options={carriers}
-						></MultiSelect>
+					{:else}
+						{#if technologies.length > 0}
+							<MultiSelect
+								bind:value={selectedTechnologies}
+								options={technologies}
+								label="Technologies"
+							></MultiSelect>
+						{/if}
+						{#if carriers.length > 0}
+							<MultiSelect bind:value={selectedCarriers} options={carriers} label="Carriers"
+							></MultiSelect>
+						{/if}
 					{/if}
 				{/if}
-			{/if}
-			<MultiSelect label="Years" bind:value={selectedYears} options={years}></MultiSelect>
-		</FilterSection>
-	{/if}
-</Filters>
-<div class="mt-4">
-	{#if solutionLoading || fetching}
-		<div class="text-center">
-			<div class="spinner-border center" role="status">
-				<span class="visually-hidden">Loading...</span>
+				<MultiSelect
+					bind:value={selectedYears}
+					options={years.map((year) => year.toString())}
+					label="Years"
+				></MultiSelect>
+			</FilterSection>
+		{/if}
+	{/snippet}
+
+	{#snippet buttons()}
+		<ChartButtons chart={chart as Chart} downloadable></ChartButtons>
+	{/snippet}
+
+	{#snippet mainContent()}
+		{#if solutionLoading || fetching}
+			<div class="text-center">
+				<div class="spinner-border center" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
 			</div>
-		</div>
-	{:else if selectedSolutions.length == 0 || hasSomeUnsetSolutions}
-		<div class="text-center">No solution selected</div>
-	{:else if datasets.length == 0 || selectedYears.length == 0}
-		<div class="text-center">No data with this selection.</div>
-	{:else}
-		<Chart
-			type="bar"
-			labels={selectedYears.map((year) => year.toString())}
-			{datasets}
-			options={plotOptions}
-			pluginOptions={plotPluginOptions}
-			{plotName}
-			{patterns}
-			generateLabels={generateLabelsForSolutionComparison}
-			onClickLegend={onClickLegendForSolutionComparison}
-		></Chart>
-	{/if}
-</div>
+		{:else if selectedSolutions.length == 0 || hasSomeUnsetSolutions}
+			<div class="text-center">No solution selected</div>
+		{:else if datasets.length == 0 || selectedYears.length == 0}
+			<div class="text-center">No data with this selection.</div>
+		{:else}
+			<Chart
+				type="bar"
+				labels={selectedYears.map((year) => year.toString())}
+				{datasets}
+				options={plotOptions}
+				pluginOptions={plotPluginOptions}
+				{plotName}
+				{patterns}
+				generateLabels={generateLabelsForSolutionComparison}
+				onClickLegend={onClickLegendForSolutionComparison}
+				bind:this={chart}
+			></Chart>
+		{/if}
+	{/snippet}
+</DiagramPage>
