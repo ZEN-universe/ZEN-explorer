@@ -2,7 +2,7 @@
 	import BaseChart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
 
 	import ColorBox, { type ColorBoxItem } from '$components/ColorBox.svelte';
@@ -52,8 +52,6 @@
 	let chart: BaseChart | undefined = undefined;
 
 	const handleChart: Action<HTMLCanvasElement> = (element) => {
-		BaseChart.defaults.color =
-			window.localStorage.getItem('theme') === 'dark' ? '#FFFFFF' : '#000000';
 		chart = new BaseChart(element, {
 			type: type,
 			data: {
@@ -119,17 +117,34 @@
 		return optionsSnapshot as ChartOptions;
 	}
 
+	//#region Colors for dark mode support
+
+	// Used to temporarily hide and show the chart when updating colors
+	let showChart: boolean = $state(true);
+
 	onMount(() => {
 		updateDefaultColor();
+		window.addEventListener('themeChange', updateDefaultColor);
 	});
 
-	function updateDefaultColor() {
+	onDestroy(() => {
+		window.removeEventListener('themeChange', updateDefaultColor);
+	});
+
+	async function updateDefaultColor() {
+		showChart = false;
 		BaseChart.defaults.color = window.localStorage.getItem('theme') === 'dark' ? '#ddd' : '#222';
 		BaseChart.defaults.borderColor =
 			window.localStorage.getItem('theme') === 'dark'
 				? 'rgba(255, 255, 255, 0.1)'
 				: 'rgba(0, 0, 0, 0.1)';
+		await tick();
+		showChart = true;
 	}
+
+	//#endregion
+
+	//#region Zooming
 
 	function setZoomLevel({ chart }: { chart: BaseChart }) {
 		if (chart == undefined || chart.canvas == null) {
@@ -157,6 +172,10 @@
 	export function zoomOut() {
 		chart?.zoom(0.8);
 	}
+
+	//#endregion
+
+	//#region Legend
 
 	let legendItems: ColorBoxItem[] = $state([]);
 
@@ -196,6 +215,10 @@
 		chart.update();
 	}
 
+	//#endregion
+
+	//#region Download data
+
 	export function downloadData() {
 		const data = chart?.data.datasets;
 
@@ -227,6 +250,8 @@
 		link.click();
 	}
 
+	//#endregion
+
 	function emitClickBarEvent(event: Event) {
 		if (chart == undefined || labels == undefined || onClickBar == undefined) {
 			return;
@@ -238,6 +263,8 @@
 		onClickBar(labels[res[0].index], res[0].datasetIndex);
 	}
 </script>
+
+<svelte:window onresize={() => tick().then(() => chart?.resize())} />
 
 {#snippet legend()}
 	<h2 class="flex items-start font-bold text-lg me-4">
@@ -277,9 +304,11 @@
 {/snippet}
 
 {#snippet chartSnippet()}
-	<div class="position-relative" style:min-height={narrow ? '259px' : '558px'}>
-		<canvas {id} use:handleChart onclick={emitClickBarEvent}></canvas>
-	</div>
+	{#if showChart}
+		<div class="position-relative" style:min-height={narrow ? '259px' : '558px'}>
+			<canvas {id} use:handleChart onclick={emitClickBarEvent}></canvas>
+		</div>
+	{/if}
 {/snippet}
 
 {#if boxed}

@@ -48,6 +48,7 @@
 				localStorage.theme === 'dark' ||
 					(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
 			);
+			window.dispatchEvent(new Event('themeChange'));
 		};
 		updateTheme();
 	</script>
