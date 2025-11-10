@@ -1,7 +1,7 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
 	import SlimSelect, { Option } from 'slim-select';
-	import { tick, untrack } from 'svelte';
+	import { untrack } from 'svelte';
 
 	interface Props {
 		options: ({ label: string; value: string } | string)[];
@@ -47,12 +47,16 @@
 			data: options,
 			settings: {
 				id: formId,
-				showSearch: false
+				showSearch: false,
+				allowDeselect: true
 			},
 			events: {
 				afterChange: (selected: Option[]) => {
 					updateValue(selected[0]?.value);
 				}
+			},
+			cssClasses: {
+				deselect: 'hidden'
 			}
 		});
 		lastOptions = JSON.stringify(options);

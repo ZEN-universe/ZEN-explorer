@@ -144,9 +144,7 @@
 	<!-- Not showing anything while mounting component -->
 {:else}
 	{#each solutions as _, idx}
-		<div class={[
-			idx > 0 && 'border-t border-gray-300 dark:border-gray-600'
-		]}>
+		<div class={[idx > 0 && 'border-t border-gray-300 dark:border-gray-600']}>
 			<!-- This is necessary to prevent weird loading issues when switching between solutions -->
 			{#if activeSecondLevels[idx] !== undefined && activeScenarios[idx] !== undefined}
 				<SolutionFilter

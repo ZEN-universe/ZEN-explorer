@@ -1,6 +1,12 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import type { ChartDataset, ChartOptions, ChartType, ChartTypeRegistry, TooltipItem } from 'chart.js';
+	import type {
+		ChartDataset,
+		ChartOptions,
+		ChartType,
+		ChartTypeRegistry,
+		TooltipItem
+	} from 'chart.js';
 	import { draw as drawPattern } from 'patternomaly';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
@@ -666,10 +672,7 @@
 				{/if}
 			</FilterSection>
 			<FilterSection title="Data Selection">
-				<Radio
-					options={aggregationOptions}
-					bind:value={selectedAggregation}
-					label="Aggregation"
+				<Radio options={aggregationOptions} bind:value={selectedAggregation} label="Aggregation"
 				></Radio>
 				{#if selectedAggregation == aggregationOptions[1]}
 					<MultiSelect bind:value={selectedLocations} options={locations} label="Locations"

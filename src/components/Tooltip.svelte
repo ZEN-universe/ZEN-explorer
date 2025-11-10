@@ -23,8 +23,8 @@
 		untrack(() => {
 			if (!tooltipDiv) return;
 			width = tooltipDiv.getBoundingClientRect().width;
-		})
-	})
+		});
+	});
 	$inspect('width', width);
 
 	let adjustedX = $derived.by(() => {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import FilterLabel from "$components/FilterLabel.svelte";
+	import FilterLabel from '$components/FilterLabel.svelte';
 
 	interface Props {
 		value: boolean;

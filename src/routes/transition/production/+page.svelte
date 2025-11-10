@@ -685,10 +685,7 @@
 						</div>
 						{#if variable.show && variable.show_subdivision}
 							<div>
-								<ToggleButton
-									bind:value={variable.subdivision}
-									label={'with Subdivision'}
-								/>
+								<ToggleButton bind:value={variable.subdivision} label={'with Subdivision'} />
 							</div>
 						{/if}
 					</div>

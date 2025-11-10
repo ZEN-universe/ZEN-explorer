@@ -48,11 +48,11 @@
 				id: formId,
 				isMultiple: true,
 				showSearch: false,
-				maxValuesShown: 100
+				maxValuesShown: 100,
+				allowDeselect: true
 			},
 			cssClasses: {
-				// option: 'bg-white dark:bg-gray-800',
-				// selected: 'bg-blue-500 dark:bg-blue-600'
+				deselect: 'hidden'
 			},
 			data: options,
 			events: {

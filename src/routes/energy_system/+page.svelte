@@ -523,9 +523,7 @@
 				<i class="bi bi-house me-2"></i>
 				<div>Reset zoom</div>
 			</Button>
-			<Button
-				onclick={diagram?.toggleShowStructureOnly}
-			>
+			<Button onclick={diagram?.toggleShowStructureOnly}>
 				<i class="bi bi-diagram-3 me-2"></i>
 				<div>Show only structure: {diagram?.getShowStructureOnly() ? 'On' : 'Off'}</div>
 			</Button>
