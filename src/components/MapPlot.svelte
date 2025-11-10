@@ -11,6 +11,8 @@
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
 	import { allColors } from '$lib/colors';
 	import Tooltip from './Tooltip.svelte';
+	import ContentBox from './ContentBox.svelte';
+	import HelpTooltip from './HelpTooltip.svelte';
 
 	let topology: Topology | null = $state(null);
 	$effect(() => {
@@ -413,7 +415,23 @@
 
 <svelte:window on:resize={handleSize} />
 
-<div class="position-relative">
+{#if technologies.length > 0}
+	<ContentBox class="flex">
+		<h2 class="flex items-start font-bold text-lg me-4">Legend</h2>
+		<div class="flex flex-wrap gap-2">
+			{#each technologies as tech}
+				<div class="flex items-center p-0 text-gray-600 dark:text-gray-400 text-sm">
+					<svg width="40" height="12" class="me-1">
+						<rect width="40" height="12" fill={computeColor(tech)} />
+					</svg>
+					<span>{tech}</span>
+				</div>
+			{/each}
+		</div>
+	</ContentBox>
+{/if}
+
+<ContentBox class="relative overflow-hidden" noPadding>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<svg
 		{width}
@@ -430,20 +448,19 @@
 			cursorPos = [0, 0];
 		}}
 		{id}
-		style:background="#fff"
+		class="bg-white dark:bg-gray-800"
 	>
 		{#if !topology}
 			<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Loading...</text>
 		{:else}
 			<g>
-				<path d={land} style:fill="#e0e0e0" />
+				<path d={land} class="fill-gray-200 dark:fill-gray-700" />
 				{#if regions != null}
-					<path d={regions} fill="none" stroke="#bbb" stroke-width="1px" />
+					<path d={regions} class="fill-none stroke-gray-300 dark:stroke-gray-600 stroke-[1px]" />
 				{/if}
 				<path
 					d={countries}
-					fill="none"
-					stroke="#888"
+					class="fill-none stroke-gray-400 dark:stroke-gray-400"
 					stroke-width={regions == null ? '1px' : '2px'}
 				/>
 			</g>
@@ -474,72 +491,44 @@
 			/>
 		{/if}
 	</svg>
-	<!-- Legend -->
-	{#if technologies.length > 0}
-		<div class="position-absolute bottom-0 end-0 m-2 p-2 bg-black bg-opacity-75 text-white pe-none">
-			<h5 class="visually-hidden">Legend</h5>
-			{#each technologies as t}
-				<div class="d-flex align-items-center">
-					<svg width="16" height="16" class="me-1">
-						<rect width="16" height="16" fill={computeColor(t)} />
-					</svg>
-					{t}
-				</div>
-			{/each}
-		</div>
-	{/if}
-	<!-- Reset zoom button -->
-	{#if topology}
-		<div class="position-absolute top-0 end-0 m-2">
-			<button class="btn btn-secondary" onclick={resetZoom}>
-				<i class="bi bi-house"></i>
-				<div class="visually-hidden">Reset zoom</div>
-			</button>
-		</div>
-	{/if}
 	<!-- Tooltip -->
 	{#if activePie || activeLines.length > 0}
 		<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
-			{#snippet content()}
-				{#if activePie}
-					<h5 class="fs-7 mb-0 px-2">{activePie.label}</h5>
-					{#each activePie.data as d}
-						<div class="px-2 fs-8">
-							<svg width="16" height="16">
-								<rect width="16" height="16" fill={d.color} />
+			{#if activePie}
+				<h5 class="font-bold text-sm mb-0 px-2">{activePie.label}</h5>
+				{#each activePie.data as d}
+					<div class="flex justify-between items-center gap-2 text-xs px-2">
+						<div class="flex items-center">
+							<svg class="me-1" width="12" height="12">
+								<rect width="12" height="12" fill={d.color} />
 							</svg>
-							{d.technology}: {d.value.toFixed(3)}
+							<span>{d.technology}:</span>
+						</div>
+						<div>
+							{d.value.toFixed(3)}
 							{unit}
 						</div>
-					{/each}
-					{#if activePie.data.length > 1}
-						<div class="px-2 fs-8">
-							<strong>Total: {activePie.total.toFixed(3)} {unit}</strong>
-						</div>
-					{/if}
-				{:else if activeLines.length > 0}
-					{#each activeLines as line, i}
-						<div class={['px-2 fs-8', i > 0 && 'border-top border-secondary mt-1 pt-1']}>
-							<h5 class="fs-7 mb-0">{line.label}</h5>
-							{#each line.values as d}
-								<div>
-									{d.technology}: {d.value.toFixed(3)}
-									{unit}
-								</div>
-							{/each}
-						</div>
-					{/each}
+					</div>
+				{/each}
+				{#if activePie.data.length > 1}
+					<div class="flex justify-between items-center gap-1 font-bold text-xs px-2 mt-1">
+						<div>Total:</div>
+						<div>{activePie.total.toFixed(3)} {unit}</div>
+					</div>
 				{/if}
-			{/snippet}
+			{:else if activeLines.length > 0}
+				{#each activeLines as line, i}
+					<div class={['px-2 text-xs', i > 0 && 'border-t border-gray-500 mt-2 pt-2']}>
+						<h5 class="font-bold text-sm mb-0">{line.label}</h5>
+						{#each line.values as d}
+							<div>
+								{d.technology}: {d.value.toFixed(3)}
+								{unit}
+							</div>
+						{/each}
+					</div>
+				{/each}
+			{/if}
 		</Tooltip>
 	{/if}
-</div>
-
-<style>
-	.fs-7 {
-		font-size: 0.875rem;
-	}
-	.fs-8 {
-		font-size: 0.75rem;
-	}
-</style>
+</ContentBox>

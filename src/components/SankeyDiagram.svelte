@@ -586,72 +586,75 @@
 		</svg>
 		<!-- Tooltip -->
 		{#if activeNode !== null}
-			<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop} minX={0} maxX={width}>
-				{#snippet content()}
-					<div class="font-bold text-sm px-2">
-						{activeNode.label}
-					</div>
-					{#if activeNode.linksIn.length > 0}
-						<div class={[activeNode.linksOut.length > 0 && 'border-b border-gray-400 pb-1']}>
-							<div class="font-bold text-xs px-2">Inflows:</div>
-							{#each activeNode.linksIn as linkInIdx}
-								{#if links[linkInIdx].value}
-									<div class="flex justify-between text-xs px-2 text-nowrap">
-										<div class="flex items-center me-1">
-											<svg class="me-1" width="12" height="12">
-												<rect width="12" height="12" fill={links[linkInIdx].source.color} />
-											</svg>
-											<span>{links[linkInIdx].source.label}:</span>
-										</div>
-										<div>
-											{links[linkInIdx].value.toFixed(3)}
-											{links[linkInIdx].unit}
-										</div>
-									</div>
-								{/if}
-							{/each}
-							{#if activeNode.showTotal && activeNode.linksIn.length > 1}
-								<div class="flex justify-between text-xs px-2 pt-1 text-nowrap">
-									<strong>Total:</strong>
-									<div>
-										{sum(activeNode.linksIn.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(
-											3
-										)}
-										{activeNode.unit}
-									</div>
-								</div>
-							{/if}
-						</div>
-					{/if}
-					{#if activeNode.linksOut.length > 0}
-						<div class="font-bold mt-1 text-sm px-2">Outflows:</div>
-						{#each activeNode.linksOut as linkOutIdx}
-							{#if links[linkOutIdx].value}
+			<Tooltip
+				x={tooltipX}
+				y={tooltipY}
+				yOffset={tooltipYOffset}
+				isOnTop={tooltipOnTop}
+				minX={0}
+				maxX={width}
+			>
+				<div class="font-bold text-sm px-2">
+					{activeNode.label}
+				</div>
+				{#if activeNode.linksIn.length > 0}
+					<div class={[activeNode.linksOut.length > 0 && 'border-b border-gray-400 pb-1']}>
+						<div class="font-bold text-xs px-2">Inflows:</div>
+						{#each activeNode.linksIn as linkInIdx}
+							{#if links[linkInIdx].value}
 								<div class="flex justify-between text-xs px-2 text-nowrap">
 									<div class="flex items-center me-1">
 										<svg class="me-1" width="12" height="12">
-											<rect width="12" height="12" fill={links[linkOutIdx].target.color} />
+											<rect width="12" height="12" fill={links[linkInIdx].source.color} />
 										</svg>
-										<span>{links[linkOutIdx].target.label}:</span>
+										<span>{links[linkInIdx].source.label}:</span>
 									</div>
 									<div>
-										{links[linkOutIdx].value.toFixed(3)}
-										{links[linkOutIdx].unit}
+										{links[linkInIdx].value.toFixed(3)}
+										{links[linkInIdx].unit}
 									</div>
 								</div>
 							{/if}
 						{/each}
-						{#if activeNode.showTotal && activeNode.linksOut.length > 1}
+						{#if activeNode.showTotal && activeNode.linksIn.length > 1}
 							<div class="flex justify-between text-xs px-2 pt-1 text-nowrap">
 								<strong>Total:</strong>
 								<div>
-									{sum(activeNode.linksOut.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
+									{sum(activeNode.linksIn.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
 									{activeNode.unit}
 								</div>
 							</div>
 						{/if}
+					</div>
+				{/if}
+				{#if activeNode.linksOut.length > 0}
+					<div class="font-bold mt-1 text-sm px-2">Outflows:</div>
+					{#each activeNode.linksOut as linkOutIdx}
+						{#if links[linkOutIdx].value}
+							<div class="flex justify-between text-xs px-2 text-nowrap">
+								<div class="flex items-center me-1">
+									<svg class="me-1" width="12" height="12">
+										<rect width="12" height="12" fill={links[linkOutIdx].target.color} />
+									</svg>
+									<span>{links[linkOutIdx].target.label}:</span>
+								</div>
+								<div>
+									{links[linkOutIdx].value.toFixed(3)}
+									{links[linkOutIdx].unit}
+								</div>
+							</div>
+						{/if}
+					{/each}
+					{#if activeNode.showTotal && activeNode.linksOut.length > 1}
+						<div class="flex justify-between text-xs px-2 pt-1 text-nowrap">
+							<strong>Total:</strong>
+							<div>
+								{sum(activeNode.linksOut.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
+								{activeNode.unit}
+							</div>
+						</div>
 					{/if}
-				{/snippet}
+				{/if}
 			</Tooltip>
 		{/if}
 	</div>
@@ -689,9 +692,5 @@
 
 	.cycle-link:hover {
 		opacity: 0.5;
-	}
-
-	.text-no-break {
-		white-space: nowrap;
 	}
 </style>

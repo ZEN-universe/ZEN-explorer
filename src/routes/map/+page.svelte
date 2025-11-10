@@ -6,16 +6,16 @@
 	import Dropdown from '$components/forms/Dropdown.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import MapPlot from '$components/MapPlot.svelte';
-	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
-	import FilterRow from '$components/FilterRow.svelte';
 	import type { MapPlotData } from '$components/MapPlot.svelte';
 	import type { ActivatedSolution, Row, System } from '$lib/types';
 
 	import { get_component_total } from '$lib/temple';
 	import { availableMaps } from '$lib/constants';
-	import { removeDuplicates, toOptions } from '$lib/utils';
+	import { removeDuplicates } from '$lib/utils';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import Button from '$components/Button.svelte';
 
 	interface AggregatedData {
 		[location: string]: { technology: string; years: number[] }[];
@@ -54,6 +54,8 @@
 			{}
 		);
 	});
+
+	//#region Functions and effects
 
 	$effect(() => {
 		years;
@@ -124,6 +126,10 @@
 		return (selected_solution.detail.system[key] || []) as string[];
 	});
 
+	//#endregion
+
+	//#region Synchronize URL parameters
+
 	// Set URL parameters
 	onMount(() => {
 		selected_technology_type = getURLParam('tech') || selected_technology_type;
@@ -145,6 +151,10 @@
 			});
 		});
 	});
+
+	//#endregion
+
+	//#region Data fetching and processing
 
 	async function solution_changed() {
 		await fetch_data();
@@ -303,91 +313,82 @@
 			[Number.MAX_SAFE_INTEGER, 0]
 		);
 	});
+
+	//#endregion
 </script>
 
-<h1 class="mt-2 mb-4">The Map</h1>
-
-<Filters>
-	<FilterSection title="Solution Selection">
-		<SolutionFilter
-			bind:years
-			bind:selected_solution
-			bind:loading={solution_loading}
-			solutionSelected={solution_changed}
-			disabled={fetching || solution_loading}
-		/>
-	</FilterSection>
-	{#if !solution_loading && selected_solution}
-		<FilterSection title="Variable Selection">
-			<FilterRow label="Technology Type">
-				{#snippet content(formId)}
+<DiagramPage parentTitle="The Map" pageTitle="Map">
+	{#snippet filters()}
+		<FilterSection title="Solution Selection">
+			<SolutionFilter
+				bind:years
+				bind:selected_solution
+				bind:loading={solution_loading}
+				solutionSelected={solution_changed}
+				disabled={fetching || solution_loading}
+			/>
+		</FilterSection>
+		{#if !solution_loading && selected_solution}
+			<FilterSection title="Variable Selection">
+				<Dropdown
+					options={technology_types}
+					bind:value={selected_technology_type}
+					label="Technology Type"
+					disabled={fetching || solution_loading}
+				></Dropdown>
+				{#if selected_technology_type == 'storage'}
+					<Radio
+						options={storage_type_options}
+						bind:value={selected_storage_type}
+						label="Storage Type"
+						disabled={fetching || solution_loading}
+					></Radio>
+				{/if}
+				{#if selected_technology_type != null && carriers.length > 0}
 					<Dropdown
-						{formId}
-						options={toOptions(technology_types)}
-						bind:value={selected_technology_type}
+						options={carriers}
+						bind:value={selected_carrier}
+						label="Carrier"
 						disabled={fetching || solution_loading}
 					></Dropdown>
-				{/snippet}
-			</FilterRow>
-			{#if selected_technology_type == 'storage'}
-				<FilterRow label="Storage Type">
-					{#snippet content(formId)}
-						<Radio
-							{formId}
-							options={toOptions(storage_type_options)}
-							bind:value={selected_storage_type}
-							disabled={fetching || solution_loading}
-						></Radio>
-					{/snippet}
-				</FilterRow>
-			{/if}
-			{#if selected_technology_type != null && carriers.length > 0}
-				<FilterRow label="Carrier">
-					{#snippet content(formId)}
-						<Dropdown
-							{formId}
-							options={toOptions(carriers)}
-							bind:value={selected_carrier}
-							disabled={fetching || solution_loading}
-						></Dropdown>
-					{/snippet}
-				</FilterRow>
-			{/if}
-		</FilterSection>
-		{#if fetchedData && selected_technology_type && selected_carrier}
-			<FilterSection title="Data Selection">
-				<FilterRow label="Year">
-					{#snippet content(formId)}
-						<Dropdown
-							{formId}
-							bind:value={selected_year}
-							options={toOptions(years.map((year) => year.toString()))}
-						></Dropdown>
-					{/snippet}
-				</FilterRow>
-				<FilterRow label="Map">
-					{#snippet content(formId)}
-						<Dropdown {formId} bind:value={selected_map} options={maps}></Dropdown>
-					{/snippet}
-				</FilterRow>
+				{/if}
 			</FilterSection>
+			{#if fetchedData && selected_technology_type && selected_carrier}
+				<FilterSection title="Data Selection">
+					<Dropdown
+						bind:value={selected_year}
+						options={years.map((year) => year.toString())}
+						label="Year"
+					></Dropdown>
+					<Dropdown bind:value={selected_map} options={maps} label="Map"></Dropdown>
+				</FilterSection>
+			{/if}
 		{/if}
-	{/if}
-</Filters>
+	{/snippet}
 
-<div class="my-4 border rounded overflow-hidden">
-	{#if pieData && lineData}
-		<MapPlot
-			bind:this={plot}
-			{pieData}
-			{lineData}
-			{minTotal}
-			{maxTotal}
-			{minEdge}
-			{maxEdge}
-			nodeCoords={coords}
-			{unit}
-			map={selected_map}
-		/>
-	{/if}
-</div>
+	{#snippet buttons()}
+		<div class="flex justify-end items-end h-full gap-4">
+			<Button onclick={plot?.resetZoom}>
+				<i class="bi bi-house me-2"></i>
+				<div class="visually-hidden">Reset zoom</div>
+			</Button>
+		</div>
+	{/snippet}
+
+	{#snippet mainContent()}
+		{#if pieData && lineData}
+			<MapPlot
+				bind:this={plot}
+				{pieData}
+				{lineData}
+				{minTotal}
+				{maxTotal}
+				{minEdge}
+				{maxEdge}
+				nodeCoords={coords}
+				{unit}
+				map={selected_map}
+			/>
+		{/if}
+	{/snippet}
+</DiagramPage>

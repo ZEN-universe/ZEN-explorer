@@ -7,11 +7,11 @@
 		y: number;
 		yOffset?: number;
 		isOnTop?: boolean;
-		content: Snippet<[]>;
+		children: Snippet<[]>;
 		minX?: number;
 		maxX?: number;
 	}
-	let { x, y, yOffset = 0, isOnTop = true, content, minX, maxX }: Props = $props();
+	let { x, y, yOffset = 0, isOnTop = true, children, minX, maxX }: Props = $props();
 
 	let tooltipDiv = $state<HTMLDivElement>();
 
@@ -44,7 +44,7 @@
 </script>
 
 <div
-	class="absolute bg-black dark:bg-white opacity-75 text-white dark:bg-black py-2 rounded pe-0 z-3"
+	class="absolute bg-black dark:bg-white opacity-75 text-white dark:text-black py-2 rounded pe-0 z-3"
 	style:left={`${adjustedX}px`}
 	style:top={`${adjustedY}px`}
 	style:transform={isOnTop ? `translate(-50%, -100%)` : `translate(-50%, 0%)`}
@@ -52,7 +52,7 @@
 	transition:fade={{ duration: 300 }}
 	bind:this={tooltipDiv}
 >
-	{@render content()}
+	{@render children()}
 </div>
 
 <svg
