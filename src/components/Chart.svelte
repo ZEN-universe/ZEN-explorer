@@ -142,11 +142,13 @@
 	}
 
 	function updateDefaultColor() {
-		BaseChart.defaults.color = window.localStorage.getItem('theme') === 'dark' ? '#ddd' : '#222';
+		const isDark = window.localStorage.getItem('theme') === 'dark' || (
+			!window.localStorage.getItem('theme') &&
+			window.matchMedia('(prefers-color-scheme: dark)').matches
+		);
+		BaseChart.defaults.color = isDark ? '#ddd' : '#222';
 		BaseChart.defaults.borderColor =
-			window.localStorage.getItem('theme') === 'dark'
-				? 'rgba(255, 255, 255, 0.1)'
-				: 'rgba(0, 0, 0, 0.1)';
+			isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 	}
 
 	//#endregion
