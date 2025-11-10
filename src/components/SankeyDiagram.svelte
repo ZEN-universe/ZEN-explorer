@@ -533,6 +533,7 @@
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<svg
 			{id}
+			class="max-w-full"
 			{width}
 			{height}
 			bind:this={svg}
@@ -572,9 +573,12 @@
 							<text
 								x={node.x + NODE_WIDTH / 2}
 								y={node.dy > 16 ? node.y + node.dy / 2 : node.y - 2}
+								class={[
+									node.dy > 16 && (isDarkBackground(node.color) ? 'fill-white' : 'fill-black'),
+									node.dy <= 16 && 'fill-black dark:fill-white'
+								]}
 								text-anchor="middle"
 								dominant-baseline={node.dy > 16 ? 'middle' : 'auto'}
-								fill={node.dy > 16 && isDarkBackground(node.color) ? '#fff' : '#000'}
 							>
 								{node.label}
 								{node.unitSuffix ? ` [${node.unit}]` : ''}

@@ -11,9 +11,9 @@
 </script>
 
 {#if zoomable || downloadable}
-	<div class="flex justify-end items-end h-full gap-4">
+	<div class="flex flex-wrap justify-end items-end h-full gap-4">
 		{#if zoomable}
-			<div class={['flex items-center', downloadable && 'me-2']}>
+			<div class={['flex flex-wrap items-center', downloadable && 'me-2']}>
 				<Button class="rounded-l-lg rounded-r-none" onclick={chart?.resetZoom}>
 					<i class="bi bi-house me-2"></i>
 					<div>Reset zoom</div>

@@ -55,17 +55,17 @@
 </svelte:head>
 
 <nav
-	class="grid grid-cols-8 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2"
+	class="flex gap-4 xl:gap-0 xl:grid grid-cols-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2"
 >
-	<a class="col-span-2 text-xl font-semibold flex items-center" href={resolve('/')}>
+	<a class="text-xl font-semibold flex items-center" href={resolve('/')}>
 		<img src="/logo.png" alt="ZEN-garden Logo" class="inline h-8 mr-2" />
 		ZEN-garden
 	</a>
-	<div class="col-span-5 px-2">
-		<ul class="flex items-end gap-8 xl:gap-12 hidden lg:flex">
+	<div class="col-span-3 px-2 flex justify-end lg:justify-between items-center flex-1">
+		<ul class="hidden lg:flex items-end gap-6 xl:gap-12">
 			<li>
 				<div class="uppercase tracking-wide text-sm text-gray-400">The Transition Pathway</div>
-				<ul class="flex gap-4 xl:gap-6 text-lg font-semibold">
+				<ul class="flex gap-4 2xl:gap-6 text-lg font-semibold">
 					{#each Object.entries(transition_urls) as [title, url]}
 						<li>
 							<a
@@ -116,37 +116,37 @@
 				>
 			</li>
 		</ul>
-	</div>
-	<div class="flex justify-end items-center gap-2">
-		<button
-			class="rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 h-10 w-10"
-			onclick={toggleTheme}
-			aria-label="Toggle theme"
-		>
-			{#if theme === 'light'}
-				<i class="bi bi-sun-fill" id="theme-toggle-light-icon"></i>
-			{:else if theme === 'dark'}
-				<i class="bi bi-moon-stars-fill" id="theme-toggle-dark-icon"></i>
-			{:else}
-				<i class="bi bi-palette-fill" id="theme-toggle-dark-icon"></i>
-			{/if}
-		</button>
-		<button
-			class="rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 lg:hidden"
-			aria-controls="sidebar-nav"
-			aria-expanded={showSidebarNav ? 'true' : 'false'}
-			aria-label="Toggle navigation"
-			onclick={toggleNavigation}
-		>
-			<svg width="24" height="24" viewBox="0 0 24 24">
-				<path
-					stroke="currentColor"
-					stroke-linecap="round"
-					stroke-width="2"
-					d="M4 12h16M4 6h16M4 18h16"
-				></path>
-			</svg>
-		</button>
+		<div class="flex justify-end items-center gap-2">
+			<button
+				class="rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 h-10 w-10"
+				onclick={toggleTheme}
+				aria-label="Toggle theme"
+			>
+				{#if theme === 'light'}
+					<i class="bi bi-sun-fill" id="theme-toggle-light-icon"></i>
+				{:else if theme === 'dark'}
+					<i class="bi bi-moon-stars-fill" id="theme-toggle-dark-icon"></i>
+				{:else}
+					<i class="bi bi-palette-fill" id="theme-toggle-dark-icon"></i>
+				{/if}
+			</button>
+			<button
+				class="rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 lg:hidden"
+				aria-controls="sidebar-nav"
+				aria-expanded={showSidebarNav ? 'true' : 'false'}
+				aria-label="Toggle navigation"
+				onclick={toggleNavigation}
+			>
+				<svg width="24" height="24" viewBox="0 0 24 24">
+					<path
+						stroke="currentColor"
+						stroke-linecap="round"
+						stroke-width="2"
+						d="M4 12h16M4 6h16M4 18h16"
+					></path>
+				</svg>
+			</button>
+		</div>
 	</div>
 </nav>
 

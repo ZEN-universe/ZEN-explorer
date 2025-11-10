@@ -12,7 +12,7 @@
 	let { parentTitle, pageTitle, filters, buttons, mainContent }: Props = $props();
 </script>
 
-<div class="grid grid-cols-4 grid-rows-[min-content_1fr] grow gap-4 p-4">
+<div class="grid lg:grid-cols-4 grid-rows-[min-content_1fr] grow gap-4 p-4">
 	<div class="flex items-end justify-between">
 		<div>
 			<div class="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
@@ -21,10 +21,10 @@
 			<h1 class="text-3xl font-bold">{pageTitle}</h1>
 		</div>
 	</div>
-	<div class="col-span-3">
+	<div class="lg:col-span-3 order-3 lg:order-2">
 		{@render buttons?.()}
 	</div>
-	<div>
+	<div class="order-2 lg:order-3">
 		<ContentBox>
 			<h2 class="font-bold text-lg mb-4">Filters</h2>
 			<div>
@@ -32,7 +32,7 @@
 			</div>
 		</ContentBox>
 	</div>
-	<main class="col-span-3">
+	<main class="lg:col-span-3 order-4">
 		{@render mainContent()}
 	</main>
 </div>

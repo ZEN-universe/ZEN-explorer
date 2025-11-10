@@ -42,4 +42,8 @@
 			--ss-disabled-color: var(--color-gray-700);
 		}
 	}
+
+	.ss-main .ss-values .ss-single {
+		overflow-wrap: anywhere;
+	}
 }

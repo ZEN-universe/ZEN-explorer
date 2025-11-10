@@ -51,12 +51,14 @@
 
 	let chart: BaseChart | undefined = undefined;
 
+	let manualChartDatasets: ChartDataset[] | undefined = undefined;
+
 	const handleChart: Action<HTMLCanvasElement> = (element) => {
 		chart = new BaseChart(element, {
 			type: type,
 			data: {
 				labels: labels,
-				datasets: $state.snapshot(datasets) as ChartDataset[]
+				datasets: manualChartDatasets ?? ($state.snapshot(datasets) as ChartDataset[])
 			},
 			options: getOptions(),
 			plugins: [htmlLegend, ...plugins]
@@ -68,7 +70,7 @@
 			}
 			chart.data = {
 				labels: labels,
-				datasets: $state.snapshot(datasets) as ChartDataset[]
+				datasets: manualChartDatasets ?? ($state.snapshot(datasets) as ChartDataset[])
 			};
 			Object.assign(chart.options, getOptions());
 			chart.update();
@@ -79,7 +81,8 @@
 		if (chart == undefined || chart.canvas == null) {
 			return;
 		}
-		chart.data.datasets = $state.snapshot(datasets) as ChartDataset[];
+		manualChartDatasets = $state.snapshot(datasets) as ChartDataset[];
+		chart.data.datasets = manualChartDatasets;
 		chart.update();
 		updateZoomLevel();
 	}
@@ -124,22 +127,26 @@
 
 	onMount(() => {
 		updateDefaultColor();
-		window.addEventListener('themeChange', updateDefaultColor);
+		window.addEventListener('themeChange', onUpdateColor);
 	});
 
 	onDestroy(() => {
-		window.removeEventListener('themeChange', updateDefaultColor);
+		window.removeEventListener('themeChange', onUpdateColor);
 	});
 
-	async function updateDefaultColor() {
+	async function onUpdateColor() {
 		showChart = false;
+		updateDefaultColor();
+		await tick();
+		showChart = true;
+	}
+
+	function updateDefaultColor() {
 		BaseChart.defaults.color = window.localStorage.getItem('theme') === 'dark' ? '#ddd' : '#222';
 		BaseChart.defaults.borderColor =
 			window.localStorage.getItem('theme') === 'dark'
 				? 'rgba(255, 255, 255, 0.1)'
 				: 'rgba(0, 0, 0, 0.1)';
-		await tick();
-		showChart = true;
 	}
 
 	//#endregion
