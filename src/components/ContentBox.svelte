@@ -2,10 +2,11 @@
 	import type { Snippet } from 'svelte';
 
 	interface Props {
-		content: Snippet;
+		children: Snippet;
 		class?: string;
+		noPadding?: boolean;
 	}
-	let { content, class: classNames = '' }: Props = $props();
+	let { children, class: classNames = '', noPadding = false }: Props = $props();
 </script>
 
 <div
@@ -13,9 +14,10 @@
 		'bg-white dark:bg-gray-800',
 		'shadow-lg shadow-black/10 dark:shadow-white/5',
 		'rounded-lg', 
-        'p-4 mb-4',
+        'mb-4',
+		!noPadding && 'p-4',
 		classNames
 	]}
 >
-	{@render content()}
+	{@render children()}
 </div>

@@ -247,10 +247,7 @@
 	<div class="flex flex-wrap gap-2">
 		{#each legendItems as item}
 			<button
-				class="flex items-center p-0 text-gray-600 dark:text-gray-400"
-				style:font-size="12px"
-				style:letter-spacing="0.0em"
-				style:font-family="Arial, sans-serif"
+				class="flex items-center p-0 text-gray-600 dark:text-gray-400 text-sm"
 				onclick={() => toggleLegendItem(item)}
 			>
 				<ColorBox item={item as ColorBoxItem}></ColorBox>
@@ -287,12 +284,12 @@
 
 {#if boxed}
 	{#if legendItems.length > 0}
-		<ContentBox content={legend} class="flex"></ContentBox>
+		<ContentBox class="flex" children={legend}></ContentBox>
 	{/if}
 	{#if patterns.length > 1}
-		<ContentBox class="flex" content={patternSnippet}></ContentBox>
+		<ContentBox class="flex" children={patternSnippet}></ContentBox>
 	{/if}
-	<ContentBox content={chartSnippet}></ContentBox>
+	<ContentBox children={chartSnippet}></ContentBox>
 {:else}
 	<div class="flex mb-4">
 		{@render legend()}

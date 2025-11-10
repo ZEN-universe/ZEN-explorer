@@ -26,12 +26,10 @@
 	</div>
 	<div>
 		<ContentBox>
-			{#snippet content()}
-				<h2 class="font-bold text-lg mb-4">Filters</h2>
-				<div>
-					{@render filters()}
-				</div>
-			{/snippet}
+			<h2 class="font-bold text-lg mb-4">Filters</h2>
+			<div>
+				{@render filters()}
+			</div>
 		</ContentBox>
 	</div>
 	<main class="col-span-3">

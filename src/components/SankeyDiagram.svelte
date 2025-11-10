@@ -26,6 +26,8 @@
 	import Tooltip from './Tooltip.svelte';
 	import { debounce } from '$lib/debounce';
 	import { sum } from 'd3';
+	import ContentBox from './ContentBox.svelte';
+	import HelpTooltip from './HelpTooltip.svelte';
 
 	let width = $state(936);
 	let height = $state(800);
@@ -331,7 +333,7 @@
 	/**
 	 * Reset the zoom to the initial state.
 	 */
-	function resetZoom() {
+	export function resetZoom() {
 		if (!svg) return;
 		select(svg).call(zoomBehavior.transform as any, zoomIdentity);
 	}
@@ -492,167 +494,168 @@
 	// ===================
 
 	let showStructureOnly = $state(false);
+
+	export function getShowStructureOnly(): boolean {
+		return showStructureOnly;
+	}
+
+	export function toggleShowStructureOnly() {
+		showStructureOnly = !showStructureOnly;
+	}
 </script>
 
 <svelte:window onresize={handleSize} onscroll={updateSvgRect} />
 
-<!-- Reset zoom button -->
-<div class="d-flex justify-content-end mb-2">
-	<button class="btn btn-outline-secondary d-flex" onclick={resetZoom}>
-		<i class="bi bi-house me-2"></i>
-		<div>Reset zoom</div>
-	</button>
-	<button
-		class="btn btn-outline-secondary d-flex ms-2"
-		onclick={() => (showStructureOnly = !showStructureOnly)}
-	>
-		<i class="bi bi-diagram-3 me-2"></i>
-		<div>Show only structure: {showStructureOnly ? 'On' : 'Off'}</div>
-	</button>
-</div>
-<div>
-	<!-- Legend -->
+<ContentBox class="flex">
+	<h2 class="flex items-start font-bold text-lg me-4">
+		<span class="me-2">Legend</span>
+		<HelpTooltip content="Click on legend items to focus on into in the diagram." />
+	</h2>
 	{#if legendItems && legendItems.length > 0}
-		<div class="mb-2 d-flex flex-wrap justify-content-center">
+		<div class="flex flex-wrap gap-2">
 			{#each legendItems as item}
 				<button
-					class="btn btn-text rounded-0 d-flex align-items-center p-0 me-2 text-secondary"
-					style:font-size="12px"
+					class="flex items-center p-0 text-gray-600 dark:text-gray-400 text-sm"
 					onclick={() => focusCarrier(item.carrier)}
 				>
 					<svg width="40" height="12" class="me-1">
 						<rect width="40" height="12" fill={item.color} />
 					</svg>
-					<span class="fs-7">{item.carrier}</span>
+					<span>{item.carrier}</span>
 				</button>
 			{/each}
 		</div>
 	{/if}
-</div>
-<div class="position-relative border rounded">
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<svg
-		{id}
-		{width}
-		{height}
-		bind:this={svg}
-		viewBox={`${minX - 1} ${-cycleLaneHeight} ${maxWidth + 4} ${maxHeight + 2 * cycleLaneHeight + 20}`}
-		onmousemove={updatePointerPosition}
-		onmouseleave={() => (pointerPosition = null)}
-	>
-		<g {transform}>
-			<g class="links">
-				{#each links.toSorted((a, b) => b.value - a.value) as link}
-					{#if link.causesCycle}
-						<path class="cycle-link" d={linkPath(link)} style:fill={link.color}>
-							<title>{linkTitle(link)}</title>
-						</path>
-					{:else}
-						<path
-							class="link"
-							d={linkPath(link)}
-							style:stroke={link.color}
-							style:stroke-width={Math.max(1, link.dy)}
-						>
-							<title>{linkTitle(link)}</title>
-						</path>
+</ContentBox>
+
+<ContentBox noPadding>
+	<div class="relative">
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<svg
+			{id}
+			{width}
+			{height}
+			bind:this={svg}
+			viewBox={`${minX - 10} ${-cycleLaneHeight} ${maxWidth + 20} ${maxHeight + 2 * cycleLaneHeight + 20}`}
+			onmousemove={updatePointerPosition}
+			onmouseleave={() => (pointerPosition = null)}
+		>
+			<g {transform}>
+				<g class="links">
+					{#each links.toSorted((a, b) => b.value - a.value) as link}
+						{#if link.causesCycle}
+							<path class="cycle-link" d={linkPath(link)} style:fill={link.color}>
+								<title>{linkTitle(link)}</title>
+							</path>
+						{:else}
+							<path
+								class="link"
+								d={linkPath(link)}
+								style:stroke={link.color}
+								style:stroke-width={Math.max(1, link.dy)}
+							>
+								<title>{linkTitle(link)}</title>
+							</path>
+						{/if}
+					{/each}
+				</g>
+				<g class="nodes">
+					{#each nodes as node, idx}
+						<g class="node" data-idx={idx}>
+							<rect
+								x={node.x}
+								y={node.y + 0.5}
+								width={NODE_WIDTH}
+								height={Math.max(0.1, node.dy - 1)}
+								fill={node.color}
+							></rect>
+							<text
+								x={node.x + NODE_WIDTH / 2}
+								y={node.dy > 16 ? node.y + node.dy / 2 : node.y - 2}
+								text-anchor="middle"
+								dominant-baseline={node.dy > 16 ? 'middle' : 'auto'}
+								fill={node.dy > 16 && isDarkBackground(node.color) ? '#fff' : '#000'}
+							>
+								{node.label}
+								{node.unitSuffix ? ` [${node.unit}]` : ''}
+							</text>
+						</g>
+					{/each}
+				</g>
+			</g>
+		</svg>
+		<!-- Tooltip -->
+		{#if activeNode !== null}
+			<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop} minX={0} maxX={width}>
+				{#snippet content()}
+					<div class="font-bold text-sm px-2">
+						{activeNode.label}
+					</div>
+					{#if activeNode.linksIn.length > 0}
+						<div class={[activeNode.linksOut.length > 0 && 'border-b border-gray-400 pb-1']}>
+							<div class="font-bold text-xs px-2">Inflows:</div>
+							{#each activeNode.linksIn as linkInIdx}
+								{#if links[linkInIdx].value}
+									<div class="flex justify-between text-xs px-2 text-nowrap">
+										<div class="flex items-center me-1">
+											<svg class="me-1" width="12" height="12">
+												<rect width="12" height="12" fill={links[linkInIdx].source.color} />
+											</svg>
+											<span>{links[linkInIdx].source.label}:</span>
+										</div>
+										<div>
+											{links[linkInIdx].value.toFixed(3)}
+											{links[linkInIdx].unit}
+										</div>
+									</div>
+								{/if}
+							{/each}
+							{#if activeNode.showTotal && activeNode.linksIn.length > 1}
+								<div class="flex justify-between text-xs px-2 pt-1 text-nowrap">
+									<strong>Total:</strong>
+									<div>
+										{sum(activeNode.linksIn.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(
+											3
+										)}
+										{activeNode.unit}
+									</div>
+								</div>
+							{/if}
+						</div>
 					{/if}
-				{/each}
-			</g>
-			<g class="nodes">
-				{#each nodes as node, idx}
-					<g class="node" data-idx={idx}>
-						<rect
-							x={node.x}
-							y={node.y + 0.5}
-							width={NODE_WIDTH}
-							height={Math.max(0.1, node.dy - 1)}
-							fill={node.color}
-						></rect>
-						<text
-							x={node.x + NODE_WIDTH / 2}
-							y={node.dy > 16 ? node.y + node.dy / 2 : node.y - 2}
-							text-anchor="middle"
-							dominant-baseline={node.dy > 16 ? 'middle' : 'auto'}
-							fill={node.dy > 16 && isDarkBackground(node.color) ? '#fff' : '#000'}
-						>
-							{node.label}
-							{node.unitSuffix ? ` [${node.unit}]` : ''}
-						</text>
-					</g>
-				{/each}
-			</g>
-		</g>
-	</svg>
-	<!-- Tooltip -->
-	{#if activeNode !== null}
-		<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
-			{#snippet content()}
-				<div class="fw-bold fs-7 px-2">
-					{activeNode.label}
-				</div>
-				{#if activeNode.linksIn.length > 0}
-					<div class={[activeNode.linksOut.length > 0 && 'border-bottom border-secondary pb-1']}>
-						<div class="fw-bold mt-1 fs-7 px-2">Inflows:</div>
-						{#each activeNode.linksIn as linkInIdx}
-							{#if links[linkInIdx].value}
-								<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
-									<div class="me-1">
-										<svg width="12" height="12">
-											<rect width="12" height="12" fill={links[linkInIdx].source.color} />
+					{#if activeNode.linksOut.length > 0}
+						<div class="font-bold mt-1 text-sm px-2">Outflows:</div>
+						{#each activeNode.linksOut as linkOutIdx}
+							{#if links[linkOutIdx].value}
+								<div class="flex justify-between text-xs px-2 text-nowrap">
+									<div class="flex items-center me-1">
+										<svg class="me-1" width="12" height="12">
+											<rect width="12" height="12" fill={links[linkOutIdx].target.color} />
 										</svg>
-										{links[linkInIdx].source.label}:
+										<span>{links[linkOutIdx].target.label}:</span>
 									</div>
 									<div>
-										{links[linkInIdx].value.toFixed(3)}
-										{links[linkInIdx].unit}
+										{links[linkOutIdx].value.toFixed(3)}
+										{links[linkOutIdx].unit}
 									</div>
 								</div>
 							{/if}
 						{/each}
-						{#if activeNode.showTotal && activeNode.linksIn.length > 1}
-							<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
+						{#if activeNode.showTotal && activeNode.linksOut.length > 1}
+							<div class="flex justify-between text-xs px-2 pt-1 text-nowrap">
 								<strong>Total:</strong>
 								<div>
-									{sum(activeNode.linksIn.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
+									{sum(activeNode.linksOut.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
 									{activeNode.unit}
 								</div>
 							</div>
 						{/if}
-					</div>
-				{/if}
-				{#if activeNode.linksOut.length > 0}
-					<div class="fw-bold mt-1 fs-7 px-2">Outflows:</div>
-					{#each activeNode.linksOut as linkOutIdx}
-						{#if links[linkOutIdx].value}
-							<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
-								<div class="me-1">
-									<svg width="12" height="12">
-										<rect width="12" height="12" fill={links[linkOutIdx].target.color} />
-									</svg>
-									{links[linkOutIdx].target.label}:
-								</div>
-								<div>
-									{links[linkOutIdx].value.toFixed(3)}
-									{links[linkOutIdx].unit}
-								</div>
-							</div>
-						{/if}
-					{/each}
-					{#if activeNode.showTotal && activeNode.linksOut.length > 1}
-						<div class="d-flex justify-content-between fs-8 px-2 text-no-break">
-							<strong>Total:</strong>
-							<div>
-								{sum(activeNode.linksOut.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
-								{activeNode.unit}
-							</div>
-						</div>
 					{/if}
-				{/if}
-			{/snippet}
-		</Tooltip>
-	{/if}
-</div>
+				{/snippet}
+			</Tooltip>
+		{/if}
+	</div>
+</ContentBox>
 
 <style>
 	svg {
@@ -686,13 +689,6 @@
 
 	.cycle-link:hover {
 		opacity: 0.5;
-	}
-
-	.fs-7 {
-		font-size: 0.875rem;
-	}
-	.fs-8 {
-		font-size: 0.75rem;
 	}
 
 	.text-no-break {

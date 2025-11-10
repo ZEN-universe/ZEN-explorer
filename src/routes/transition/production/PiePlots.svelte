@@ -97,41 +97,35 @@
 
 {#if year == null || solution == null}
 	<ContentBox>
-		{#snippet content()}
-			<div class="text-center text-muted my-4">
-				Click on a bar to see a production and consumption breakdown.
-			</div>
-		{/snippet}
+		<div class="text-center text-muted my-4">
+			Click on a bar to see a production and consumption breakdown.
+		</div>
 	</ContentBox>
 {:else}
 	<div class="grid grid-cols-2 gap-4">
 		<ContentBox>
-			{#snippet content()}
-				<h3 class="font-semibold text-lg mb-4">
-					Breakdown of Production for {year} ({solution})
-				</h3>
-				<Chart
-					type="pie"
-					datasets={productionDatasets}
-					labels={productionLabels}
-					options={productionOptions}
-					boxed={false}
-				></Chart>
-			{/snippet}
+			<h3 class="font-semibold text-lg mb-4">
+				Breakdown of Production for {year} ({solution})
+			</h3>
+			<Chart
+				type="pie"
+				datasets={productionDatasets}
+				labels={productionLabels}
+				options={productionOptions}
+				boxed={false}
+			></Chart>
 		</ContentBox>
 		<ContentBox>
-			{#snippet content()}
-				<h3 class="font-semibold text-lg mb-4">
-					Breakdown of Consumption for {year} ({solution})
-				</h3>
-				<Chart
-					type="pie"
-					datasets={consumptionDatasets}
-					labels={consumptionLabels}
-					options={consumptionOptions}
-					boxed={false}
-				></Chart>
-			{/snippet}
+			<h3 class="font-semibold text-lg mb-4">
+				Breakdown of Consumption for {year} ({solution})
+			</h3>
+			<Chart
+				type="pie"
+				datasets={consumptionDatasets}
+				labels={consumptionLabels}
+				options={consumptionOptions}
+				boxed={false}
+			></Chart>
 		</ContentBox>
 	</div>
 {/if}
