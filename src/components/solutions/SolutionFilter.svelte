@@ -5,7 +5,7 @@
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import { removeDuplicates } from '$lib/utils';
 
-	import FilterRow from '$components/FilterRow.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
 
 	import {
 		getSolutionList,
@@ -211,42 +211,14 @@
 </script>
 
 {#if !withoutSolution}
-	<FilterRow label="Solution">
-		{#snippet content(id)}
-			<select {id} class="form-select" bind:value={activeFirstLevel} {disabled}>
-				{#each firstLevels as solution}
-					<option value={solution}>
-						{solution}
-					</option>
-				{/each}
-			</select>
-		{/snippet}
-	</FilterRow>
+	<Dropdown bind:value={activeFirstLevel} label="Solution" {disabled} options={firstLevels}
+	></Dropdown>
 {/if}
 {#if secondLevels.length > 0}
-	<FilterRow label="Subsolution">
-		{#snippet content(id)}
-			<select {id} class="form-select" bind:value={activeSecondLevel} {disabled}>
-				{#each secondLevels as solution}
-					<option value={solution}>
-						{solution}
-					</option>
-				{/each}
-			</select>
-		{/snippet}
-	</FilterRow>
+	<Dropdown bind:value={activeSecondLevel} label="Subsolution" {disabled} options={secondLevels}
+	></Dropdown>
 {/if}
 
 {#if allScenarios.length > 1}
-	<FilterRow label="Scenario">
-		{#snippet content(id)}
-			<select {id} class="form-select" bind:value={activeScenario} {disabled}>
-				{#each scenarios as scenario}
-					<option value={scenario}>
-						{scenario}
-					</option>
-				{/each}
-			</select>
-		{/snippet}
-	</FilterRow>
+	<Dropdown bind:value={activeScenario} label="Scenario" {disabled} options={scenarios}></Dropdown>
 {/if}

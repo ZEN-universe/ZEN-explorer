@@ -3,18 +3,17 @@
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
-	import Dropdown from '$components/Dropdown.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
 	import Chart from '$components/Chart.svelte';
-	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
-	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_energy_balance, get_unit } from '$lib/temple';
-	import { toOptions } from '$lib/utils';
 	import { get_variable_name } from '$lib/variables';
 	import { nextColor, resetColorState as reset_color_picker_state } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes, Entry } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import ChartButtons from '$components/ChartButtons.svelte';
 
 	let energy_balance_data: EnergyBalanceDataframes | null = null;
 	let unit_data: any = $state(null);
@@ -28,13 +27,15 @@
 	let nodes: string[] = $state([]);
 	let carriers: string[] = $state([]);
 	let years: number[] = $state([]);
-	const window_sizes = toOptions(['Hourly', 'Daily', 'Weekly', 'Monthly']);
+	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
 
 	let selected_solution: ActivatedSolution | null = $state(null);
 	let selected_node: string | null = $state(null);
 	let selected_carrier: string | null = $state(null);
 	let selected_year: string | null = $state(null);
 	let selected_window_size = $state('Hourly');
+
+	//#region Plot configuration
 
 	let plot_name: string = $derived.by(() => {
 		if (!selected_solution || !selected_solution.solution_name) {
@@ -165,6 +166,10 @@
 		}
 	};
 
+	//#endregion
+
+	//#region Effects to manage URL parameters and data fetching
+
 	$effect(() => {
 		years;
 		untrack(() => {
@@ -226,6 +231,10 @@
 			});
 		});
 	});
+
+	//#endregion
+
+	//#region Data fetching and dataset computation
 
 	let window_size = $derived(
 		{
@@ -436,104 +445,95 @@
 			duals_plot.updateChart(duals_datasets);
 		}
 	}
+
+	//#endregion
 </script>
 
-<h1 class="mt-2 mb-4">The Energy Balance &ndash; Nodal</h1>
-
-<Filters>
-	<FilterSection title="Solution Selection">
-		<SolutionFilter
-			bind:selected_solution
-			bind:carriers
-			bind:nodes
-			bind:years
-			bind:loading={solution_loading}
-			disabled={fetching || solution_loading}
-		/>
-	</FilterSection>
-	{#if !solution_loading && selected_solution}
-		<FilterSection title="Data Selection">
-			<FilterRow label="Year">
-				{#snippet content(formId)}
-					<Dropdown
-						{formId}
-						options={toOptions(years.map((year) => year.toString()))}
-						bind:value={selected_year}
-						disabled={fetching || solution_loading}
-					></Dropdown>
-				{/snippet}
-			</FilterRow>
-			<FilterRow label="Node">
-				{#snippet content(formId)}
-					<Dropdown
-						{formId}
-						options={toOptions(nodes)}
-						bind:value={selected_node}
-						disabled={fetching || solution_loading}
-					></Dropdown>
-				{/snippet}
-			</FilterRow>
-			<FilterRow label="Carrier">
-				{#snippet content(formId)}
-					<Dropdown
-						{formId}
-						options={toOptions(carriers)}
-						bind:value={selected_carrier}
-						disabled={fetching || solution_loading}
-					></Dropdown>
-				{/snippet}
-			</FilterRow>
-			<FilterRow label="Smoothing Window Size">
-				{#snippet content(formId)}
-					<Dropdown
-						{formId}
-						options={window_sizes}
-						bind:value={selected_window_size}
-						disabled={fetching || solution_loading}
-					></Dropdown>
-				{/snippet}
-			</FilterRow>
+<DiagramPage parentTitle="The Energy Balance" pageTitle="Nodal">
+	{#snippet filters()}
+		<FilterSection title="Solution Selection">
+			<SolutionFilter
+				bind:selected_solution
+				bind:carriers
+				bind:nodes
+				bind:years
+				bind:loading={solution_loading}
+				disabled={fetching || solution_loading}
+			/>
 		</FilterSection>
-	{/if}
-</Filters>
-<div class="my-4">
-	{#if fetching}
-		<div class="text-center">
-			<div class="spinner-border center" role="status">
-				<span class="visually-hidden">Loading...</span>
+		{#if !solution_loading && selected_solution}
+			<FilterSection title="Data Selection">
+				<Dropdown
+					options={years.map((year) => year.toString())}
+					bind:value={selected_year}
+					label="Year"
+					disabled={fetching || solution_loading}
+				></Dropdown>
+				<Dropdown
+					options={nodes}
+					bind:value={selected_node}
+					label="Node"
+					disabled={fetching || solution_loading}
+				></Dropdown>
+				<Dropdown
+					options={carriers}
+					bind:value={selected_carrier}
+					label="Carrier"
+					disabled={fetching || solution_loading}
+				></Dropdown>
+				<Dropdown
+					options={window_sizes}
+					bind:value={selected_window_size}
+					label="Smoothing Window Size"
+					disabled={fetching || solution_loading}
+				></Dropdown>
+			</FilterSection>
+		{/if}
+	{/snippet}
+
+	{#snippet buttons()}
+		<ChartButtons chart={plot as Chart} downloadable zoomable></ChartButtons>
+	{/snippet}
+
+	{#snippet mainContent()}
+		{#if fetching}
+			<div class="text-center">
+				<div class="spinner-border center" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
 			</div>
-		</div>
-	{:else if datasets_length == 0 || selected_solution == null}
-		<div class="text-center">No data with this selection.</div>
-	{:else}
-		<Chart
-			type={number_of_time_steps == 1 ? 'bar' : 'line'}
-			{labels}
-			datasets={[]}
-			options={plot_options}
-			pluginOptions={plotPluginOptions}
-			plotName={plot_name}
-			zoom={true}
-			bind:zoomLevel
-			bind:this={plot}
-		></Chart>
-		{#if duals_datasets_length > 0}
+		{:else if datasets_length == 0 || selected_solution == null}
+			<div class="text-center">No data with this selection.</div>
+		{:else}
 			<Chart
-				id="chart-duals"
 				type={number_of_time_steps == 1 ? 'bar' : 'line'}
 				{labels}
 				datasets={[]}
-				options={duals_plot_options}
+				options={plot_options}
 				pluginOptions={plotPluginOptions}
-				plotName={duals_plot_name}
+				plotName={plot_name}
 				zoom={true}
-				narrow
-				generateLabels={() => []}
 				bind:zoomLevel
-				bind:this={duals_plot}
+				bind:this={plot}
 			></Chart>
-		{:else}
-			<div class="text-center text-muted mt-2">No dual data available.</div>
+			{#if duals_datasets_length > 0}
+				<Chart
+					id="chart-duals"
+					type={number_of_time_steps == 1 ? 'bar' : 'line'}
+					{labels}
+					datasets={[]}
+					options={duals_plot_options}
+					pluginOptions={plotPluginOptions}
+					plotName={duals_plot_name}
+					zoom={true}
+					narrow
+					generateLabels={() => []}
+					bind:zoomLevel
+					bind:this={duals_plot}
+				></Chart>
+			{:else}
+				<div class="text-center text-muted mt-2">No dual data available.</div>
+			{/if}
 		{/if}
-	{/if}
-</div>
+	{/snippet}
+</DiagramPage>

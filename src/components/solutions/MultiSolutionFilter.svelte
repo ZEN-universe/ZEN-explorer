@@ -144,43 +144,42 @@
 	<!-- Not showing anything while mounting component -->
 {:else}
 	{#each solutions as _, idx}
-		{#if idx > 0}
-			<hr />
-		{/if}
-		<!-- This if is necessary to prevent weird loading issues when switching between solutions -->
-		{#if activeSecondLevels[idx] !== undefined && activeScenarios[idx] !== undefined}
-			<SolutionFilter
-				bind:this={solutionFilters[idx]}
-				bind:selected_solution={solutions[idx]}
-				bind:activeFirstLevel
-				bind:activeSecondLevel={activeSecondLevels[idx]}
-				bind:activeScenario={activeScenarios[idx]}
-				bind:loading
-				excludeSolutions={getSolutionsToExclude(idx)}
-				solutionSelected={emitUpdateEvent}
-				{disabled}
-				withoutSolution={idx > 0}
-				urlParamSolution={null}
-				urlParamScenario={null}
-			/>
-		{/if}
-		{#if idx > 0}
-			<div class="row mt-2">
-				<div class="offset-md-3 col-md-9">
-					<button class="btn btn-sm btn-outline-danger" onclick={() => deleteSolution(idx)}
-						>Remove solution from comparison</button
-					>
+		<div class={[idx > 0 && 'border-t border-gray-300 dark:border-gray-600']}>
+			<!-- This is necessary to prevent weird loading issues when switching between solutions -->
+			{#if activeSecondLevels[idx] !== undefined && activeScenarios[idx] !== undefined}
+				<SolutionFilter
+					bind:this={solutionFilters[idx]}
+					bind:selected_solution={solutions[idx]}
+					bind:activeFirstLevel
+					bind:activeSecondLevel={activeSecondLevels[idx]}
+					bind:activeScenario={activeScenarios[idx]}
+					bind:loading
+					excludeSolutions={getSolutionsToExclude(idx)}
+					solutionSelected={emitUpdateEvent}
+					{disabled}
+					withoutSolution={idx > 0}
+					urlParamSolution={null}
+					urlParamScenario={null}
+				/>
+			{/if}
+			{#if idx > 0}
+				<div class="row mb-2">
+					<div class="offset-md-3 col-md-9">
+						<button class="text-red-500 hover:text-red-600" onclick={() => deleteSolution(idx)}>
+							<i class="bi bi-trash3 me-1"></i>
+							Remove solution from comparison
+						</button>
+					</div>
 				</div>
-			</div>
-		{/if}
+			{/if}
+		</div>
 	{/each}
 	{#if moreSolutionsExist && !solutions.includes(null)}
-		<div class="row mt-3">
-			<div class="offset-md-3 col-md-9">
-				<button class="btn btn-sm btn-outline-primary" onclick={addSolution}
-					>Add solution to compare</button
-				>
-			</div>
+		<div class="mb-2">
+			<button class="text-blue-500 hover:text-blue-600" onclick={addSolution}>
+				<i class="bi bi-plus-lg me-1"></i>
+				Add solution to compare
+			</button>
 		</div>
 	{/if}
 {/if}

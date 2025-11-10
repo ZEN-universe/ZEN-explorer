@@ -9,13 +9,13 @@
 	import { getTransportEdges, toOptions } from '$lib/utils';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 
-	import AllCheckbox from '$components/AllCheckbox.svelte';
-	import Dropdown from '$components/Dropdown.svelte';
-	import FilterRow from '$components/FilterRow.svelte';
-	import Filters from '$components/Filters.svelte';
+	import MultiSelect from '$components/forms/MultiSelect.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import SankeyDiagram, { type LegendItem } from '$components/SankeyDiagram.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import Button from '$components/Button.svelte';
 
 	let years: number[] = $state([]);
 	let solutionLoading: boolean = $state(false);
@@ -51,14 +51,14 @@
 	let sankeyNodes: Partial<SankeyNode>[] = $state([]);
 	let sankeyLinks: PartialSankeyLink[] = $state([]);
 
-	function solutionChanged() {
-		fetchData();
-	}
-
 	let carriers: string[] = $state([]);
 	let nodes: string[] = $state([]);
 
 	let legendItems: LegendItem[] = $state([]);
+
+	let diagram = $state<SankeyDiagram>();
+
+	//#region Effects and functions
 
 	$effect(() => {
 		if (!years.length) {
@@ -126,6 +126,14 @@
 		urlCarriers = getURLParamAsIntArray('car');
 		urlNodes = getURLParamAsIntArray('nodes');
 	});
+
+	//#endregion
+
+	function solutionChanged() {
+		fetchData();
+	}
+
+	//#region Data fetching and processing
 
 	async function fetchData() {
 		if (!selectedSolution) {
@@ -478,58 +486,67 @@
 		sankeyLinks = links;
 		legendItems = colors;
 	}
+
+	//#endregion
 </script>
 
-<h1 class="mt-2 mb-4">The Energy System</h1>
+<DiagramPage parentTitle="The Energy System" pageTitle="Sankey">
+	{#snippet filters()}
+		<FilterSection title="Solution Selection">
+			<SolutionFilter
+				bind:years
+				bind:selected_solution={selectedSolution}
+				bind:carriers
+				bind:nodes
+				bind:loading={solutionLoading}
+				solutionSelected={solutionChanged}
+				disabled={fetching || solutionLoading}
+			/>
+		</FilterSection>
+		<FilterSection title="Carrier Selection">
+			<MultiSelect bind:value={selectedCarriers} options={carriers} label="Carriers"></MultiSelect>
+		</FilterSection>
+		<FilterSection title="Data Selection">
+			<Dropdown
+				bind:value={selectedYear}
+				options={toOptions(years.map((year) => year.toString()))}
+				label="Year"
+				disabled={fetching || solutionLoading}
+			></Dropdown>
+			<MultiSelect bind:value={selectedNodes} options={nodes} label="Nodes"></MultiSelect>
+		</FilterSection>
+	{/snippet}
 
-<Filters>
-	<FilterSection title="Solution Selection">
-		<SolutionFilter
-			bind:years
-			bind:selected_solution={selectedSolution}
-			bind:carriers
-			bind:nodes
-			bind:loading={solutionLoading}
-			solutionSelected={solutionChanged}
-			disabled={fetching || solutionLoading}
-		/>
-	</FilterSection>
-	<FilterSection title="Carrier Selection">
-		<AllCheckbox label="Carriers" bind:value={selectedCarriers} elements={carriers}></AllCheckbox>
-	</FilterSection>
-	<FilterSection title="Data Selection">
-		<FilterRow label="Year">
-			{#snippet content(formId)}
-				<Dropdown
-					{formId}
-					bind:value={selectedYear}
-					options={toOptions(years.map((year) => year.toString()))}
-					disabled={fetching || solutionLoading}
-				></Dropdown>
-			{/snippet}
-		</FilterRow>
-		<AllCheckbox label="Nodes" bind:value={selectedNodes} elements={nodes}></AllCheckbox>
-	</FilterSection>
-</Filters>
-
-<h2 class="visually-hidden">Sankey Diagram</h2>
-
-<div class="plot my-4">
-	{#if solutionLoading || fetching}
-		<div class="text-center">
-			<div class="spinner-border center" role="status">
-				<span class="visually-hidden">Loading...</span>
-			</div>
+	{#snippet buttons()}
+		<div class="flex justify-end items-end h-full gap-4">
+			<Button onclick={diagram?.resetZoom}>
+				<i class="bi bi-house me-2"></i>
+				<div>Reset zoom</div>
+			</Button>
+			<Button onclick={diagram?.toggleShowStructureOnly}>
+				<i class="bi bi-diagram-3 me-2"></i>
+				<div>Show only structure: {diagram?.getShowStructureOnly() ? 'On' : 'Off'}</div>
+			</Button>
 		</div>
-	{:else if !selectedSolution}
-		<div class="text-center">No solution selected</div>
-	{:else if selectedCarriers.length === 0}
-		<div class="text-center">No carriers selected</div>
-	{:else if selectedNodes.length === 0}
-		<div class="text-center">No nodes selected</div>
-	{:else if sankeyNodes.length === 0}
-		<div class="text-center">No data available for the selected filters</div>
-	{:else}
-		<SankeyDiagram nodes={sankeyNodes} links={sankeyLinks} {legendItems} />
-	{/if}
-</div>
+	{/snippet}
+
+	{#snippet mainContent()}
+		{#if solutionLoading || fetching}
+			<div class="text-center">
+				<div class="spinner-border center" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
+			</div>
+		{:else if !selectedSolution}
+			<div class="text-center">No solution selected</div>
+		{:else if selectedCarriers.length === 0}
+			<div class="text-center">No carriers selected</div>
+		{:else if selectedNodes.length === 0}
+			<div class="text-center">No nodes selected</div>
+		{:else if sankeyNodes.length === 0}
+			<div class="text-center">No data available for the selected filters</div>
+		{:else}
+			<SankeyDiagram nodes={sankeyNodes} links={sankeyLinks} {legendItems} bind:this={diagram} />
+		{/if}
+	{/snippet}
+</DiagramPage>

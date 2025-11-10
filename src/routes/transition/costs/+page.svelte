@@ -1,19 +1,22 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
+	import type {
+		ChartDataset,
+		ChartOptions,
+		ChartType,
+		ChartTypeRegistry,
+		TooltipItem
+	} from 'chart.js';
 	import { draw as drawPattern } from 'patternomaly';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
-	import AllCheckbox from '$components/AllCheckbox.svelte';
-	import Radio from '$components/Radio.svelte';
-	import ToggleButton from '$components/ToggleButton.svelte';
+	import MultiSelect from '$components/forms/MultiSelect.svelte';
+	import Radio from '$components/forms/Radio.svelte';
+	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import Chart from '$components/Chart.svelte';
-	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
-	import FilterRow from '$components/FilterRow.svelte';
 
 	import { get_component_total } from '$lib/temple';
-	import { removeDuplicates, toOptions } from '$lib/utils';
 	import {
 		getURLParamAsBoolean,
 		getURLParamAsIntArray,
@@ -33,6 +36,8 @@
 		onClickLegendForSolutionComparison
 	} from '$lib/compareSolutions';
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import ChartButtons from '$components/ChartButtons.svelte';
 
 	const technologyCarrierLabel = 'Technology / Carrier';
 	const capexSuffix = ' (Capex)';
@@ -60,7 +65,7 @@
 	let selectedDemandCarriers: string[] = $state([]);
 	let selectedAggregation: string = $state('Location');
 	let selectedLocations: string[] = $state([]);
-	let selectedYears: number[] = $state([]);
+	let selectedYears: string[] = $state([]);
 
 	let urlConversionTechnologies: number[] | null = null;
 	let urlStorageTechnologies: number[] | null = null;
@@ -77,6 +82,8 @@
 
 	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
+
+	let chart = $state<Chart>();
 
 	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
 
@@ -124,7 +131,8 @@
 		}
 	});
 
-	// Plot configuration
+	//#region Plot configuration
+
 	let plotName = $derived.by(() => {
 		if (!selectedSolutions[0]) {
 			return '';
@@ -184,9 +192,11 @@
 		}
 	};
 
-	let labels: string[] = $derived.by(() => {
-		return selectedYears.map((year) => year.toString());
-	});
+	let labels: string[] = $derived(selectedYears);
+
+	//#endregion
+
+	//#region Derived variables
 
 	// Technologies, carriers and locations
 	let setCapexOpexTechnologies: Set<string> = $derived.by(() => {
@@ -290,6 +300,17 @@
 		return Array.from(setLocations).sort();
 	});
 
+	$effect(() => {
+		selectedLocations = locations;
+	});
+	$effect(() => {
+		selectedYears = years.map((year) => year.toString());
+	});
+
+	//#endregion
+
+	//#region URL parameter synchronization
+
 	// Reset selected values when options change
 	updateSelectionOnStateChanges(
 		() => transportTechnologies,
@@ -346,7 +367,7 @@
 		() => {}
 	);
 	updateSelectionOnStateChanges(
-		() => years,
+		() => years.map((year) => year.toString()),
 		() => !!selectedSolutions[0],
 		() => previousYears,
 		() => null,
@@ -354,13 +375,6 @@
 		(value) => (previousYears = value),
 		() => {}
 	);
-
-	$effect(() => {
-		selectedLocations = locations;
-	});
-	$effect(() => {
-		selectedYears = years;
-	});
 
 	onMount(() => {
 		Object.entries(variables).forEach(([key, variable]) => {
@@ -405,9 +419,13 @@
 		});
 	});
 
+	//#endregion
+
 	function onSolutionChanged() {
 		fetchData();
 	}
+
+	//#region Data fetching and processing
 
 	async function fetchData() {
 		if (selectedSolutions.some((s) => s === null)) {
@@ -521,7 +539,7 @@
 							location: selectedLocations,
 							[technologyCarrierLabel]: allSelectedTechnologies.concat(variableLabels)
 						})
-						.filterDataByIndex(selectedYears.map((year) => years.indexOf(year)));
+						.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))));
 
 					if (variables[variableName].subdivision) {
 						return entries;
@@ -566,7 +584,7 @@
 			if (fetchedCostCarbon[solutionIndex].length === 1 && variables.carbon_emission.show) {
 				const carbonCostEntries = Entries.fromRows(
 					fetchedCostCarbon[solutionIndex]
-				).filterDataByIndex(selectedYears.map((year) => years.indexOf(year)));
+				).filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))));
 				const color = nextColor('Total Carbon Costs');
 				datasets.push({
 					data: carbonCostEntries.get(0)!.data,
@@ -585,119 +603,122 @@
 
 		return [datasets, patterns];
 	});
+
+	//#endregion
 </script>
 
-<h1 class="mt-2 mb-4">The Transition Pathway &ndash; Costs</h1>
-
-<Filters>
-	<FilterSection title="Solution Selection">
-		<MultiSolutionFilter
-			bind:solutions={selectedSolutions}
-			bind:years
-			bind:loading={solutionLoading}
-			onSelected={onSolutionChanged}
-			disabled={fetching || solutionLoading}
-		/>
-	</FilterSection>
-	{#if !solutionLoading && !hasSomeUnsetSolutions}
-		<FilterSection title="Cost Selection">
-			{#each Object.values(variables) as variable, i}
-				<div class="row mb-2">
-					<label class="col-6 col-md-3 fw-medium fs-4" for={'variables' + i}>
-						{variable.title}
-					</label>
-					<div class="col-4 col-md-2">
-						<ToggleButton formId={'variables' + i} bind:value={variable.show}></ToggleButton>
-					</div>
-					{#if variable.show && variable.showSubdivision}
-						<label class="col-6 col-md-2" for={'subdivision' + i}>Subdivision</label>
-						<div class="col-4 col-md-2">
-							<ToggleButton formId={'subdivision' + i} bind:value={variable.subdivision}
-							></ToggleButton>
+<DiagramPage parentTitle="The Transition Pathway" pageTitle="Costs">
+	{#snippet filters()}
+		<FilterSection title="Solution Selection">
+			<MultiSolutionFilter
+				bind:solutions={selectedSolutions}
+				bind:years
+				bind:loading={solutionLoading}
+				onSelected={onSolutionChanged}
+				disabled={fetching || solutionLoading}
+			/>
+		</FilterSection>
+		{#if !solutionLoading && !hasSomeUnsetSolutions}
+			<FilterSection title="Cost Selection">
+				{#each Object.values(variables) as variable, i}
+					<div class="grid grid-cols-2">
+						<div>
+							<ToggleButton bind:value={variable.show} label={variable.title}></ToggleButton>
 						</div>
-					{/if}
+						{#if variable.show && variable.showSubdivision}
+							<div>
+								<ToggleButton bind:value={variable.subdivision} label={'with Subdivision'} />
+							</div>
+						{/if}
+					</div>
+				{/each}
+			</FilterSection>
+			<FilterSection title="Technology Selection">
+				<h3>Technologies (for Capex/Opex)</h3>
+				{#if transportTechnologies.length > 0}
+					<MultiSelect
+						bind:value={selectedTransportTechnologies}
+						options={transportTechnologies}
+						label="Transport"
+					></MultiSelect>
+				{/if}
+				{#if storageTechnologies.length > 0}
+					<MultiSelect
+						bind:value={selectedStorageTechnologies}
+						options={storageTechnologies}
+						label="Storage"
+					></MultiSelect>
+				{/if}
+				{#if conversionTechnologies.length > 0}
+					<MultiSelect
+						bind:value={selectedConversionTechnologies}
+						options={conversionTechnologies}
+						label="Conversion"
+					></MultiSelect>
+				{/if}
+				{#if costCarriers.length > 0}
+					<MultiSelect
+						bind:value={selectedCostCarriers}
+						options={costCarriers}
+						label="Cost of Carrier"
+					></MultiSelect>
+				{/if}
+				{#if demandCarriers.length > 0}
+					<MultiSelect
+						bind:value={selectedDemandCarriers}
+						options={demandCarriers}
+						label="Shed Demand"
+					></MultiSelect>
+				{/if}
+			</FilterSection>
+			<FilterSection title="Data Selection">
+				<Radio options={aggregationOptions} bind:value={selectedAggregation} label="Aggregation"
+				></Radio>
+				{#if selectedAggregation == aggregationOptions[1]}
+					<MultiSelect bind:value={selectedLocations} options={locations} label="Locations"
+					></MultiSelect>
+				{/if}
+				{#if selectedYears}
+					<MultiSelect
+						bind:value={selectedYears}
+						options={years.map((year) => year.toString())}
+						label="Years"
+					></MultiSelect>
+				{/if}
+			</FilterSection>
+		{/if}
+	{/snippet}
+
+	{#snippet buttons()}
+		<ChartButtons chart={chart as Chart} downloadable></ChartButtons>
+	{/snippet}
+
+	{#snippet mainContent()}
+		{#if solutionLoading || fetching}
+			<div class="text-center">
+				<div class="spinner-border center" role="status">
+					<span class="visually-hidden">Loading...</span>
 				</div>
-			{/each}
-		</FilterSection>
-		<FilterSection title="Technology Selection">
-			<h3>Technologies (for Capex/Opex)</h3>
-			{#if transportTechnologies.length > 0}
-				<AllCheckbox
-					label="Transport"
-					bind:value={selectedTransportTechnologies}
-					elements={transportTechnologies}
-				></AllCheckbox>
-			{/if}
-			{#if storageTechnologies.length > 0}
-				<AllCheckbox
-					label="Storage"
-					bind:value={selectedStorageTechnologies}
-					elements={storageTechnologies}
-				></AllCheckbox>
-			{/if}
-			{#if conversionTechnologies.length > 0}
-				<AllCheckbox
-					label="Conversion"
-					bind:value={selectedConversionTechnologies}
-					elements={conversionTechnologies}
-				></AllCheckbox>
-			{/if}
-			{#if costCarriers.length > 0}
-				<AllCheckbox
-					label="Cost of Carrier"
-					bind:value={selectedCostCarriers}
-					elements={costCarriers}
-				></AllCheckbox>
-			{/if}
-			{#if demandCarriers.length > 0}
-				<AllCheckbox
-					label="Shed Demand"
-					bind:value={selectedDemandCarriers}
-					elements={demandCarriers}
-				></AllCheckbox>
-			{/if}
-		</FilterSection>
-		<FilterSection title="Data Selection">
-			<FilterRow label="Aggregation">
-				{#snippet content(formId)}
-					<Radio {formId} options={toOptions(aggregationOptions)} bind:value={selectedAggregation}
-					></Radio>
-				{/snippet}
-			</FilterRow>
-			{#if selectedAggregation == aggregationOptions[1]}
-				<AllCheckbox label="Locations" bind:value={selectedLocations} elements={locations}
-				></AllCheckbox>
-			{/if}
-			{#if selectedYears}
-				<AllCheckbox label="Years" bind:value={selectedYears} elements={years}></AllCheckbox>
-			{/if}
-		</FilterSection>
-	{/if}
-</Filters>
-<div class="mt-4">
-	{#if solutionLoading || fetching}
-		<div class="text-center">
-			<div class="spinner-border center" role="status">
-				<span class="visually-hidden">Loading...</span>
 			</div>
-		</div>
-	{:else if hasSomeUnsetSolutions}
-		<div class="text-center">Please select at least one solution.</div>
-	{:else if selectedYears.length == 0}
-		<div class="text-center">Please select at least one year.</div>
-	{:else if datasets.length == 0}
-		<div class="text-center">No data with this selection.</div>
-	{:else}
-		<Chart
-			type="bar"
-			{labels}
-			{datasets}
-			options={plotOptions}
-			pluginOptions={plotPluginOptions}
-			{plotName}
-			{patterns}
-			generateLabels={generateLabelsForSolutionComparison}
-			onClickLegend={onClickLegendForSolutionComparison}
-		></Chart>
-	{/if}
-</div>
+		{:else if hasSomeUnsetSolutions}
+			<div class="text-center">Please select at least one solution.</div>
+		{:else if selectedYears.length == 0}
+			<div class="text-center">Please select at least one year.</div>
+		{:else if datasets.length == 0}
+			<div class="text-center">No data with this selection.</div>
+		{:else}
+			<Chart
+				type="bar"
+				{labels}
+				{datasets}
+				options={plotOptions}
+				pluginOptions={plotPluginOptions}
+				{plotName}
+				{patterns}
+				generateLabels={generateLabelsForSolutionComparison}
+				onClickLegend={onClickLegendForSolutionComparison}
+				bind:this={chart}
+			></Chart>
+		{/if}
+	{/snippet}
+</DiagramPage>

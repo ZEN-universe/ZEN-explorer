@@ -4,24 +4,24 @@
 	import { draw as drawPattern } from 'patternomaly';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
-	import AllCheckbox from '$components/AllCheckbox.svelte';
-	import Radio from '$components/Radio.svelte';
+	import MultiSelect from '$components/forms/MultiSelect.svelte';
+	import Radio from '$components/forms/Radio.svelte';
 	import Chart from '$components/Chart.svelte';
-	import Filters from '$components/Filters.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
-	import Dropdown from '$components/Dropdown.svelte';
-	import ToggleButton from '$components/ToggleButton.svelte';
+	import Dropdown from '$components/forms/Dropdown.svelte';
+	import ToggleButton from '$components/forms/ToggleButton.svelte';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import ChartButtons from '$components/ChartButtons.svelte';
 
 	import { get_component_total as getComponentTotal } from '$lib/temple';
-	import { toOptions } from '$lib/utils';
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
 	} from '$lib/compareSolutions';
-	import type { ActivatedSolution, Row, System } from '$lib/types';
+	import type { ActivatedSolution, Row } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
-	import FilterRow from '$components/FilterRow.svelte';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
 	import Entries, { type FilterCriteria } from '$lib/entries';
 	import {
@@ -30,7 +30,6 @@
 		resetPatternState,
 		type ShapeType
 	} from '$lib/patterns';
-	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 
 	let data: Row[][] = $state([]);
 
@@ -56,7 +55,7 @@
 	let selectedNormalization: boolean = $state(false);
 	let selectedLocations: string[] = $state([]);
 	let selectedTechnologies: string[] = $state([]);
-	let selectedYears: number[] = $state([]);
+	let selectedYears: string[] = $state([]);
 
 	let preferredCarrier: string | null = null;
 
@@ -72,7 +71,10 @@
 		return units[technologies[0] + '_' + capacity_type] || '';
 	});
 
-	// Plot config
+	let chart = $state<Chart<'bar'>>();
+
+	//#region Plot config
+
 	let labels: string[] = $derived(selectedYears.map((year) => year.toString()));
 	let plotOptions: ChartOptions<'bar'> = $derived({
 		responsive: true,
@@ -129,7 +131,10 @@
 		].join('_');
 	});
 
-	// Filter options
+	//#endregion
+
+	//#region Filter options
+
 	let technologiesPerSolution = $derived.by(() => {
 		if (hasSomeUnsetSolutions || selectedTechnologyType === null) {
 			return [];
@@ -201,7 +206,10 @@
 		return Array.from(setLocations).sort();
 	});
 
-	// Effects for filter options
+	//#endregion
+
+	//#region Filter update handlers
+
 	$effect(() => {
 		carriers;
 
@@ -259,12 +267,16 @@
 		});
 	});
 
+	//#endregion
+
+	//#region Data selection
+
 	function resetDataSelection() {
 		selectedAggregation = 'node';
 		selectedNormalization = false;
 		selectedLocations = locations;
 		selectedTechnologies = technologies;
-		selectedYears = years;
+		selectedYears = years.map((y) => y.toString());
 	}
 
 	async function onSolutionChanged() {
@@ -286,6 +298,10 @@
 	function onCarrierChanged() {
 		resetDataSelection();
 	}
+
+	//#endregion
+
+	//#region Data fetching and processing
 
 	/**
 	 * Fetch data from the API of the selected values in the form
@@ -343,7 +359,7 @@
 
 		let entries = Entries.fromRows(data)
 			.filterByCriteria(filterCriteria)
-			.filterDataByIndex(selectedYears.map((year) => years.indexOf(year)))
+			.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))))
 			.groupBy(groupByColumns);
 
 		if (selectedNormalization) {
@@ -391,127 +407,117 @@
 		});
 		return [datasets, patterns];
 	});
+
+	//#endregion
 </script>
 
-<h1 class="mt-2 mb-4">The Transition Pathway &ndash; Capacity</h1>
-<Filters>
-	<FilterSection title="Solution Selection">
-		<MultiSolutionFilter
-			bind:solutions={selectedSolutions}
-			bind:years
-			bind:loading={solutionLoading}
-			onSelected={onSolutionChanged}
-			disabled={fetching || solutionLoading}
-		></MultiSolutionFilter>
-	</FilterSection>
-	{#if !solutionLoading && selectedSolutions[0]}
-		<FilterSection title="Variable Selection">
-			<FilterRow label="Variable">
-				{#snippet content(formId)}
-					<Dropdown
-						{formId}
-						options={toOptions(variables)}
-						bind:value={selectedVariable}
-						disabled={fetching || solutionLoading}
-						onUpdate={onVariableChanged}
-					></Dropdown>
-				{/snippet}
-			</FilterRow>
-			{#if selectedVariable != null}
-				<FilterRow label="Technology Type">
-					{#snippet content(formId)}
-						<Dropdown
-							{formId}
-							options={toOptions(technologyTypes)}
-							bind:value={selectedTechnologyType}
-							disabled={fetching || solutionLoading}
-							onUpdate={onTechnologyTypeChanged}
-						></Dropdown>
-					{/snippet}
-				</FilterRow>
-				{#if selectedTechnologyType == 'storage'}
-					<FilterRow label="">
-						{#snippet content(formId)}
-							<Radio
-								{formId}
-								options={toOptions(storageTypeOptions)}
-								bind:value={selectedStorageType}
-								onUpdate={onTechnologyTypeChanged}
-								disabled={fetching || solutionLoading}
-							></Radio>
-						{/snippet}
-					</FilterRow>
-				{/if}
-			{/if}
-			{#if selectedTechnologyType != null && carriers.length > 0}
-				<FilterRow label="Carrier">
-					{#snippet content(formId)}
-						<Dropdown
-							{formId}
-							options={toOptions(carriers)}
-							bind:value={selectedCarrier}
-							disabled={fetching || solutionLoading}
-							onUpdate={onCarrierChanged}
-						></Dropdown>
-					{/snippet}
-				</FilterRow>
-			{/if}
+<DiagramPage parentTitle="The Transition Pathway" pageTitle="Capacity">
+	{#snippet filters()}
+		<FilterSection title="Solution Selection">
+			<MultiSolutionFilter
+				bind:solutions={selectedSolutions}
+				bind:years
+				bind:loading={solutionLoading}
+				onSelected={onSolutionChanged}
+				disabled={fetching || solutionLoading}
+			></MultiSolutionFilter>
 		</FilterSection>
-		{#if data && selectedTechnologyType && selectedCarrier && technologies.length > 0 && locations.length > 0}
-			<FilterSection title="Data Selection">
-				<FilterRow label="Aggregation">
-					{#snippet content(formId)}
-						<Radio {formId} options={aggregationOptions} bind:value={selectedAggregation}></Radio>
-					{/snippet}
-				</FilterRow>
-				<FilterRow label="Normalization">
-					{#snippet content(formId)}
-						<ToggleButton {formId} bind:value={selectedNormalization}></ToggleButton>
-					{/snippet}
-				</FilterRow>
-				{#if selectedAggregation == 'technology'}
-					<AllCheckbox
-						label="Technologies"
-						bind:value={selectedTechnologies}
-						elements={technologies}
-					></AllCheckbox>
-				{:else}
-					<AllCheckbox label="Nodes" bind:value={selectedLocations} elements={locations}
-					></AllCheckbox>
+		{#if !solutionLoading && selectedSolutions[0]}
+			<FilterSection title="Variable Selection">
+				<Dropdown
+					label="Variable"
+					options={variables}
+					bind:value={selectedVariable}
+					disabled={fetching || solutionLoading}
+					onUpdate={onVariableChanged}
+				></Dropdown>
+				{#if selectedVariable != null}
+					<Dropdown
+						label="Technology Type"
+						options={technologyTypes}
+						bind:value={selectedTechnologyType}
+						disabled={fetching || solutionLoading}
+						onUpdate={onTechnologyTypeChanged}
+					></Dropdown>
+					{#if selectedTechnologyType == 'storage'}
+						<Radio
+							label="Storage Type"
+							options={storageTypeOptions}
+							bind:value={selectedStorageType}
+							onUpdate={onTechnologyTypeChanged}
+							disabled={fetching || solutionLoading}
+						></Radio>
+					{/if}
 				{/if}
-				<AllCheckbox label="Years" bind:value={selectedYears} elements={years}></AllCheckbox>
+				{#if selectedTechnologyType != null && carriers.length > 0}
+					<Dropdown
+						label="Carrier"
+						options={carriers}
+						bind:value={selectedCarrier}
+						disabled={fetching || solutionLoading}
+						onUpdate={onCarrierChanged}
+					></Dropdown>
+				{/if}
 			</FilterSection>
+			{#if data && selectedTechnologyType && selectedCarrier && technologies.length > 0 && locations.length > 0}
+				<FilterSection title="Data Selection">
+					<Radio label="Aggregation" options={aggregationOptions} bind:value={selectedAggregation}
+					></Radio>
+					<ToggleButton label="Normalization" bind:value={selectedNormalization}></ToggleButton>
+					{#if selectedAggregation == 'technology'}
+						<MultiSelect
+							label="Technologies"
+							bind:value={selectedTechnologies}
+							options={technologies}
+						></MultiSelect>
+					{:else}
+						<MultiSelect label="Nodes" bind:value={selectedLocations} options={locations}
+						></MultiSelect>
+					{/if}
+					<MultiSelect
+						label="Years"
+						bind:value={selectedYears}
+						options={years.map((y) => y.toString())}
+					></MultiSelect>
+				</FilterSection>
+			{/if}
 		{/if}
-	{/if}
-</Filters>
-<div class="plot mt-4">
-	{#if solutionLoading || fetching}
-		<div class="text-center">
-			<div class="spinner-border center" role="status">
-				<span class="visually-hidden">Loading...</span>
+	{/snippet}
+
+	{#snippet buttons()}
+		<ChartButtons chart={chart as Chart} downloadable></ChartButtons>
+	{/snippet}
+
+	{#snippet mainContent()}
+		{#if solutionLoading || fetching}
+			<div class="text-center">
+				<div class="spinner-border center" role="status">
+					<span class="visually-hidden">Loading...</span>
+				</div>
 			</div>
-		</div>
-	{:else if technologies.length == 0}
-		<div class="text-center">No technologies with this selection.</div>
-	{:else if carriers.length == 0}
-		<div class="text-center">No carriers with this selection.</div>
-	{:else if selectedSolutions[0] == null}
-		<div class="text-center">No solution selected.</div>
-	{:else if locations.length == 0}
-		<div class="text-center">No locations with this selection.</div>
-	{:else if datasets.length == 0}
-		<div class="text-center">No data with this selection.</div>
-	{:else}
-		<Chart
-			type="bar"
-			{datasets}
-			{labels}
-			options={plotOptions}
-			pluginOptions={plotPluginOptions}
-			{plotName}
-			{patterns}
-			generateLabels={generateLabelsForSolutionComparison}
-			onClickLegend={onClickLegendForSolutionComparison}
-		></Chart>
-	{/if}
-</div>
+		{:else if technologies.length == 0}
+			<div class="text-center">No technologies with this selection.</div>
+		{:else if carriers.length == 0}
+			<div class="text-center">No carriers with this selection.</div>
+		{:else if selectedSolutions[0] == null}
+			<div class="text-center">No solution selected.</div>
+		{:else if locations.length == 0}
+			<div class="text-center">No locations with this selection.</div>
+		{:else if datasets.length == 0}
+			<div class="text-center">No data with this selection.</div>
+		{:else}
+			<Chart
+				type="bar"
+				{datasets}
+				{labels}
+				options={plotOptions}
+				pluginOptions={plotPluginOptions}
+				{plotName}
+				{patterns}
+				generateLabels={generateLabelsForSolutionComparison}
+				onClickLegend={onClickLegendForSolutionComparison}
+				bind:this={chart}
+			></Chart>
+		{/if}
+	{/snippet}
+</DiagramPage>

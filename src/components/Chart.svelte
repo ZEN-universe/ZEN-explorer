@@ -1,12 +1,13 @@
-<script lang="ts" generics="Type extends ChartType">
+<script lang="ts" generics="Type extends ChartType = ChartType">
 	import BaseChart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
 
-	import Modal from '$components/Modal.svelte';
 	import ColorBox, { type ColorBoxItem } from '$components/ColorBox.svelte';
+	import HelpTooltip from './HelpTooltip.svelte';
+	import ContentBox from './ContentBox.svelte';
 
 	BaseChart.register(zoomPlugin);
 
@@ -20,10 +21,10 @@
 		pluginOptions?: ChartOptions<ChartType>['plugins'];
 		zoom?: boolean;
 		plotName?: string;
-		downloadable?: boolean;
 		narrow?: boolean;
 		zoomLevel?: [number, number] | null;
 		patterns?: ColorBoxItem[];
+		boxed?: boolean;
 		generateLabels?: (chart: BaseChart) => LegendItem[];
 		onClickLegend?: (item: LegendItem, chart: BaseChart) => void;
 		onClickBar?: (label: string, datasetIndex: number) => void;
@@ -39,10 +40,10 @@
 		plugins = [],
 		zoom = false,
 		plotName = 'plot_data',
-		downloadable = true,
 		narrow = false,
 		zoomLevel = $bindable(null),
 		patterns = [],
+		boxed = true,
 		generateLabels,
 		onClickLegend,
 		onClickBar
@@ -50,12 +51,14 @@
 
 	let chart: BaseChart | undefined = undefined;
 
+	let manualChartDatasets: ChartDataset[] | undefined = undefined;
+
 	const handleChart: Action<HTMLCanvasElement> = (element) => {
 		chart = new BaseChart(element, {
 			type: type,
 			data: {
 				labels: labels,
-				datasets: $state.snapshot(datasets) as ChartDataset[]
+				datasets: manualChartDatasets ?? ($state.snapshot(datasets) as ChartDataset[])
 			},
 			options: getOptions(),
 			plugins: [htmlLegend, ...plugins]
@@ -67,7 +70,7 @@
 			}
 			chart.data = {
 				labels: labels,
-				datasets: $state.snapshot(datasets) as ChartDataset[]
+				datasets: manualChartDatasets ?? ($state.snapshot(datasets) as ChartDataset[])
 			};
 			Object.assign(chart.options, getOptions());
 			chart.update();
@@ -78,7 +81,8 @@
 		if (chart == undefined || chart.canvas == null) {
 			return;
 		}
-		chart.data.datasets = $state.snapshot(datasets) as ChartDataset[];
+		manualChartDatasets = $state.snapshot(datasets) as ChartDataset[];
+		chart.data.datasets = manualChartDatasets;
 		chart.update();
 		updateZoomLevel();
 	}
@@ -88,11 +92,13 @@
 	});
 
 	function getOptions(): ChartOptions {
-		const optionsSnapshot = $state.snapshot(options as ChartOptions);
-		optionsSnapshot.plugins = {
-			...(optionsSnapshot.plugins ?? {}),
-			...pluginOptions
-		} as Record<string, any>;
+		const optionsSnapshot = {
+			...$state.snapshot(options as ChartOptions),
+			plugins: {
+				...(options?.plugins ?? {}),
+				...pluginOptions
+			} as Record<string, any>
+		};
 
 		optionsSnapshot.plugins.legend = {
 			display: false
@@ -114,6 +120,39 @@
 		return optionsSnapshot as ChartOptions;
 	}
 
+	//#region Colors for dark mode support
+
+	// Used to temporarily hide and show the chart when updating colors
+	let showChart: boolean = $state(true);
+
+	onMount(() => {
+		updateDefaultColor();
+		window.addEventListener('themeChange', onUpdateColor);
+	});
+
+	onDestroy(() => {
+		window.removeEventListener('themeChange', onUpdateColor);
+	});
+
+	async function onUpdateColor() {
+		showChart = false;
+		updateDefaultColor();
+		await tick();
+		showChart = true;
+	}
+
+	function updateDefaultColor() {
+		BaseChart.defaults.color = window.localStorage.getItem('theme') === 'dark' ? '#ddd' : '#222';
+		BaseChart.defaults.borderColor =
+			window.localStorage.getItem('theme') === 'dark'
+				? 'rgba(255, 255, 255, 0.1)'
+				: 'rgba(0, 0, 0, 0.1)';
+	}
+
+	//#endregion
+
+	//#region Zooming
+
 	function setZoomLevel({ chart }: { chart: BaseChart }) {
 		if (chart == undefined || chart.canvas == null) {
 			return;
@@ -129,9 +168,21 @@
 	}
 	$effect(updateZoomLevel);
 
-	function resetZoom() {
+	export function resetZoom() {
 		chart?.resetZoom();
 	}
+
+	export function zoomIn() {
+		chart?.zoom(1.2);
+	}
+
+	export function zoomOut() {
+		chart?.zoom(0.8);
+	}
+
+	//#endregion
+
+	//#region Legend
 
 	let legendItems: ColorBoxItem[] = $state([]);
 
@@ -171,12 +222,11 @@
 		chart.update();
 	}
 
-	let modal_open = $state(false);
-	const toggle = () => {
-		modal_open = !modal_open;
-	};
+	//#endregion
 
-	function downloadData() {
+	//#region Download data
+
+	export function downloadData() {
 		const data = chart?.data.datasets;
 
 		if (!data || data.length === 0) {
@@ -207,6 +257,8 @@
 		link.click();
 	}
 
+	//#endregion
+
 	function emitClickBarEvent(event: Event) {
 		if (chart == undefined || labels == undefined || onClickBar == undefined) {
 			return;
@@ -219,45 +271,17 @@
 	}
 </script>
 
-<!-- Modal -->
-<Modal header="Zoom Controls" isOpen={modal_open} {toggle}>
-	<p>
-		You can zoom in the graph into the chart by either highlighting an area with your mouse or by
-		scrolling.
-	</p>
-	<p>When zoomed in, you can press and hold CTRL and drag the plot to move along the time axis.</p>
-	<p>The home button resets the zoom.</p>
-</Modal>
-{#if zoom || downloadable}
-	<div class="d-flex justify-content-end mb-2">
-		{#if zoom}
-			<div class={['btn-group', downloadable && 'me-2']}>
-				<button class="btn btn-outline-secondary d-flex" onclick={toggle}>
-					<i class="bi bi-info me-2"></i>
-					<div>Show Help</div>
-				</button>
-				<button class="btn btn-outline-secondary d-flex" onclick={resetZoom}>
-					<i class="bi bi-house me-2"></i>
-					<div>Reset zoom</div>
-				</button>
-			</div>
-		{/if}
-		{#if downloadable}
-			<button class="btn btn-outline-secondary d-flex" onclick={downloadData}>
-				<i class="bi bi-download me-2"></i>
-				<div>Download CSV Data</div>
-			</button>
-		{/if}
-	</div>
-{/if}
-<div class="d-flex flex-column justify-content-between h-100 py-2" id={id + '-container'}>
-	<div class={['legend d-flex flex-wrap justify-content-center', patterns.length > 1 && 'mb-2']}>
+<svelte:window onresize={() => tick().then(() => chart?.resize())} />
+
+{#snippet legend()}
+	<h2 class="flex items-start font-bold text-lg me-4">
+		<span class="me-2">Legend</span>
+		<HelpTooltip content="Click on legend items to show/hide them in the chart." />
+	</h2>
+	<div class="flex flex-wrap gap-2">
 		{#each legendItems as item}
 			<button
-				class="btn btn-text rounded-0 d-flex align-items-center p-0 me-2 text-secondary"
-				style:font-size="12px"
-				style:letter-spacing="0.0em"
-				style:font-family="Arial, sans-serif"
+				class="flex items-center p-0 text-gray-600 dark:text-gray-400 text-sm"
 				onclick={() => toggleLegendItem(item)}
 			>
 				<ColorBox item={item as ColorBoxItem}></ColorBox>
@@ -265,11 +289,15 @@
 			</button>
 		{/each}
 	</div>
+{/snippet}
+
+{#snippet patternSnippet()}
 	{#if patterns.length > 1}
-		<div class="legend d-flex flex-wrap justify-content-center">
+		<h2 class="font-bold text-lg me-4">Patterns</h2>
+		<div class="legend flex wrap gap-2">
 			{#each patterns as pattern}
 				<div
-					class="d-flex align-items-center me-2 text-secondary"
+					class="flex items-center text-gray-600 dark:text-gray-400"
 					style:font-size="12px"
 					style:letter-spacing="0.0em"
 					style:font-family="Arial, sans-serif"
@@ -280,7 +308,30 @@
 			{/each}
 		</div>
 	{/if}
-	<div class="position-relative" style:min-height={narrow ? '259px' : '558px'}>
-		<canvas {id} use:handleChart onclick={emitClickBarEvent}></canvas>
+{/snippet}
+
+{#snippet chartSnippet()}
+	{#if showChart}
+		<div class="position-relative" style:min-height={narrow ? '259px' : '558px'}>
+			<canvas {id} use:handleChart onclick={emitClickBarEvent}></canvas>
+		</div>
+	{/if}
+{/snippet}
+
+{#if boxed}
+	{#if legendItems.length > 0}
+		<ContentBox class="flex" children={legend}></ContentBox>
+	{/if}
+	{#if patterns.length > 1}
+		<ContentBox class="flex" children={patternSnippet}></ContentBox>
+	{/if}
+	<ContentBox children={chartSnippet}></ContentBox>
+{:else}
+	<div class="flex mb-4">
+		{@render legend()}
 	</div>
-</div>
+	<div class="flex mb-4">
+		{@render patternSnippet()}
+	</div>
+	{@render chartSnippet()}
+{/if}

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
+	import { untrack, type Snippet } from 'svelte';
 	import { fade } from 'svelte/transition';
 
 	interface Props {
@@ -7,37 +7,65 @@
 		y: number;
 		yOffset?: number;
 		isOnTop?: boolean;
-		content: Snippet<[]>;
+		children: Snippet<[]>;
+		minX?: number;
+		maxX?: number;
 	}
-	let { x, y, yOffset = 0, isOnTop = true, content }: Props = $props();
+	let { x, y, yOffset = 0, isOnTop = true, children, minX, maxX }: Props = $props();
+
+	let tooltipDiv = $state<HTMLDivElement>();
+
+	let width = $state(200);
+
+	$effect(() => {
+		x;
+		y;
+		untrack(() => {
+			if (!tooltipDiv) return;
+			width = tooltipDiv.getBoundingClientRect().width;
+		});
+	});
+	$inspect('width', width);
+
+	let adjustedX = $derived.by(() => {
+		let newX = x;
+		if (minX !== undefined && newX < minX + width / 2) {
+			newX = minX + width / 2;
+		}
+		if (maxX !== undefined && newX > maxX - width / 2) {
+			newX = maxX - width / 2;
+		}
+		return newX;
+	});
+
+	let adjustedY = $derived.by(() => {
+		return isOnTop ? y - 5 - yOffset : y + 5 + yOffset;
+	});
 </script>
 
 <div
-	class="position-absolute bg-black bg-opacity-75 text-white py-2 rounded pe-none z-3"
-	style:top={isOnTop ? `${y - 5 - yOffset}px` : `${y + 5 + yOffset}px`}
-	style:left={`${x}px`}
+	class="absolute bg-black dark:bg-white opacity-75 text-white dark:text-black py-2 rounded pe-0 z-3"
+	style:left={`${adjustedX}px`}
+	style:top={`${adjustedY}px`}
 	style:transform={isOnTop ? `translate(-50%, -100%)` : `translate(-50%, 0%)`}
 	style:min-width="200px"
 	transition:fade={{ duration: 300 }}
+	bind:this={tooltipDiv}
+>
+	{@render children()}
+</div>
+
+<svg
+	class="absolute opacity-75 translate-middle-x"
+	style:left={`${x}px`}
+	style:top={`${adjustedY + (isOnTop ? 0 : -5)}px`}
+	width="10"
+	height="5"
+	transition:fade={{ duration: 300 }}
 >
 	{#if isOnTop}
-		<svg
-			class="position-absolute translate-middle-x opacity-75 start-50"
-			style:bottom="-5px"
-			width="10"
-			height="5"
-		>
-			<polygon points="0,0 10,0 5,5" fill="black" />
-		</svg>
+		<polygon points="0,0 10,0 5,5" fill="black" />
 	{:else}
-		<svg
-			class="position-absolute translate-middle-x opacity-75 start-50"
-			style:top="-5px"
-			width="10"
-			height="5"
-		>
-			<polygon points="0,5 10,5 5,0" fill="black" />
-		</svg>
+		<polygon points="0,5 10,5 5,0" fill="black" />
 	{/if}
-	{@render content()}
-</div>
+</svg>
