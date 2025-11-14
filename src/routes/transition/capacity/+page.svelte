@@ -218,8 +218,6 @@
 			if (selectedCarrier == null || !carriers.includes(selectedCarrier)) {
 				if (preferredCarrier != null && carriers.includes(preferredCarrier)) {
 					selectedCarrier = preferredCarrier;
-				} else {
-					selectedCarrier = carriers.length > 0 ? carriers[0] : null;
 				}
 			}
 		});
@@ -425,13 +423,20 @@
 		{#if !solutionLoading && selectedSolutions[0]}
 			<FilterSection title="Variable Selection">
 				<Dropdown
-					label="Variable"
-					options={variables}
-					bind:value={selectedVariable}
+					label="Carrier"
+					options={carriers}
+					bind:value={selectedCarrier}
 					disabled={fetching || solutionLoading}
-					onUpdate={onVariableChanged}
+					onUpdate={onCarrierChanged}
 				></Dropdown>
-				{#if selectedVariable != null}
+				{#if selectedCarrier !== null}
+					<Dropdown
+						label="Variable"
+						options={variables}
+						bind:value={selectedVariable}
+						disabled={fetching || solutionLoading}
+						onUpdate={onVariableChanged}
+					></Dropdown>
 					<Dropdown
 						label="Technology Type"
 						options={technologyTypes}
@@ -449,17 +454,8 @@
 						></Radio>
 					{/if}
 				{/if}
-				{#if selectedTechnologyType != null && carriers.length > 0}
-					<Dropdown
-						label="Carrier"
-						options={carriers}
-						bind:value={selectedCarrier}
-						disabled={fetching || solutionLoading}
-						onUpdate={onCarrierChanged}
-					></Dropdown>
-				{/if}
 			</FilterSection>
-			{#if data && selectedTechnologyType && selectedCarrier && technologies.length > 0 && locations.length > 0}
+			{#if selectedCarrier !== null}
 				<FilterSection title="Data Selection">
 					<Radio label="Aggregation" options={aggregationOptions} bind:value={selectedAggregation}
 					></Radio>

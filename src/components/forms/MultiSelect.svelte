@@ -7,6 +7,7 @@
 		label: string;
 		options: string[];
 		value: string[];
+		emptyText?: string;
 		disabled?: boolean;
 		onUpdate?: (value: string[]) => void;
 	}
@@ -15,6 +16,7 @@
 		options: initialOptions,
 		value = $bindable(initialOptions),
 		label,
+		emptyText = 'No options available.',
 		disabled = false,
 		onUpdate = () => {}
 	}: Props = $props();
@@ -132,4 +134,8 @@
 	{/snippet}
 </FilterLabel>
 
-<select class="slim mb-2" multiple {@attach renderDropdown}></select>
+{#if options.length == 0}
+	<div class="text-gray-500 italic text-sm mb-2">{emptyText}</div>
+{:else}
+	<select class="slim mb-2" multiple {@attach renderDropdown}></select>
+{/if}

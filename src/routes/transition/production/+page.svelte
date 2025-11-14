@@ -39,6 +39,7 @@
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import Entries, { type FilterCriteria } from '$lib/entries';
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
+	import FilterLabel from '$components/FilterLabel.svelte';
 
 	// Data
 	let data: Row[][][] = $state([]);
@@ -339,6 +340,32 @@
 		return Array.from(setTransportTechnologies).sort();
 	});
 
+	function hasDataForVariable(variable: Variable): boolean {
+		switch (variable.id) {
+			case 'conversion':
+				return conversionTechnologies.length > 0;
+			case 'storage':
+				return storageTechnologies.length > 0;
+			case 'transport':
+				return transportTechnologies.length > 0;
+			case 'import_export':
+				return data.some((solutionData) => {
+					return (
+						solutionData[6].some((item) => item.carrier === selectedCarrier) ||
+						solutionData[7].some((item) => item.carrier === selectedCarrier)
+					);
+				});
+			case 'demand_shed_demand':
+				return data.some((solutionData) => {
+					return (
+						solutionData[8].some((item) => item.carrier === selectedCarrier) ||
+						solutionData[9].some((item) => item.carrier === selectedCarrier)
+					);
+				});
+		}
+		return true;
+	}
+
 	//#endregion
 
 	// Update selected values when the corresponding options change
@@ -347,11 +374,8 @@
 		untrack(() => {
 			if (!selectedSolutions) return;
 			// Keep the selected carrier if it is still available, otherwise select the first one.
-			if (
-				carriers.length > 0 &&
-				(!selectedCarrier || (selectedCarrier && !carriers.includes(selectedCarrier)))
-			) {
-				selectedCarrier = carriers[0];
+			if (selectedCarrier !== null && !carriers.includes(selectedCarrier)) {
+				selectedCarrier = null;
 			}
 		});
 	});
@@ -666,67 +690,77 @@
 				disabled={fetching || solutionLoading}
 			/>
 		</FilterSection>
-		{#if !solutionLoading && selectedSolutions[0] !== null}
+		{#if !solutionLoading && !hasSomeUnsetSolutions}
 			<FilterSection title="Carrier Selection">
-				{#if carriers.length > 0}
-					<Dropdown
-						label="Carrier"
-						options={carriers}
-						bind:value={selectedCarrier}
-						disabled={solutionLoading || fetching}
-					></Dropdown>
-				{/if}
+				<Dropdown
+					label="Carrier"
+					options={carriers}
+					bind:value={selectedCarrier}
+					disabled={solutionLoading || fetching}
+				></Dropdown>
 			</FilterSection>
-			<FilterSection title="Production Component Selection">
-				{#each variables as variable}
-					<div class="grid grid-cols-2">
-						<div>
-							<ToggleButton bind:value={variable.show} label={variable.title}></ToggleButton>
-						</div>
-						{#if variable.show && variable.show_subdivision}
-							<div>
-								<ToggleButton bind:value={variable.subdivision} label={'with Subdivision'} />
+			{#if selectedCarrier !== null}
+				<FilterSection title="Production Component Selection">
+					{#each variables as variable}
+						{#if !hasDataForVariable(variable)}
+							<FilterLabel label={variable.title}></FilterLabel>
+							<div class="text-gray-500 italic text-sm mb-2">
+								No data available for {variable.title}.
+							</div>
+						{:else}
+							<div class="grid grid-cols-2">
+								<div>
+									<ToggleButton bind:value={variable.show} label={variable.title}></ToggleButton>
+								</div>
+								{#if variable.show && variable.show_subdivision}
+									<div>
+										<ToggleButton bind:value={variable.subdivision} label={'with Subdivision'} />
+									</div>
+								{/if}
 							</div>
 						{/if}
-					</div>
-				{/each}
-			</FilterSection>
-			<FilterSection title="Technology Selection">
-				<MultiSelect
-					bind:value={selectedConversionTechnologies}
-					options={conversionTechnologies}
-					label="Conversion"
-					disabled={solutionLoading || fetching}
-				></MultiSelect>
-				<MultiSelect
-					bind:value={selectedStorageTechnologies}
-					options={storageTechnologies}
-					label="Storage"
-					disabled={solutionLoading || fetching}
-				></MultiSelect>
-				<MultiSelect
-					bind:value={selectedTransportTechnologies}
-					options={transportTechnologies}
-					label="Transport"
-					disabled={solutionLoading || fetching}
-				></MultiSelect>
-			</FilterSection>
-			{#if !fetching && selectedCarrier != null}
-				<FilterSection title="Data Selection">
-					<ToggleButton label="Normalization" bind:value={selectedNormalization}></ToggleButton>
+					{/each}
+				</FilterSection>
+				<FilterSection title="Technology Selection">
 					<MultiSelect
-						bind:value={selectedNodes}
-						options={nodes}
-						label="Nodes"
+						bind:value={selectedConversionTechnologies}
+						options={conversionTechnologies}
+						label="Conversion"
+						emptyText="No conversion technologies available."
 						disabled={solutionLoading || fetching}
 					></MultiSelect>
 					<MultiSelect
-						bind:value={selectedYears}
-						options={years.map((y) => y.toString())}
-						label="Years"
+						bind:value={selectedStorageTechnologies}
+						options={storageTechnologies}
+						label="Storage"
+						emptyText="No storage technologies available."
+						disabled={solutionLoading || fetching}
+					></MultiSelect>
+					<MultiSelect
+						bind:value={selectedTransportTechnologies}
+						options={transportTechnologies}
+						label="Transport"
+						emptyText="No transport technologies available."
 						disabled={solutionLoading || fetching}
 					></MultiSelect>
 				</FilterSection>
+				{#if !fetching && selectedCarrier != null}
+					<FilterSection title="Data Selection">
+						<ToggleButton label="Normalization" bind:value={selectedNormalization}></ToggleButton>
+						<MultiSelect
+							bind:value={selectedNodes}
+							options={nodes}
+							label="Nodes"
+							disabled={solutionLoading || fetching}
+						></MultiSelect>
+						<MultiSelect
+							bind:value={selectedYears}
+							options={years.map((y) => y.toString())}
+							label="Years"
+							disabled={solutionLoading || fetching}
+						></MultiSelect>
+					</FilterSection>
+				{/if}
 			{/if}
 		{/if}
 	{/snippet}
@@ -742,10 +776,10 @@
 					<span class="visually-hidden">Loading...</span>
 				</div>
 			</div>
-		{:else if selectedSolutions == null}
-			<div></div>
-		{:else if carriers.length == 0}
-			<div class="text-center">No carriers with this selection.</div>
+		{:else if hasSomeUnsetSolutions}
+			<div class="text-center">Some solutions are not set.</div>
+		{:else if selectedCarrier == null}
+			<div class="text-center">No carrier selected.</div>
 		{:else if datasets.length == 0}
 			<div class="text-center">No data with this selection.</div>
 		{:else}

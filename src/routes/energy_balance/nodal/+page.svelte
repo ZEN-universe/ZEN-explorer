@@ -189,11 +189,9 @@
 	$effect(() => {
 		carriers;
 		untrack(() => {
-			if (
-				carriers.length > 0 &&
-				(selected_carrier == null || !carriers.includes(selected_carrier))
-			) {
-				selected_carrier = carriers[0];
+			if (selected_solution === null) return;
+			if (selected_carrier !== null && !carriers.includes(selected_carrier)) {
+				selected_carrier = null;
 			}
 		});
 	});
@@ -461,32 +459,34 @@
 				disabled={fetching || solution_loading}
 			/>
 		</FilterSection>
-		{#if !solution_loading && selected_solution}
+		{#if !solution_loading && selected_solution !== null}
 			<FilterSection title="Data Selection">
-				<Dropdown
-					options={years.map((year) => year.toString())}
-					bind:value={selected_year}
-					label="Year"
-					disabled={fetching || solution_loading}
-				></Dropdown>
-				<Dropdown
-					options={nodes}
-					bind:value={selected_node}
-					label="Node"
-					disabled={fetching || solution_loading}
-				></Dropdown>
 				<Dropdown
 					options={carriers}
 					bind:value={selected_carrier}
 					label="Carrier"
 					disabled={fetching || solution_loading}
 				></Dropdown>
-				<Dropdown
-					options={window_sizes}
-					bind:value={selected_window_size}
-					label="Smoothing Window Size"
-					disabled={fetching || solution_loading}
-				></Dropdown>
+				{#if selected_carrier !== null}
+					<Dropdown
+						options={years.map((year) => year.toString())}
+						bind:value={selected_year}
+						label="Year"
+						disabled={fetching || solution_loading}
+					></Dropdown>
+					<Dropdown
+						options={nodes}
+						bind:value={selected_node}
+						label="Node"
+						disabled={fetching || solution_loading}
+					></Dropdown>
+					<Dropdown
+						options={window_sizes}
+						bind:value={selected_window_size}
+						label="Smoothing Window Size"
+						disabled={fetching || solution_loading}
+					></Dropdown>
+				{/if}
 			</FilterSection>
 		{/if}
 	{/snippet}

@@ -91,11 +91,9 @@
 	$effect(() => {
 		carriers;
 		untrack(() => {
-			if (
-				carriers.length > 0 &&
-				(selected_carrier == null || !carriers.includes(selected_carrier))
-			) {
-				selected_carrier = carriers[0];
+			if (selected_solution === null) return;
+			if (selected_carrier !== null && !carriers.includes(selected_carrier)) {
+				selected_carrier = null;
 			}
 		});
 	});
@@ -331,29 +329,29 @@
 		{#if !solution_loading && selected_solution}
 			<FilterSection title="Variable Selection">
 				<Dropdown
-					options={technology_types}
-					bind:value={selected_technology_type}
-					label="Technology Type"
+					options={carriers}
+					bind:value={selected_carrier}
+					label="Carrier"
 					disabled={fetching || solution_loading}
 				></Dropdown>
-				{#if selected_technology_type == 'storage'}
-					<Radio
-						options={storage_type_options}
-						bind:value={selected_storage_type}
-						label="Storage Type"
-						disabled={fetching || solution_loading}
-					></Radio>
-				{/if}
-				{#if selected_technology_type != null && carriers.length > 0}
+				{#if selected_carrier !== null}
 					<Dropdown
-						options={carriers}
-						bind:value={selected_carrier}
-						label="Carrier"
+						options={technology_types}
+						bind:value={selected_technology_type}
+						label="Technology Type"
 						disabled={fetching || solution_loading}
 					></Dropdown>
+					{#if selected_technology_type == 'storage'}
+						<Radio
+							options={storage_type_options}
+							bind:value={selected_storage_type}
+							label="Storage Type"
+							disabled={fetching || solution_loading}
+						></Radio>
+					{/if}
 				{/if}
 			</FilterSection>
-			{#if fetchedData && selected_technology_type && selected_carrier}
+			{#if selected_solution !== null && selected_carrier !== null}
 				<FilterSection title="Data Selection">
 					<Dropdown
 						bind:value={selected_year}

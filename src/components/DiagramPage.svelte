@@ -25,8 +25,8 @@
 		{@render buttons?.()}
 	</div>
 	<div class="order-2 lg:order-3">
-		<ContentBox>
-			<h2 class="font-bold text-lg mb-4">Filters</h2>
+		<ContentBox noPadding>
+			<h2 class="font-bold text-lg px-4 pt-4 pb-2">Selection</h2>
 			<div>
 				{@render filters()}
 			</div>

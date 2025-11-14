@@ -57,10 +57,12 @@
 <nav
 	class="flex gap-4 xl:gap-0 xl:grid grid-cols-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2"
 >
-	<a class="text-xl font-semibold flex items-center" href={resolve('/')}>
-		<img src="/logo.png" alt="ZEN-garden Logo" class="inline h-8 mr-2" />
-		ZEN-garden
-	</a>
+	<div>
+		<a class="text-xl font-semibold inline-flex items-center h-full" href={resolve('/')}>
+			<img src="/logo.png" alt="ZEN-garden Logo" class="inline h-8 mr-2" />
+			ZEN-garden
+		</a>
+	</div>
 	<div class="col-span-3 px-2 flex justify-end lg:justify-between items-center flex-1">
 		<ul class="hidden lg:flex items-end gap-6 xl:gap-12">
 			<li>

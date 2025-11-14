@@ -618,7 +618,7 @@
 				disabled={fetching || solutionLoading}
 			/>
 		</FilterSection>
-		{#if !solutionLoading && !hasSomeUnsetSolutions}
+		{#if !solutionLoading && !fetching && !hasSomeUnsetSolutions}
 			<FilterSection title="Cost Selection">
 				{#each Object.values(variables) as variable, i}
 					<div class="grid grid-cols-2">
@@ -634,7 +634,6 @@
 				{/each}
 			</FilterSection>
 			<FilterSection title="Technology Selection">
-				<h3>Technologies (for Capex/Opex)</h3>
 				{#if transportTechnologies.length > 0}
 					<MultiSelect
 						bind:value={selectedTransportTechnologies}
