@@ -67,25 +67,25 @@
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		if (!fetchedData || !selected_solution || !selected_technology_type) {
+		if (!fetchedData || !selected_solution) {
 			return [];
 		}
 
+		const solution = selected_solution as ActivatedSolution;
 		const technologies = all_technologies.concat(
-			selected_solution.detail.system.set_transport_technologies
+			solution.detail.system.set_transport_technologies
 		);
+		const set_carriers: Set<string> = new Set();
 
-		return removeDuplicates(
-			fetchedData.data
-				.map((element) => {
-					const current_technology = element.technology;
-					if (!technologies.includes(current_technology)) {
-						return null;
-					}
-					return selected_solution!.detail.reference_carrier[current_technology];
-				})
-				.filter((carrier) => carrier != null)
-		);
+		fetchedData.data
+			.forEach((element) => {
+				if (!technologies.includes(element.technology)) {
+					return null;
+				}
+				set_carriers.add(solution.detail.reference_carrier[element.technology]);
+			});
+
+		return Array.from(set_carriers).sort();
 	});
 
 	$effect(() => {
