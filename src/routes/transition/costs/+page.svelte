@@ -38,6 +38,7 @@
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
+	import Spinner from '$components/Spinner.svelte';
 
 	const technologyCarrierLabel = 'Technology / Carrier';
 	const capexSuffix = ' (Capex)';
@@ -694,11 +695,7 @@
 
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
-			<div class="text-center">
-				<div class="spinner-border center" role="status">
-					<span class="visually-hidden">Loading...</span>
-				</div>
-			</div>
+			<Spinner></Spinner>
 		{:else if hasSomeUnsetSolutions}
 			<div class="text-center">Please select at least one solution.</div>
 		{:else if selectedYears.length == 0}

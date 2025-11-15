@@ -16,6 +16,7 @@
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import Button from '$components/Button.svelte';
+	import Spinner from '$components/Spinner.svelte';
 
 	let years: number[] = $state([]);
 	let solutionLoading: boolean = $state(false);
@@ -532,11 +533,7 @@
 
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
-			<div class="text-center">
-				<div class="spinner-border center" role="status">
-					<span class="visually-hidden">Loading...</span>
-				</div>
-			</div>
+			<Spinner></Spinner>
 		{:else if !selectedSolution}
 			<div class="text-center">No solution selected</div>
 		{:else if selectedCarriers.length === 0}

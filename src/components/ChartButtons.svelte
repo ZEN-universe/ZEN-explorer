@@ -13,7 +13,7 @@
 {#if zoomable || downloadable}
 	<div class="flex flex-wrap justify-end items-end h-full gap-4">
 		{#if zoomable}
-			<div class={['flex flex-wrap items-center', downloadable && 'me-2']}>
+			<div class={['flex flex-wrap items-center']}>
 				<Button class="rounded-l-lg rounded-r-none" onclick={chart?.resetZoom}>
 					<i class="bi bi-house me-2"></i>
 					<div>Reset zoom</div>
@@ -30,9 +30,13 @@
 		{/if}
 		{#if downloadable}
 			<Button onclick={chart?.downloadData}>
-				<i class="bi bi-download me-2"></i>
+				<i class="bi bi-file-earmark-spreadsheet me-2"></i>
 				<div>Download CSV Data</div>
 			</Button>
 		{/if}
+		<Button onclick={chart?.downloadChartAsImage}>
+			<i class="bi bi-image me-2"></i>
+			<div>Download as PNG</div>
+		</Button>
 	</div>
 {/if}

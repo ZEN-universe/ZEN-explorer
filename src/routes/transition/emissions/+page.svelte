@@ -25,6 +25,7 @@
 		onClickLegendForSolutionComparison
 	} from '$lib/compareSolutions';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
+	import Spinner from '$components/Spinner.svelte';
 
 	let technologyData: Row[][] = $state([]);
 	let carrierData: Row[][] = $state([]);
@@ -489,11 +490,7 @@
 
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
-			<div class="text-center">
-				<div class="spinner-border center" role="status">
-					<span class="visually-hidden">Loading...</span>
-				</div>
-			</div>
+			<Spinner></Spinner>
 		{:else if selectedSolutions.length == 0 || hasSomeUnsetSolutions}
 			<div class="text-center">No solution selected</div>
 		{:else if datasets.length == 0 || selectedYears.length == 0}

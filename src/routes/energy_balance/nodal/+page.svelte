@@ -14,6 +14,7 @@
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
+	import Spinner from '$components/Spinner.svelte';
 
 	let energy_balance_data: EnergyBalanceDataframes | null = null;
 	let unit_data: any = $state(null);
@@ -496,12 +497,8 @@
 	{/snippet}
 
 	{#snippet mainContent()}
-		{#if fetching}
-			<div class="text-center">
-				<div class="spinner-border center" role="status">
-					<span class="visually-hidden">Loading...</span>
-				</div>
-			</div>
+		{#if solution_loading || fetching}
+			<Spinner></Spinner>
 		{:else if datasets_length == 0 || selected_solution == null}
 			<div class="text-center">No data with this selection.</div>
 		{:else}

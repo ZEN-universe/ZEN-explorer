@@ -30,6 +30,7 @@
 		resetPatternState,
 		type ShapeType
 	} from '$lib/patterns';
+	import Spinner from '$components/Spinner.svelte';
 
 	let data: Row[][] = $state([]);
 
@@ -486,11 +487,7 @@
 
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
-			<div class="text-center">
-				<div class="spinner-border center" role="status">
-					<span class="visually-hidden">Loading...</span>
-				</div>
-			</div>
+			<Spinner></Spinner>
 		{:else if technologies.length == 0}
 			<div class="text-center">No technologies with this selection.</div>
 		{:else if carriers.length == 0}

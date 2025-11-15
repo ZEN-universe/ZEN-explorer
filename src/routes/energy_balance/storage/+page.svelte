@@ -22,6 +22,7 @@
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Entry } from '$lib/types';
 	import { nextColor, resetColorState } from '$lib/colors';
+	import Spinner from '$components/Spinner.svelte';
 
 	// All but one data variable are non-reactive because of their size
 	let level_response: Entry[] | null = null;
@@ -579,11 +580,7 @@
 
 	{#snippet mainContent()}
 		{#if solution_loading || fetching}
-			<div class="text-center">
-				<div class="spinner-border center" role="status">
-					<span class="visually-hidden">Loading...</span>
-				</div>
-			</div>
+			<Spinner></Spinner>
 		{:else if technologies.length == 0}
 			<div class="text-center">No technologies with this selection.</div>
 		{:else if carriers.length == 0}

@@ -142,13 +142,12 @@
 	}
 
 	function updateDefaultColor() {
-		const isDark = window.localStorage.getItem('theme') === 'dark' || (
-			!window.localStorage.getItem('theme') &&
-			window.matchMedia('(prefers-color-scheme: dark)').matches
-		);
+		const isDark =
+			window.localStorage.getItem('theme') === 'dark' ||
+			(!window.localStorage.getItem('theme') &&
+				window.matchMedia('(prefers-color-scheme: dark)').matches);
 		BaseChart.defaults.color = isDark ? '#ddd' : '#222';
-		BaseChart.defaults.borderColor =
-			isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+		BaseChart.defaults.borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 	}
 
 	//#endregion
@@ -259,6 +258,19 @@
 		link.click();
 	}
 
+	//#endregion
+
+	//#region Download chart as image
+	export function downloadChartAsImage() {
+		if (chart == undefined) {
+			return;
+		}
+		const link = document.createElement('a');
+		link.download = plotName + '.png';
+		link.href = chart.toBase64Image();
+		document.body.appendChild(link); // Required for Firefox
+		link.click();
+	}
 	//#endregion
 
 	function emitClickBarEvent(event: Event) {

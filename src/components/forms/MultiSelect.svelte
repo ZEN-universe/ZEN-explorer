@@ -53,7 +53,7 @@
 					showSearch: false,
 					maxValuesShown: 100,
 					allowDeselect: true,
-					closeOnSelect: false,
+					closeOnSelect: false
 				},
 				cssClasses: {
 					deselect: 'hidden'
@@ -89,7 +89,6 @@
 				return;
 			}
 			if (!slimSelect) return;
-			
 			slimSelect.setSelected(value || [], false);
 		});
 	});

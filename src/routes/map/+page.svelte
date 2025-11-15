@@ -16,6 +16,7 @@
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import Button from '$components/Button.svelte';
+	import Spinner from '$components/Spinner.svelte';
 
 	interface AggregatedData {
 		[location: string]: { technology: string; years: number[] }[];
@@ -72,18 +73,15 @@
 		}
 
 		const solution = selected_solution as ActivatedSolution;
-		const technologies = all_technologies.concat(
-			solution.detail.system.set_transport_technologies
-		);
+		const technologies = all_technologies.concat(solution.detail.system.set_transport_technologies);
 		const set_carriers: Set<string> = new Set();
 
-		fetchedData.data
-			.forEach((element) => {
-				if (!technologies.includes(element.technology)) {
-					return null;
-				}
-				set_carriers.add(solution.detail.reference_carrier[element.technology]);
-			});
+		fetchedData.data.forEach((element) => {
+			if (!technologies.includes(element.technology)) {
+				return null;
+			}
+			set_carriers.add(solution.detail.reference_carrier[element.technology]);
+		});
 
 		return Array.from(set_carriers).sort();
 	});
@@ -374,7 +372,11 @@
 	{/snippet}
 
 	{#snippet mainContent()}
-		{#if pieData && lineData}
+		{#if fetching || solution_loading}
+			<Spinner></Spinner>
+		{:else if !pieData || !lineData}
+			<div class="text-center">No data to display.</div>
+		{:else}
 			<MapPlot
 				bind:this={plot}
 				{pieData}

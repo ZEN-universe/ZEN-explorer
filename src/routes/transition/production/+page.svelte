@@ -17,6 +17,9 @@
 	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
+	import FilterLabel from '$components/FilterLabel.svelte';
+	import Spinner from '$components/Spinner.svelte';
 
 	import { get_component_total } from '$lib/temple';
 	import {
@@ -38,8 +41,6 @@
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import Entries, { type FilterCriteria } from '$lib/entries';
-	import type { ColorBoxItem } from '$components/ColorBox.svelte';
-	import FilterLabel from '$components/FilterLabel.svelte';
 
 	// Data
 	let data: Row[][][] = $state([]);
@@ -771,11 +772,7 @@
 
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
-			<div class="text-center">
-				<div class="spinner-border center" role="status">
-					<span class="visually-hidden">Loading...</span>
-				</div>
-			</div>
+			<Spinner></Spinner>
 		{:else if hasSomeUnsetSolutions}
 			<div class="text-center">Some solutions are not set.</div>
 		{:else if selectedCarrier == null}
