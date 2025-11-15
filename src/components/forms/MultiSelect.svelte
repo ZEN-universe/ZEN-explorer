@@ -1,7 +1,7 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
 	import SlimSelect, { Option } from 'slim-select';
-	import { untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 
 	interface Props {
 		label: string;
@@ -44,35 +44,42 @@
 	}
 
 	function renderDropdown(element: HTMLSelectElement) {
-		slimSelect = new SlimSelect({
-			select: element,
-			settings: {
-				id: formId,
-				isMultiple: true,
-				showSearch: false,
-				maxValuesShown: 100,
-				allowDeselect: true
-			},
-			cssClasses: {
-				deselect: 'hidden'
-			},
-			data: options,
-			events: {
-				afterChange: (selected) => {
-					updateValue(selected.map((s) => s.value));
+		untrack(() => {
+			slimSelect = new SlimSelect({
+				select: element,
+				settings: {
+					id: formId,
+					isMultiple: true,
+					showSearch: false,
+					maxValuesShown: 100,
+					allowDeselect: true,
+					closeOnSelect: false,
+				},
+				cssClasses: {
+					deselect: 'hidden'
+				},
+				data: options,
+				events: {
+					afterChange: (selected) => {
+						// return;
+						updateValue(selected.map((s) => s.value));
+					}
 				}
-			}
+			});
+			lastOptions = JSON.stringify(options);
+			slimSelect.setSelected(
+				value.map((v) => v.toString()),
+				false
+			);
 		});
-		lastOptions = JSON.stringify(options);
-		slimSelect.setSelected(
-			value.map((v) => v.toString()),
-			false
-		);
-
-		return () => {
-			slimSelect?.destroy();
-		};
 	}
+
+	onDestroy(() => {
+		if (slimSelect) {
+			slimSelect.destroy();
+			slimSelect = undefined;
+		}
+	});
 
 	$effect(() => {
 		value;
@@ -82,6 +89,7 @@
 				return;
 			}
 			if (!slimSelect) return;
+			
 			slimSelect.setSelected(value || [], false);
 		});
 	});
@@ -94,6 +102,7 @@
 			lastOptions = JSON.stringify(options);
 
 			if (!slimSelect) return;
+
 			slimSelect.setData($state.snapshot(options.map((opt) => new Option(opt))));
 		});
 	});
