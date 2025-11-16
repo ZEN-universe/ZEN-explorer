@@ -78,7 +78,7 @@
 
 	let labels: string[] = $derived(selectedYears.map((year) => year.toString()));
 	let plotOptions: ChartOptions<'bar'> = $derived({
-		responsive: true,
+		maintainAspectRatio: false,
 		scales: {
 			x: {
 				stacked: true,
@@ -421,7 +421,7 @@
 				disabled={fetching || solutionLoading}
 			></MultiSolutionFilter>
 		</FilterSection>
-		{#if !solutionLoading && selectedSolutions[0]}
+		{#if !solutionLoading && !hasSomeUnsetSolutions}
 			<FilterSection title="Variable Selection">
 				<Dropdown
 					label="Carrier"
@@ -488,12 +488,14 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
+		{:else if hasSomeUnsetSolutions}
+			<div class="text-center">No solution selected.</div>
+		{:else if carriers.length == 0}
+			<div class="text-center">No carriers for this solution.</div>
+		{:else if selectedCarrier === null}
+			<div class="text-center">No carrier selected.</div>
 		{:else if technologies.length == 0}
 			<div class="text-center">No technologies with this selection.</div>
-		{:else if carriers.length == 0}
-			<div class="text-center">No carriers with this selection.</div>
-		{:else if selectedSolutions[0] == null}
-			<div class="text-center">No solution selected.</div>
 		{:else if locations.length == 0}
 			<div class="text-center">No locations with this selection.</div>
 		{:else if datasets.length == 0}

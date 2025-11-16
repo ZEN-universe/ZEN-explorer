@@ -102,7 +102,7 @@
 					borderWidth: 1
 				}
 			},
-			responsive: true,
+			maintainAspectRatio: false,
 			scales: {
 				x: {
 					type: 'linear',

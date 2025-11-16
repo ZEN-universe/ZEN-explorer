@@ -21,7 +21,7 @@
 		pluginOptions?: ChartOptions<ChartType>['plugins'];
 		zoom?: boolean;
 		plotName?: string;
-		narrow?: boolean;
+		initialHeight?: number;
 		zoomLevel?: [number, number] | null;
 		patterns?: ColorBoxItem[];
 		boxed?: boolean;
@@ -40,7 +40,7 @@
 		plugins = [],
 		zoom = false,
 		plotName = 'plot_data',
-		narrow = false,
+		initialHeight = 600,
 		zoomLevel = $bindable(null),
 		patterns = [],
 		boxed = true,
@@ -285,8 +285,6 @@
 	}
 </script>
 
-<svelte:window onresize={() => tick().then(() => chart?.resize())} />
-
 {#snippet legend()}
 	<h2 class="flex items-start font-bold text-lg me-4">
 		<span class="me-2">Legend</span>
@@ -295,7 +293,7 @@
 	<div class="flex flex-wrap gap-2">
 		{#each legendItems as item}
 			<button
-				class="flex items-center p-0 text-gray-600 dark:text-gray-400 text-sm"
+				class="flex items-center text-gray-600 dark:text-gray-400 text-sm"
 				onclick={() => toggleLegendItem(item)}
 			>
 				<ColorBox item={item as ColorBoxItem}></ColorBox>
@@ -308,14 +306,9 @@
 {#snippet patternSnippet()}
 	{#if patterns.length > 1}
 		<h2 class="font-bold text-lg me-4">Patterns</h2>
-		<div class="legend flex wrap gap-2">
+		<div class="legend flex flex-wrap gap-2">
 			{#each patterns as pattern}
-				<div
-					class="flex items-center text-gray-600 dark:text-gray-400"
-					style:font-size="12px"
-					style:letter-spacing="0.0em"
-					style:font-family="Arial, sans-serif"
-				>
+				<div class="flex items-center text-gray-600 dark:text-gray-400 text-sm">
 					<ColorBox item={pattern}></ColorBox>
 					<span>{pattern.text}</span>
 				</div>
@@ -326,8 +319,8 @@
 
 {#snippet chartSnippet()}
 	{#if showChart}
-		<div class="position-relative" style:min-height={narrow ? '259px' : '558px'}>
-			<canvas {id} use:handleChart onclick={emitClickBarEvent}></canvas>
+		<div class="position-relative h-full max-w-full">
+			<canvas {id} height={initialHeight} use:handleChart onclick={emitClickBarEvent}></canvas>
 		</div>
 	{/if}
 {/snippet}
@@ -339,7 +332,7 @@
 	{#if patterns.length > 1}
 		<ContentBox class="flex" children={patternSnippet}></ContentBox>
 	{/if}
-	<ContentBox children={chartSnippet}></ContentBox>
+	<ContentBox class="resize-y overflow-y-auto" children={chartSnippet}></ContentBox>
 {:else}
 	<div class="flex mb-4">
 		{@render legend()}

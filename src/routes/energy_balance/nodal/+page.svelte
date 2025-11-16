@@ -98,7 +98,7 @@
 			animation: false,
 			normalized: true,
 			parsing: false,
-			responsive: true,
+			maintainAspectRatio: false,
 			borderWidth: 1,
 			aspectRatio,
 			elements: {
@@ -523,7 +523,7 @@
 					pluginOptions={plotPluginOptions}
 					plotName={duals_plot_name}
 					zoom={true}
-					narrow
+					initialHeight={300}
 					generateLabels={() => []}
 					bind:zoomLevel
 					bind:this={duals_plot}

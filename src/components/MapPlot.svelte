@@ -4,7 +4,7 @@
 	import { pointer, select } from 'd3-selection';
 	import { pie as d3pie, arc as d3arc } from 'd3-shape';
 	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3-zoom';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
@@ -384,14 +384,6 @@
 		});
 	}
 
-	onMount(handleSize);
-
-	function handleSize() {
-		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
-		width = w;
-		height = h;
-	}
-
 	function computeRadius(total: number) {
 		if (maxTotal == minTotal) {
 			return maxRadius;
@@ -411,6 +403,26 @@
 		const [x2, y2] = end;
 		return `M${x1},${y1} L${x2},${y2}`;
 	}
+
+	//#region Handle resizing
+	function handleSize() {
+		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
+		width = w;
+		height = h;
+	}
+
+	onMount(handleSize);
+
+	const resizeObserver = new ResizeObserver(handleSize);
+	onMount(() => {
+		if (svg && svg.parentElement) {
+			resizeObserver.observe(svg.parentElement);
+		}
+	});
+	onDestroy(() => {
+		resizeObserver.disconnect();
+	});
+	//#endregion
 </script>
 
 <svelte:window on:resize={handleSize} />
@@ -431,7 +443,7 @@
 	</ContentBox>
 {/if}
 
-<ContentBox class="relative overflow-hidden" noPadding>
+<ContentBox class="relative overflow-hidden resize-y overflow-y-auto" noPadding>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<svg
 		{width}

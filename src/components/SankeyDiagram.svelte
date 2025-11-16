@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, untrack } from 'svelte';
+	import { onDestroy, onMount, untrack } from 'svelte';
 	import type {
 		SankeyNode,
 		SankeyLink,
@@ -287,12 +287,26 @@
 	 */
 	function handleSize() {
 		if (!svg) return;
-		const { width: w } = svg.parentElement!.getBoundingClientRect();
+		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
 		width = w;
+		height = h;
 		debounceLayoutDiagram();
 	}
 
 	onMount(handleSize);
+
+	/**
+	 * Resize observer to resize the diagram when the user resizes the container.
+	 */
+	const resizeObserver = new ResizeObserver(handleSize);
+	onMount(() => {
+		if (svg && svg.parentElement) {
+			resizeObserver.observe(svg.parentElement);
+		}
+	});
+	onDestroy(() => {
+		resizeObserver.disconnect();
+	});
 
 	// ===================================
 	// Zoom and pan behavior using d3-zoom
@@ -529,7 +543,7 @@
 </ContentBox>
 
 <ContentBox noPadding>
-	<div class="relative">
+	<div class="relative resize-y overflow-y-hidden">
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<svg
 			{id}

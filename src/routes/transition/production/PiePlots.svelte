@@ -27,12 +27,15 @@
 			});
 	});
 
+	let hasMultipleSolutions = $derived(new Set(datasets.map((d) => d.stack)).size > 1);
+
 	function getPlotOptions() {
 		return {
 			animation: {
 				duration: 0
 			},
-			responsive: true,
+			maintainAspectRatio: true,
+			radius: '90%',
 			plugins: {
 				tooltip: {
 					callbacks: {
@@ -49,8 +52,7 @@
 				legend: {
 					position: 'top' as const
 				}
-			},
-			radius: '90%'
+			}
 		};
 	}
 
@@ -105,7 +107,8 @@
 	<div class="grid grid-cols-2 gap-4">
 		<ContentBox>
 			<h3 class="font-semibold text-lg mb-4">
-				Breakdown of Production for {year} ({solution})
+				Breakdown of Production for {year}
+				{hasMultipleSolutions ? ` (${solution})` : ''}
 			</h3>
 			<Chart
 				type="pie"
@@ -117,7 +120,8 @@
 		</ContentBox>
 		<ContentBox>
 			<h3 class="font-semibold text-lg mb-4">
-				Breakdown of Consumption for {year} ({solution})
+				Breakdown of Consumption for {year}
+				{hasMultipleSolutions ? ` (${solution})` : ''}
 			</h3>
 			<Chart
 				type="pie"

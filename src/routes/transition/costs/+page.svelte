@@ -156,7 +156,7 @@
 		return '';
 	});
 	let plotOptions: ChartOptions = $derived({
-		responsive: true,
+		maintainAspectRatio: false,
 		scales: {
 			x: {
 				stacked: true,

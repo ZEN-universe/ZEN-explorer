@@ -25,7 +25,6 @@
 			width = tooltipDiv.getBoundingClientRect().width;
 		});
 	});
-	$inspect('width', width);
 
 	let adjustedX = $derived.by(() => {
 		let newX = x;
