@@ -363,16 +363,18 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<div class="flex justify-end items-end h-full gap-4">
-			<Button onclick={plot?.resetZoom}>
-				<i class="bi bi-house me-2"></i>
-				<div class="visually-hidden">Reset zoom</div>
-			</Button>
-			<Button onclick={plot?.downloadSVG}>
-				<i class="bi bi-download me-2"></i>
-				<div class="visually-hidden">Download SVG</div>
-			</Button>
-		</div>
+		{#if plot}
+			<div class="flex justify-end items-end h-full gap-4">
+				<Button onclick={plot?.resetZoom}>
+					<i class="bi bi-house me-2"></i>
+					<div class="visually-hidden">Reset zoom</div>
+				</Button>
+				<Button onclick={plot?.downloadSVG}>
+					<i class="bi bi-download me-2"></i>
+					<div class="visually-hidden">Download SVG</div>
+				</Button>
+			</div>
+		{/if}
 	{/snippet}
 
 	{#snippet mainContent()}

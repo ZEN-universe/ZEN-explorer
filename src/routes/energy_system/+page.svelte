@@ -522,20 +522,22 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<div class="flex justify-end items-end h-full gap-4">
-			<Button onclick={diagram?.resetZoom}>
-				<i class="bi bi-house me-2"></i>
-				<div>Reset zoom</div>
-			</Button>
-			<Button onclick={diagram?.toggleShowStructureOnly}>
-				<i class="bi bi-diagram-3 me-2"></i>
-				<div>Show only structure: {diagram?.getShowStructureOnly() ? 'On' : 'Off'}</div>
-			</Button>
-			<Button onclick={diagram?.downloadSVG}>
-				<i class="bi bi-download me-2"></i>
-				<div>Download SVG</div>
-			</Button>
-		</div>
+		{#if diagram}
+			<div class="flex justify-end items-end h-full gap-4">
+				<Button onclick={diagram?.resetZoom}>
+					<i class="bi bi-house me-2"></i>
+					<div>Reset zoom</div>
+				</Button>
+				<Button onclick={diagram?.toggleShowStructureOnly}>
+					<i class="bi bi-diagram-3 me-2"></i>
+					<div>Show only structure: {diagram?.getShowStructureOnly() ? 'On' : 'Off'}</div>
+				</Button>
+				<Button onclick={diagram?.downloadSVG}>
+					<i class="bi bi-download me-2"></i>
+					<div>Download SVG</div>
+				</Button>
+			</div>
+		{/if}
 	{/snippet}
 
 	{#snippet mainContent()}

@@ -10,7 +10,7 @@
 	let { chart, zoomable = false, downloadable = false }: Props = $props();
 </script>
 
-{#if zoomable || downloadable}
+{#if chart}
 	<div class="flex flex-wrap justify-end items-end h-full gap-4">
 		{#if zoomable}
 			<div class={['flex flex-wrap items-center']}>
