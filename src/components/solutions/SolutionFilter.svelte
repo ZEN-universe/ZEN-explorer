@@ -58,10 +58,17 @@
 		if (activeFirstLevel == '') return [];
 
 		const excludedSecondLevels = new Set(excludeSolutions.map((s) => s[0]));
-		return getSolutionList()
-			.filter((solution) => solution.name.startsWith(activeFirstLevel))
-			.map((solution) => solution.name.split('.')[1] || null)
-			.filter((solution) => solution !== null && !excludedSecondLevels.has(solution)) as string[];
+		const secondLevels: string[] = [];
+		getSolutionList().forEach((solution) => {
+			const parts = solution.name.split('.');
+			if (
+				parts[0] == activeFirstLevel &&
+				(solution.scenarios.length > 0 || !excludedSecondLevels.has(parts[1]))
+			) {
+				secondLevels.push(parts[1]);
+			}
+		});
+		return secondLevels;
 	});
 
 	let allScenarios: string[] = $state([]);

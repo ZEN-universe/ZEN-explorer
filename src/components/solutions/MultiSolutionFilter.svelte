@@ -144,39 +144,53 @@
 	<!-- Not showing anything while mounting component -->
 {:else}
 	{#each solutions as _, idx}
-		<div class={[idx > 0 && 'border-t border-gray-300 dark:border-gray-600']}>
+		<div class={[idx > 0 && 'mb-2 mt-4']}>
+			{#if idx > 0}
+				<div
+					class={[
+						'flex justify-between border-b',
+						'border border-gray-300 dark:border-gray-600 rounded-t bg-gray-200 dark:bg-gray-900',
+						'px-2 py-2'
+					]}
+				>
+					<strong>Solution {idx + 1}</strong>
+					<button class="text-red-500 hover:text-red-600" onclick={() => deleteSolution(idx)}>
+						<i class="bi bi-trash3 me-1"></i>
+						Remove solution
+					</button>
+				</div>
+			{/if}
 			<!-- This is necessary to prevent weird loading issues when switching between solutions -->
 			{#if activeSecondLevels[idx] !== undefined && activeScenarios[idx] !== undefined}
-				<SolutionFilter
-					bind:this={solutionFilters[idx]}
-					bind:selected_solution={solutions[idx]}
-					bind:activeFirstLevel
-					bind:activeSecondLevel={activeSecondLevels[idx]}
-					bind:activeScenario={activeScenarios[idx]}
-					bind:loading
-					excludeSolutions={getSolutionsToExclude(idx)}
-					solutionSelected={emitUpdateEvent}
-					{disabled}
-					withoutSolution={idx > 0}
-					urlParamSolution={null}
-					urlParamScenario={null}
-				/>
-			{/if}
-			{#if idx > 0}
-				<div class="row mb-2">
-					<div class="offset-md-3 col-md-9">
-						<button class="text-red-500 hover:text-red-600" onclick={() => deleteSolution(idx)}>
-							<i class="bi bi-trash3 me-1"></i>
-							Remove solution from comparison
-						</button>
-					</div>
+				<div
+					class={[
+						idx > 0 && 'border border-t-0 border-gray-300 dark:border-gray-600 rounded-b p-2'
+					]}
+				>
+					<SolutionFilter
+						bind:this={solutionFilters[idx]}
+						bind:selected_solution={solutions[idx]}
+						bind:activeFirstLevel
+						bind:activeSecondLevel={activeSecondLevels[idx]}
+						bind:activeScenario={activeScenarios[idx]}
+						bind:loading
+						excludeSolutions={getSolutionsToExclude(idx)}
+						solutionSelected={emitUpdateEvent}
+						{disabled}
+						withoutSolution={idx > 0}
+						urlParamSolution={null}
+						urlParamScenario={null}
+					/>
 				</div>
 			{/if}
 		</div>
 	{/each}
 	{#if moreSolutionsExist && !solutions.includes(null)}
-		<div class="mb-2">
-			<button class="text-blue-500 hover:text-blue-600" onclick={addSolution}>
+		<div class="mt-4">
+			<button
+				class="border-2 rounded p-2 w-full text-blue-500 hover:bg-gray-200 hover:dark:bg-gray-700"
+				onclick={addSolution}
+			>
 				<i class="bi bi-plus-lg me-1"></i>
 				Add solution to compare
 			</button>

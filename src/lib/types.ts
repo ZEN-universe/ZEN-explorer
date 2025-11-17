@@ -4,6 +4,7 @@ export interface Solution {
 	folder_name: string;
 	nodes: string[];
 	technologies: string[];
+	scenarios: string[];
 }
 
 export interface Component {
