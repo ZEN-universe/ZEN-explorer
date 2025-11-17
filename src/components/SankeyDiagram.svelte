@@ -28,6 +28,7 @@
 	import { sum } from 'd3';
 	import ContentBox from './ContentBox.svelte';
 	import HelpTooltip from './HelpTooltip.svelte';
+	import { exportAsSVG } from '$lib/export';
 
 	let width = $state(936);
 	let height = $state(800);
@@ -516,6 +517,15 @@
 	export function toggleShowStructureOnly() {
 		showStructureOnly = !showStructureOnly;
 	}
+
+	// ===================
+	// Download SVG
+	// ===================
+
+	export function downloadSVG() {
+		if (!svg) return;
+		exportAsSVG(svg, 'sankey_diagram.svg');
+	}
 </script>
 
 <svelte:window onresize={handleSize} onscroll={updateSvgRect} />
@@ -554,18 +564,27 @@
 			viewBox={`${minX - 10} ${-cycleLaneHeight} ${maxWidth + 20} ${maxHeight + 2 * cycleLaneHeight + 20}`}
 			onmousemove={updatePointerPosition}
 			onmouseleave={() => (pointerPosition = null)}
+			style:font="9px sans-serif"
 		>
 			<g {transform}>
 				<g class="links">
 					{#each links.toSorted((a, b) => b.value - a.value) as link}
 						{#if link.causesCycle}
-							<path class="cycle-link" d={linkPath(link)} style:fill={link.color}>
+							<path
+								class="cycle-link"
+								d={linkPath(link)}
+								style:fill={link.color}
+								stroke="none"
+								style:opacity="0.3"
+							>
 								<title>{linkTitle(link)}</title>
 							</path>
 						{:else}
 							<path
 								class="link"
 								d={linkPath(link)}
+								fill="none"
+								style:stroke-opacity="0.3"
 								style:stroke={link.color}
 								style:stroke-width={Math.max(1, link.dy)}
 							>
@@ -583,6 +602,8 @@
 								width={NODE_WIDTH}
 								height={Math.max(0.1, node.dy - 1)}
 								fill={node.color}
+								stroke="black"
+								stroke-width="1"
 							></rect>
 							<text
 								x={node.x + NODE_WIDTH / 2}
@@ -679,36 +700,15 @@
 </ContentBox>
 
 <style>
-	svg {
-		font: 9px sans-serif;
-	}
-
 	.node {
 		cursor: row-resize;
 	}
 
-	.node rect {
-		stroke: #000;
-		stroke-width: 1px;
-	}
-
-	.link {
-		fill: none;
-		stroke: #000;
-		stroke-opacity: 0.3;
-	}
-
 	.link:hover {
-		stroke-opacity: 0.5;
-	}
-
-	.cycle-link {
-		opacity: 0.3;
-		stroke: none;
-		stroke-linejoin: round;
+		stroke-opacity: 0.5 !important;
 	}
 
 	.cycle-link:hover {
-		opacity: 0.5;
+		opacity: 0.5 !important;
 	}
 </style>

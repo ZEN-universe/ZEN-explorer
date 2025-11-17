@@ -528,6 +528,10 @@
 				<i class="bi bi-diagram-3 me-2"></i>
 				<div>Show only structure: {diagram?.getShowStructureOnly() ? 'On' : 'Off'}</div>
 			</Button>
+			<Button onclick={diagram?.downloadSVG}>
+				<i class="bi bi-download me-2"></i>
+				<div>Download SVG</div>
+			</Button>
 		</div>
 	{/snippet}
 

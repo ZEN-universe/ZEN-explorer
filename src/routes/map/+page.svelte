@@ -368,6 +368,10 @@
 				<i class="bi bi-house me-2"></i>
 				<div class="visually-hidden">Reset zoom</div>
 			</Button>
+			<Button onclick={plot?.downloadSVG}>
+				<i class="bi bi-download me-2"></i>
+				<div class="visually-hidden">Download SVG</div>
+			</Button>
 		</div>
 	{/snippet}
 

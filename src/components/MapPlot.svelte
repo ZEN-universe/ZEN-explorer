@@ -5,14 +5,13 @@
 	import { pie as d3pie, arc as d3arc } from 'd3-shape';
 	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3-zoom';
 	import { onDestroy, onMount } from 'svelte';
-	import { fade } from 'svelte/transition';
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
 	import { allColors } from '$lib/colors';
 	import Tooltip from './Tooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
-	import HelpTooltip from './HelpTooltip.svelte';
+	import { exportAsSVG } from '$lib/export';
 
 	let topology: Topology | null = $state(null);
 	$effect(() => {
@@ -423,6 +422,13 @@
 		resizeObserver.disconnect();
 	});
 	//#endregion
+
+	//#region Download SVG
+	export function downloadSVG() {
+		if (!svg) return;
+		exportAsSVG(svg, 'map_plot.svg');
+	}
+	//#endregion
 </script>
 
 <svelte:window on:resize={handleSize} />
@@ -472,7 +478,8 @@
 				{/if}
 				<path
 					d={countries}
-					class="fill-none stroke-gray-400 dark:stroke-gray-400"
+					class="stroke-gray-400"
+					fill="none"
 					stroke-width={regions == null ? '1px' : '2px'}
 				/>
 			</g>
@@ -483,9 +490,9 @@
 			</g>
 			<g>
 				{#each pies as pie}
-					<g class="pies" transform={`translate(${pie.x}, ${pie.y})`}>
+					<g transform={`translate(${pie.x}, ${pie.y})`}>
 						{#each pie.data as d}
-							<path class="arc" d={d.arc} fill={d.color} />
+							<path d={d.arc} fill={d.color} />
 						{/each}
 					</g>
 				{/each}
