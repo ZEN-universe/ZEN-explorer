@@ -68,6 +68,7 @@ export interface SolutionDetail {
 	name: string;
 	scenarios: Scenarios;
 	version: string;
+	objective: string;
 }
 
 export interface ActivatedSolution {
@@ -75,6 +76,7 @@ export interface ActivatedSolution {
 	scenario_name: string;
 	detail: ScenarioDetail;
 	version: string;
+	objective: string;
 }
 
 export type Row = Record<string, any>;

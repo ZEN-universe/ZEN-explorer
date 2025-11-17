@@ -62,7 +62,8 @@
 		getSolutionList().forEach((solution) => {
 			const parts = solution.name.split('.');
 			if (
-				parts[0] == activeFirstLevel &&
+				solution.name.startsWith(activeFirstLevel) &&
+				parts.length > 1 &&
 				(solution.scenarios.length > 0 || !excludedSecondLevels.has(parts[1]))
 			) {
 				secondLevels.push(parts[1]);

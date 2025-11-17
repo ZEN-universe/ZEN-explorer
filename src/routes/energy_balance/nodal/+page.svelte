@@ -18,6 +18,7 @@
 
 	let energy_balance_data: EnergyBalanceDataframes | null = null;
 	let unit_data: any = $state(null);
+	let unit_objective_data: any = $state(null);
 
 	let solution_loading: boolean = $state(false);
 	let fetching = $state(false);
@@ -65,6 +66,15 @@
 		}
 		return unit_data.data[0][0] || unit_data.data[0]['units'] || '';
 	});
+	let dual_unit = $derived.by(() => {
+		let unit_of_demand_carrier = unit;
+		if (unit.includes('*') || unit.includes('/')) {
+			unit_of_demand_carrier = `(${unit_of_demand_carrier})`;
+		}
+		const unit_of_objective =
+			unit_objective_data?.data[0][0] || unit_objective_data?.data[0]['units'] || '';
+		return `${unit_of_objective} / ${unit_of_demand_carrier}`;
+	});
 
 	// Zoom level for both plots
 	let zoomLevel: [number, number] | null = $state(null);
@@ -86,7 +96,9 @@
 	});
 
 	let plot_options: ChartOptions = $derived.by(() => getPlotOptions(`Energy [${unit}]`));
-	let duals_plot_options: ChartOptions = $derived.by(() => getPlotOptions('Dual', false, 5, false));
+	let duals_plot_options: ChartOptions = $derived.by(() =>
+		getPlotOptions(`Dual [${dual_unit}]`, false, 5, false)
+	);
 
 	function getPlotOptions(
 		yAxisLabel: string,
@@ -139,33 +151,38 @@
 		} as ChartOptions<'bar' | 'line'>;
 	}
 
-	const plotPluginOptions: ChartOptions['plugins'] = {
-		zoom: {
-			pan: {
-				enabled: true,
-				modifierKey: 'ctrl',
-				mode: 'x'
-			},
+	const plotPluginOptions: ChartOptions['plugins'] = $derived(getPluginOptions(unit));
+	const dualsPlotPluginOptions: ChartOptions['plugins'] = $derived(getPluginOptions(dual_unit));
+
+	function getPluginOptions(unit: string): ChartOptions['plugins'] {
+		return {
 			zoom: {
-				drag: {
-					enabled: true
+				pan: {
+					enabled: true,
+					modifierKey: 'ctrl',
+					mode: 'x'
 				},
-				wheel: {
-					enabled: true
+				zoom: {
+					drag: {
+						enabled: true
+					},
+					wheel: {
+						enabled: true
+					},
+					mode: 'x'
 				},
-				mode: 'x'
+				limits: {
+					x: { minRange: 10, min: 'original', max: 'original' }
+				}
 			},
-			limits: {
-				x: { minRange: 10, min: 'original', max: 'original' }
+			tooltip: {
+				callbacks: {
+					label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
+						`${item.dataset.label}: ${item.formattedValue} ${unit}`
+				}
 			}
-		},
-		tooltip: {
-			callbacks: {
-				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-					`${item.dataset.label}: ${item.formattedValue} ${unit}`
-			}
-		}
-	};
+		};
+	}
 
 	//#endregion
 
@@ -256,7 +273,7 @@
 		fetching = true;
 
 		// Fetch the energy balance data
-		[energy_balance_data, unit_data] = await Promise.all([
+		[energy_balance_data, unit_data, unit_objective_data] = await Promise.all([
 			get_energy_balance(
 				selected_solution.solution_name,
 				selected_node,
@@ -268,6 +285,13 @@
 			get_unit(
 				selected_solution.solution_name,
 				get_variable_name('flow_export', selected_solution.version),
+				selected_solution.scenario_name
+			),
+			get_unit(
+				selected_solution.solution_name,
+				selected_solution.objective === 'total_cost'
+					? get_variable_name('net_present_cost', selected_solution.version)
+					: get_variable_name('carbon_emissions_cumulative', selected_solution.version),
 				selected_solution.scenario_name
 			)
 		]);
@@ -520,7 +544,7 @@
 					{labels}
 					datasets={[]}
 					options={duals_plot_options}
-					pluginOptions={plotPluginOptions}
+					pluginOptions={dualsPlotPluginOptions}
 					plotName={duals_plot_name}
 					zoom={true}
 					initialHeight={300}

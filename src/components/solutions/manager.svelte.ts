@@ -45,7 +45,8 @@ export function getActivatedSolution(
 		solution_name: solutionName,
 		scenario_name: scenario,
 		detail: solutionDetail.scenarios[scenario],
-		version: solutionDetail.version
+		version: solutionDetail.version,
+		objective: solutionDetail.objective
 	};
 }
 
