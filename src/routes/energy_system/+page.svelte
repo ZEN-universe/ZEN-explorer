@@ -504,18 +504,21 @@
 				disabled={fetching || solutionLoading}
 			/>
 		</FilterSection>
-		<FilterSection title="Carrier Selection">
-			<MultiSelect bind:value={selectedCarriers} options={carriers} label="Carriers"></MultiSelect>
-		</FilterSection>
-		<FilterSection title="Data Selection">
-			<Dropdown
-				bind:value={selectedYear}
-				options={toOptions(years.map((year) => year.toString()))}
-				label="Year"
-				disabled={fetching || solutionLoading}
-			></Dropdown>
-			<MultiSelect bind:value={selectedNodes} options={nodes} label="Nodes"></MultiSelect>
-		</FilterSection>
+		{#if selectedSolution != null}
+			<FilterSection title="Carrier Selection">
+				<MultiSelect bind:value={selectedCarriers} options={carriers} label="Carriers"
+				></MultiSelect>
+			</FilterSection>
+			<FilterSection title="Data Selection">
+				<Dropdown
+					bind:value={selectedYear}
+					options={toOptions(years.map((year) => year.toString()))}
+					label="Year"
+					disabled={fetching || solutionLoading}
+				></Dropdown>
+				<MultiSelect bind:value={selectedNodes} options={nodes} label="Nodes"></MultiSelect>
+			</FilterSection>
+		{/if}
 	{/snippet}
 
 	{#snippet buttons()}
