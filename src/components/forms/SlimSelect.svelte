@@ -51,8 +51,9 @@
 						}
 					},
 					beforeChange(newValue) {
-						if (multiple) return;
-						return newValue.length > 0;
+						if (multiple || newValue.length > 0) return;
+						slimSelect?.close();
+						return false;
 					}
 				}
 			});

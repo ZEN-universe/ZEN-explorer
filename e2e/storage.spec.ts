@@ -2,10 +2,12 @@ import { test, expect } from '@playwright/test';
 
 test('storage: default', async ({ page }) => {
 	await page.goto('/energy_balance/storage');
-	await page
-		.getByLabel('Solution', { exact: true })
-		.selectOption('european_electricity_heating_transition');
-	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
+	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
+	await page.getByRole('combobox', { name: 'Subsolution' }).click();
+	await page.getByRole('option', { name: 'perfect_foresight' }).click();
+	await page.getByRole('combobox', { name: 'Carrier' }).click();
+	await page.getByRole('option', { name: 'electricity', exact: true }).click();
 	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
 		`eeht_pf/default/level.png`
 	);
@@ -14,11 +16,14 @@ test('storage: default', async ({ page }) => {
 
 test('storage: year', async ({ page }) => {
 	await page.goto('/energy_balance/storage');
-	await page
-		.getByLabel('Solution', { exact: true })
-		.selectOption('european_electricity_heating_transition');
-	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
-	await page.getByLabel('Year').selectOption('2050');
+	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
+	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
+	await page.getByRole('combobox', { name: 'Subsolution' }).click();
+	await page.getByRole('option', { name: 'perfect_foresight' }).click();
+	await page.getByRole('combobox', { name: 'Carrier' }).click();
+	await page.getByRole('option', { name: 'electricity', exact: true }).click();
+	await page.getByRole('combobox', { name: 'Year' }).click();
+	await page.getByRole('option', { name: '2050', exact: true }).click();
 	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
 		`eeht_pf/year-2050/level.png`
 	);
@@ -29,11 +34,12 @@ test('storage: year', async ({ page }) => {
 
 test('storage: carrier', async ({ page }) => {
 	await page.goto('/energy_balance/storage');
-	await page
-		.getByLabel('Solution', { exact: true })
-		.selectOption('european_electricity_heating_transition');
-	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
-	await page.getByLabel('Carrier').selectOption('natural_gas');
+	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
+	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
+	await page.getByRole('combobox', { name: 'Subsolution' }).click();
+	await page.getByRole('option', { name: 'perfect_foresight' }).click();
+	await page.getByRole('combobox', { name: 'Carrier' }).click();
+	await page.getByRole('option', { name: 'natural_gas', exact: true }).click();
 	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
 		`eeht_pf/carrier-natural_gas/level.png`
 	);
@@ -44,11 +50,14 @@ test('storage: carrier', async ({ page }) => {
 
 test('storage: smoothing window size', async ({ page }) => {
 	await page.goto('/energy_balance/storage');
-	await page
-		.getByLabel('Solution', { exact: true })
-		.selectOption('european_electricity_heating_transition');
-	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
-	await page.getByLabel('Smoothing Window Size').selectOption('Monthly');
+	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
+	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
+	await page.getByRole('combobox', { name: 'Subsolution' }).click();
+	await page.getByRole('option', { name: 'perfect_foresight' }).click();
+	await page.getByRole('combobox', { name: 'Carrier' }).click();
+	await page.getByRole('option', { name: 'electricity', exact: true }).click();
+	await page.getByRole('combobox', { name: 'Smoothing Window Size' }).click();
+	await page.getByRole('option', { name: 'Monthly', exact: true }).click();
 	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
 		`eeht_pf/smoothing-window-size-monthly/level.png`
 	);
@@ -59,10 +68,12 @@ test('storage: smoothing window size', async ({ page }) => {
 
 test('storage: technology subdivision', async ({ page }) => {
 	await page.goto('/energy_balance/storage');
-	await page
-		.getByLabel('Solution', { exact: true })
-		.selectOption('european_electricity_heating_transition');
-	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
+	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
+	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
+	await page.getByRole('combobox', { name: 'Subsolution' }).click();
+	await page.getByRole('option', { name: 'perfect_foresight' }).click();
+	await page.getByRole('combobox', { name: 'Carrier' }).click();
+	await page.getByRole('option', { name: 'electricity', exact: true }).click();
 	await page.waitForSelector('#level_chart');
 	await page.getByRole('switch', { name: 'Technology Subdivision on' }).uncheck();
 	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
@@ -75,18 +86,17 @@ test('storage: technology subdivision', async ({ page }) => {
 
 test('storage: technologies', async ({ page }) => {
 	await page.goto('/energy_balance/storage');
-	await page
-		.getByLabel('Solution', { exact: true })
-		.selectOption('european_electricity_heating_transition');
-	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
-	await page.getByLabel('Year').selectOption('2050');
-	await page.waitForSelector('#level_chart');
-	await page
-		.locator('div')
-		.filter({ hasText: /^Technologies Deselect all$/ })
-		.getByRole('button')
-		.click();
-	await page.getByRole('checkbox', { name: 'battery' }).check();
+	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
+	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
+	await page.getByRole('combobox', { name: 'Subsolution' }).click();
+	await page.getByRole('option', { name: 'perfect_foresight' }).click();
+	await page.getByRole('combobox', { name: 'Carrier' }).click();
+	await page.getByRole('option', { name: 'electricity', exact: true }).click();
+	await page.getByRole('combobox', { name: 'Year' }).click();
+	await page.getByRole('option', { name: '2050', exact: true }).click();
+	await page.getByText('Technologies Deselect All').getByRole('button').click();
+	await page.getByRole('combobox', { name: 'Technologies' }).click();
+	await page.getByRole('option', { name: 'battery', exact: true }).click();
 	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
 		`eeht_pf/technologies-battery-2050/level.png`
 	);
@@ -97,17 +107,15 @@ test('storage: technologies', async ({ page }) => {
 
 test('storage: nodes', async ({ page }) => {
 	await page.goto('/energy_balance/storage');
-	await page
-		.getByLabel('Solution', { exact: true })
-		.selectOption('european_electricity_heating_transition');
-	await page.getByLabel('Subsolution').selectOption('perfect_foresight');
-	await page.waitForSelector('#level_chart');
-	await page
-		.locator('div')
-		.filter({ hasText: /^Nodes Deselect all$/ })
-		.getByRole('button')
-		.click();
-	await page.getByRole('checkbox', { name: 'DE' }).check();
+	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
+	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
+	await page.getByRole('combobox', { name: 'Subsolution' }).click();
+	await page.getByRole('option', { name: 'perfect_foresight' }).click();
+	await page.getByRole('combobox', { name: 'Carrier' }).click();
+	await page.getByRole('option', { name: 'electricity', exact: true }).click();
+	await page.getByText('Nodes Deselect All').getByRole('button').click();
+	await page.getByRole('combobox', { name: 'Nodes' }).click();
+	await page.getByRole('option', { name: 'DE', exact: true }).click();
 	await expect(page.locator('#level_chart-container')).toHaveScreenshot(
 		`eeht_pf/nodes-only-de/level.png`
 	);
