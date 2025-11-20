@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.0 (2025-11-20)
+
+- New responsive design for the platform with a dark theme.
+- [Sankey, Map] Add download SVG button.
+- [Nodal] Fix dual plot unit.
+- Add download PNG button.
+- [Map] Sort carriers alphabetically.
+- Always select carrier first.
+
 ## 0.7.7 (2025-10-30)
 
 - [Sankey] Give carriers their own row.
