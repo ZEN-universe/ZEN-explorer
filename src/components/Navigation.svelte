@@ -155,6 +155,7 @@
 <aside
 	id="sidebar-nav"
 	class={[
+		'block lg:hidden',
 		'fixed lg:translate-x-0 transition-transform duration-300',
 		'inset-y-0 -right-64 w-64 z-5 h-full overflow-y-auto',
 		'bg-gray-100 dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700',

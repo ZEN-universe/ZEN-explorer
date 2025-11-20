@@ -8,7 +8,6 @@ function replaceTailwindClassesWithInlineStyles(element: Element) {
 				const color = getComputedStyle(document.documentElement).getPropertyValue(
 					`--color-${colorName}`
 				);
-				console.log(`Mapping fill class ${cls} to color ${color}`);
 				if (color) {
 					inlineStyles += `fill: ${color};`;
 				}
@@ -17,7 +16,6 @@ function replaceTailwindClassesWithInlineStyles(element: Element) {
 				const color = getComputedStyle(document.documentElement).getPropertyValue(
 					`--color-${colorName}`
 				);
-				console.log(`Mapping stroke class ${cls} to color ${color}`);
 				if (color) {
 					inlineStyles += `stroke: ${color};`;
 				}
