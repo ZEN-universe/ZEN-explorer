@@ -1,7 +1,6 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
-	import SlimSelect, { Option } from 'slim-select';
-	import { untrack } from 'svelte';
+	import SlimSelect from './SlimSelect.svelte';
 
 	interface Props {
 		options: ({ label: string; value: string } | string)[];
@@ -16,14 +15,9 @@
 		value = $bindable(),
 		label,
 		disabled = false,
-		onUpdate
+		onUpdate = () => {}
 	}: Props = $props();
 	const formId = $props.id();
-
-	let slimSelect: SlimSelect | undefined = undefined;
-
-	let flip: boolean = $state(false);
-	let lastOptions: string = '';
 
 	let options = $derived.by(() => {
 		return initialOptions.map((option) => {
@@ -34,75 +28,12 @@
 			}
 		});
 	});
-
-	function updateValue(newVal: string) {
-		value = newVal;
-		flip = true;
-		onUpdate?.(newVal);
-	}
-
-	function renderDropdown(element: HTMLSelectElement) {
-		slimSelect = new SlimSelect({
-			select: element,
-			data: options,
-			settings: {
-				id: formId,
-				showSearch: false,
-				allowDeselect: true
-			},
-			events: {
-				afterChange: (selected: Option[]) => {
-					updateValue(selected[0]?.value);
-				}
-			},
-			cssClasses: {
-				deselect: 'hidden'
-			}
-		});
-		lastOptions = JSON.stringify(options);
-		slimSelect.setSelected(value || '', false);
-
-		return () => {
-			slimSelect?.destroy();
-		};
-	}
-
-	$effect(() => {
-		value;
-		untrack(async () => {
-			if (flip) {
-				flip = false;
-				return;
-			}
-			if (!slimSelect) return;
-			slimSelect.setSelected(value || '', false);
-		});
-	});
-
-	$effect(() => {
-		options;
-
-		untrack(async () => {
-			if (JSON.stringify(options) === lastOptions) return;
-			lastOptions = JSON.stringify(options);
-
-			if (!slimSelect) return;
-			slimSelect.setData($state.snapshot(options.map((opt) => new Option(opt))));
-		});
-	});
-
-	$effect(() => {
-		disabled;
-
-		untrack(() => {
-			if (!slimSelect) return;
-
-			if (!disabled) slimSelect.enable();
-			else slimSelect.disable();
-		});
-	});
 </script>
 
 <FilterLabel {label} {formId}></FilterLabel>
 
-<select class="slim mb-2" {disabled} {@attach renderDropdown}> </select>
+{#if options.length == 0}
+	<div class="text-gray-500 dark:text-gray-400 italic">No options available</div>
+{:else}
+	<SlimSelect id={formId} {label} bind:value {options} {disabled} {onUpdate}></SlimSelect>
+{/if}

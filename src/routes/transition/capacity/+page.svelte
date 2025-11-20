@@ -166,9 +166,7 @@
 				return;
 			}
 			(data[solutionIndex] ?? []).forEach((row) => {
-				if ((technologiesPerSolution[solutionIndex] ?? []).includes(row['technology'])) {
-					setUsedCarriers.add(solution.detail.reference_carrier[row['technology']]);
-				}
+				setUsedCarriers.add(solution.detail.reference_carrier[row['technology']]);
 			});
 		});
 
@@ -385,6 +383,7 @@
 	let [datasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() => {
 		if (
 			selectedVariable == null ||
+			selectedTechnologyType == null ||
 			selectedLocations.length == 0 ||
 			selectedYears.length == 0 ||
 			selectedTechnologies.length == 0 ||
@@ -404,6 +403,7 @@
 			patterns.push(createColorBoxItem(suffix, pattern));
 			return generateDatasets(data[index], suffix, pattern);
 		});
+		
 		return [datasets, patterns];
 	});
 
@@ -421,7 +421,7 @@
 				disabled={fetching || solutionLoading}
 			></MultiSolutionFilter>
 		</FilterSection>
-		{#if !solutionLoading && !hasSomeUnsetSolutions}
+		{#if !solutionLoading && !fetching && !hasSomeUnsetSolutions}
 			<FilterSection title="Variable Selection">
 				<Dropdown
 					label="Carrier"

@@ -319,7 +319,7 @@
 
 {#snippet chartSnippet()}
 	{#if showChart}
-		<div class="position-relative h-full max-w-full">
+		<div id={`${id}-container`} class="position-relative h-full max-w-full">
 			<canvas {id} height={initialHeight} use:handleChart onclick={emitClickBarEvent}></canvas>
 		</div>
 	{/if}
