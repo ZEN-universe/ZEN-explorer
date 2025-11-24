@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.1 (2025-11-24)
+
+- Fix resetting selection in dropdowns when options change.
+
 ## 0.8.0 (2025-11-20)
 
 - New responsive design for the platform with a dark theme.
