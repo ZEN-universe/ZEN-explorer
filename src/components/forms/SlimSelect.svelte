@@ -29,7 +29,7 @@
 		untrack(() => {
 			slimSelect = new SlimSelect({
 				select: element,
-				data: options,
+				data: cloneOptions(),
 				settings: {
 					id: id,
 					ariaLabel: label,
@@ -97,7 +97,16 @@
 			lastOptions = JSON.stringify(options);
 
 			if (!slimSelect) return;
-			slimSelect.setData($state.snapshot(options.map((opt) => new Option(opt))));
+			const previousValue = slimSelect.getSelected();
+			slimSelect.setData(cloneOptions());
+
+			let newValue;
+			if (multiple) {
+				newValue = previousValue.filter((opt) => options.find((o) => o.value === opt));
+			} else {
+				newValue = options.some((o) => o.value === previousValue[0]) ? previousValue[0] : '';
+			}
+			slimSelect.setSelected(newValue, false);
 		});
 	});
 
@@ -116,6 +125,10 @@
 		value = newVal;
 		flip = true;
 		onUpdate(newVal);
+	}
+
+	function cloneOptions() {
+		return $state.snapshot(options.map((opt) => new Option({ ...opt })));
 	}
 </script>
 

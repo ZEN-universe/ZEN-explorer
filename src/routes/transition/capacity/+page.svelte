@@ -162,11 +162,14 @@
 
 		const setUsedCarriers: Set<string> = new Set();
 		selectedSolutions.forEach((solution, solutionIndex) => {
-			if (solution === null) {
+			if (solution === null || !data[solutionIndex]) {
 				return;
 			}
-			(data[solutionIndex] ?? []).forEach((row) => {
-				setUsedCarriers.add(solution.detail.reference_carrier[row['technology']]);
+			data[solutionIndex].forEach((row) => {
+				const carrier = solution.detail.reference_carrier[row['technology']];
+				if (carrier) {
+					setUsedCarriers.add(carrier);
+				}
 			});
 		});
 
@@ -403,7 +406,7 @@
 			patterns.push(createColorBoxItem(suffix, pattern));
 			return generateDatasets(data[index], suffix, pattern);
 		});
-		
+
 		return [datasets, patterns];
 	});
 

@@ -181,12 +181,18 @@
 		if (!level_response || !selected_solution) {
 			return [];
 		}
-		let all_technologies = Array.from(level_response.map((a) => a.index.technology));
-		return removeDuplicates(
-			level_response
-				.filter((element) => all_technologies.includes(element.index.technology))
-				.map((element) => selected_solution!.detail.reference_carrier[element.index.technology])
-		);
+
+		let set_carriers: Set<string> = new Set();
+		Array.from(level_response.map((a) => a.index.technology)).forEach((technology) => {
+			if (!level_response?.some((element) => element.index.technology === technology)) {
+				return;
+			}
+			let carrier = selected_solution!.detail.reference_carrier[technology];
+			if (carrier) {
+				set_carriers.add(carrier);
+			}
+		});
+		return Array.from(set_carriers).sort();
 	});
 
 	let technologies: string[] = $derived.by(() => {
