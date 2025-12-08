@@ -718,11 +718,19 @@
 						{:else}
 							<div class="grid grid-cols-2">
 								<div>
-									<ToggleButton bind:value={variable.show} label={variable.title}></ToggleButton>
+									<ToggleButton
+										bind:value={variable.show}
+										label={variable.title}
+										disabled={solutionLoading || fetching}
+									></ToggleButton>
 								</div>
 								{#if variable.show && variable.show_subdivision}
 									<div>
-										<ToggleButton bind:value={variable.subdivision} label={'with Subdivision'} />
+										<ToggleButton
+											bind:value={variable.subdivision}
+											label={'with Subdivision'}
+											disabled={solutionLoading || fetching}
+										/>
 									</div>
 								{/if}
 							</div>
@@ -752,9 +760,13 @@
 						disabled={solutionLoading || fetching}
 					></MultiSelect>
 				</FilterSection>
-				{#if !fetching && selectedCarrier != null}
+				{#if selectedCarrier !== null}
 					<FilterSection title="Data Selection">
-						<ToggleButton label="Normalization" bind:value={selectedNormalization}></ToggleButton>
+						<ToggleButton
+							label="Normalization"
+							bind:value={selectedNormalization}
+							disabled={solutionLoading || fetching}
+						></ToggleButton>
 						<MultiSelect
 							bind:value={selectedNodes}
 							options={nodes}

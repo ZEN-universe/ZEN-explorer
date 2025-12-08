@@ -621,7 +621,7 @@
 				disabled={fetching || solutionLoading}
 			/>
 		</FilterSection>
-		{#if !solutionLoading && !fetching && !hasSomeUnsetSolutions}
+		{#if !solutionLoading && !hasSomeUnsetSolutions}
 			<FilterSection title="Cost Selection">
 				{#each Object.values(variables) as variable, i}
 					<div class="grid grid-cols-2">
@@ -642,6 +642,7 @@
 						bind:value={selectedTransportTechnologies}
 						options={transportTechnologies}
 						label="Transport"
+						disabled={fetching || solutionLoading}
 					></MultiSelect>
 				{/if}
 				{#if storageTechnologies.length > 0}
@@ -649,6 +650,7 @@
 						bind:value={selectedStorageTechnologies}
 						options={storageTechnologies}
 						label="Storage"
+						disabled={fetching || solutionLoading}
 					></MultiSelect>
 				{/if}
 				{#if conversionTechnologies.length > 0}
@@ -656,6 +658,7 @@
 						bind:value={selectedConversionTechnologies}
 						options={conversionTechnologies}
 						label="Conversion"
+						disabled={fetching || solutionLoading}
 					></MultiSelect>
 				{/if}
 				{#if costCarriers.length > 0}
@@ -663,6 +666,7 @@
 						bind:value={selectedCostCarriers}
 						options={costCarriers}
 						label="Cost of Carrier"
+						disabled={fetching || solutionLoading}
 					></MultiSelect>
 				{/if}
 				{#if demandCarriers.length > 0}
@@ -670,14 +674,23 @@
 						bind:value={selectedDemandCarriers}
 						options={demandCarriers}
 						label="Shed Demand"
+						disabled={fetching || solutionLoading}
 					></MultiSelect>
 				{/if}
 			</FilterSection>
 			<FilterSection title="Data Selection">
-				<Radio options={aggregationOptions} bind:value={selectedAggregation} label="Aggregation"
+				<Radio
+					options={aggregationOptions}
+					bind:value={selectedAggregation}
+					label="Aggregation"
+					disabled={fetching || solutionLoading}
 				></Radio>
 				{#if selectedAggregation == aggregationOptions[1]}
-					<MultiSelect bind:value={selectedLocations} options={locations} label="Locations"
+					<MultiSelect
+						bind:value={selectedLocations}
+						options={locations}
+						label="Locations"
+						disabled={fetching || solutionLoading}
 					></MultiSelect>
 				{/if}
 				{#if selectedYears}
@@ -685,6 +698,7 @@
 						bind:value={selectedYears}
 						options={years.map((year) => year.toString())}
 						label="Years"
+						disabled={fetching || solutionLoading}
 					></MultiSelect>
 				{/if}
 			</FilterSection>

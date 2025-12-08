@@ -5,10 +5,17 @@
 		value: boolean;
 		texts?: string[];
 		label: string;
+		disabled?: boolean;
 		onUpdate?: () => void;
 	}
 
-	let { value = $bindable(), texts = ['on', 'off'], label, onUpdate }: Props = $props();
+	let {
+		value = $bindable(),
+		texts = ['on', 'off'],
+		label,
+		disabled = false,
+		onUpdate
+	}: Props = $props();
 	const formId = $props.id();
 
 	function dispatchEvent() {
@@ -25,9 +32,10 @@
 		role="switch"
 		id={formId}
 		bind:checked={value}
+		{disabled}
 		onchange={dispatchEvent}
 	/>
-	<label class="inline-flex" for={formId}>
+	<label class={['inline-flex', disabled && 'opacity-50 cursor-not-allowed']} for={formId}>
 		<div
 			class={[
 				'h-6 w-12 rounded-full flex me-2 px-1',

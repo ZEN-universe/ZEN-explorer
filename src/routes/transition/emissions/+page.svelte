@@ -444,7 +444,11 @@
 		</FilterSection>
 		{#if !solutionLoading && !hasSomeUnsetSolutions}
 			<FilterSection title="Variable Selection">
-				<ToggleButton bind:value={selectedSubdivision} label="Subdivision"></ToggleButton>
+				<ToggleButton
+					bind:value={selectedSubdivision}
+					label="Subdivision"
+					disabled={fetching || solutionLoading}
+				></ToggleButton>
 				{#if !selectedSubdivision}
 					<Radio
 						options={cumulationOptions}
@@ -455,14 +459,26 @@
 				{/if}
 			</FilterSection>
 		{/if}
-		{#if !solutionLoading && !hasSomeUnsetSolutions && !fetching}
+		{#if !solutionLoading && !hasSomeUnsetSolutions}
 			<FilterSection title="Data Selection">
 				{#if selectedSubdivision}
-					<Radio options={aggregationOptions} bind:value={selectedAggregation} label="Aggregation"
+					<Radio
+						options={aggregationOptions}
+						bind:value={selectedAggregation}
+						label="Aggregation"
+						disabled={fetching || solutionLoading}
 					></Radio>
-					<ToggleButton bind:value={selectedNormalization} label="Normalization"></ToggleButton>
+					<ToggleButton
+						bind:value={selectedNormalization}
+						label="Normalization"
+						disabled={fetching || solutionLoading}
+					></ToggleButton>
 					{#if selectedAggregation == 'location'}
-						<MultiSelect bind:value={selectedLocations} options={locations} label="Locations"
+						<MultiSelect
+							bind:value={selectedLocations}
+							options={locations}
+							label="Locations"
+							disabled={fetching || solutionLoading}
 						></MultiSelect>
 					{:else}
 						{#if technologies.length > 0}
@@ -470,10 +486,15 @@
 								bind:value={selectedTechnologies}
 								options={technologies}
 								label="Technologies"
+								disabled={fetching || solutionLoading}
 							></MultiSelect>
 						{/if}
 						{#if carriers.length > 0}
-							<MultiSelect bind:value={selectedCarriers} options={carriers} label="Carriers"
+							<MultiSelect
+								bind:value={selectedCarriers}
+								options={carriers}
+								label="Carriers"
+								disabled={fetching || solutionLoading}
 							></MultiSelect>
 						{/if}
 					{/if}
@@ -482,6 +503,7 @@
 					bind:value={selectedYears}
 					options={years.map((year) => year.toString())}
 					label="Years"
+					disabled={fetching || solutionLoading}
 				></MultiSelect>
 			</FilterSection>
 		{/if}

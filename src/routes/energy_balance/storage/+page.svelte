@@ -533,7 +533,7 @@
 				disabled={fetching || solution_loading}
 			/>
 		</FilterSection>
-		{#if !fetching && selected_solution !== null}
+		{#if selected_solution !== null}
 			<FilterSection title="Variable Selection">
 				<Dropdown
 					options={carriers}

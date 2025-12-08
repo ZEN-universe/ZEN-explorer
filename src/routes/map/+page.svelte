@@ -387,7 +387,7 @@
 	{/snippet}
 
 	{#snippet mainContent()}
-		{#if fetching || solution_loading}
+		{#if solution_loading || fetching}
 			<Spinner></Spinner>
 		{:else if !pieData || !lineData}
 			<ErrorMessage message="Please select a solution and carrier to display the map"
