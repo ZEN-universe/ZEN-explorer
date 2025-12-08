@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '../app.css';
+	import '@/app.css';
 	import 'bootstrap-icons/font/bootstrap-icons.min.css';
 	import 'slim-select/styles';
 

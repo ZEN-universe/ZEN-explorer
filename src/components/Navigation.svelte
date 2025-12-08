@@ -2,32 +2,21 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { addCurrentSolutionToURL } from '$lib/queryParams.svelte';
+	import ToggleThemeButton from './ToggleThemeButton.svelte';
 
 	const transition_urls = {
-		Capacity: resolve('/transition/capacity'),
-		Production: resolve('/transition/production'),
-		Emissions: resolve('/transition/emissions'),
-		Costs: resolve('/transition/costs')
+		Capacity: resolve('/explorer/transition/capacity'),
+		Production: resolve('/explorer/transition/production'),
+		Emissions: resolve('/explorer/transition/emissions'),
+		Costs: resolve('/explorer/transition/costs')
 	};
 
 	const energy_balance_urls = {
-		Nodal: resolve('/energy_balance/nodal'),
-		Storage: resolve('/energy_balance/storage')
+		Nodal: resolve('/explorer/energy_balance/nodal'),
+		Storage: resolve('/explorer/energy_balance/storage')
 	};
 
 	let currentPage = $derived(page.url.pathname.slice(0, -1));
-
-	//#region Theme
-
-	let theme: 'light' | 'dark' | 'system' = $state(localStorage.theme || 'system');
-
-	function toggleTheme() {
-		theme = theme === 'dark' ? 'light' : 'dark';
-		localStorage.theme = theme;
-		(window as any).updateTheme();
-	}
-
-	//#endregion
 
 	//#region Navigation
 
@@ -40,25 +29,11 @@
 	//#endregion
 </script>
 
-<svelte:head>
-	<script>
-		updateTheme = () => {
-			document.documentElement.classList.toggle(
-				'dark',
-				localStorage.theme === 'dark' ||
-					(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-			);
-			window.dispatchEvent(new Event('themeChange'));
-		};
-		updateTheme();
-	</script>
-</svelte:head>
-
 <nav
 	class="flex gap-4 xl:gap-0 xl:grid grid-cols-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2"
 >
 	<div>
-		<a class="text-xl font-semibold inline-flex items-center h-full" href={resolve('/')}>
+		<a class="text-xl font-semibold inline-flex items-center h-full" href={resolve('/explorer/')}>
 			<img src="/logo.png" alt="ZEN-garden Logo" class="inline h-8 mr-2" />
 			ZEN-garden
 		</a>
@@ -102,9 +77,9 @@
 				<a
 					class={[
 						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
-						currentPage == '/energy_system' && 'border-b-2 pb-1'
+						currentPage == '/explorer/energy_system' && 'border-b-2 pb-1'
 					]}
-					href={addCurrentSolutionToURL('/energy_system', false)}>Sankey</a
+					href={addCurrentSolutionToURL('/explorer/energy_system', false)}>Sankey</a
 				>
 			</li>
 			<li>
@@ -112,26 +87,14 @@
 				<a
 					class={[
 						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
-						currentPage == '/map' && 'border-b-2 pb-1'
+						currentPage == '/explorer/map' && 'border-b-2 pb-1'
 					]}
-					href={addCurrentSolutionToURL('/map', false)}>Map</a
+					href={addCurrentSolutionToURL('/explorer/map', false)}>Map</a
 				>
 			</li>
 		</ul>
 		<div class="flex justify-end items-center gap-2">
-			<button
-				class="rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 h-10 w-10"
-				onclick={toggleTheme}
-				aria-label="Toggle theme"
-			>
-				{#if theme === 'light'}
-					<i class="bi bi-sun-fill" id="theme-toggle-light-icon"></i>
-				{:else if theme === 'dark'}
-					<i class="bi bi-moon-stars-fill" id="theme-toggle-dark-icon"></i>
-				{:else}
-					<i class="bi bi-palette-fill" id="theme-toggle-dark-icon"></i>
-				{/if}
-			</button>
+			<ToggleThemeButton></ToggleThemeButton>
 			<button
 				class="rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 lg:hidden"
 				aria-controls="sidebar-nav"
