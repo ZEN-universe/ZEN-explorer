@@ -12,6 +12,7 @@
 	import Tooltip from './Tooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
 	import { exportAsSVG } from '$lib/export';
+	import Spinner from './Spinner.svelte';
 
 	let topology: Topology | null = $state(null);
 	$effect(() => {
@@ -405,12 +406,11 @@
 
 	//#region Handle resizing
 	function handleSize() {
-		const { width: w, height: h } = svg.parentElement!.getBoundingClientRect();
+		if (!svg?.parentElement) return;
+		const { width: w, height: h } = svg.parentElement.getBoundingClientRect();
 		width = w;
 		height = h;
 	}
-
-	onMount(handleSize);
 
 	const resizeObserver = new ResizeObserver(handleSize);
 	onMount(() => {
@@ -433,44 +433,45 @@
 
 <svelte:window on:resize={handleSize} />
 
-{#if technologies.length > 0}
-	<ContentBox class="flex">
-		<h2 class="flex items-start font-bold text-lg me-4">Legend</h2>
-		<div class="flex flex-wrap gap-2">
-			{#each technologies as tech}
-				<div class="flex items-center p-0 text-gray-600 dark:text-gray-400 text-sm">
-					<svg width="40" height="12" class="me-1">
-						<rect width="40" height="12" fill={computeColor(tech)} />
-					</svg>
-					<span>{tech}</span>
-				</div>
-			{/each}
-		</div>
-	</ContentBox>
-{/if}
+{#if !topology}
+	<Spinner></Spinner>
+{:else}
+	{#if technologies.length > 0}
+		<ContentBox class="flex">
+			<h2 class="flex items-start font-bold text-lg me-4">Legend</h2>
+			<div class="flex flex-wrap gap-2">
+				{#each technologies as tech}
+					<div class="flex items-center p-0 text-gray-600 dark:text-gray-400 text-sm">
+						<svg width="40" height="12" class="me-1">
+							<rect width="40" height="12" fill={computeColor(tech)} />
+						</svg>
+						<span>{tech}</span>
+					</div>
+				{/each}
+			</div>
+		</ContentBox>
+	{/if}
 
-<ContentBox class="relative overflow-hidden resize-y overflow-y-auto" noPadding>
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<svg
-		{width}
-		{height}
-		bind:this={svg}
-		onmousemove={(event) => {
-			updateActiveElements(event);
-			moveZoomRectangle(event);
-		}}
-		onmousedown={startZoomRectangle}
-		onmouseup={endZoomRectangle}
-		onmouseleave={() => {
-			cancelZoomRectangle();
-			cursorPos = [0, 0];
-		}}
-		{id}
-		class="bg-white dark:bg-gray-800"
-	>
-		{#if !topology}
-			<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">Loading...</text>
-		{:else}
+	<ContentBox class="relative overflow-hidden resize-y overflow-y-auto" noPadding>
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<svg
+			{width}
+			{height}
+			bind:this={svg}
+			{@attach handleSize}
+			onmousemove={(event) => {
+				updateActiveElements(event);
+				moveZoomRectangle(event);
+			}}
+			onmousedown={startZoomRectangle}
+			onmouseup={endZoomRectangle}
+			onmouseleave={() => {
+				cancelZoomRectangle();
+				cursorPos = [0, 0];
+			}}
+			{id}
+			class="bg-white dark:bg-gray-800"
+		>
 			<g>
 				<path d={land} class="fill-gray-200 dark:fill-gray-700" />
 				{#if regions != null}
@@ -497,57 +498,57 @@
 					</g>
 				{/each}
 			</g>
-		{/if}
-		{#if drawRectangle}
-			<rect
-				x={Math.min(startPos[0], endPos[0])}
-				y={Math.min(startPos[1], endPos[1])}
-				width={Math.abs(startPos[0] - endPos[0])}
-				height={Math.abs(startPos[1] - endPos[1])}
-				stroke="black"
-				stroke-width="1"
-				fill="rgba(255, 255, 255, 0.5)"
-			/>
-		{/if}
-	</svg>
-	<!-- Tooltip -->
-	{#if activePie || activeLines.length > 0}
-		<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
-			{#if activePie}
-				<h5 class="font-bold text-sm mb-0 px-2">{activePie.label}</h5>
-				{#each activePie.data as d}
-					<div class="flex justify-between items-center gap-2 text-xs px-2">
-						<div class="flex items-center">
-							<svg class="me-1" width="12" height="12">
-								<rect width="12" height="12" fill={d.color} />
-							</svg>
-							<span>{d.technology}:</span>
-						</div>
-						<div>
-							{d.value.toFixed(3)}
-							{unit}
-						</div>
-					</div>
-				{/each}
-				{#if activePie.data.length > 1}
-					<div class="flex justify-between items-center gap-1 font-bold text-xs px-2 mt-1">
-						<div>Total:</div>
-						<div>{activePie.total.toFixed(3)} {unit}</div>
-					</div>
-				{/if}
-			{:else if activeLines.length > 0}
-				{#each activeLines as line, i}
-					<div class={['px-2 text-xs', i > 0 && 'border-t border-gray-500 mt-2 pt-2']}>
-						<h5 class="font-bold text-sm mb-0">{line.label}</h5>
-						{#each line.values as d}
+			{#if drawRectangle}
+				<rect
+					x={Math.min(startPos[0], endPos[0])}
+					y={Math.min(startPos[1], endPos[1])}
+					width={Math.abs(startPos[0] - endPos[0])}
+					height={Math.abs(startPos[1] - endPos[1])}
+					stroke="black"
+					stroke-width="1"
+					fill="rgba(255, 255, 255, 0.5)"
+				/>
+			{/if}
+		</svg>
+		<!-- Tooltip -->
+		{#if activePie || activeLines.length > 0}
+			<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
+				{#if activePie}
+					<h5 class="font-bold text-sm mb-0 px-2">{activePie.label}</h5>
+					{#each activePie.data as d}
+						<div class="flex justify-between items-center gap-2 text-xs px-2">
+							<div class="flex items-center">
+								<svg class="me-1" width="12" height="12">
+									<rect width="12" height="12" fill={d.color} />
+								</svg>
+								<span>{d.technology}:</span>
+							</div>
 							<div>
-								{d.technology}: {d.value.toFixed(3)}
+								{d.value.toFixed(3)}
 								{unit}
 							</div>
-						{/each}
-					</div>
-				{/each}
-			{/if}
-		</Tooltip>
-	{/if}
-</ContentBox>
+						</div>
+					{/each}
+					{#if activePie.data.length > 1}
+						<div class="flex justify-between items-center gap-1 font-bold text-xs px-2 mt-1">
+							<div>Total:</div>
+							<div>{activePie.total.toFixed(3)} {unit}</div>
+						</div>
+					{/if}
+				{:else if activeLines.length > 0}
+					{#each activeLines as line, i}
+						<div class={['px-2 text-xs', i > 0 && 'border-t border-gray-500 mt-2 pt-2']}>
+							<h5 class="font-bold text-sm mb-0">{line.label}</h5>
+							{#each line.values as d}
+								<div>
+									{d.technology}: {d.value.toFixed(3)}
+									{unit}
+								</div>
+							{/each}
+						</div>
+					{/each}
+				{/if}
+			</Tooltip>
+		{/if}
+	</ContentBox>
+{/if}
