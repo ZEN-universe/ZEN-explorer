@@ -31,6 +31,9 @@
 		type ShapeType
 	} from '$lib/patterns';
 	import Spinner from '$components/Spinner.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import { removeDuplicates } from '$lib/utils';
 
 	let data: Row[][] = $state([]);
 
@@ -156,24 +159,13 @@
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		if (data.length === 0 || hasSomeUnsetSolutions) {
+		if (hasSomeUnsetSolutions) {
 			return [];
 		}
 
-		const setUsedCarriers: Set<string> = new Set();
-		selectedSolutions.forEach((solution, solutionIndex) => {
-			if (solution === null || !data[solutionIndex]) {
-				return;
-			}
-			data[solutionIndex].forEach((row) => {
-				const carrier = solution.detail.reference_carrier[row['technology']];
-				if (carrier) {
-					setUsedCarriers.add(carrier);
-				}
-			});
-		});
-
-		return Array.from(setUsedCarriers).sort();
+		return removeDuplicates(
+			selectedSolutions.flatMap((solution) => Object.values(solution!.detail.reference_carrier))
+		).sort();
 	});
 
 	let technologies: string[] = $derived.by(() => {
@@ -247,6 +239,7 @@
 		selectedTechnologyType = getURLParam('tech') || selectedTechnologyType;
 		selectedStorageType = getURLParam('stor') || selectedStorageType;
 		selectedCarrier = getURLParam('car') || selectedCarrier;
+		fetchData();
 	});
 
 	$effect(() => {
@@ -283,19 +276,20 @@
 		// wait for all properties (e.g. years) to be updated
 		await tick();
 		resetDataSelection();
-		await fetchData();
-	}
-
-	async function onVariableChanged() {
-		resetDataSelection();
-		await fetchData();
-	}
-
-	function onTechnologyTypeChanged() {
-		resetDataSelection();
+		fetchData();
 	}
 
 	function onCarrierChanged() {
+		resetDataSelection();
+		fetchData();
+	}
+
+	function onVariableChanged() {
+		resetDataSelection();
+		fetchData();
+	}
+
+	function onTechnologyTypeChanged() {
 		resetDataSelection();
 	}
 
@@ -307,7 +301,7 @@
 	 * Fetch data from the API of the selected values in the form
 	 */
 	async function fetchData() {
-		if (selectedVariable === null || hasSomeUnsetSolutions) {
+		if (selectedVariable === null || selectedCarrier === null || hasSomeUnsetSolutions) {
 			data = [];
 			return;
 		}
@@ -318,7 +312,12 @@
 		const variable = selectedVariable;
 		const fetched = await Promise.all(
 			solutions.map((solution) => {
-				return getComponentTotal(solution.solution_name, [variable], solution.scenario_name);
+				return getComponentTotal(
+					solution.solution_name,
+					[variable],
+					solution.scenario_name,
+					selectedCarrier!
+				);
 			})
 		);
 
@@ -424,8 +423,8 @@
 				disabled={fetching || solutionLoading}
 			></MultiSolutionFilter>
 		</FilterSection>
-		{#if !solutionLoading && !fetching && !hasSomeUnsetSolutions}
-			<FilterSection title="Variable Selection">
+		{#if !solutionLoading && !hasSomeUnsetSolutions}
+			<FilterSection title="Carrier Selection">
 				<Dropdown
 					label="Carrier"
 					options={carriers}
@@ -433,7 +432,9 @@
 					disabled={fetching || solutionLoading}
 					onUpdate={onCarrierChanged}
 				></Dropdown>
-				{#if selectedCarrier !== null}
+			</FilterSection>
+			{#if selectedCarrier !== null}
+				<FilterSection title="Variable Selection">
 					<Dropdown
 						label="Variable"
 						options={variables}
@@ -457,8 +458,8 @@
 							disabled={fetching || solutionLoading}
 						></Radio>
 					{/if}
-				{/if}
-			</FilterSection>
+				</FilterSection>
+			{/if}
 			{#if selectedCarrier !== null}
 				<FilterSection title="Data Selection">
 					<Radio label="Aggregation" options={aggregationOptions} bind:value={selectedAggregation}
@@ -492,17 +493,17 @@
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
 		{:else if hasSomeUnsetSolutions}
-			<div class="text-center">No solution selected.</div>
+			<WarningMessage message="Please select a solution"></WarningMessage>
 		{:else if carriers.length == 0}
-			<div class="text-center">No carriers for this solution.</div>
+			<ErrorMessage message="No carriers for this solution found"></ErrorMessage>
 		{:else if selectedCarrier === null}
-			<div class="text-center">No carrier selected.</div>
+			<WarningMessage message="Please select a carrier"></WarningMessage>
 		{:else if technologies.length == 0}
-			<div class="text-center">No technologies with this selection.</div>
+			<ErrorMessage message="No technologies for this selection found"></ErrorMessage>
 		{:else if locations.length == 0}
-			<div class="text-center">No locations with this selection.</div>
+			<ErrorMessage message="No locations for this selection found"></ErrorMessage>
 		{:else if datasets.length == 0}
-			<div class="text-center">No data with this selection.</div>
+			<ErrorMessage message="No data for this selection found"></ErrorMessage>
 		{:else}
 			<Chart
 				type="bar"

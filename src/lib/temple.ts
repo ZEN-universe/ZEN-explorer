@@ -38,7 +38,10 @@ export async function get_solutions(): Promise<Solution[]> {
  * @returns Promise with the SolutionDetail API Server.
  */
 export async function get_solution_detail(solution: string): Promise<SolutionDetail> {
-	const url = env.PUBLIC_TEMPLE_URL + `solutions/get_detail/${solution}`;
+	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/detail');
+	urlObj.searchParams.set('solution_name', solution);
+	const url = urlObj.toString();
+
 	let solution_detail_request = await fetch(url, { cache: 'no-store' });
 
 	if (!solution_detail_request.ok) {
@@ -64,15 +67,19 @@ export async function get_full_ts(
 	scenario_name: string,
 	unit_component: string = '',
 	year_index: number = 0,
-	window_size: number = 1
+	window_size: number = 1,
+	carrier: string = ''
 ): Promise<ComponentTimeSeries> {
-	const urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/get_full_ts');
+	const urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/full_ts');
 	urlObj.searchParams.set('solution_name', solution_name);
 	urlObj.searchParams.set('components', components.join(','));
 	urlObj.searchParams.set('unit_component', unit_component);
 	urlObj.searchParams.set('scenario', scenario_name);
 	urlObj.searchParams.set('year', year_index.toString());
 	urlObj.searchParams.set('rolling_average_size', window_size.toString());
+	if (carrier !== '') {
+		urlObj.searchParams.set('carrier', carrier);
+	}
 	const url = urlObj.toString();
 
 	let component_data_request = await fetch(url, { cache: 'no-store' });
@@ -119,12 +126,14 @@ export async function get_component_total(
 	solution_name: string,
 	components: string[],
 	scenario_name: string,
+	carrier: string = '',
 	unit_component: string = ''
 ): Promise<ComponentTotal> {
-	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/get_total');
+	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/total');
 	urlObj.searchParams.set('solution_name', solution_name);
 	urlObj.searchParams.set('components', components.join(','));
 	urlObj.searchParams.set('scenario', scenario_name);
+	if (carrier !== '') urlObj.searchParams.set('carrier', carrier);
 	urlObj.searchParams.set('unit_component', unit_component);
 	const url = urlObj.toString();
 
@@ -156,18 +165,13 @@ export async function get_component_total(
  * @param scenario_name Name of the scenario
  * @returns Papaparsed CSV of the Unit-Dataframe from the API Server
  */
-export async function get_unit(
-	solution_name: string,
-	component_name: string,
-	scenario_name: string
-) {
-	let unit_data = await (
-		await fetch(
-			env.PUBLIC_TEMPLE_URL +
-				`solutions/get_unit/${solution_name}/${component_name}?scenario=${scenario_name}`,
-			{ cache: 'no-store' }
-		)
-	).json();
+export async function get_unit(solution_name: string, component_name: string) {
+	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/unit');
+	urlObj.searchParams.set('solution_name', solution_name);
+	urlObj.searchParams.set('component', component_name);
+	const url = urlObj.toString();
+
+	let unit_data = await (await fetch(url, { cache: 'no-store' })).json();
 
 	return parse_unit_data(unit_data);
 }
@@ -189,9 +193,14 @@ export async function get_energy_balance(
 	year: number,
 	window_size: number
 ): Promise<EnergyBalanceDataframes> {
-	const url =
-		env.PUBLIC_TEMPLE_URL +
-		`solutions/get_energy_balance/${solution}/${node}/${carrier}?scenario=${scenario}&year=${year}&rolling_average_size=${window_size}`;
+	let urlobj = new URL(env.PUBLIC_TEMPLE_URL + `solutions/energy_balance`);
+	urlobj.searchParams.set('solution_name', solution);
+	urlobj.searchParams.set('node', node);
+	urlobj.searchParams.set('carrier', carrier);
+	urlobj.searchParams.set('scenario_name', scenario);
+	urlobj.searchParams.set('year', year.toString());
+	urlobj.searchParams.set('rolling_average_size', window_size.toString());
+	const url = urlobj.toString();
 
 	let energy_balance_data_request = await fetch(url, { cache: 'no-store' });
 

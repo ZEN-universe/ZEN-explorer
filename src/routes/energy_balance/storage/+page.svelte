@@ -23,6 +23,8 @@
 	import type { ActivatedSolution, Entry } from '$lib/types';
 	import { nextColor, resetColorState } from '$lib/colors';
 	import Spinner from '$components/Spinner.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
 
 	// All but one data variable are non-reactive because of their size
 	let level_response: Entry[] | null = null;
@@ -177,22 +179,11 @@
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		response_update_trigger;
-		if (!level_response || !selected_solution) {
+		if (!selected_solution) {
 			return [];
 		}
 
-		let set_carriers: Set<string> = new Set();
-		Array.from(level_response.map((a) => a.index.technology)).forEach((technology) => {
-			if (!level_response?.some((element) => element.index.technology === technology)) {
-				return;
-			}
-			let carrier = selected_solution!.detail.reference_carrier[technology];
-			if (carrier) {
-				set_carriers.add(carrier);
-			}
-		});
-		return Array.from(set_carriers).sort();
+		return removeDuplicates(Object.values(selected_solution.detail.reference_carrier)).sort();
 	});
 
 	let technologies: string[] = $derived.by(() => {
@@ -284,7 +275,7 @@
 	//#region Data fetching and processing
 
 	async function fetch_data() {
-		if (selected_solution === null || !selected_year) {
+		if (selected_solution === null || !selected_year || selected_carrier === null) {
 			return;
 		}
 
@@ -309,7 +300,8 @@
 			selected_solution.scenario_name,
 			'storage_level',
 			Number(selected_year),
-			window_size
+			window_size,
+			selected_carrier
 		);
 
 		level_response = response.components.storage_level || null;
@@ -587,16 +579,16 @@
 	{#snippet mainContent()}
 		{#if solution_loading || fetching}
 			<Spinner></Spinner>
-		{:else if technologies.length == 0}
-			<div class="text-center">No technologies with this selection.</div>
-		{:else if carriers.length == 0}
-			<div class="text-center">No carriers with this selection.</div>
 		{:else if selected_solution == null}
-			<div class="text-center">No solution selected.</div>
+			<WarningMessage message="Please select a solution"></WarningMessage>
+		{:else if carriers.length == 0}
+			<ErrorMessage message="No carriers with this selection"></ErrorMessage>
+		{:else if technologies.length == 0}
+			<ErrorMessage message="No technologies with this selection"></ErrorMessage>
 		{:else if locations.length == 0}
-			<div class="text-center">No locations with this selection.</div>
+			<ErrorMessage message="No locations with this selection"></ErrorMessage>
 		{:else if level_datasets_length == 0}
-			<div class="text-center">No data available for this selection.</div>
+			<ErrorMessage message="No data available for this selection"></ErrorMessage>
 		{:else}
 			<Chart
 				id="level_chart"

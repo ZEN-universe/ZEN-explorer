@@ -41,6 +41,8 @@
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import Entries, { type FilterCriteria } from '$lib/entries';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	// Data
 	let data: Row[][][] = $state([]);
@@ -473,10 +475,14 @@
 	//#endregion
 
 	// Update functions
-	async function onSolutionChanged() {
+	function onSolutionChanged() {
 		activeYear = null;
 		activeSolution = null;
-		await fetchData();
+		fetchData();
+	}
+
+	function onCarrierChanged() {
+		fetchData();
 	}
 
 	function onBarClick(year: string, datasetIndex: number) {
@@ -499,7 +505,7 @@
 	 * Fetch data from the API server for the current selection.
 	 */
 	async function fetchData() {
-		if (hasSomeUnsetSolutions) {
+		if (hasSomeUnsetSolutions || selectedCarrier === null) {
 			return;
 		}
 
@@ -524,6 +530,7 @@
 						'demand'
 					],
 					solution.scenario_name,
+					selectedCarrier!,
 					'demand'
 				);
 			})
@@ -697,6 +704,7 @@
 					options={carriers}
 					bind:value={selectedCarrier}
 					disabled={solutionLoading || fetching}
+					onUpdate={onCarrierChanged}
 				></Dropdown>
 			</FilterSection>
 			{#if selectedCarrier !== null}
@@ -773,11 +781,11 @@
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
 		{:else if hasSomeUnsetSolutions}
-			<div class="text-center">Some solutions are not set.</div>
+			<WarningMessage message="Please select all solutions."></WarningMessage>
 		{:else if selectedCarrier == null}
-			<div class="text-center">No carrier selected.</div>
+			<WarningMessage message="Please select a carrier."></WarningMessage>
 		{:else if datasets.length == 0}
-			<div class="text-center">No data with this selection.</div>
+			<ErrorMessage message="No data with this selection."></ErrorMessage>
 		{:else}
 			<Chart
 				type="bar"

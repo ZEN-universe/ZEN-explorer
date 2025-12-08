@@ -26,6 +26,8 @@
 	} from '$lib/compareSolutions';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import Spinner from '$components/Spinner.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	let technologyData: Row[][] = $state([]);
 	let carrierData: Row[][] = $state([]);
@@ -234,12 +236,13 @@
 			cumulative: get_variable_name('carbon_emissions_cumulative', solutions[0].version)
 		};
 		let [annual_unit_data, ...responses] = await Promise.all([
-			get_unit(solutions[0].solution_name, components.annual, solutions[0].scenario_name),
+			get_unit(solutions[0].solution_name, components.annual),
 			...solutions.flatMap((solution) => [
 				get_component_total(
 					solution.solution_name,
 					Object.values(components),
 					solution.scenario_name,
+					'',
 					components.carrier
 				)
 			])
@@ -492,9 +495,13 @@
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
 		{:else if selectedSolutions.length == 0 || hasSomeUnsetSolutions}
-			<div class="text-center">No solution selected</div>
-		{:else if datasets.length == 0 || selectedYears.length == 0}
-			<div class="text-center">No data with this selection.</div>
+			<WarningMessage message="Please select a solution"></WarningMessage>
+		{:else if selectedLocations.length == 0}
+			<WarningMessage message="Please select at least one location"></WarningMessage>
+		{:else if selectedYears.length == 0}
+			<WarningMessage message="Please select at least one year"></WarningMessage>
+		{:else if datasets.length == 0}
+			<ErrorMessage message="No data available for the selected filters"></ErrorMessage>
 		{:else}
 			<Chart
 				type="bar"

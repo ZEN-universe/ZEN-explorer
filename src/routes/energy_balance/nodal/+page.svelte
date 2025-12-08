@@ -284,15 +284,13 @@
 			),
 			get_unit(
 				selected_solution.solution_name,
-				get_variable_name('flow_export', selected_solution.version),
-				selected_solution.scenario_name
+				get_variable_name('flow_export', selected_solution.version)
 			),
 			get_unit(
 				selected_solution.solution_name,
 				selected_solution.objective === 'total_cost'
 					? get_variable_name('net_present_cost', selected_solution.version)
-					: get_variable_name('carbon_emissions_cumulative', selected_solution.version),
-				selected_solution.scenario_name
+					: get_variable_name('carbon_emissions_cumulative', selected_solution.version)
 			)
 		]);
 
@@ -524,7 +522,7 @@
 		{#if solution_loading || fetching}
 			<Spinner></Spinner>
 		{:else if datasets_length == 0 || selected_solution == null}
-			<div class="text-center">No data with this selection.</div>
+			<ErrorMessage message="No data with this selection."></ErrorMessage>
 		{:else}
 			<Chart
 				type={number_of_time_steps == 1 ? 'bar' : 'line'}

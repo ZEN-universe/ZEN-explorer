@@ -39,6 +39,8 @@
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	const technologyCarrierLabel = 'Technology / Carrier';
 	const capexSuffix = ' (Capex)';
@@ -697,11 +699,11 @@
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
 		{:else if hasSomeUnsetSolutions}
-			<div class="text-center">Please select at least one solution.</div>
+			<WarningMessage message="Please select a solution"></WarningMessage>
 		{:else if selectedYears.length == 0}
-			<div class="text-center">Please select at least one year.</div>
+			<WarningMessage message="Please select at least one year"></WarningMessage>
 		{:else if datasets.length == 0}
-			<div class="text-center">No data with this selection.</div>
+			<ErrorMessage message="No data available for the selected filters"></ErrorMessage>
 		{:else}
 			<Chart
 				type="bar"

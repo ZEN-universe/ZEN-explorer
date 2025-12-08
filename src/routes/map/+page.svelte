@@ -12,11 +12,12 @@
 
 	import { get_component_total } from '$lib/temple';
 	import { availableMaps } from '$lib/constants';
-	import { removeDuplicates } from '$lib/utils';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import Button from '$components/Button.svelte';
 	import Spinner from '$components/Spinner.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import { removeDuplicates } from '$lib/utils';
 
 	interface AggregatedData {
 		[location: string]: { technology: string; years: number[] }[];
@@ -68,22 +69,11 @@
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		if (!fetchedData || !selected_solution) {
+		if (!selected_solution) {
 			return [];
 		}
 
-		const solution = selected_solution as ActivatedSolution;
-		const technologies = all_technologies.concat(solution.detail.system.set_transport_technologies);
-		const set_carriers: Set<string> = new Set();
-
-		fetchedData.data.forEach((element) => {
-			if (!technologies.includes(element.technology)) {
-				return null;
-			}
-			set_carriers.add(solution.detail.reference_carrier[element.technology]);
-		});
-
-		return Array.from(set_carriers).sort();
+		return removeDuplicates(Object.values(selected_solution.detail.reference_carrier)).sort();
 	});
 
 	$effect(() => {
@@ -152,13 +142,30 @@
 
 	//#region Data fetching and processing
 
-	async function solution_changed() {
+	async function solutionUpdated() {
+		if (!selected_solution) {
+			return;
+		}
+		carrierUpdated();
+	}
+
+	let previous_carrier = '';
+	$effect(() => {
+		selected_carrier;
+		untrack(() => {
+			if (selected_carrier === previous_carrier) return;
+			carrierUpdated();
+		});
+	});
+
+	async function carrierUpdated() {
+		previous_carrier = selected_carrier || '';
 		await fetch_data();
 		plot?.resetZoom();
 	}
 
 	async function fetch_data() {
-		if (!selected_solution) {
+		if (!selected_solution || !selected_carrier) {
 			return;
 		}
 
@@ -168,7 +175,8 @@
 		const response = await get_component_total(
 			selected_solution.solution_name,
 			['capacity'],
-			selected_solution.scenario_name
+			selected_solution.scenario_name,
+			selected_carrier
 		);
 
 		fetchedData = response.capacity;
@@ -320,7 +328,7 @@
 				bind:years
 				bind:selected_solution
 				bind:loading={solution_loading}
-				solutionSelected={solution_changed}
+				solutionSelected={solutionUpdated}
 				disabled={fetching || solution_loading}
 			/>
 		</FilterSection>
@@ -330,6 +338,7 @@
 					options={carriers}
 					bind:value={selected_carrier}
 					label="Carrier"
+					onUpdate={carrierUpdated}
 					disabled={fetching || solution_loading}
 				></Dropdown>
 				{#if selected_carrier !== null}
@@ -381,7 +390,10 @@
 		{#if fetching || solution_loading}
 			<Spinner></Spinner>
 		{:else if !pieData || !lineData}
-			<div class="text-center">No data to display.</div>
+			<ErrorMessage message="Please select a solution and carrier to display the map"
+			></ErrorMessage>
+		{:else if Object.keys(pieData).length === 0 && Object.keys(lineData).length === 0}
+			<ErrorMessage message="No data to display for the selected options"></ErrorMessage>
 		{:else}
 			<MapPlot
 				bind:this={plot}

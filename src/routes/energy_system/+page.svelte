@@ -17,6 +17,8 @@
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import Button from '$components/Button.svelte';
 	import Spinner from '$components/Spinner.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	let years: number[] = $state([]);
 	let solutionLoading: boolean = $state(false);
@@ -160,6 +162,7 @@
 				'flow_transport_loss'
 			],
 			selectedSolution.scenario_name,
+			'',
 			'demand'
 		);
 
@@ -544,13 +547,13 @@
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
 		{:else if !selectedSolution}
-			<div class="text-center">No solution selected</div>
+			<WarningMessage message="Please select a solution"></WarningMessage>
 		{:else if selectedCarriers.length === 0}
-			<div class="text-center">No carriers selected</div>
+			<WarningMessage message="Please select at least one carrier"></WarningMessage>
 		{:else if selectedNodes.length === 0}
-			<div class="text-center">No nodes selected</div>
+			<WarningMessage message="Please select at least one node"></WarningMessage>
 		{:else if sankeyNodes.length === 0}
-			<div class="text-center">No data available for the selected filters</div>
+			<ErrorMessage message="No data available for the selected filters"></ErrorMessage>
 		{:else}
 			<SankeyDiagram nodes={sankeyNodes} links={sankeyLinks} {legendItems} bind:this={diagram} />
 		{/if}
