@@ -76,7 +76,7 @@ export async function get_full_ts(
 	urlObj.searchParams.set('unit_component', unit_component);
 	urlObj.searchParams.set('scenario', scenario_name);
 	urlObj.searchParams.set('year', year_index.toString());
-	urlObj.searchParams.set('rolling_average_size', window_size.toString());
+	urlObj.searchParams.set('rolling_average_window_size', window_size.toString());
 	if (carrier !== '') {
 		urlObj.searchParams.set('carrier', carrier);
 	}
@@ -199,7 +199,7 @@ export async function get_energy_balance(
 	urlobj.searchParams.set('carrier', carrier);
 	urlobj.searchParams.set('scenario_name', scenario);
 	urlobj.searchParams.set('year', year.toString());
-	urlobj.searchParams.set('rolling_average_size', window_size.toString());
+	urlobj.searchParams.set('rolling_average_window_size', window_size.toString());
 	const url = urlobj.toString();
 
 	let energy_balance_data_request = await fetch(url, { cache: 'no-store' });

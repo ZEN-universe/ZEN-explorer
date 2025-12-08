@@ -18,6 +18,7 @@
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import { removeDuplicates } from '$lib/utils';
+	import WarningMessage from '$components/WarningMessage.svelte';
 
 	interface AggregatedData {
 		[location: string]: { technology: string; years: number[] }[];
@@ -389,10 +390,11 @@
 	{#snippet mainContent()}
 		{#if solution_loading || fetching}
 			<Spinner></Spinner>
-		{:else if !pieData || !lineData}
-			<ErrorMessage message="Please select a solution and carrier to display the map"
-			></ErrorMessage>
-		{:else if Object.keys(pieData).length === 0 && Object.keys(lineData).length === 0}
+		{:else if !selected_solution}
+			<WarningMessage message="Please select a solution"></WarningMessage>
+		{:else if !selected_carrier}
+			<WarningMessage message="Please select a carrier"></WarningMessage>
+		{:else if !pieData || !lineData || (Object.keys(pieData).length === 0 && Object.keys(lineData).length === 0)}
 			<ErrorMessage message="No data to display for the selected options"></ErrorMessage>
 		{:else}
 			<MapPlot

@@ -61,7 +61,7 @@
 	}: Props = $props();
 
 	// SVG element
-	let svg: SVGSVGElement;
+	let svg = $state<SVGSVGElement>();
 
 	// Constants
 	const minRadius = 7;
@@ -170,12 +170,13 @@
 
 	// Zoom
 	let zoom = d3zoom().filter(shouldHandleZoom).on('zoom', onZoom);
-	onMount(() => {
+
+	function initZoom() {
 		if (!svg) return;
 		select(svg)
 			.call(zoom as any)
 			.call(zoom.transform as any, zoomIdentity);
-	});
+	}
 
 	function shouldHandleZoom(event: MouseEvent | WheelEvent) {
 		// Ignore right-click, since that should open the context menu
@@ -247,6 +248,7 @@
 	}
 
 	export function resetZoom() {
+		if (!svg) return;
 		zoomScale = 1;
 		zoomX = 0;
 		zoomY = 0;
@@ -413,11 +415,12 @@
 	}
 
 	const resizeObserver = new ResizeObserver(handleSize);
-	onMount(() => {
-		if (svg && svg.parentElement) {
-			resizeObserver.observe(svg.parentElement);
-		}
-	});
+
+	function initResizeObserver() {
+		if (!svg?.parentElement) return;
+		resizeObserver.observe(svg.parentElement);
+	}
+
 	onDestroy(() => {
 		resizeObserver.disconnect();
 	});
@@ -429,6 +432,12 @@
 		exportAsSVG(svg, 'map_plot.svg');
 	}
 	//#endregion
+
+	function initSvg() {
+		initZoom();
+		initResizeObserver();
+		handleSize();
+	}
 </script>
 
 <svelte:window on:resize={handleSize} />
@@ -458,7 +467,7 @@
 			{width}
 			{height}
 			bind:this={svg}
-			{@attach handleSize}
+			{@attach initSvg}
 			onmousemove={(event) => {
 				updateActiveElements(event);
 				moveZoomRectangle(event);

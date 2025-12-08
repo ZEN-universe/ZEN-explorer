@@ -45,7 +45,7 @@
 
 <FilterLabel {label} {formId}>
 	{#snippet rightSide()}
-		<button class="text-blue-500 block ml-auto" onclick={toggleAll}>
+		<button class="text-blue-500 block ml-auto" onclick={toggleAll} {disabled}>
 			{#if areAllSelected}
 				<i class="bi bi-x"></i>
 			{:else}

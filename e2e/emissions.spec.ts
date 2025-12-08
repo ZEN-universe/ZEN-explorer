@@ -83,7 +83,7 @@ test('emissions: year', async ({ page }) => {
 	await page.getByRole('combobox', { name: 'Subsolution' }).click();
 	await page.getByRole('option', { name: 'perfect_foresight' }).click();
 	await page.getByText('Years Deselect All').getByRole('button').click();
-	await expect(page.getByRole('main')).toHaveText('No data with this selection.');
+	await expect(page.getByRole('main')).toHaveText('Please select at least one year');
 	await page.getByRole('combobox', { name: 'Years' }).click();
 	await page.getByRole('option', { name: '2024' }).click();
 	await expect(page.locator('#chart-container')).toHaveScreenshot(

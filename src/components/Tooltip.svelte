@@ -43,7 +43,7 @@
 </script>
 
 <div
-	class="absolute bg-black dark:bg-white opacity-75 text-white dark:text-black py-2 rounded pe-0 z-3"
+	class="absolute bg-black dark:bg-white opacity-75 text-white dark:text-black pointer-events-none py-2 rounded pe-0 z-3"
 	style:left={`${adjustedX}px`}
 	style:top={`${adjustedY}px`}
 	style:transform={isOnTop ? `translate(-50%, -100%)` : `translate(-50%, 0%)`}
@@ -55,7 +55,7 @@
 </div>
 
 <svg
-	class="absolute opacity-75 translate-middle-x"
+	class="absolute opacity-75 translate-middle-x pointer-events-none"
 	style:left={`${x}px`}
 	style:top={`${adjustedY + (isOnTop ? 0 : -5)}px`}
 	width="10"
@@ -63,8 +63,8 @@
 	transition:fade={{ duration: 300 }}
 >
 	{#if isOnTop}
-		<polygon points="0,0 10,0 5,5" fill="black" />
+		<polygon points="0,0 10,0 5,5" class="fill-black dark:fill-white" />
 	{:else}
-		<polygon points="0,5 10,5 5,0" fill="black" />
+		<polygon points="0,5 10,5 5,0" class="fill-black dark:fill-white" />
 	{/if}
 </svg>

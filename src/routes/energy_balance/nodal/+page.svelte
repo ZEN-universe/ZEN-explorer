@@ -15,6 +15,7 @@
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	let energy_balance_data: EnergyBalanceDataframes | null = null;
 	let unit_data: any = $state(null);

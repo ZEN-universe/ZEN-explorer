@@ -18,7 +18,7 @@ test('map: technology type', async ({ page }) => {
 	await page.getByRole('combobox', { name: 'Subsolution' }).click();
 	await page.getByRole('option', { name: 'perfect_foresight' }).click();
 	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'heat', exact: true }).click();
+	await page.getByRole('option', { name: 'carbon', exact: true }).click();
 	await page.getByRole('combobox', { name: 'Technology Type' }).click();
 	await page.getByRole('option', { name: 'storage' }).click();
 	await expect(page.locator('#map')).toHaveScreenshot(
@@ -33,7 +33,7 @@ test('map: storage type', async ({ page }) => {
 	await page.getByRole('combobox', { name: 'Subsolution' }).click();
 	await page.getByRole('option', { name: 'perfect_foresight' }).click();
 	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'heat', exact: true }).click();
+	await page.getByRole('option', { name: 'carbon', exact: true }).click();
 	await page.getByRole('combobox', { name: 'Technology Type' }).click();
 	await page.getByRole('option', { name: 'storage' }).click();
 	await page.getByRole('radio', { name: 'power' }).check();

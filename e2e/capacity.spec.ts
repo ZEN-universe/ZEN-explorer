@@ -118,7 +118,7 @@ test('capacity: node selection', async ({ page }) => {
 	await page.getByRole('combobox', { name: 'Technology Type' }).click();
 	await page.getByRole('option', { name: 'conversion' }).click();
 	await page.getByText('Nodes Deselect All').getByRole('button').click();
-	await expect(page.getByRole('main')).toHaveText('No data with this selection.');
+	await expect(page.getByRole('main')).toHaveText('No data for this selection found');
 	await page.getByRole('combobox', { name: 'Nodes' }).click();
 	await page.getByRole('option', { name: 'DE' }).click();
 	await expect(page.locator('#chart-container')).toHaveScreenshot(
@@ -139,7 +139,7 @@ test('capacity: year selection', async ({ page }) => {
 	await page.getByRole('combobox', { name: 'Technology Type' }).click();
 	await page.getByRole('option', { name: 'conversion' }).click();
 	await page.getByText('Years Deselect All').getByRole('button').click();
-	await expect(page.getByRole('main')).toHaveText('No data with this selection.');
+	await expect(page.getByRole('main')).toHaveText('No data for this selection found');
 	await page.getByRole('combobox', { name: 'Years' }).click();
 	await page.getByRole('option', { name: '2024' }).click();
 	await expect(page.locator('#chart-container')).toHaveScreenshot(

@@ -558,14 +558,22 @@
 			</FilterSection>
 			{#if selected_solution !== null && selected_carrier !== null}
 				<FilterSection title="Data Selection">
-					<ToggleButton bind:value={selected_subdivision} label="Technology Subdivision"
+					<ToggleButton
+						bind:value={selected_subdivision}
+						label="Technology Subdivision"
+						disabled={fetching || solution_loading}
 					></ToggleButton>
 					<MultiSelect
 						options={technologies}
 						bind:value={selected_technologies}
 						label="Technologies"
+						disabled={fetching || solution_loading}
 					></MultiSelect>
-					<MultiSelect options={locations} bind:value={selected_locations} label="Nodes"
+					<MultiSelect
+						options={locations}
+						bind:value={selected_locations}
+						label="Nodes"
+						disabled={fetching || solution_loading}
 					></MultiSelect>
 				</FilterSection>
 			{/if}
