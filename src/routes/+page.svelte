@@ -5,6 +5,34 @@
 	import { resolve } from '$app/paths';
 	import ToggleThemeButton from '$components/ToggleThemeButton.svelte';
 	import ContentBox from '$components/ContentBox.svelte';
+
+	// List of publications
+	const publications = [
+		{
+			title: 'ZEN-garden: Optimizing energy transition pathways with user-oriented data handling',
+			authors:
+				'Jacob Mannhardt, Alissa Ganter, Johannes Burger, Francesco De Marco, Lukas Kunz, Lukas Schmidt-Engelbertz, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'SoftwareX, vol. 29, pp. 102059, Elsevier, 2025.',
+			doi: '10.1016/j.softx.2025.102059',
+			researchCollection: 'http://hdl.handle.net/20.500.11850/711439'
+		},
+		{
+			title:
+				'Understanding the vicious cycle of myopic foresight and constrained technology deployment in transforming the European energy system',
+			authors: 'Jacob Mannhardt, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'iScience, vol. 27: no. 12, pp. 111369, Cell Press, 2024.',
+			doi: '10.1016/j.isci.2024.111369',
+			researchCollection: 'http://hdl.handle.net/20.500.11850/710173'
+		},
+		{
+			title:
+				'Near-term infrastructure rollout and investment strategies for net-zero hydrogen supply chains',
+			authors: 'Alissa Ganter, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'Renewable and Sustainable Energy Reviews, vol. 194, pp. 114314, Pergamon, 2024.',
+			doi: '10.1016/j.rser.2024.114314',
+			researchCollection: 'http://hdl.handle.net/20.500.11850/659862'
+		}
+	];
 </script>
 
 <svelte:head>
@@ -22,6 +50,7 @@
 	</a>
 {/snippet}
 
+<!-- Navbar -->
 <nav
 	class="border-b border-gray-200 bg-white px-4 py-2 text-gray-800 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
 >
@@ -88,11 +117,12 @@
 	</div>
 </nav>
 
+<!-- Header -->
 <div class="container mx-auto mt-8">
 	<ContentBox class="mb-12 px-20 py-20">
 		<h1 class="mb-12 text-5xl font-bold">Welcome to our ZEN-garden</h1>
 
-		<p class="max-w-270 text-xl leading-relaxed">
+		<p class="mb-12 max-w-270 text-xl leading-relaxed">
 			Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there
 			live the blind texts. Separated they live in Bookmarksgrove right at the coast of the
 			Semantics, a large language ocean. A small river named Duden flows by their place and supplies
@@ -101,9 +131,19 @@
 			texts it is an almost unorthographic life One day however a small line of blind text by the
 			name of Lorem Ipsum decided to leave for the far World of Grammar.
 		</p>
+
+		<a
+			class="rounded bg-black px-8 py-4 text-xl text-white dark:bg-gray-100 dark:text-gray-900"
+			href="https://zen-garden.readthedocs.io/en/latest/files/quick_start/installation.html"
+			target="_blank"
+		>
+			Getting started
+			<i class="bi bi-arrow-up-right"></i>
+		</a>
 	</ContentBox>
 </div>
 
+<!-- 3 headline boxes -->
 <div class="container mx-auto mb-12 grid grid-cols-3 gap-12">
 	<ContentBox class="py-8 text-center">
 		<h2 class="mb-4 text-2xl font-bold">Case Studies</h2>
@@ -125,8 +165,9 @@
 	</ContentBox>
 </div>
 
+<!-- Case Studies -->
 <div class="container mx-auto mb-24 flex gap-12">
-	<ContentBox class="grow py-8 px-12">
+	<ContentBox class="grow px-12 py-8">
 		<h2 class="mb-5 text-4xl font-bold">Case Studies</h2>
 		<p class="mb-12 text-lg">
 			Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there
@@ -135,97 +176,6 @@
 			countries Vokalia and Consonantia, there live the blind texts. Separated they live in
 			Bookmarksgrove right at the coast of the Semantics, a large language ocean.
 		</p>
-
-		<h3 class="mb-4 text-2xl font-bold">List of Publications</h3>
-
-		<ul class="mb-12">
-			<li class="mb-4 border-b border-gray-200 pb-4 dark:border-gray-600">
-				<h4 class="mb-2 text-lg font-bold">
-					ZEN-garden: Optimizing energy transition pathways with user-oriented data handling
-				</h4>
-				<div class="mb-2">
-					Jacob Mannhardt, Alissa Ganter, Johannes Burger, Francesco De Marco, Lukas Kunz, Lukas
-					Schmidt-Engelbertz, Paolo Gabrielli and Giovanni Sansavini
-				</div>
-				<div class="mb-2 text-sm text-gray-600 dark:text-gray-400">
-					SoftwareX, vol. 29, pp. 102059, Elsevier, 2025.
-				</div>
-				<div>
-					<a
-						class="hover:text-gray-600 dark:hover:text-gray-400"
-						href="https://doi.org/10.1016/j.softx.2025.102059"
-						target="blank"
-					>
-						DOI: 10.1016/j.softx.2025.102059
-						<i class="bi bi-arrow-up-right"></i>
-					</a>
-					<a
-						class="ms-4 hover:text-gray-600 dark:hover:text-gray-400"
-						href="http://hdl.handle.net/20.500.11850/711439"
-						target="blank"
-					>
-						Research Collection
-						<i class="bi bi-arrow-up-right"></i>
-					</a>
-				</div>
-			</li>
-			<li class="mb-4 border-b border-gray-200 pb-4 dark:border-gray-600">
-				<h4 class="mb-2 text-lg font-bold">
-					Understanding the vicious cycle of myopic foresight and constrained technology deployment
-					in transforming the European energy system
-				</h4>
-				<div class="mb-2">Jacob Mannhardt, Paolo Gabrielli and Giovanni Sansavini</div>
-				<div class="mb-2 text-sm text-gray-600 dark:text-gray-400">
-					iScience, vol. 27: no. 12, pp. 111369, Cell Press, 2024.
-				</div>
-				<div>
-					<a
-						class="hover:text-gray-600 dark:hover:text-gray-400"
-						href="https://doi.org/10.1016/j.isci.2024.111369"
-						target="blank"
-					>
-						DOI: 10.1016/j.isci.2024.111369
-						<i class="bi bi-arrow-up-right"></i>
-					</a>
-					<a
-						class="ms-4 hover:text-gray-600 dark:hover:text-gray-400"
-						href="http://hdl.handle.net/20.500.11850/710173"
-						target="blank"
-					>
-						Research Collection
-						<i class="bi bi-arrow-up-right"></i>
-					</a>
-				</div>
-			</li>
-			<li class="mb-4 border-b border-gray-200 pb-4 dark:border-gray-600">
-				<h4 class="mb-2 text-lg font-bold">
-					Near-term infrastructure rollout and investment strategies for net-zero hydrogen supply
-					chains
-				</h4>
-				<div class="mb-2">Alissa Ganter, Paolo Gabrielli and Giovanni Sansavini</div>
-				<div class="mb-2 text-sm text-gray-600 dark:text-gray-400">
-					Renewable and Sustainable Energy Reviews, vol. 194, pp. 114314, Pergamon, 2024.
-				</div>
-				<div>
-					<a
-						class="hover:text-gray-600 dark:hover:text-gray-400"
-						href="https://doi.org/10.1016/j.rser.2024.114314"
-						target="blank"
-					>
-						DOI: 10.1016/j.rser.2024.114314
-						<i class="bi bi-arrow-up-right"></i>
-					</a>
-					<a
-						class="ms-4 hover:text-gray-600 dark:hover:text-gray-400"
-						href="http://hdl.handle.net/20.500.11850/659862"
-						target="blank"
-					>
-						Research Collection
-						<i class="bi bi-arrow-up-right"></i>
-					</a>
-				</div>
-			</li>
-		</ul>
 
 		<h3 class="mb-4 text-2xl font-bold">ZEN-models</h3>
 
@@ -237,7 +187,7 @@
 			Bookmarksgrove right at the coast of the Semantics, a large language ocean.
 		</p>
 
-		<div class="grid grid-cols-3 gap-4">
+		<div class="mb-12 grid grid-cols-3 gap-4">
 			<div class="rounded bg-[#07c59f] px-4 py-4 dark:bg-teal-800">
 				<h3 class="mb-4 text-xl font-bold">Hydrogen</h3>
 				<a class="mb-2 block" href="#">
@@ -272,6 +222,43 @@
 				</a>
 			</div>
 		</div>
+
+		<h3 class="mb-4 text-2xl font-bold">List of Publications</h3>
+
+		<!-- Note: Publications are located at the top of the file -->
+		<ul>
+			{#each publications as publication}
+				<li class="mb-4 border-b border-gray-200 pb-4 dark:border-gray-600">
+					<h4 class="mb-2 text-lg font-bold">
+						{publication.title}
+					</h4>
+					<div class="mb-2">
+						{publication.authors}
+					</div>
+					<div class="mb-2 text-sm text-gray-600 dark:text-gray-400">
+						{publication.journal}
+					</div>
+					<div>
+						<a
+							class="hover:text-gray-600 dark:hover:text-gray-400"
+							href={`https://doi.org/${publication.doi}`}
+							target="_blank"
+						>
+							DOI: {publication.doi}
+							<i class="bi bi-arrow-up-right"></i>
+						</a>
+						<a
+							class="ms-4 hover:text-gray-600 dark:hover:text-gray-400"
+							href={publication.researchCollection}
+							target="_blank"
+						>
+							Research Collection
+							<i class="bi bi-arrow-up-right"></i>
+						</a>
+					</div>
+				</li>
+			{/each}
+		</ul>
 	</ContentBox>
 	<ContentBox class="py-8 text-center">
 		<h2 class="mb-4 text-2xl font-bold [writing-mode:sideways-lr]">Framework</h2>
@@ -281,11 +268,12 @@
 	</ContentBox>
 </div>
 
+<!-- Framework -->
 <div class="container mx-auto mb-24 flex gap-12">
 	<ContentBox class="py-8 text-center">
 		<h2 class="mb-4 text-2xl font-bold [writing-mode:sideways-lr]">Case Studies</h2>
 	</ContentBox>
-	<ContentBox class="grow py-8 px-12">
+	<ContentBox class="grow px-12 py-8">
 		<h2 class="mb-5 text-4xl font-bold">Framework</h2>
 		<p class="mb-8 text-lg">
 			Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there
@@ -363,6 +351,7 @@
 	</ContentBox>
 </div>
 
+<!-- Visualization -->
 <div class="container mx-auto mb-24 flex gap-12">
 	<ContentBox class="py-8 text-center">
 		<h2 class="mb-4 text-2xl font-bold [writing-mode:sideways-lr]">Case Studies</h2>
@@ -370,7 +359,7 @@
 	<ContentBox class="py-8 text-center">
 		<h2 class="mb-4 text-2xl font-bold [writing-mode:sideways-lr]">Framework</h2>
 	</ContentBox>
-	<ContentBox class="grow py-8 px-12">
+	<ContentBox class="grow px-12 py-8">
 		<h2 class="mb-5 text-4xl font-bold">Visualization</h2>
 		<p class="mb-12 text-lg">
 			Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there
@@ -381,25 +370,25 @@
 		</p>
 
 		<div
-			class="relative mx-auto grid w-full max-w-250 grid-cols-2 gap-4 text-3xl font-bold text-white items-center mb-12"
+			class="relative mx-auto mb-12 grid w-full max-w-250 grid-cols-2 items-center gap-4 text-3xl font-bold text-white"
 		>
 			<div
-				class="min-h-48 rounded-tl-lg border border-gray-400 bg-[#6e7e2c] p-4 dark:border-gray-800 flex items-center justify-center"
+				class="flex min-h-48 items-center justify-center rounded-tl-lg border border-gray-400 bg-[#6e7e2c] p-4 dark:border-gray-800"
 			>
 				The Transition Pathway
 			</div>
 			<div
-				class="min-h-48 rounded-tr-lg border border-gray-400 bg-[#387e70] p-4 dark:border-gray-800 flex items-center justify-center"
+				class="flex min-h-48 items-center justify-center rounded-tr-lg border border-gray-400 bg-[#387e70] p-4 dark:border-gray-800"
 			>
 				The Energy Balance
 			</div>
 			<div
-				class="min-h-48 rounded-bl-lg border border-gray-400 bg-[#4270a8] p-4 dark:border-gray-800 flex items-center justify-center"
+				class="flex min-h-48 items-center justify-center rounded-bl-lg border border-gray-400 bg-[#4270a8] p-4 dark:border-gray-800"
 			>
 				The Energy System
 			</div>
 			<div
-				class="min-h-48 rounded-br-lg border border-gray-400 bg-[#ae995e] p-4 dark:border-gray-800 flex items-center justify-center"
+				class="flex min-h-48 items-center justify-center rounded-br-lg border border-gray-400 bg-[#ae995e] p-4 dark:border-gray-800"
 			>
 				The Map
 			</div>
@@ -411,11 +400,12 @@
 				</div>
 			</div>
 
-            <a href="/explorer" class="absolute inset-0" aria-label="Go to ZEN-garden Explorer"></a>
+			<a href="/explorer" class="absolute inset-0" aria-label="Go to ZEN-garden Explorer"></a>
 		</div>
 	</ContentBox>
 </div>
 
+<!-- Copyright Footer -->
 <footer class="border-t border-gray-200 bg-white py-6 dark:border-gray-600 dark:bg-gray-900">
 	<div class="container mx-auto text-center text-gray-600 dark:text-gray-400">
 		&copy; {new Date().getFullYear()} ZEN-garden. All rights reserved.
