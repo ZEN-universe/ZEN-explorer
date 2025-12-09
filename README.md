@@ -2,6 +2,42 @@
 
 The Explorer is the frontend of the ZEN-garden (https://github.com/ZEN-universe/ZEN-garden) visualization platform. It directly uses the endpoints provided by the web service ZEN-temple (https://github.com/ZEN-universe/ZEN-temple) to fetch the data of the solutions and plots them.
 
+## Installation
+
+Please ensure you have npm on your computer, ideally the LTS version 22 (Dec 2025). Then, install all dependencies for ZEN-explorer using:
+
+```bash
+npm install
+cp .env.example .env
+```
+
+Also create a conda env for ZEN-temple and install it with:
+
+```
+conda create --name <your-conda-env> python==3.13
+conda activate <your-conda-env>
+pip install -e .[mypy]
+```
+
+## Usage
+
+To develop ZEN-explorer you must run ZEN-temple in the background. Make sure you have solutions ready for ZEN-temple and start it in your conda environment using:
+
+```bash
+conda run -n <your-conda-env> --no-capture-output python -m zen_temple.main --no-open-browser --reload
+```
+
+Optionally, you can also define a path to an outputs folder using the `-o <path-to-folder>` flag.
+
+Next, open a new shell and start ZEN-explorer's dev server using:
+
+```bash
+npm run dev
+```
+
+Finally, open the URL [http://localhost:5173/](http://localhost:5173/) printed in the console after "Local:".
+You're ready to develop ZEN-explorer and ZEN-temple.
+
 ## Project structure
 
 Each route in Svelte is one folder in the `routes` that contains a `+page.svelte` file. All of these pages are more or less independent of each other. There are some parts of the pages, that can be reused. These are called components and are contained in the `components` folder. The `lib` folder contains utilities that are used by different pages and components.
@@ -33,7 +69,7 @@ If you have to work on both ends, ZEN Temple and ZEN Explorer or you want ZEN Te
    You can test if you have a running ZEN Temple instance on your machine by opening [http://localhost:8000/api/docs](http://localhost:8000/api/docs) in your browser. If you see the Swagger documentation of the Temple endpoints, everything is running correctly.
 2. Clone the ZEN Explorer repository and switch to the directory that contains the project and make sure that the variable `PUBLIC_TEMPLE_URL` in the `.env` file is set to `http://localhost:8000/api/`.
 3. Install the dependncies with `npm install`. An installation of Node.js is necessary for this, see https://nodejs.org/en.
-4. Once you installed the dependencies, you can compile the `.svelte` and `.ts` files to `.html`, `.css`, and `.js` with the command `npm run dev`. This command does not only compile the files but also starts a local Node.js server that hosts the compiled files. You can check that everything worked by opening http://localhost:5174/. Additionally to the compilation and hosting of the compiled files, the command starts a file watcher that watches for changes in any files. Once you change any of the files in the `src` folder, everything is being recompiled and you can see the changes in the browser without having to restart the command.
+4. Once you installed the dependencies, you can compile the `.svelte` and `.ts` files to `.html`, `.css`, and `.js` with the command `npm run dev`. This command does not only compile the files but also starts a local Node.js server that hosts the compiled files. You can check that everything worked by opening http://localhost:5173/. Additionally to the compilation and hosting of the compiled files, the command starts a file watcher that watches for changes in any files. Once you change any of the files in the `src` folder, everything is being recompiled and you can see the changes in the browser without having to restart the command.
 
 ### Local Development on Explorer
 
