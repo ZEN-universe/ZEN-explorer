@@ -56,7 +56,7 @@ export async function get_solution_detail(solution: string): Promise<SolutionDet
 /**
  * Helper function to fetch the full timeseries of a component from the Temple.
  * @param solution_name Name of the solution
- * @param components Name of the compoennt
+ * @param components Names of the components
  * @param scenario_name Name of the scenario
  * @param year Year
  * @returns Promise of the TimeSeries as returned by the API

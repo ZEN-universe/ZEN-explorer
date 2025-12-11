@@ -19,13 +19,14 @@
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
+	import Entries, { type FilterCriteria } from '$lib/entries';
 
 	// All but one data variable are non-reactive because of their size
-	let levelResponse: Entry[] | null = null;
-	let chargeResponse: Entry[] | null = null;
-	let dischargeResponse: Entry[] | null = null;
-	let spillageResponse: Entry[] | null = null;
-	let inflowResponse: Entry[] | null = null;
+	let levelResponse: Entries | null = null;
+	let chargeResponse: Entries | null = null;
+	let dischargeResponse: Entries | null = null;
+	let spillageResponse: Entries | null = null;
+	let inflowResponse: Entries | null = null;
 	let responseUpdateTrigger: number = $state(0);
 	let units: { [carrier: string]: string } = $state({});
 
@@ -169,7 +170,7 @@
 		if (!levelResponse) {
 			return [];
 		}
-		return removeDuplicates(levelResponse.map((a) => a.index.node)).sort();
+		return removeDuplicates(levelResponse.entries.map((a) => a.index.node)).sort();
 	});
 
 	let carriers: string[] = $derived.by(() => {
@@ -185,7 +186,7 @@
 		if (!levelResponse || !selectedSolution || carriers.length === 0) {
 			return [];
 		}
-		let allTechnologies = removeDuplicates(levelResponse.map((a) => a.index.technology));
+		let allTechnologies = removeDuplicates(levelResponse.entries.map((a) => a.index.technology));
 		return allTechnologies.filter(
 			(technology) => selectedSolution!.detail.reference_carrier[technology] == selectedCarrier
 		);
@@ -298,11 +299,11 @@
 			selectedCarrier
 		);
 
-		levelResponse = response.components.storage_level || null;
-		chargeResponse = response.components.flow_storage_charge || null;
-		dischargeResponse = response.components.flow_storage_discharge || null;
-		spillageResponse = response.components.flow_storage_spillage || null;
-		inflowResponse = response.components.flow_storage_inflow || null;
+		levelResponse = new Entries(response.components.storage_level) || null;
+		chargeResponse = new Entries(response.components.flow_storage_charge) || null;
+		dischargeResponse = new Entries(response.components.flow_storage_discharge) || null;
+		spillageResponse = new Entries(response.components.flow_storage_spillage) || null;
+		inflowResponse = new Entries(response.components.flow_storage_inflow) || null;
 		responseUpdateTrigger++;
 
 		if (response.unit?.data) {
@@ -320,40 +321,9 @@
 	let levelDatasets: ChartDataset<'bar' | 'line'>[] = [];
 	let flowDatasets: ChartDataset<'bar' | 'line'>[] = [];
 	let levelDatasetsLength: number = $state(0);
-	let flowDatasetsLength: number = $state(0);
 	let numberOfTimeSteps: number = $state(0);
 
-	function computeLevelDatasets() {
-		if (
-			selectedLocations.length == 0 ||
-			selectedTechnologies.length == 0 ||
-			!levelResponse ||
-			!chargeResponse ||
-			!dischargeResponse ||
-			!inflowResponse ||
-			!spillageResponse
-		) {
-			return [];
-		}
-
-		return convertToDataset(
-			levelResponse,
-			{
-				technology: selectedTechnologies,
-				node: selectedLocations
-			},
-			selectedSubdivision ? ['technology'] : [],
-			selectedSubdivision
-				? undefined
-				: () => ({
-						label: 'Storage Level',
-						borderColor: 'rgb(0, 0, 0)',
-						backgroundColor: 'rgba(0, 0, 0, 0.2)'
-					})
-		);
-	}
-
-	function computeFlowDatasets() {
+	function computeDatasets(): [ChartDataset<'bar' | 'line'>[], ChartDataset<'bar' | 'line'>[]] {
 		if (
 			selectedSolution === null ||
 			fetching ||
@@ -365,51 +335,98 @@
 			!inflowResponse ||
 			!spillageResponse
 		) {
-			return [];
+			return [[], []];
 		}
 
-		return [
+		const components = [
 			{
 				data: chargeResponse,
 				labelSuffix: '_charge',
 				labelAggregated: 'Flow Storage Charge',
 				negate: false,
-				color: 'rgb(54, 162, 235)'
+				aggregatedColor: 'rgb(54, 162, 235)',
+				aggregatedBackgroundColor: undefined
 			},
 			{
 				data: dischargeResponse,
 				labelSuffix: '_discharge',
 				labelAggregated: 'Flow Storage Discharge',
 				negate: true,
-				color: 'rgb(255, 99, 132)'
+				aggregatedColor: 'rgb(255, 99, 132)',
+				aggregatedBackgroundColor: undefined
 			},
 			{
 				data: inflowResponse,
 				labelSuffix: '_inflow',
 				labelAggregated: 'Flow Storage Inflow',
 				negate: false,
-				color: 'rgb(75, 192, 192)'
+				aggregatedColor: 'rgb(75, 192, 192)',
+				aggregatedBackgroundColor: undefined
 			},
 			{
 				data: spillageResponse,
 				labelSuffix: '_spillage',
 				labelAggregated: 'Flow Storage Spillage',
 				negate: true,
-				color: 'rgb(255, 99, 132)'
+				aggregatedColor: 'rgb(255, 99, 132)',
+				aggregatedBackgroundColor: undefined
 			}
-		].flatMap(({ data, labelSuffix, labelAggregated, negate, color }) => {
-			return convertToDataset(
-				data,
-				{
-					technology: selectedTechnologies,
-					node: selectedLocations
-				},
-				selectedSubdivision ? ['technology'] : [],
-				selectedSubdivision
-					? (entry) => ({ label: entry.index.column + labelSuffix })
-					: () => ({ label: labelAggregated, borderColor: color, backgroundColor: color }),
-				(value) => (negate ? -value : value)
-			);
+		];
+
+		return [
+			convertToDatasets({
+				data: levelResponse,
+				labelSuffix: '',
+				labelAggregated: 'Storage Level',
+				negate: false,
+				aggregatedColor: 'rgb(0, 0, 0)',
+				aggregatedBackgroundColor: 'rgba(0, 0, 0, 0.2)'
+			}),
+			components.flatMap(convertToDatasets)
+		];
+	}
+
+	function convertToDatasets({
+		data,
+		labelSuffix,
+		labelAggregated,
+		negate,
+		aggregatedColor,
+		aggregatedBackgroundColor
+	}: {
+		data: Entries;
+		labelSuffix: string;
+		labelAggregated: string;
+		negate: boolean;
+		aggregatedColor: string;
+		aggregatedBackgroundColor?: string;
+	}) {
+		let entries = data.filterByCriteria({
+			technology: selectedTechnologies,
+			node: selectedLocations
+		});
+
+		if (selectedSubdivision) {
+			entries = entries.groupBy(['technology']);
+		}
+
+		if (negate) {
+			entries = entries.mapData((value) => -value);
+		}
+
+		return entries.toArray().map((entry) => {
+			const color = selectedSubdivision ? nextColor() : aggregatedColor;
+
+			return {
+				data: entry.data.map((value, i) => ({ x: i, y: value })),
+				label: selectedSubdivision ? entry.index.technology + labelSuffix : labelAggregated,
+				type: 'line',
+				fill: 'origin',
+				stepped: true,
+				borderColor: color,
+				backgroundColor:
+					selectedSubdivision || !aggregatedBackgroundColor ? color : aggregatedBackgroundColor
+			} as ChartDataset<'bar' | 'line'>;
 		});
 	}
 
@@ -420,10 +437,8 @@
 	 */
 	async function updateDatasets() {
 		resetColorState();
-		levelDatasets = computeLevelDatasets();
-		flowDatasets = computeFlowDatasets();
+		[levelDatasets, flowDatasets] = computeDatasets();
 		levelDatasetsLength = levelDatasets.length;
-		flowDatasetsLength = flowDatasets.length;
 		numberOfTimeSteps = levelDatasetsLength > 0 ? levelDatasets[0].data.length : 0;
 
 		await tick();
@@ -434,84 +449,6 @@
 		if (flowPlot) {
 			flowPlot.updateChart(flowDatasets);
 		}
-	}
-
-	/**
-	 * Convert time series data to a chart dataset.
-	 *
-	 * @param initialEntries The initial time series entries.
-	 * @param selectors The selectors to filter the data.
-	 * @param groupByAttributes The attributes to group by.
-	 * @param buildDatasetBase A function to build the base dataset properties.
-	 * @param mapData A function to map the data values.
-	 */
-	function convertToDataset(
-		initialEntries: Entry[],
-		selectors: { [key: string]: string[] },
-		groupByAttributes: string[] | null,
-		buildDatasetBase: (entry: Entry) => Partial<ChartDataset<'line'>> = () => ({}),
-		mapData: (value: number, i: number, array: number[]) => number = (value) => value
-	): ChartDataset<'bar' | 'line'>[] {
-		let entries = initialEntries
-			.filter((entry) => {
-				// Filter out all entries that do not contain at least one selector
-				return Object.entries(selectors).every(([key, values]) => {
-					return values.includes(entry.index[key]);
-				});
-			})
-			.map((entry) => {
-				// Apply mapping function to each data point
-				return {
-					index: entry.index,
-					data: entry.data.map(mapData)
-				};
-			});
-
-		if (entries.length === 0) {
-			return [];
-		}
-
-		if (groupByAttributes) {
-			// Group by the specified attributes
-			const aggregatedColumns = Array.isArray(groupByAttributes) ? groupByAttributes : [0];
-			const aggregatedMap: { [key: string]: number[] } = {};
-
-			entries.forEach((entry) => {
-				// Compute label of aggregated entry, initialize it, and compute total for each column
-				const label = aggregatedColumns.map((column) => entry.index[column]).join('_');
-				if (!aggregatedMap[label]) {
-					aggregatedMap[label] = new Array(entry.data.length).fill(0);
-				}
-				entry.data.forEach((value, i) => {
-					aggregatedMap[label][i] += value;
-				});
-			});
-
-			// Create aggregated entries
-			entries = Object.entries(aggregatedMap).map(([column, data]) => {
-				return {
-					index: { column },
-					data: data
-				} as Entry;
-			});
-		}
-
-		// Map entries to datasets
-		return entries.map((entry) => {
-			const datasetBase = buildDatasetBase(entry);
-			const color = datasetBase.borderColor || nextColor();
-
-			return {
-				...datasetBase,
-				data: entry.data.map((value, i) => ({ x: i, y: value })),
-				label: datasetBase.label || entry.index.column,
-				type: 'line',
-				fill: 'origin',
-				stepped: true,
-				borderColor: color,
-				backgroundColor: datasetBase.backgroundColor || (color as string)
-			} as ChartDataset<'bar' | 'line'>;
-		});
 	}
 
 	//#endregion
@@ -599,7 +536,7 @@
 				datasets={[]}
 				options={plotOptions}
 				pluginOptions={plotPluginOptions}
-				plotName={plotName}
+				{plotName}
 				zoom={true}
 				bind:zoomLevel
 				bind:this={levelPlot}

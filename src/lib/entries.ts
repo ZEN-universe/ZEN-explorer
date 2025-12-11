@@ -173,12 +173,24 @@ export default class Entries {
 	 * @return Reference to itself for chaining.
 	 */
 	dump(): Entries {
-		console.table(
-			this.entries.map((entry) => ({
-				...entry.index,
-				...Object.fromEntries(entry.data.map((value, i) => [i.toString(), value]))
-			}))
-		);
+		if (this.entries.length === 0) {
+			console.log('No entries to display.');
+		} else if (this.entries[0].data.length + Object.keys(this.entries[0].index).length > 20) {
+			console.warn('Data too wide to display all columns, showing sums instead.');
+			console.table(
+				this.entries.map((entry) => ({
+					...entry.index,
+					sum: entry.data.reduce((a, b) => a + b, 0)
+				}))
+			);
+		} else {
+			console.table(
+				this.entries.map((entry) => ({
+					...entry.index,
+					...Object.fromEntries(entry.data.map((value, i) => [i.toString(), value]))
+				}))
+			);
+		}
 		return this;
 	}
 
