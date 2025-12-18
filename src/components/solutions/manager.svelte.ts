@@ -1,4 +1,4 @@
-import { get_solution_detail, get_solutions } from '$lib/temple';
+import { fetchSolutionDetail, fetchSolutions } from '$lib/temple';
 import type { ActivatedSolution, ScenarioDetail, Solution, SolutionDetail } from '$lib/types';
 import { onMount } from 'svelte';
 
@@ -15,7 +15,7 @@ export function initSolutionList() {
 		}
 
 		isFetchingList = true;
-		solutionList = await get_solutions();
+		solutionList = await fetchSolutions();
 		isFetchingList = false;
 	});
 }
@@ -29,7 +29,7 @@ export async function getSolutionDetail(name: string): Promise<SolutionDetail> {
 		return fetchedDetails[name];
 	}
 
-	const detail = await get_solution_detail(name);
+	const detail = await fetchSolutionDetail(name);
 	if (detail) {
 		fetchedDetails[name] = detail;
 	}

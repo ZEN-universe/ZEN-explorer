@@ -15,7 +15,7 @@ import type {
  * Helper function to fetch the solutions/list endpoint of the temple
  * @returns Promise with a list of solutions as returned by the API Server.
  */
-export async function get_solutions(): Promise<Solution[]> {
+export async function fetchSolutions(): Promise<Solution[]> {
 	let url = env.PUBLIC_TEMPLE_URL + 'solutions/list';
 
 	let solution_list_request = await fetch(url, { cache: 'no-store' });
@@ -37,7 +37,7 @@ export async function get_solutions(): Promise<Solution[]> {
  * @param solution Name of the solution
  * @returns Promise with the SolutionDetail API Server.
  */
-export async function get_solution_detail(solution: string): Promise<SolutionDetail> {
+export async function fetchSolutionDetail(solution: string): Promise<SolutionDetail> {
 	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/detail');
 	urlObj.searchParams.set('solution_name', solution);
 	const url = urlObj.toString();
@@ -54,6 +54,70 @@ export async function get_solution_detail(solution: string): Promise<SolutionDet
 }
 
 /**
+ * Helper function to fetch the unit endpoint of the temple.
+ * @param solution_name Name of the solution
+ * @param component_name Name of the component
+ * @param scenario_name Name of the scenario
+ * @returns Papaparsed CSV of the Unit-Dataframe from the API Server
+ */
+export async function fetchUnit(solution_name: string, component_name: string) {
+	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/unit');
+	urlObj.searchParams.set('solution_name', solution_name);
+	urlObj.searchParams.set('component', component_name);
+	const url = urlObj.toString();
+
+	let unit_data = await (await fetch(url, { cache: 'no-store' })).json();
+
+	return parseUnitData(unit_data);
+}
+
+/**
+ * Helper function to fetch the total of a component from the Temple. It removes rows that only contain zeros.
+ * @param solution_name Name of the solution
+ * @param components Name of the component
+ * @param scenario_name Name of the scenario
+ * @param start_year Start year
+ * @param step_year Number of steps between years
+ * @param year_index Year to fetch
+ * @returns Promise of the ComponentTotal as returned by the temple.
+ */
+export async function fetchTotal(
+	solution_name: string,
+	components: string[],
+	scenario_name: string,
+	carrier: string = '',
+	unit_component: string = ''
+): Promise<ComponentTotal> {
+	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/total');
+	urlObj.searchParams.set('solution_name', solution_name);
+	urlObj.searchParams.set('components', components.join(','));
+	urlObj.searchParams.set('scenario', scenario_name);
+	if (carrier !== '') urlObj.searchParams.set('carrier', carrier);
+	urlObj.searchParams.set('unit_component', unit_component);
+	const url = urlObj.toString();
+
+	let component_data_request = await fetch(url, { cache: 'no-store' });
+
+	if (!component_data_request.ok) {
+		alert('Error when fetching ' + url);
+		throw new Error('Error when fetching ' + url);
+	}
+
+	let component_data = await component_data_request.json();
+
+	for (const key in component_data) {
+		if (key == 'unit' || component_data[key] === undefined) {
+			continue;
+		}
+
+		component_data[key] = filterOutZeroRows(parseCSV(component_data[key]));
+	}
+	component_data.unit = parseUnitData(component_data.unit || '');
+
+	return component_data;
+}
+
+/**
  * Helper function to fetch the full timeseries of a component from the Temple.
  * @param solution_name Name of the solution
  * @param components Names of the components
@@ -61,7 +125,7 @@ export async function get_solution_detail(solution: string): Promise<SolutionDet
  * @param year Year
  * @returns Promise of the TimeSeries as returned by the API
  */
-export async function get_full_ts(
+export async function fetchFullTs(
 	solution_name: string,
 	components: string[],
 	scenario_name: string,
@@ -98,82 +162,15 @@ export async function get_full_ts(
 					return null;
 				}
 
-				return [key, parse_timeseries_data(values as TimeSeriesResponseEntry[])] as [
-					string,
-					Entry[]
-				];
+				return [key, parseTimeseriesData(values as TimeSeriesResponseEntry[])] as [string, Entry[]];
 			})
 			.filter((entry) => entry !== null)
 	);
 
 	return {
-		unit: parse_unit_data(component_data.unit || ''),
+		unit: parseUnitData(component_data.unit || ''),
 		components: parsed_components
 	};
-}
-
-/**
- * Helper function to fetch the total of a component from the Temple. It removes rows that only contain zeros.
- * @param solution_name Name of the solution
- * @param components Name of the component
- * @param scenario_name Name of the scenario
- * @param start_year Start year
- * @param step_year Number of steps between years
- * @param year_index Year to fetch
- * @returns Promise of the ComponentTotal as returned by the temple.
- */
-export async function get_component_total(
-	solution_name: string,
-	components: string[],
-	scenario_name: string,
-	carrier: string = '',
-	unit_component: string = ''
-): Promise<ComponentTotal> {
-	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/total');
-	urlObj.searchParams.set('solution_name', solution_name);
-	urlObj.searchParams.set('components', components.join(','));
-	urlObj.searchParams.set('scenario', scenario_name);
-	if (carrier !== '') urlObj.searchParams.set('carrier', carrier);
-	urlObj.searchParams.set('unit_component', unit_component);
-	const url = urlObj.toString();
-
-	let component_data_request = await fetch(url, { cache: 'no-store' });
-
-	if (!component_data_request.ok) {
-		alert('Error when fetching ' + url);
-		throw new Error('Error when fetching ' + url);
-	}
-
-	let component_data = await component_data_request.json();
-
-	for (const key in component_data) {
-		if (key == 'unit' || component_data[key] === undefined) {
-			continue;
-		}
-
-		component_data[key] = filter_zero_rows(parse_csv(component_data[key]));
-	}
-	component_data.unit = parse_unit_data(component_data.unit || '');
-
-	return component_data;
-}
-
-/**
- * Helper function to fetch the unit endpoint of the temple.
- * @param solution_name Name of the solution
- * @param component_name Name of the component
- * @param scenario_name Name of the scenario
- * @returns Papaparsed CSV of the Unit-Dataframe from the API Server
- */
-export async function get_unit(solution_name: string, component_name: string) {
-	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/unit');
-	urlObj.searchParams.set('solution_name', solution_name);
-	urlObj.searchParams.set('component', component_name);
-	const url = urlObj.toString();
-
-	let unit_data = await (await fetch(url, { cache: 'no-store' })).json();
-
-	return parse_unit_data(unit_data);
 }
 
 /**
@@ -185,7 +182,7 @@ export async function get_unit(solution_name: string, component_name: string) {
  * @param year Desired year
  * @returns Promise of an Object that contains the Energy Balance Dataframes
  */
-export async function get_energy_balance(
+export async function fetchEnergyBalance(
 	solution: string,
 	node: string,
 	carrier: string,
@@ -231,7 +228,7 @@ export async function get_energy_balance(
 
 	for (const series_name of series_names) {
 		if (energy_balance_data[series_name] !== undefined) {
-			ans[series_name as keyof EnergyBalanceDataframes] = parse_timeseries_data(
+			ans[series_name as keyof EnergyBalanceDataframes] = parseTimeseriesData(
 				energy_balance_data[series_name]
 			);
 		}
@@ -251,7 +248,7 @@ export async function get_energy_balance(
  * @param step_year Years between each index
  * @returns Papaparsed CSV
  */
-function parse_csv(data_csv: string) {
+function parseCSV(data_csv: string) {
 	// Get first line of the csv data
 	let first_line = data_csv.slice(0, data_csv.indexOf('\n'));
 
@@ -292,7 +289,7 @@ function parse_csv(data_csv: string) {
 	return data;
 }
 
-function parse_timeseries_data(entries: TimeSeriesResponseEntry[]): Entry[] {
+function parseTimeseriesData(entries: TimeSeriesResponseEntry[]): Entry[] {
 	return entries.map((entry) => {
 		let { d: data, t, ...rest } = entry;
 		const [translation, scale] = t;
@@ -308,7 +305,7 @@ function parse_timeseries_data(entries: TimeSeriesResponseEntry[]): Entry[] {
 	});
 }
 
-function parse_unit_data(unit_csv: string): Papa.ParseResult<Row> {
+function parseUnitData(unit_csv: string): Papa.ParseResult<Row> {
 	if (unit_csv.slice(-1) == '\n') {
 		unit_csv = unit_csv.slice(0, unit_csv.length - 1);
 	}
@@ -316,7 +313,7 @@ function parse_unit_data(unit_csv: string): Papa.ParseResult<Row> {
 	return Papa.parse(unit_csv, { delimiter: ',', header: true, newline: '\n' });
 }
 
-function filter_zero_rows(data: Papa.ParseResult<Row>): Papa.ParseResult<Row> {
+function filterOutZeroRows(data: Papa.ParseResult<Row>): Papa.ParseResult<Row> {
 	// Filter out rows that only contain zeros
 	data.data = data.data.filter((row: Row) => {
 		return Object.keys(row).some((key: string) => {

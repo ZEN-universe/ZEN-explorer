@@ -7,8 +7,8 @@
 	import Chart from '$components/Chart.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 
-	import { get_energy_balance, get_unit } from '$lib/temple';
-	import { get_variable_name } from '$lib/variables';
+	import { fetchEnergyBalance, fetchUnit } from '$lib/temple';
+	import { getVariableName } from '$lib/variables';
 	import { nextColor, resetColorState as reset_color_picker_state } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes, Entry } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
@@ -275,7 +275,7 @@
 
 		// Fetch the energy balance data
 		[energy_balance_data, unit_data, unit_objective_data] = await Promise.all([
-			get_energy_balance(
+			fetchEnergyBalance(
 				selected_solution.solution_name,
 				selected_node,
 				selected_carrier,
@@ -283,15 +283,15 @@
 				Number(selected_year),
 				window_size
 			),
-			get_unit(
+			fetchUnit(
 				selected_solution.solution_name,
-				get_variable_name('flow_export', selected_solution.version)
+				getVariableName('flow_export', selected_solution.version)
 			),
-			get_unit(
+			fetchUnit(
 				selected_solution.solution_name,
 				selected_solution.objective === 'total_cost'
-					? get_variable_name('net_present_cost', selected_solution.version)
-					: get_variable_name('carbon_emissions_cumulative', selected_solution.version)
+					? getVariableName('net_present_cost', selected_solution.version)
+					: getVariableName('carbon_emissions_cumulative', selected_solution.version)
 			)
 		]);
 
@@ -364,13 +364,13 @@
 					// Get label-name for the plot
 					const version = selected_solution!.version;
 					const labelMap: Record<string, (label: string) => string> = {
-						[get_variable_name('flow_storage_discharge', version)]: (l) => l + ' (discharge)',
-						[get_variable_name('flow_transport_in', version)]: (l) => l + ' (transport in)',
-						[get_variable_name('flow_import', version)]: () => 'Import',
-						[get_variable_name('shed_demand', version)]: () => 'Shed Demand',
-						[get_variable_name('flow_storage_charge', version)]: (l) => l + ' (charge)',
-						[get_variable_name('flow_transport_out', version)]: (l) => l + ' (transport out)',
-						[get_variable_name('flow_export', version)]: () => 'Export'
+						[getVariableName('flow_storage_discharge', version)]: (l) => l + ' (discharge)',
+						[getVariableName('flow_transport_in', version)]: (l) => l + ' (transport in)',
+						[getVariableName('flow_import', version)]: () => 'Import',
+						[getVariableName('shed_demand', version)]: () => 'Shed Demand',
+						[getVariableName('flow_storage_charge', version)]: (l) => l + ' (charge)',
+						[getVariableName('flow_transport_out', version)]: (l) => l + ' (transport out)',
+						[getVariableName('flow_export', version)]: () => 'Export'
 					};
 
 					// Demand is plotted in a different way than the other plots

@@ -2,7 +2,7 @@
 	import { onMount, tick, untrack } from 'svelte';
 
 	import Entries from '$lib/entries';
-	import { get_component_total } from '$lib/temple';
+	import { fetchTotal } from '$lib/temple';
 	import type { ActivatedSolution, Row, Entry, SankeyNode, PartialSankeyLink } from '$lib/types';
 	import { getURLParam, getURLParamAsIntArray, updateURLParams } from '$lib/queryParams.svelte';
 	import { nextColor, resetColorState } from '$lib/colors';
@@ -145,7 +145,7 @@
 
 		fetching = true;
 
-		let response = await get_component_total(
+		let response = await fetchTotal(
 			selectedSolution.solution_name,
 			[
 				'flow_conversion_input',

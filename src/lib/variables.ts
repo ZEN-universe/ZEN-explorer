@@ -1,10 +1,5 @@
-interface NameMap {
-	[key: string]: string;
-}
-
-interface Versions {
-	[key: string]: NameMap;
-}
+type NameMap = Record<string, string>;
+type Versions = Record<string, NameMap>;
 
 // sort so that a potential version 2.x.x has precedence over 1.9.0
 const versions: Versions = {
@@ -18,7 +13,7 @@ const versions: Versions = {
 	}
 };
 
-function smaller_than(version_a: string, version_b: string) {
+function smallerThan(version_a: string, version_b: string) {
 	let split_a = version_a.split('.');
 	let split_b = version_b.split('.');
 
@@ -32,10 +27,10 @@ function smaller_than(version_a: string, version_b: string) {
 	return false;
 }
 
-export function get_variable_name(name: string, version: string = '0.0.0') {
+export function getVariableName(name: string, version: string = '0.0.0') {
 	let current_version: string | null = null;
 	for (let defined_version of Object.keys(versions)) {
-		if (smaller_than(defined_version, version)) {
+		if (smallerThan(defined_version, version)) {
 			current_version = defined_version;
 		}
 	}

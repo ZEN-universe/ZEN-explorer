@@ -10,7 +10,7 @@
 	import type { MapPlotData } from '$components/MapPlot.svelte';
 	import type { ActivatedSolution, Row, System } from '$lib/types';
 
-	import { get_component_total } from '$lib/temple';
+	import { fetchTotal } from '$lib/temple';
 	import { availableMaps } from '$lib/constants';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
@@ -173,7 +173,7 @@
 		fetching = true;
 		fetchedData = null;
 
-		const response = await get_component_total(
+		const response = await fetchTotal(
 			selected_solution.solution_name,
 			['capacity'],
 			selected_solution.scenario_name,

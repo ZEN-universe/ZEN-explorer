@@ -11,7 +11,7 @@
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 
-	import { get_full_ts as getFullTs } from '$lib/temple';
+	import { fetchFullTs } from '$lib/temple';
 	import { removeDuplicates } from '$lib/utils';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Entry } from '$lib/types';
@@ -283,7 +283,7 @@
 				Monthly: 720
 			}[selectedWindowSize] || 1; // Default to hourly (1 hour)
 
-		const response = await getFullTs(
+		const response = await fetchFullTs(
 			selectedSolution.solution_name,
 			[
 				'storage_level',

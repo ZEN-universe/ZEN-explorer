@@ -16,7 +16,7 @@
 	import Chart from '$components/Chart.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 
-	import { get_component_total } from '$lib/temple';
+	import { fetchTotal } from '$lib/temple';
 	import {
 		getURLParamAsBoolean,
 		getURLParamAsIntArray,
@@ -25,7 +25,7 @@
 	} from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
-	import { get_variable_name } from '$lib/variables';
+	import { getVariableName } from '$lib/variables';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 	import Entries from '$lib/entries';
 	import { debounce } from '$lib/debounce';
@@ -440,7 +440,7 @@
 		const solutions = selectedSolutions as ActivatedSolution[];
 		const responses = await Promise.all(
 			solutions.map((solution) =>
-				get_component_total(
+				fetchTotal(
 					solution.solution_name,
 					[
 						'cost_capex_yearly',
@@ -449,7 +449,7 @@
 						'cost_carrier',
 						'cost_shed_demand'
 					].map((variable) => {
-						return get_variable_name(variable, solution?.version);
+						return getVariableName(variable, solution?.version);
 					}),
 					solution.scenario_name
 				)

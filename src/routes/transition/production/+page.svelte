@@ -21,7 +21,7 @@
 	import FilterLabel from '$components/FilterLabel.svelte';
 	import Spinner from '$components/Spinner.svelte';
 
-	import { get_component_total } from '$lib/temple';
+	import { fetchTotal } from '$lib/temple';
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
@@ -515,7 +515,7 @@
 		const solutions = selectedSolutions as ActivatedSolution[];
 		const responses = await Promise.all(
 			solutions.map((solution) => {
-				return get_component_total(
+				return fetchTotal(
 					solution.solution_name,
 					[
 						'flow_conversion_output',

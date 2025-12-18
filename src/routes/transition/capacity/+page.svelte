@@ -14,7 +14,7 @@
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 
-	import { get_component_total as getComponentTotal } from '$lib/temple';
+	import { fetchTotal } from '$lib/temple';
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
@@ -312,7 +312,7 @@
 		const variable = selectedVariable;
 		const fetched = await Promise.all(
 			solutions.map((solution) => {
-				return getComponentTotal(
+				return fetchTotal(
 					solution.solution_name,
 					[variable],
 					solution.scenario_name,

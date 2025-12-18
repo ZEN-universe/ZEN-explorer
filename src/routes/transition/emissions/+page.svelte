@@ -13,8 +13,8 @@
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 
-	import { get_component_total, get_unit } from '$lib/temple';
-	import { get_variable_name } from '$lib/variables';
+	import { fetchTotal, fetchUnit } from '$lib/temple';
+	import { getVariableName } from '$lib/variables';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { getURLParam, getURLParamAsBoolean, updateURLParams } from '$lib/queryParams.svelte';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
@@ -130,11 +130,11 @@
 
 	let divisionVariable = $derived.by(() => {
 		if (selectedSubdivision) {
-			return get_variable_name('carbon_emissions_carrier', selectedSolutions[0]?.version);
+			return getVariableName('carbon_emissions_carrier', selectedSolutions[0]?.version);
 		} else if (selectedCumulation == 'Annual') {
-			return get_variable_name('carbon_emissions_annual', selectedSolutions[0]?.version);
+			return getVariableName('carbon_emissions_annual', selectedSolutions[0]?.version);
 		} else {
-			return get_variable_name('carbon_emissions_cumulative', selectedSolutions[0]?.version);
+			return getVariableName('carbon_emissions_cumulative', selectedSolutions[0]?.version);
 		}
 	});
 
@@ -228,17 +228,17 @@
 
 		const solutions = selectedSolutions as ActivatedSolution[];
 		const components = {
-			technology: get_variable_name('carbon_emissions_technology', solutions[0].version),
-			carrier: get_variable_name('carbon_emissions_carrier', solutions[0].version),
-			annual_limit: get_variable_name('carbon_emissions_annual_limit', solutions[0].version),
-			budget: get_variable_name('carbon_emissions_budget', solutions[0].version),
-			annual: get_variable_name('carbon_emissions_annual', solutions[0].version),
-			cumulative: get_variable_name('carbon_emissions_cumulative', solutions[0].version)
+			technology: getVariableName('carbon_emissions_technology', solutions[0].version),
+			carrier: getVariableName('carbon_emissions_carrier', solutions[0].version),
+			annual_limit: getVariableName('carbon_emissions_annual_limit', solutions[0].version),
+			budget: getVariableName('carbon_emissions_budget', solutions[0].version),
+			annual: getVariableName('carbon_emissions_annual', solutions[0].version),
+			cumulative: getVariableName('carbon_emissions_cumulative', solutions[0].version)
 		};
 		let [annual_unit_data, ...responses] = await Promise.all([
-			get_unit(solutions[0].solution_name, components.annual),
+			fetchUnit(solutions[0].solution_name, components.annual),
 			...solutions.flatMap((solution) => [
-				get_component_total(
+				fetchTotal(
 					solution.solution_name,
 					Object.values(components),
 					solution.scenario_name,
