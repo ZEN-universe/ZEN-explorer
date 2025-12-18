@@ -401,14 +401,12 @@
 		aggregatedColor: string;
 		aggregatedBackgroundColor?: string;
 	}) {
-		let entries = data.filterByCriteria({
-			technology: selectedTechnologies,
-			node: selectedLocations
-		});
-
-		if (selectedSubdivision) {
-			entries = entries.groupBy(['technology']);
-		}
+		let entries = data
+			.filterByCriteria({
+				technology: selectedTechnologies,
+				node: selectedLocations
+			})
+			.groupBy(selectedSubdivision ? ['technology'] : []);
 
 		if (negate) {
 			entries = entries.mapData((value) => -value);

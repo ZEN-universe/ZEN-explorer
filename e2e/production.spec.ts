@@ -79,7 +79,7 @@ test('production: nodes', async ({ page }) => {
 	await page.getByRole('combobox', { name: 'Carrier' }).click();
 	await page.getByRole('option', { name: 'biomass' }).click();
 	await page.getByText('Nodes Deselect All').getByRole('button').click();
-	await expect(page.getByRole('main')).toHaveText('No data with this selection.');
+	await expect(page.getByRole('main')).toHaveText('No data with this selection');
 	await page.getByRole('combobox', { name: 'Nodes' }).click();
 	await page.getByRole('option', { name: 'DE' }).click();
 	await expect(page.locator('#chart-container')).toHaveScreenshot(
@@ -96,7 +96,7 @@ test('production: years', async ({ page }) => {
 	await page.getByRole('combobox', { name: 'Carrier' }).click();
 	await page.getByRole('option', { name: 'biomass' }).click();
 	await page.getByText('Years Deselect All').getByRole('button').click();
-	await expect(page.getByRole('main')).toHaveText('No data with this selection.');
+	await expect(page.getByRole('main')).toHaveText('No data with this selection');
 	await page.getByRole('combobox', { name: 'Years' }).click();
 	await page.getByRole('option', { name: '2024' }).click();
 	await expect(page.locator('#chart-container')).toHaveScreenshot(
