@@ -793,11 +793,11 @@
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
 		{:else if hasSomeUnsetSolutions}
-			<WarningMessage message="Please select all solutions."></WarningMessage>
+			<WarningMessage message="Please select all solutions"></WarningMessage>
 		{:else if selectedCarrier == null}
-			<WarningMessage message="Please select a carrier."></WarningMessage>
+			<WarningMessage message="Please select a carrier"></WarningMessage>
 		{:else if datasets.length == 0}
-			<ErrorMessage message="No data with this selection."></ErrorMessage>
+			<ErrorMessage message="No data with this selection"></ErrorMessage>
 		{:else}
 			<Chart
 				type="bar"

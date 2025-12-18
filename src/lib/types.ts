@@ -1,3 +1,5 @@
+import type Entries from './entries';
+
 export interface Solution {
 	id: string;
 	name: string;
@@ -99,17 +101,17 @@ export interface DatasetSelectors {
 }
 
 export interface EnergyBalanceDataframes {
-	demand: Entry[];
-	flow_conversion_input: Entry[];
-	flow_export: Entry[];
-	flow_import: Entry[];
-	flow_storage_charge: Entry[];
-	flow_storage_discharge: Entry[];
-	flow_transport_in: Entry[];
-	flow_transport_out: Entry[];
-	flow_conversion_output: Entry[];
-	shed_demand: Entry[];
-	constraint_nodal_energy_balance: Entry[];
+	demand: Entries;
+	flow_conversion_input: Entries;
+	flow_export: Entries;
+	flow_import: Entries;
+	flow_storage_charge: Entries;
+	flow_storage_discharge: Entries;
+	flow_transport_in: Entries;
+	flow_transport_out: Entries;
+	flow_conversion_output: Entries;
+	shed_demand: Entries;
+	constraint_nodal_energy_balance: Entries;
 }
 
 export interface Dataset {
@@ -129,7 +131,7 @@ export interface ComponentTotal {
 
 export interface ComponentTimeSeries {
 	unit: Papa.ParseResult<Row> | null;
-	components: { [key: string]: Entry[] };
+	components: { [key: string]: Entries };
 }
 
 export interface DatasetContainer {

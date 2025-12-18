@@ -14,12 +14,12 @@
 	import { fetchFullTs } from '$lib/temple';
 	import { removeDuplicates } from '$lib/utils';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
-	import type { ActivatedSolution, Entry } from '$lib/types';
+	import type { ActivatedSolution } from '$lib/types';
 	import { nextColor, resetColorState } from '$lib/colors';
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
-	import Entries, { type FilterCriteria } from '$lib/entries';
+	import Entries from '$lib/entries';
 
 	// All but one data variable are non-reactive because of their size
 	let levelResponse: Entries | null = null;
@@ -299,11 +299,11 @@
 			selectedCarrier
 		);
 
-		levelResponse = new Entries(response.components.storage_level) || null;
-		chargeResponse = new Entries(response.components.flow_storage_charge) || null;
-		dischargeResponse = new Entries(response.components.flow_storage_discharge) || null;
-		spillageResponse = new Entries(response.components.flow_storage_spillage) || null;
-		inflowResponse = new Entries(response.components.flow_storage_inflow) || null;
+		levelResponse = response.components.storage_level || null;
+		chargeResponse = response.components.flow_storage_charge || null;
+		dischargeResponse = response.components.flow_storage_discharge || null;
+		spillageResponse = response.components.flow_storage_spillage || null;
+		inflowResponse = response.components.flow_storage_inflow || null;
 		responseUpdateTrigger++;
 
 		if (response.unit?.data) {
@@ -522,6 +522,8 @@
 			<WarningMessage message="Please select a solution"></WarningMessage>
 		{:else if carriers.length == 0}
 			<ErrorMessage message="No carriers with this selection"></ErrorMessage>
+		{:else if selectedCarrier == null}
+			<WarningMessage message="Please select a carrier"></WarningMessage>
 		{:else if technologies.length == 0}
 			<ErrorMessage message="No technologies with this selection"></ErrorMessage>
 		{:else if locations.length == 0}

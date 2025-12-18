@@ -88,7 +88,13 @@
 		<div class="absolute inset-0 hidden lg:grid place-content-center pointer-events-none">
 			<div class="relative">
 				<div class="absolute inset-1 rounded-full bg-white z-0"></div>
-				<img class="relative z-1" width="340" height="340" alt="ZEN-garden Logo" src="/zen_garden_700x700.png" />
+				<img
+					class="relative z-1"
+					width="340"
+					height="340"
+					alt="ZEN-garden Logo"
+					src="/zen_garden_700x700.png"
+				/>
 			</div>
 		</div>
 	</main>

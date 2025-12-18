@@ -9,72 +9,74 @@
 
 	import { fetchEnergyBalance, fetchUnit } from '$lib/temple';
 	import { getVariableName } from '$lib/variables';
-	import { nextColor, resetColorState as reset_color_picker_state } from '$lib/colors';
+	import { nextColor, resetColorState } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes, Entry } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import type Entries from '$lib/entries';
+	import type { FilterCriteria } from '$lib/entries';
 
-	let energy_balance_data: EnergyBalanceDataframes | null = null;
-	let unit_data: any = $state(null);
-	let unit_objective_data: any = $state(null);
+	let energyBalanceData: EnergyBalanceDataframes | null = null;
+	let unitData: Record<string, string>[] | null = $state(null);
+	let unitObjectiveData: Record<string, string>[] | null = $state(null);
 
-	let solution_loading: boolean = $state(false);
+	let solutionLoading: boolean = $state(false);
 	let fetching = $state(false);
 
 	let plot = $state<Chart<any>>();
-	let duals_plot = $state<Chart<any>>();
+	let dualsPlot = $state<Chart<any>>();
 
 	let nodes: string[] = $state([]);
 	let carriers: string[] = $state([]);
 	let years: number[] = $state([]);
-	const window_sizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
+	const windowSizes = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
 
-	let selected_solution: ActivatedSolution | null = $state(null);
-	let selected_node: string | null = $state(null);
-	let selected_carrier: string | null = $state(null);
-	let selected_year: string | null = $state(null);
-	let selected_window_size = $state('Hourly');
+	let selectedSolution: ActivatedSolution | null = $state(null);
+	let selectedNode: string | null = $state(null);
+	let selectedCarrier: string | null = $state(null);
+	let selectedYear: string | null = $state(null);
+	let selectedWindowSize = $state('Hourly');
 
 	//#region Plot configuration
 
-	let plot_name: string = $derived.by(() => {
-		if (!selected_solution || !selected_solution.solution_name) {
+	let plotName: string = $derived.by(() => {
+		if (!selectedSolution || !selectedSolution.solution_name) {
 			return '';
 		}
-		let solution_names = selected_solution.solution_name.split('.');
+		let solutionNames = selectedSolution.solution_name.split('.');
 		return [
-			solution_names[solution_names.length - 1],
-			selected_solution.scenario_name,
+			solutionNames[solutionNames.length - 1],
+			selectedSolution.scenario_name,
 			'balance',
-			selected_carrier,
-			selected_node,
-			selected_year
+			selectedCarrier,
+			selectedNode,
+			selectedYear
 		].join('_');
 	});
-	let duals_plot_name: string = $derived.by(() => {
-		return plot_name + '_duals';
+	let dualsPlotName: string = $derived.by(() => {
+		return plotName + '_duals';
 	});
 	let unit = $derived.by(() => {
-		if (unit_data === null) {
+		if (unitData === null) {
 			return '';
 		}
-		let unit_entry = unit_data.data.find((entry: any) => entry['carrier'] === selected_carrier);
-		if (unit_entry) {
-			return unit_entry[0] || unit_entry['units'] || '';
+		let unitEntry = unitData.find((entry: any) => entry['carrier'] === selectedCarrier);
+		if (unitEntry) {
+			return unitEntry[0] || unitEntry['units'] || '';
 		}
-		return unit_data.data[0][0] || unit_data.data[0]['units'] || '';
+		return unitData[0][0] || unitData[0]['units'] || '';
 	});
-	let dual_unit = $derived.by(() => {
-		let unit_of_demand_carrier = unit;
+	let dualUnit = $derived.by(() => {
+		let unitOfDemandCarrier = unit;
 		if (unit.includes('*') || unit.includes('/')) {
-			unit_of_demand_carrier = `(${unit_of_demand_carrier})`;
+			unitOfDemandCarrier = `(${unitOfDemandCarrier})`;
 		}
-		const unit_of_objective =
-			unit_objective_data?.data[0][0] || unit_objective_data?.data[0]['units'] || '';
-		return `${unit_of_objective} / ${unit_of_demand_carrier}`;
+		const unitOfObjective = unitObjectiveData?.[0][0] || unitObjectiveData?.[0]['units'] || '';
+		return `${unitOfObjective} / ${unitOfDemandCarrier}`;
 	});
 
 	// Zoom level for both plots
@@ -83,8 +85,8 @@
 	// Time steps per year (for x-axis scaling)
 	let timeStepsPerYear: number = $state(0);
 	$effect(() => {
-		if (selected_solution?.detail?.system.unaggregated_time_steps_per_year !== undefined) {
-			timeStepsPerYear = selected_solution.detail.system.unaggregated_time_steps_per_year;
+		if (selectedSolution?.detail?.system.unaggregated_time_steps_per_year !== undefined) {
+			timeStepsPerYear = selectedSolution.detail.system.unaggregated_time_steps_per_year;
 		}
 	});
 
@@ -96,14 +98,13 @@
 		});
 	});
 
-	let plot_options: ChartOptions = $derived.by(() => getPlotOptions(`Energy [${unit}]`));
-	let duals_plot_options: ChartOptions = $derived.by(() =>
-		getPlotOptions(`Dual [${dual_unit}]`, false, 5, false)
+	let plotOptions: ChartOptions = $derived.by(() => getPlotOptions(`Energy [${unit}]`));
+	let dualsPlotOptions: ChartOptions = $derived.by(() =>
+		getPlotOptions(`Dual [${dualUnit}]`, 5, false)
 	);
 
 	function getPlotOptions(
 		yAxisLabel: string,
-		showLegend: boolean = true,
 		aspectRatio: number = 2,
 		yAxisBeginAtZero: boolean = true
 	): ChartOptions<'bar' | 'line'> {
@@ -153,7 +154,7 @@
 	}
 
 	const plotPluginOptions: ChartOptions['plugins'] = $derived(getPluginOptions(unit));
-	const dualsPlotPluginOptions: ChartOptions['plugins'] = $derived(getPluginOptions(dual_unit));
+	const dualsPlotPluginOptions: ChartOptions['plugins'] = $derived(getPluginOptions(dualUnit));
 
 	function getPluginOptions(unit: string): ChartOptions['plugins'] {
 		return {
@@ -192,81 +193,81 @@
 	$effect(() => {
 		years;
 		untrack(() => {
-			if (years.length > 0 && (selected_year == null || !years.includes(Number(selected_year)))) {
-				selected_year = years[0].toString();
+			if (years.length > 0 && (selectedYear == null || !years.includes(Number(selectedYear)))) {
+				selectedYear = years[0].toString();
 			}
 		});
 	});
 	$effect(() => {
 		nodes;
 		untrack(() => {
-			if (nodes.length > 0 && (selected_node == null || !nodes.includes(selected_node))) {
-				selected_node = nodes[0];
+			if (nodes.length > 0 && (selectedNode == null || !nodes.includes(selectedNode))) {
+				selectedNode = nodes[0];
 			}
 		});
 	});
 	$effect(() => {
 		carriers;
 		untrack(() => {
-			if (selected_solution === null) return;
-			if (selected_carrier !== null && !carriers.includes(selected_carrier)) {
-				selected_carrier = null;
+			if (selectedSolution === null) return;
+			if (selectedCarrier !== null && !carriers.includes(selectedCarrier)) {
+				selectedCarrier = null;
 			}
 		});
 	});
 
 	$effect(() => {
-		selected_solution;
-		selected_year;
-		selected_node;
-		selected_carrier;
-		selected_window_size;
-		untrack(fetch_data);
+		selectedSolution;
+		selectedYear;
+		selectedNode;
+		selectedCarrier;
+		selectedWindowSize;
+		untrack(fetchData);
 	});
 
 	// Set URL parameters
 	onMount(() => {
-		selected_year = getURLParam('year') || selected_year;
-		selected_node = getURLParam('node') || selected_node;
-		selected_carrier = getURLParam('car') || selected_carrier;
-		selected_window_size = getURLParam('window') || selected_window_size;
+		selectedYear = getURLParam('year') || selectedYear;
+		selectedNode = getURLParam('node') || selectedNode;
+		selectedCarrier = getURLParam('car') || selectedCarrier;
+		selectedWindowSize = getURLParam('window') || selectedWindowSize;
 	});
 
 	$effect(() => {
 		// Triggers
-		selected_year;
-		selected_node;
-		selected_carrier;
-		selected_window_size;
+		selectedYear;
+		selectedNode;
+		selectedCarrier;
+		selectedWindowSize;
 
 		tick().then(() => {
 			updateURLParams({
-				year: selected_year,
-				node: selected_node,
-				car: selected_carrier,
-				window: selected_window_size
+				year: selectedYear,
+				node: selectedNode,
+				car: selectedCarrier,
+				window: selectedWindowSize
 			});
 		});
 	});
 
 	//#endregion
 
-	//#region Data fetching and dataset computation
+	//#region Fetch data
 
-	let window_size = $derived(
+	let windowSize = $derived(
 		{
 			Daily: 24,
 			Weekly: 168,
 			Monthly: 720
-		}[selected_window_size] || 1 // Default to hourly (1 hour)
+		}[selectedWindowSize] || 1 // Default to hourly (1 hour)
 	);
 
-	async function fetch_data() {
+	async function fetchData() {
 		if (
-			selected_node == null ||
-			selected_carrier == null ||
-			selected_year == null ||
-			selected_solution == null
+			selectedNode == null ||
+			selectedCarrier == null ||
+			selectedYear == null ||
+			selectedSolution == null
 		) {
 			return;
 		}
@@ -274,169 +275,141 @@
 		fetching = true;
 
 		// Fetch the energy balance data
-		[energy_balance_data, unit_data, unit_objective_data] = await Promise.all([
+		const responses = await Promise.all([
 			fetchEnergyBalance(
-				selected_solution.solution_name,
-				selected_node,
-				selected_carrier,
-				selected_solution.scenario_name,
-				Number(selected_year),
-				window_size
+				selectedSolution.solution_name,
+				selectedNode,
+				selectedCarrier,
+				selectedSolution.scenario_name,
+				Number(selectedYear),
+				windowSize
 			),
 			fetchUnit(
-				selected_solution.solution_name,
-				getVariableName('flow_export', selected_solution.version)
+				selectedSolution.solution_name,
+				getVariableName('flow_export', selectedSolution.version)
 			),
 			fetchUnit(
-				selected_solution.solution_name,
-				selected_solution.objective === 'total_cost'
-					? getVariableName('net_present_cost', selected_solution.version)
-					: getVariableName('carbon_emissions_cumulative', selected_solution.version)
+				selectedSolution.solution_name,
+				selectedSolution.objective === 'total_cost'
+					? getVariableName('net_present_cost', selectedSolution.version)
+					: getVariableName('carbon_emissions_cumulative', selectedSolution.version)
 			)
 		]);
 
+		energyBalanceData = responses[0];
+		unitData = responses[1].data;
+		unitObjectiveData = responses[2].data;
+
 		fetching = false;
-		update_datasets();
+		updateDatasets();
 	}
 
+	//#endregion
+
+	//#region Compute datasets
+
 	let labels: string[] = $derived.by(() => {
-		return Array.from({ length: number_of_time_steps }, (_, i) => i.toString());
+		return Array.from({ length: numberOfTimeSteps }, (_, i) => i.toString());
 	});
 
 	let datasets: ChartDataset<'bar' | 'line'>[] = [];
-	let duals_datasets: ChartDataset<'bar' | 'line'>[] = [];
-	let datasets_length: number = $state(0);
-	let duals_datasets_length: number = $state(0);
-	let number_of_time_steps: number = $state(0);
+	let dualsDatasets: ChartDataset<'bar' | 'line'>[] = [];
+	let datasetsLength: number = $state(0);
+	let dualsDatasetsLength: number = $state(0);
+	let numberOfTimeSteps: number = $state(0);
+	const dualsKey = 'constraint_nodal_energy_balance';
 
-	function compute_datasets(): ChartDataset<'bar' | 'line'>[] {
+	function computeDatasets(): ChartDataset<'bar' | 'line'>[] {
 		if (
-			!selected_solution ||
-			!selected_node ||
-			!selected_carrier ||
-			!selected_year ||
-			!energy_balance_data
+			!selectedSolution ||
+			!selectedNode ||
+			!selectedCarrier ||
+			!selectedYear ||
+			!energyBalanceData
 		) {
 			return [];
 		}
 
-		return Object.entries(energy_balance_data).flatMap(([key, entries]: [string, Entry[]]) => {
-			if (!entries || entries.length === 0 || key === 'constraint_nodal_energy_balance') {
+		const version = selectedSolution!.version;
+		const labelMap: Record<string, (label: string) => string> = {
+			[getVariableName('flow_storage_discharge', version)]: (l) => l + ' (discharge)',
+			[getVariableName('flow_transport_in', version)]: (l) => l + ' (transport in)',
+			[getVariableName('flow_import', version)]: () => 'Import',
+			[getVariableName('shed_demand', version)]: () => 'Shed Demand',
+			[getVariableName('flow_storage_charge', version)]: (l) => l + ' (charge)',
+			[getVariableName('flow_transport_out', version)]: (l) => l + ' (transport out)',
+			[getVariableName('flow_export', version)]: () => 'Export'
+		};
+
+		return Object.entries(energyBalanceData).flatMap(([key, entries]: [string, Entries]) => {
+			if (!entries || entries.length === 0 || key === dualsKey) {
 				return [];
 			}
 
-			// for (const plot_name in energy_balance_data) {
-			let dataset_selector: Record<string, string[]> = {
-				node: [selected_node!]
-			};
-
-			// If the dataframe has a row "technology", add all of them to the list of technologies
-			if ('technology' in entries[0].index) {
-				dataset_selector = {
-					technology: entries.map((row: any) => row.index.technology)
-				};
-			}
-
 			// Filter and group rows by label (technology/node/label)
-			const filtered = entries.filter((entry: Entry) =>
-				Object.entries(dataset_selector).every(([k, v]) => v.includes(entry.index[k]))
-			);
-
-			// Group by label (technology/node/label)
-			const aggregated_map: Record<string, number[]> = {};
-			filtered.forEach((entry: Entry) => {
-				const label = entry.index.technology || entry.index.node || entry.index.label || '';
-				if (!aggregated_map[label]) {
-					aggregated_map[label] = new Array(entry.data.length).fill(0);
-				}
-				entry.data.forEach((value, index) => {
-					aggregated_map[label][index] += value;
-				});
-			});
-
-			// Loop through the different variables
-			return Object.entries(aggregated_map)
-				.map(([label, data]) => {
-					if (Object.keys(data).length == 0) {
-						return null;
-					}
-
-					// Get label-name for the plot
-					const version = selected_solution!.version;
-					const labelMap: Record<string, (label: string) => string> = {
-						[getVariableName('flow_storage_discharge', version)]: (l) => l + ' (discharge)',
-						[getVariableName('flow_transport_in', version)]: (l) => l + ' (transport in)',
-						[getVariableName('flow_import', version)]: () => 'Import',
-						[getVariableName('shed_demand', version)]: () => 'Shed Demand',
-						[getVariableName('flow_storage_charge', version)]: (l) => l + ' (charge)',
-						[getVariableName('flow_transport_out', version)]: (l) => l + ' (transport out)',
-						[getVariableName('flow_export', version)]: () => 'Export'
-					};
-
-					// Demand is plotted in a different way than the other plots
-					let color = nextColor();
-					let bg_color = color;
-					let dataset_data = Object.values(data).map((value, i) => ({ x: i, y: value }));
-
-					if (key == 'demand') {
-						return {
-							data: dataset_data,
-							label: 'Demand',
-							type: 'line',
-							stack: 'ownCustomStack',
-							fill: false,
-							borderColor: 'black',
-							backgroundColor: 'white',
-							borderWidth: 2,
-							stepped: true,
-							pointRadius: Object.keys(data).length == 1 ? 2 : 0
-						} as ChartDataset<'bar' | 'line'>;
-					} else {
-						return {
-							data: dataset_data,
-							label: labelMap[key]?.(label) || label,
-							fill: 'origin',
-							borderColor: color,
-							backgroundColor: bg_color,
-							stepped: true,
-							cubicInterpolationMode: 'monotone',
-							pointRadius: Object.keys(data).length == 1 ? 2 : 0
-						} as ChartDataset<'bar' | 'line'>;
-					}
+			entries = entries
+				.filterByCriteria({
+					node: [selectedNode!]
 				})
-				.filter((dataset) => dataset !== null);
+				.groupBy(['technology', 'node', 'label']);
+
+			return entries.toArray().map(({ data, index }) => {
+				const label = index.technology || index.node || index.label || '';
+				const color = nextColor();
+				const datasetData = Object.values(data).map((value, i) => ({ x: i, y: value }));
+
+				if (key == 'demand') {
+					return {
+						data: datasetData,
+						label: 'Demand',
+						type: 'line',
+						stack: 'ownCustomStack',
+						fill: false,
+						borderColor: 'black',
+						backgroundColor: 'white',
+						borderWidth: 2,
+						stepped: true,
+						pointRadius: Object.keys(data).length == 1 ? 2 : 0
+					} as ChartDataset<'bar' | 'line'>;
+				} else {
+					return {
+						data: datasetData,
+						label: labelMap[key]?.(label) || label,
+						fill: 'origin',
+						borderColor: color,
+						backgroundColor: color,
+						stepped: true,
+						cubicInterpolationMode: 'monotone',
+						pointRadius: Object.keys(data).length == 1 ? 2 : 0
+					} as ChartDataset<'bar' | 'line'>;
+				}
+			});
 		});
 	}
 
-	function compute_duals_datasets() {
+	function computeDualsDatasets() {
 		if (
-			!selected_solution ||
-			!selected_node ||
-			!selected_carrier ||
-			!selected_year ||
-			!energy_balance_data
+			!selectedSolution ||
+			!selectedNode ||
+			!selectedCarrier ||
+			!selectedYear ||
+			!energyBalanceData ||
+			!energyBalanceData[dualsKey]?.length
 		) {
 			return [];
 		}
 
-		const duals_key = 'constraint_nodal_energy_balance';
-		const entries = energy_balance_data[duals_key];
-
-		if (!entries || entries.length === 0) {
-			return [];
-		}
-
-		// Loop through the different variables
-		return entries
+		return energyBalanceData[dualsKey]
+			.toArray()
 			.map((entry) => {
 				if (entry.data.length == 0) {
 					return null;
 				}
 
-				let dataset_data = entry.data.map((value, i) => ({ x: i, y: value }));
+				let datasetData = entry.data.map((value, i) => ({ x: i, y: value }));
 
 				return {
-					data: dataset_data,
+					data: datasetData,
 					label: `dual_${entry.index.carrier}_${entry.index.node}`,
 					fill: false,
 					borderColor: 'rgb(0, 0, 0)',
@@ -450,21 +423,21 @@
 			.filter((dataset) => dataset !== null);
 	}
 
-	async function update_datasets() {
-		reset_color_picker_state();
-		datasets = compute_datasets();
-		datasets_length = datasets.length;
-		number_of_time_steps = datasets_length > 0 ? datasets[0].data.length : 0;
-		duals_datasets = compute_duals_datasets();
-		duals_datasets_length = duals_datasets.length;
+	async function updateDatasets() {
+		resetColorState();
+		datasets = computeDatasets();
+		datasetsLength = datasets.length;
+		numberOfTimeSteps = datasetsLength > 0 ? datasets[0].data.length : 0;
+		dualsDatasets = computeDualsDatasets();
+		dualsDatasetsLength = dualsDatasets.length;
 
 		await tick();
 
 		if (plot) {
 			plot.updateChart(datasets);
 		}
-		if (duals_plot) {
-			duals_plot.updateChart(duals_datasets);
+		if (dualsPlot) {
+			dualsPlot.updateChart(dualsDatasets);
 		}
 	}
 
@@ -475,40 +448,40 @@
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
-				bind:selected_solution
+				bind:selected_solution={selectedSolution}
 				bind:carriers
 				bind:nodes
 				bind:years
-				bind:loading={solution_loading}
-				disabled={fetching || solution_loading}
+				bind:loading={solutionLoading}
+				disabled={fetching || solutionLoading}
 			/>
 		</FilterSection>
-		{#if !solution_loading && selected_solution !== null}
+		{#if !solutionLoading && selectedSolution !== null}
 			<FilterSection title="Data Selection">
 				<Dropdown
 					options={carriers}
-					bind:value={selected_carrier}
+					bind:value={selectedCarrier}
 					label="Carrier"
-					disabled={fetching || solution_loading}
+					disabled={fetching || solutionLoading}
 				></Dropdown>
-				{#if selected_carrier !== null}
+				{#if selectedCarrier !== null}
 					<Dropdown
 						options={years.map((year) => year.toString())}
-						bind:value={selected_year}
+						bind:value={selectedYear}
 						label="Year"
-						disabled={fetching || solution_loading}
+						disabled={fetching || solutionLoading}
 					></Dropdown>
 					<Dropdown
 						options={nodes}
-						bind:value={selected_node}
+						bind:value={selectedNode}
 						label="Node"
-						disabled={fetching || solution_loading}
+						disabled={fetching || solutionLoading}
 					></Dropdown>
 					<Dropdown
-						options={window_sizes}
-						bind:value={selected_window_size}
+						options={windowSizes}
+						bind:value={selectedWindowSize}
 						label="Smoothing Window Size"
-						disabled={fetching || solution_loading}
+						disabled={fetching || solutionLoading}
 					></Dropdown>
 				{/if}
 			</FilterSection>
@@ -520,36 +493,40 @@
 	{/snippet}
 
 	{#snippet mainContent()}
-		{#if solution_loading || fetching}
+		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if datasets_length == 0 || selected_solution == null}
-			<ErrorMessage message="No data with this selection."></ErrorMessage>
+		{:else if carriers.length == 0}
+			<ErrorMessage message="No carriers available for the selected solution"></ErrorMessage>
+		{:else if selectedCarrier == null}
+			<WarningMessage message="Please select a carrier"></WarningMessage>
+		{:else if datasetsLength == 0 || selectedSolution == null}
+			<ErrorMessage message="No data with this selection"></ErrorMessage>
 		{:else}
 			<Chart
-				type={number_of_time_steps == 1 ? 'bar' : 'line'}
+				type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
 				{labels}
 				datasets={[]}
-				options={plot_options}
+				options={plotOptions}
 				pluginOptions={plotPluginOptions}
-				plotName={plot_name}
+				{plotName}
 				zoom={true}
 				bind:zoomLevel
 				bind:this={plot}
 			></Chart>
-			{#if duals_datasets_length > 0}
+			{#if dualsDatasetsLength > 0}
 				<Chart
 					id="chart-duals"
-					type={number_of_time_steps == 1 ? 'bar' : 'line'}
+					type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
 					{labels}
 					datasets={[]}
-					options={duals_plot_options}
+					options={dualsPlotOptions}
 					pluginOptions={dualsPlotPluginOptions}
-					plotName={duals_plot_name}
+					plotName={dualsPlotName}
 					zoom={true}
 					initialHeight={300}
 					generateLabels={() => []}
 					bind:zoomLevel
-					bind:this={duals_plot}
+					bind:this={dualsPlot}
 				></Chart>
 			{:else}
 				<div class="text-center text-muted mt-2">No dual data available.</div>

@@ -10,6 +10,7 @@ import type {
 	ComponentTimeSeries,
 	Entry
 } from '$lib/types';
+import Entries from './entries';
 
 /**
  * Helper function to fetch the solutions/list endpoint of the temple
@@ -155,14 +156,14 @@ export async function fetchFullTs(
 
 	let component_data = await component_data_request.json();
 
-	const parsed_components: { [key: string]: Entry[] } = Object.fromEntries(
+	const parsed_components: { [key: string]: Entries } = Object.fromEntries(
 		Object.entries(component_data)
 			.map(([key, values]) => {
 				if (key == 'unit' || values === undefined) {
 					return null;
 				}
 
-				return [key, parseTimeseriesData(values as TimeSeriesResponseEntry[])] as [string, Entry[]];
+				return [key, parseTimeseriesData(values as TimeSeriesResponseEntry[])] as [string, Entries];
 			})
 			.filter((entry) => entry !== null)
 	);
@@ -289,20 +290,22 @@ function parseCSV(data_csv: string) {
 	return data;
 }
 
-function parseTimeseriesData(entries: TimeSeriesResponseEntry[]): Entry[] {
-	return entries.map((entry) => {
-		let { d: data, t, ...rest } = entry;
-		const [translation, scale] = t;
+function parseTimeseriesData(entries: TimeSeriesResponseEntry[]): Entries {
+	return new Entries(
+		entries.map((entry) => {
+			let { d: data, t, ...rest } = entry;
+			const [translation, scale] = t;
 
-		// Compute cumulative sum
-		let sum: number = 0;
-		data = data.map((value) => (sum += value));
+			// Compute cumulative sum
+			let sum: number = 0;
+			data = data.map((value) => (sum += value));
 
-		// Apply scaling and translation
-		data = data.map((value) => value * scale + translation);
+			// Apply scaling and translation
+			data = data.map((value) => value * scale + translation);
 
-		return { index: rest as Record<string, string>, data };
-	});
+			return { index: rest as Record<string, string>, data };
+		})
+	);
 }
 
 function parseUnitData(unit_csv: string): Papa.ParseResult<Row> {
