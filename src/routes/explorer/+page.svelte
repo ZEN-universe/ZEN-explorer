@@ -1,7 +1,3 @@
-<script lang="ts">
-	import logo from '$lib/assets/zen_garden_small.png';
-</script>
-
 <div class="grid grow dark:bg-gray-800 place-content-center">
 	<main
 		class="grid md:grid-cols-2 md:grid-rows-2 relative w-full max-w-300 mx-auto py-8 px-4 gap-6"
@@ -92,7 +88,7 @@
 		<div class="absolute inset-0 hidden lg:grid place-content-center pointer-events-none">
 			<div class="relative">
 				<div class="absolute inset-1 rounded-full bg-white z-0"></div>
-				<img class="relative z-1" width="340" height="340" alt="ZEN-garden Logo" src={logo} />
+				<img class="relative z-1" width="340" height="340" alt="ZEN-garden Logo" src="/zen_garden_700x700.png" />
 			</div>
 		</div>
 	</main>
