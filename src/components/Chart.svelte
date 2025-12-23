@@ -291,7 +291,7 @@
 		<HelpTooltip content="Click on legend items to show/hide them in the chart." />
 	</h2>
 	<div class="flex flex-wrap gap-2">
-		{#each legendItems as item}
+		{#each legendItems as item, idx (idx)}
 			<button
 				class="flex items-center text-gray-600 dark:text-gray-400 text-sm"
 				onclick={() => toggleLegendItem(item)}
@@ -307,7 +307,7 @@
 	{#if patterns.length > 1}
 		<h2 class="font-bold text-lg me-4">Patterns</h2>
 		<div class="legend flex flex-wrap gap-2">
-			{#each patterns as pattern}
+			{#each patterns as pattern, idx (idx)}
 				<div class="flex items-center text-gray-600 dark:text-gray-400 text-sm">
 					<ColorBox item={pattern}></ColorBox>
 					<span>{pattern.text}</span>

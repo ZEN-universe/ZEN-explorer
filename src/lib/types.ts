@@ -81,6 +81,7 @@ export interface ActivatedSolution {
 	objective: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Row = Record<string, any>;
 
 export interface TimeSeriesResponseEntry {

@@ -1,12 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import type {
-		ChartDataset,
-		ChartOptions,
-		ChartType,
-		ChartTypeRegistry,
-		TooltipItem
-	} from 'chart.js';
+	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import { draw as drawPattern } from 'patternomaly';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
@@ -41,6 +35,7 @@
 	import Spinner from '$components/Spinner.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	const technologyCarrierLabel = 'Technology / Carrier';
 	const capexSuffix = ' (Capex)';
@@ -217,7 +212,7 @@
 			return [];
 		}
 		const solutions = selectedSolutions as ActivatedSolution[];
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		solutions.forEach((solution) => {
 			solution.detail.system.set_transport_technologies.forEach((t) => {
 				if (setCapexOpexTechnologies.has(t)) {
@@ -233,7 +228,7 @@
 			return [];
 		}
 		const solutions = selectedSolutions as ActivatedSolution[];
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		solutions.forEach((solution) => {
 			solution.detail.system.set_conversion_technologies.forEach((t) => {
 				if (setCapexOpexTechnologies.has(t)) {
@@ -249,7 +244,7 @@
 			return [];
 		}
 		const solutions = selectedSolutions as ActivatedSolution[];
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		solutions.forEach((solution) => {
 			solution.detail.system.set_storage_technologies.forEach((t) => {
 				if (setCapexOpexTechnologies.has(t)) {
@@ -264,7 +259,7 @@
 		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		const setCarriers = new Set<string>();
+		const setCarriers: Set<string> = new SvelteSet();
 		fetchedCostCarrier.forEach((data) => {
 			data.forEach((row) => {
 				setCarriers.add(row['carrier']);
@@ -277,7 +272,7 @@
 		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		const setCarriers = new Set<string>();
+		const setCarriers: Set<string> = new SvelteSet();
 		fetchedCostShedDemand.forEach((data) => {
 			data.forEach((row) => {
 				setCarriers.add(row['carrier']);
@@ -291,7 +286,7 @@
 			return [];
 		}
 		const solutions = selectedSolutions as ActivatedSolution[];
-		const setLocations = new Set<string>();
+		const setLocations: Set<string> = new SvelteSet();
 		solutions.forEach((solution) => {
 			Object.keys(solution.detail.edges).forEach((edge) => {
 				setLocations.add(edge);
@@ -623,14 +618,14 @@
 		</FilterSection>
 		{#if !solutionLoading && !hasSomeUnsetSolutions}
 			<FilterSection title="Cost Selection">
-				{#each Object.values(variables) as variable, i}
+				{#each Object.values(variables) as variable (variable.title)}
 					<div class="grid grid-cols-2">
 						<div>
 							<ToggleButton bind:value={variable.show} label={variable.title}></ToggleButton>
 						</div>
 						{#if variable.show && variable.showSubdivision}
 							<div>
-								<ToggleButton bind:value={variable.subdivision} label={'with Subdivision'} />
+								<ToggleButton bind:value={variable.subdivision} label="with Subdivision" />
 							</div>
 						{/if}
 					</div>

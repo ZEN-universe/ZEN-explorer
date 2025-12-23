@@ -3,7 +3,7 @@ import type { ActivatedSolution, ScenarioDetail, Solution, SolutionDetail } from
 import { onMount } from 'svelte';
 
 let solutionList: Solution[] = $state([]);
-let fetchedDetails: Record<string, SolutionDetail> = {};
+const fetchedDetails: Record<string, SolutionDetail> = {};
 
 let isFetchingList: boolean = false;
 

@@ -1,3 +1,7 @@
+<script lang="ts">
+	import { resolve } from '$app/paths';
+</script>
+
 <div class="grid grow dark:bg-gray-800 place-content-center">
 	<main
 		class="grid md:grid-cols-2 md:grid-rows-2 relative w-full max-w-300 mx-auto py-8 px-4 gap-6"
@@ -18,19 +22,28 @@
 			>
 				<div class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50">
 					<span class="font-medium">Capacity</span>
-					<a class="absolute inset-0" href="./transition/capacity/" aria-label="Capacity"></a>
+					<a class="absolute inset-0" href={resolve('/transition/capacity/')} aria-label="Capacity"
+					></a>
 				</div>
 				<div class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50">
 					<span class="font-medium">Production</span>
-					<a class="absolute inset-0" href="./transition/production/" aria-label="Production"></a>
+					<a
+						class="absolute inset-0"
+						href={resolve('/transition/production/')}
+						aria-label="Production"
+					></a>
 				</div>
 				<div class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50">
 					<span class="font-medium">Emissions</span>
-					<a class="absolute inset-0" href="./transition/emissions/" aria-label="Emissions"></a>
+					<a
+						class="absolute inset-0"
+						href={resolve('/transition/emissions/')}
+						aria-label="Emissions"
+					></a>
 				</div>
 				<div class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50">
 					<span class="font-medium">Costs</span>
-					<a class="absolute inset-0" href="./transition/costs/" aria-label="Costs"></a>
+					<a class="absolute inset-0" href={resolve('/transition/costs/')} aria-label="Costs"></a>
 				</div>
 			</nav>
 		</section>
@@ -51,11 +64,16 @@
 			>
 				<div class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50">
 					<span class="font-medium">Nodal</span>
-					<a class="absolute inset-0" href="./energy_balance/nodal/" aria-label="Nodal"></a>
+					<a class="absolute inset-0" href={resolve('/energy_balance/nodal/')} aria-label="Nodal"
+					></a>
 				</div>
 				<div class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50">
 					<span class="font-medium">Storage</span>
-					<a class="absolute inset-0" href="./energy_balance/storage/" aria-label="Storage"></a>
+					<a
+						class="absolute inset-0"
+						href={resolve('/energy_balance/storage/')}
+						aria-label="Storage"
+					></a>
 				</div>
 			</nav>
 		</section>
@@ -67,7 +85,7 @@
 			<h2 class="font-extrabold text-3xl text-white">The Energy System</h2>
 			<a
 				class="absolute inset-0 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-white/80 dark:focus:ring-gray-700/80"
-				href="/energy_system"
+				href={resolve('/energy_system')}
 				aria-label="The Energy System"
 			></a>
 		</section>
@@ -79,7 +97,7 @@
 			<h2 class="font-extrabold text-3xl text-white">The Map</h2>
 			<a
 				class="absolute inset-0 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-white/80 dark:focus:ring-gray-700/80"
-				href="/map"
+				href={resolve('/map')}
 				aria-label="The Map"
 			></a>
 		</section>

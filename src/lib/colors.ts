@@ -124,7 +124,7 @@ export function addTransparency(color: string, transparency: number = 0.8): stri
 }
 
 export function allColors(): string[] {
-	let flatColors = [];
+	const flatColors = [];
 	for (let j = 0; j < colors.length; j++) {
 		for (let i = 0; i < colors[0].length; i++) {
 			flatColors.push(colors[i][j]);

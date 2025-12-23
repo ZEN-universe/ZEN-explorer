@@ -7,8 +7,7 @@ import type {
 	EnergyBalanceDataframes,
 	Row,
 	TimeSeriesResponseEntry,
-	ComponentTimeSeries,
-	Entry
+	ComponentTimeSeries
 } from '$lib/types';
 import Entries from './entries';
 
@@ -17,15 +16,15 @@ import Entries from './entries';
  * @returns Promise with a list of solutions as returned by the API Server.
  */
 export async function fetchSolutions(): Promise<Solution[]> {
-	let url = env.PUBLIC_TEMPLE_URL + 'solutions/list';
+	const url = env.PUBLIC_TEMPLE_URL + 'solutions/list';
 
-	let solution_list_request = await fetch(url, { cache: 'no-store' });
+	const solution_list_request = await fetch(url, { cache: 'no-store' });
 
 	if (!solution_list_request.ok) {
 		alert('could not fetch ' + url);
 		return [];
 	}
-	let solution_list: Array<Solution> = await solution_list_request.json();
+	const solution_list: Array<Solution> = await solution_list_request.json();
 
 	solution_list.sort((a, b) => {
 		return a.name.localeCompare(b.name);
@@ -39,17 +38,17 @@ export async function fetchSolutions(): Promise<Solution[]> {
  * @returns Promise with the SolutionDetail API Server.
  */
 export async function fetchSolutionDetail(solution: string): Promise<SolutionDetail> {
-	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/detail');
+	const urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/detail');
 	urlObj.searchParams.set('solution_name', solution);
 	const url = urlObj.toString();
 
-	let solution_detail_request = await fetch(url, { cache: 'no-store' });
+	const solution_detail_request = await fetch(url, { cache: 'no-store' });
 
 	if (!solution_detail_request.ok) {
 		alert('Could not fetch ' + url);
 		throw new Error('Could not fetch ' + url);
 	}
-	let solution_detail = await solution_detail_request.json();
+	const solution_detail = await solution_detail_request.json();
 
 	return solution_detail;
 }
@@ -62,12 +61,12 @@ export async function fetchSolutionDetail(solution: string): Promise<SolutionDet
  * @returns Papaparsed CSV of the Unit-Dataframe from the API Server
  */
 export async function fetchUnit(solution_name: string, component_name: string) {
-	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/unit');
+	const urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/unit');
 	urlObj.searchParams.set('solution_name', solution_name);
 	urlObj.searchParams.set('component', component_name);
 	const url = urlObj.toString();
 
-	let unit_data = await (await fetch(url, { cache: 'no-store' })).json();
+	const unit_data = await (await fetch(url, { cache: 'no-store' })).json();
 
 	return parseUnitData(unit_data);
 }
@@ -89,7 +88,7 @@ export async function fetchTotal(
 	carrier: string = '',
 	unit_component: string = ''
 ): Promise<ComponentTotal> {
-	let urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/total');
+	const urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/total');
 	urlObj.searchParams.set('solution_name', solution_name);
 	urlObj.searchParams.set('components', components.join(','));
 	urlObj.searchParams.set('scenario', scenario_name);
@@ -97,14 +96,14 @@ export async function fetchTotal(
 	urlObj.searchParams.set('unit_component', unit_component);
 	const url = urlObj.toString();
 
-	let component_data_request = await fetch(url, { cache: 'no-store' });
+	const component_data_request = await fetch(url, { cache: 'no-store' });
 
 	if (!component_data_request.ok) {
 		alert('Error when fetching ' + url);
 		throw new Error('Error when fetching ' + url);
 	}
 
-	let component_data = await component_data_request.json();
+	const component_data = await component_data_request.json();
 
 	for (const key in component_data) {
 		if (key == 'unit' || component_data[key] === undefined) {
@@ -147,14 +146,14 @@ export async function fetchFullTs(
 	}
 	const url = urlObj.toString();
 
-	let component_data_request = await fetch(url, { cache: 'no-store' });
+	const component_data_request = await fetch(url, { cache: 'no-store' });
 
 	if (!component_data_request.ok) {
 		alert('Error when fetching ' + url);
 		throw new Error('Error when fetching ' + url);
 	}
 
-	let component_data = await component_data_request.json();
+	const component_data = await component_data_request.json();
 
 	const parsed_components: { [key: string]: Entries } = Object.fromEntries(
 		Object.entries(component_data)
@@ -191,7 +190,7 @@ export async function fetchEnergyBalance(
 	year: number,
 	window_size: number
 ): Promise<EnergyBalanceDataframes> {
-	let urlobj = new URL(env.PUBLIC_TEMPLE_URL + `solutions/energy_balance`);
+	const urlobj = new URL(env.PUBLIC_TEMPLE_URL + `solutions/energy_balance`);
 	urlobj.searchParams.set('solution_name', solution);
 	urlobj.searchParams.set('node', node);
 	urlobj.searchParams.set('carrier', carrier);
@@ -200,16 +199,16 @@ export async function fetchEnergyBalance(
 	urlobj.searchParams.set('rolling_average_window_size', window_size.toString());
 	const url = urlobj.toString();
 
-	let energy_balance_data_request = await fetch(url, { cache: 'no-store' });
+	const energy_balance_data_request = await fetch(url, { cache: 'no-store' });
 
 	if (!energy_balance_data_request.ok) {
 		alert('Could not fetch ' + url);
 		throw new Error('Could not fetch ' + url);
 	}
 
-	let energy_balance_data = await energy_balance_data_request.json();
+	const energy_balance_data = await energy_balance_data_request.json();
 
-	let series_names = [
+	const series_names = [
 		'shed_demand',
 		'demand',
 		'flow_conversion_input',
@@ -224,8 +223,7 @@ export async function fetchEnergyBalance(
 		'constraint_nodal_energy_balance'
 	];
 
-	// @ts-ignore
-	let ans: EnergyBalanceDataframes = {};
+	const ans: Partial<EnergyBalanceDataframes> = {};
 
 	for (const series_name of series_names) {
 		if (energy_balance_data[series_name] !== undefined) {
@@ -235,7 +233,7 @@ export async function fetchEnergyBalance(
 		}
 	}
 
-	return ans;
+	return ans as EnergyBalanceDataframes;
 }
 
 /**
@@ -251,14 +249,14 @@ export async function fetchEnergyBalance(
  */
 function parseCSV(data_csv: string) {
 	// Get first line of the csv data
-	let first_line = data_csv.slice(0, data_csv.indexOf('\n'));
+	const first_line = data_csv.slice(0, data_csv.indexOf('\n'));
 
 	// Get column names
-	let headers = first_line.split(',');
+	const headers = first_line.split(',');
 
 	// If there are only two columns, we transpose the csv
 	if (headers.length == 2) {
-		let lines = data_csv.split('\n');
+		const lines = data_csv.split('\n');
 		let years = '';
 		let data = '';
 
@@ -267,7 +265,7 @@ function parseCSV(data_csv: string) {
 				continue;
 			}
 
-			let line_split = line.split(',');
+			const line_split = line.split(',');
 			years += line_split[0] + ',';
 			data += line_split[1] + ',';
 		}
@@ -281,7 +279,7 @@ function parseCSV(data_csv: string) {
 	}
 
 	// Parse CSV
-	let data: Papa.ParseResult<Row> = Papa.parse(data_csv, {
+	const data: Papa.ParseResult<Row> = Papa.parse(data_csv, {
 		delimiter: ',',
 		header: true,
 		newline: '\n'
@@ -293,6 +291,7 @@ function parseCSV(data_csv: string) {
 function parseTimeseriesData(entries: TimeSeriesResponseEntry[]): Entries {
 	return new Entries(
 		entries.map((entry) => {
+			// eslint-disable-next-line prefer-const
 			let { d: data, t, ...rest } = entry;
 			const [translation, scale] = t;
 

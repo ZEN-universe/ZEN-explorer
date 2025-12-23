@@ -241,7 +241,7 @@ export default class Entries {
 	 * @returns An array of all unique index keys across all entries.
 	 */
 	*[Symbol.iterator](): Iterator<Entry> {
-		return this.entries[Symbol.iterator]();
+		yield* this.entries[Symbol.iterator]();
 	}
 
 	/**

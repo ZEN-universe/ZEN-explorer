@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ActivatedSolution } from '$lib/types';
-	import { onMount, tick, untrack } from 'svelte';
+	import { onMount, tick } from 'svelte';
 	import SolutionFilter from './SolutionFilter.svelte';
 	import { getURLParamAsArray, updateURLParams } from '$lib/queryParams.svelte';
 
@@ -143,7 +143,8 @@
 {#if !componentMounted}
 	<!-- Not showing anything while mounting component -->
 {:else}
-	{#each solutions as _, idx}
+	<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+	{#each solutions as _, idx (idx)}
 		<div class={[idx > 0 && 'mb-2 mt-4']}>
 			{#if idx > 0}
 				<div

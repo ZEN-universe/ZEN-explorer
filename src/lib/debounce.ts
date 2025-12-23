@@ -16,6 +16,7 @@
  * debouncedFunction();
  * // The actual function will be called only once, 300ms after the last call.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function debounce<T extends any[]>(
 	func: (...args: T) => void,
 	wait: number

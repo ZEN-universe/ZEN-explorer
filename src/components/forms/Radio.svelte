@@ -35,7 +35,7 @@
 <FilterLabel {label}></FilterLabel>
 
 <div class="flex gap-2 mb-2" role="radiogroup">
-	{#each options as option}
+	{#each options as option (option.value)}
 		<div class="relative">
 			<input
 				class="appearance-none absolute inset-y-0 w-4"

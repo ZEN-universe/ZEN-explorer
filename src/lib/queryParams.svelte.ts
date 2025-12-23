@@ -1,11 +1,9 @@
 import { replaceState } from '$app/navigation';
 import { page } from '$app/state';
 
-export interface URLParams {
-	[key: string]: string | null;
-}
+export type URLParams = Record<string, string | null>;
 
-let urlParams: URLParams = $state({});
+let urlParams: Record<string, string | null> = $state({});
 
 function getRawURLParam(key: string): string | null {
 	const state = page.state as Record<string, string>;
@@ -59,7 +57,7 @@ export function addCurrentSolutionToURL(
 	url?: string,
 	hasMultipleSolutions: boolean = false
 ): string {
-	let params: URLParams = {};
+	const params: URLParams = {};
 	const singleSolution = getURLParam('solution');
 	const singleScenario = getURLParam('scenario');
 	const multipleSolutions = getURLParamAsArray('solutions');
@@ -79,5 +77,6 @@ export function addCurrentSolutionToURL(
 
 export function updateURLParams(params: URLParams): void {
 	urlParams = { ...urlParams, ...params };
+	// eslint-disable-next-line svelte/no-navigation-without-resolve
 	replaceState(buildURL(params), $state.snapshot(urlParams));
 }

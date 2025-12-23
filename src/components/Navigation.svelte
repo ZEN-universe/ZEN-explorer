@@ -24,6 +24,7 @@
 	function toggleTheme() {
 		theme = theme === 'dark' ? 'light' : 'dark';
 		localStorage.theme = theme;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(window as any).updateTheme();
 	}
 
@@ -68,8 +69,9 @@
 			<li>
 				<div class="uppercase tracking-wide text-sm text-gray-400">The Transition Pathway</div>
 				<ul class="flex gap-4 2xl:gap-6 text-lg font-semibold">
-					{#each Object.entries(transition_urls) as [title, url]}
+					{#each Object.entries(transition_urls) as [title, url] (title)}
 						<li>
+							<!-- eslint-disable svelte/no-navigation-without-resolve -->
 							<a
 								class={[
 									'hover:text-gray-600 dark:hover:text-gray-400',
@@ -84,7 +86,7 @@
 			<li>
 				<div class="uppercase tracking-wide text-sm text-gray-400">The Energy Balance</div>
 				<ul class="flex gap-4 text-lg font-semibold">
-					{#each Object.entries(energy_balance_urls) as [title, url]}
+					{#each Object.entries(energy_balance_urls) as [title, url] (title)}
 						<li>
 							<a
 								class={[
@@ -195,7 +197,7 @@
 	<div class="px-2 pt-2 pb-3 space-y-1">
 		<h2 class="px-3 mb-0 text-gray-500 uppercase tracking-wide text-sm">The Transition Pathway</h2>
 		<div class="mb-4">
-			{#each Object.entries(transition_urls) as [title, url]}
+			{#each Object.entries(transition_urls) as [title, url] (title)}
 				<a
 					href={addCurrentSolutionToURL(url, true)}
 					class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -205,7 +207,7 @@
 		</div>
 		<h2 class="px-3 mb-0 text-gray-500 uppercase tracking-wide text-sm">The Energy Balance</h2>
 		<div class="mb-4">
-			{#each Object.entries(energy_balance_urls) as [title, url]}
+			{#each Object.entries(energy_balance_urls) as [title, url] (title)}
 				<a
 					href={addCurrentSolutionToURL(url, false)}
 					class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"

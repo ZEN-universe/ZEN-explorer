@@ -34,6 +34,7 @@
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import { removeDuplicates } from '$lib/utils';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	let data: Row[][] = $state([]);
 
@@ -173,7 +174,7 @@
 			return [];
 		}
 
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		(selectedSolutions as ActivatedSolution[]).forEach((solution, solutionIndex) => {
 			(technologiesPerSolution[solutionIndex] ?? []).forEach((tech) => {
 				if (solution.detail.reference_carrier[tech] === selectedCarrier) {
@@ -189,7 +190,7 @@
 			return [];
 		}
 
-		const setLocations: Set<string> = new Set();
+		const setLocations: Set<string> = new SvelteSet();
 		data.forEach((items) => {
 			items.forEach((d) => {
 				if (technologies.includes(d.technology)) {

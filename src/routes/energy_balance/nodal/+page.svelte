@@ -10,7 +10,7 @@
 	import { fetchEnergyBalance, fetchUnit } from '$lib/temple';
 	import { getVariableName } from '$lib/variables';
 	import { nextColor, resetColorState } from '$lib/colors';
-	import type { ActivatedSolution, EnergyBalanceDataframes, Entry } from '$lib/types';
+	import type { ActivatedSolution, EnergyBalanceDataframes } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
@@ -18,7 +18,6 @@
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import type Entries from '$lib/entries';
-	import type { FilterCriteria } from '$lib/entries';
 
 	let energyBalanceData: EnergyBalanceDataframes | null = null;
 	let unitData: Record<string, string>[] | null = $state(null);
@@ -27,8 +26,8 @@
 	let solutionLoading: boolean = $state(false);
 	let fetching = $state(false);
 
-	let plot = $state<Chart<any>>();
-	let dualsPlot = $state<Chart<any>>();
+	let plot = $state<Chart>();
+	let dualsPlot = $state<Chart>();
 
 	let nodes: string[] = $state([]);
 	let carriers: string[] = $state([]);
@@ -64,7 +63,7 @@
 		if (unitData === null) {
 			return '';
 		}
-		let unitEntry = unitData.find((entry: any) => entry['carrier'] === selectedCarrier);
+		let unitEntry = unitData.find((entry) => entry['carrier'] === selectedCarrier);
 		if (unitEntry) {
 			return unitEntry[0] || unitEntry['units'] || '';
 		}

@@ -43,6 +43,7 @@
 	import Entries, { type FilterCriteria } from '$lib/entries';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	// Data
 	let data: Row[][][] = $state([]);
@@ -286,7 +287,7 @@
 	let carriers: string[] = $derived.by(() => {
 		if (hasSomeUnsetSolutions) return [];
 
-		const setCarriers: Set<string> = new Set();
+		const setCarriers: Set<string> = new SvelteSet();
 		const solutions = selectedSolutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
@@ -298,7 +299,7 @@
 	let conversionTechnologies = $derived.by(() => {
 		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
 
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		const solutions = selectedSolutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
@@ -313,7 +314,7 @@
 	let storageTechnologies = $derived.by(() => {
 		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
 
-		const setStorageTechnologies: Set<string> = new Set();
+		const setStorageTechnologies: Set<string> = new SvelteSet();
 		const solutions = selectedSolutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
@@ -330,7 +331,7 @@
 	let transportTechnologies = $derived.by(() => {
 		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
 
-		const setTransportTechnologies: Set<string> = new Set();
+		const setTransportTechnologies: Set<string> = new SvelteSet();
 		const solutions = selectedSolutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
@@ -709,7 +710,7 @@
 			</FilterSection>
 			{#if selectedCarrier !== null}
 				<FilterSection title="Production Component Selection">
-					{#each variables as variable}
+					{#each variables as variable (variable.id)}
 						{#if !hasDataForVariable(variable)}
 							<FilterLabel label={variable.title}></FilterLabel>
 							<div class="text-gray-500 italic text-sm mb-2">
@@ -728,7 +729,7 @@
 									<div>
 										<ToggleButton
 											bind:value={variable.subdivision}
-											label={'with Subdivision'}
+											label="with Subdivision"
 											disabled={solutionLoading || fetching}
 										/>
 									</div>

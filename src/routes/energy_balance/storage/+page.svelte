@@ -44,8 +44,8 @@
 	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
-	let levelPlot = $state<Chart<any>>();
-	let flowPlot = $state<Chart<any>>();
+	let levelPlot = $state<Chart>();
+	let flowPlot = $state<Chart>();
 
 	let unit: string = $derived.by(() => (technologies.length > 0 ? units[technologies[0]] : ''));
 

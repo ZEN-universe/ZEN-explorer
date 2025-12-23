@@ -48,7 +48,7 @@ export function resetPatternState() {
  * @returns Pattern as type ShapeType
  */
 export function nextPattern(): ShapeType {
-	let pattern = patterns[patternIndex];
+	const pattern = patterns[patternIndex];
 	patternIndex = (patternIndex + 1) % patterns.length;
 	return pattern;
 }

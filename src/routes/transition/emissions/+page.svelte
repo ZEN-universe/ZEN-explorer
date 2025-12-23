@@ -28,6 +28,7 @@
 	import Spinner from '$components/Spinner.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	let technologyData: Row[][] = $state([]);
 	let carrierData: Row[][] = $state([]);
@@ -142,7 +143,7 @@
 		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		technologyData.forEach((data) => {
 			data.forEach((d) => setTechnologies.add(d.technology));
 		});
@@ -153,7 +154,7 @@
 		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		const setCarriers: Set<string> = new Set();
+		const setCarriers: Set<string> = new SvelteSet();
 		carrierData.forEach((data) => {
 			data.forEach((d) => setCarriers.add(d.carrier));
 		});
@@ -164,7 +165,7 @@
 		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		const setLocations: Set<string> = new Set();
+		const setLocations: Set<string> = new SvelteSet();
 		technologyData.forEach((data) => {
 			data.forEach((d) => setLocations.add(d.location));
 		});
@@ -392,7 +393,7 @@
 				if ((annualLimitData[solutionIndex] ?? []).length === 0) {
 					return [];
 				}
-				entry = Object.entries(annualLimitData[solutionIndex][0]).map(([_, i]) =>
+				entry = Object.entries(annualLimitData[solutionIndex][0]).map(([, i]) =>
 					i === 'inf' ? Infinity : Number(i)
 				);
 			} else {
