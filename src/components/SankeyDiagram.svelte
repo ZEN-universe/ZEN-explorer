@@ -533,7 +533,7 @@
 <ContentBox class="flex">
 	<h2 class="flex items-start font-bold text-lg me-4">
 		<span class="me-2">Legend</span>
-		<HelpTooltip content="Click on legend items to focus on into in the diagram." />
+		<HelpTooltip>Click on legend items to focus on into in the diagram.</HelpTooltip>
 	</h2>
 	{#if legendItems && legendItems.length > 0}
 		<div class="flex flex-wrap gap-2">

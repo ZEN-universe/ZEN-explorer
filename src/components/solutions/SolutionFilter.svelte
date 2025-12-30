@@ -219,14 +219,24 @@
 </script>
 
 {#if !withoutSolution}
-	<Dropdown bind:value={activeFirstLevel} label="Solution" {disabled} options={firstLevels}
-	></Dropdown>
+	<Dropdown bind:value={activeFirstLevel} label="Solution" {disabled} options={firstLevels}>
+		{#snippet helpText()}
+			Select the name of the solution for which to visualize results.
+		{/snippet}
+	</Dropdown>
 {/if}
 {#if secondLevels.length > 0}
-	<Dropdown bind:value={activeSecondLevel} label="Subsolution" {disabled} options={secondLevels}
-	></Dropdown>
+	<Dropdown bind:value={activeSecondLevel} label="Subsolution" {disabled} options={secondLevels}>
+		{#snippet helpText()}
+			Select the subsolution for which to visualize results.
+		{/snippet}
+	</Dropdown>
 {/if}
 
 {#if allScenarios.length > 1}
-	<Dropdown bind:value={activeScenario} label="Scenario" {disabled} options={scenarios}></Dropdown>
+	<Dropdown bind:value={activeScenario} label="Scenario" {disabled} options={scenarios}>
+		{#snippet helpText()}
+			Select the scenario for which to visualize results.
+		{/snippet}
+	</Dropdown>
 {/if}

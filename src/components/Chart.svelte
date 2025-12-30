@@ -288,7 +288,7 @@
 {#snippet legend()}
 	<h2 class="flex items-start font-bold text-lg me-4">
 		<span class="me-2">Legend</span>
-		<HelpTooltip content="Click on legend items to show/hide them in the chart." />
+		<HelpTooltip>Click on legend items to show/hide them in the chart.</HelpTooltip>
 	</h2>
 	<div class="flex flex-wrap gap-2">
 		{#each legendItems as item, idx (idx)}

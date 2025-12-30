@@ -3,13 +3,14 @@
 	import ContentBox from './ContentBox.svelte';
 
 	interface Props {
-		parentTitle: string;
+		parentTitle?: string;
 		pageTitle: string;
+		subtitle?: string;
 		filters: Snippet;
 		buttons?: Snippet;
 		mainContent: Snippet;
 	}
-	let { parentTitle, pageTitle, filters, buttons, mainContent }: Props = $props();
+	let { parentTitle, pageTitle, subtitle, filters, buttons, mainContent }: Props = $props();
 
 	let sidebarCollapsed: boolean = $state(false);
 
@@ -18,16 +19,21 @@
 	}
 </script>
 
-<div class={['grid', 'grid-cols-1 lg:grid-cols-4', 'gap-x-4 p-4 pb-0']}>
-	<div class="lg:col-span-1 flex items-end justify-between">
+<div class={['grid grid-cols-1', 'lg:flex lg:justify-between', 'gap-x-4 p-4 pb-0']}>
+	<div class="flex items-end justify-between">
 		<div>
-			<div class="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
-				{parentTitle}
-			</div>
+			{#if parentTitle}
+				<div class="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+					{parentTitle}
+				</div>
+			{/if}
 			<h1 class="text-3xl font-bold">{pageTitle}</h1>
+			{#if subtitle}
+				<div class="text-gray-600 dark:text-gray-400 mt-1">{subtitle}</div>
+			{/if}
 		</div>
 	</div>
-	<div class="lg:col-span-3 order-3 lg:order-2">
+	<div>
 		{@render buttons?.()}
 	</div>
 </div>

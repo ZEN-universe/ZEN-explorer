@@ -1,26 +1,55 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { computePosition, flip, shift, offset, arrow } from '@floating-ui/dom';
+	import { onMount, type Snippet } from 'svelte';
+	import { innerWidth } from 'svelte/reactivity/window';
 
 	interface Props {
-		content: string;
+		children: Snippet;
+		maxWidth?: number;
 	}
+	type Side = 'top' | 'bottom';
 
-	let { content }: Props = $props();
+	const PADDING_FROM_EDGE = 8;
+
+	let { children, maxWidth = 500 }: Props = $props();
 
 	let button = $state<HTMLButtonElement>();
+	let tooltip = $state<HTMLDivElement>();
+	let arrowElement = $state<SVGSVGElement>();
 
 	let isHovered = $state(false);
 	let isFocused = $state(false);
 
-	let buttonTop = $state(0);
-	let buttonCenter = $state(0);
+	let tooltipLeft: number | null = $state(null);
+	let tooltipTop: number | null = $state(null);
+	let tooltipMaxWidth = $derived(
+		Math.min((innerWidth.current || maxWidth) - 2 * PADDING_FROM_EDGE, maxWidth)
+	);
+	let arrowLeft: number | null = $state(null);
+	let arrowStaticSide: Side = $state('top');
 
-	function updateButtonPosition() {
-		if (button) {
-			const rect = button.getBoundingClientRect();
-			buttonTop = rect.top;
-			buttonCenter = rect.left + rect.width / 2;
-		}
+	async function updateButtonPosition() {
+		if (!button || !tooltip || !arrowElement) return;
+
+		const { x, y, placement, middlewareData } = await computePosition(button, tooltip, {
+			placement: 'top',
+			middleware: [
+				offset(8),
+				flip(),
+				shift({ padding: PADDING_FROM_EDGE }),
+				arrow({ element: arrowElement })
+			]
+		});
+
+		tooltipLeft = x;
+		tooltipTop = y;
+
+		arrowStaticSide = ({
+			top: 'bottom',
+			bottom: 'top'
+		}[placement.split('-')[0]] ?? 'top') as Side;
+
+		arrowLeft = middlewareData.arrow?.x ?? null;
 	}
 
 	onMount(() => {
@@ -28,13 +57,18 @@
 	});
 </script>
 
+<svelte:window onresize={updateButtonPosition} />
+
 <button
 	aria-label="Help tooltip"
+	onclick={updateButtonPosition}
 	onmouseover={() => {
 		isHovered = true;
+		updateButtonPosition();
 	}}
 	onfocus={() => {
-		((isFocused = true), updateButtonPosition());
+		isFocused = true;
+		updateButtonPosition();
 	}}
 	onmouseleave={() => {
 		isHovered = false;
@@ -49,16 +83,29 @@
 	></i>
 </button>
 
-{#if isHovered || isFocused}
-	<div
-		class="absolute font-normal -translate-x-1/2 -translate-y-full z-3 border bg-gray-200 dark:bg-gray-800 border-black dark:border-white rounded-lg p-2"
-		style:top={`${buttonTop - 10}px`}
-		style:left={`${buttonCenter}px`}
+<div
+	class="absolute w-[max-content] font-normal z-3 border bg-gray-200 dark:bg-gray-800 border-black dark:border-white rounded-lg p-2 text-base"
+	style:display={isHovered || isFocused ? 'block' : 'none'}
+	style:top={tooltipTop !== null ? `${tooltipTop}px` : 0}
+	style:left={tooltipLeft !== null ? `${tooltipLeft}px` : 0}
+	style:max-width={`${tooltipMaxWidth}px`}
+	bind:this={tooltip}
+>
+	{@render children()}
+	<svg
+		class="absolute z-3"
+		style:left={arrowLeft !== null ? `${arrowLeft}px` : undefined}
+		style={`${arrowStaticSide}: -10px`}
+		width="20"
+		height="10"
+		bind:this={arrowElement}
 	>
-		{content}
-		<svg class="absolute -translate-x-1/2 left-1/2" style:bottom="-10px" width="20" height="10">
+		{#if arrowStaticSide === 'bottom'}
 			<polygon points="0,0 20,0 10,10" class="fill-gray-200 dark:fill-gray-800" />
 			<path d="M0,0 L10,10 L20,0" class="fill-none stroke-black dark:stroke-white" />
-		</svg>
-	</div>
-{/if}
+		{:else}
+			<polygon points="0,10 20,10 10,0" class="fill-gray-200 dark:fill-gray-800" />
+			<path d="M0,10 L10,0 L20,10" class="fill-none stroke-black dark:stroke-white" />
+		{/if}
+	</svg>
+</div>
