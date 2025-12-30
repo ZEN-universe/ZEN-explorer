@@ -432,7 +432,11 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Transition Pathway" pageTitle="Emissions">
+<DiagramPage
+	parentTitle="The Transition Pathway"
+	pageTitle="Emissions"
+	subtitle="Annual or cumulative emissions"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<MultiSolutionFilter

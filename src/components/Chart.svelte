@@ -334,9 +334,11 @@
 	{/if}
 	<ContentBox class="resize-y overflow-y-auto" children={chartSnippet}></ContentBox>
 {:else}
-	<div class="flex mb-4">
-		{@render legend()}
-	</div>
+	{#if legendItems.length > 0}
+		<div class="flex mb-4">
+			{@render legend()}
+		</div>
+	{/if}
 	<div class="flex mb-4">
 		{@render patternSnippet()}
 	</div>

@@ -100,23 +100,21 @@
 				</ul>
 			</li>
 			<li>
-				<div class="uppercase tracking-wide text-sm text-gray-400">The Energy System</div>
 				<a
 					class={[
 						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
 						currentPage == '/energy_system' && 'border-b-2 pb-1'
 					]}
-					href={addCurrentSolutionToURL('/energy_system', false)}>Sankey</a
+					href={addCurrentSolutionToURL('/energy_system', false)}>The Energy System</a
 				>
 			</li>
 			<li>
-				<div class="uppercase tracking-wide text-sm text-gray-400">The Map</div>
 				<a
 					class={[
 						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
 						currentPage == '/map' && 'border-b-2 pb-1'
 					]}
-					href={addCurrentSolutionToURL('/map', false)}>Map</a
+					href={addCurrentSolutionToURL('/map', false)}>The Map</a
 				>
 			</li>
 		</ul>
@@ -215,17 +213,15 @@
 				>
 			{/each}
 		</div>
-		<h2 class="px-3 mb-0 text-gray-500 uppercase tracking-wide text-sm">The Energy System</h2>
 		<a
 			href={addCurrentSolutionToURL('/energy_system', false)}
 			class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700 mb-4"
-			>Sankey</a
+			>The Energy System</a
 		>
-		<h2 class="px-3 mb-0 text-gray-500 uppercase tracking-wide text-sm">The Map</h2>
 		<a
 			href={addCurrentSolutionToURL('/map', false)}
 			class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
-			>Map</a
+			>The Map</a
 		>
 	</div>
 </aside>

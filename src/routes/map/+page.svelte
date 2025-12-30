@@ -325,7 +325,7 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Map" pageTitle="Map">
+<DiagramPage pageTitle="The Map" subtitle="Map of conversion, storage, and transport capacities">
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter

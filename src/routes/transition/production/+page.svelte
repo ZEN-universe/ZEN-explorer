@@ -686,7 +686,11 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Transition Pathway" pageTitle="Production">
+<DiagramPage
+	parentTitle="The Transition Pathway"
+	pageTitle="Production"
+	subtitle="Annual production and consumption of a carrier"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<MultiSolutionFilter

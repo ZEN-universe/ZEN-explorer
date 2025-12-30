@@ -99,7 +99,7 @@
 
 {#if year == null || solution == null}
 	<ContentBox>
-		<div class="text-center text-muted my-4">
+		<div class="text-center text-xl text-muted my-2">
 			Click on a bar to see a production and consumption breakdown.
 		</div>
 	</ContentBox>

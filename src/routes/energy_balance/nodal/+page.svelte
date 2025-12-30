@@ -18,6 +18,8 @@
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import type Entries from '$lib/entries';
+	import ContentBox from '$components/ContentBox.svelte';
+	import HelpTooltip from '$components/HelpTooltip.svelte';
 
 	let energyBalanceData: EnergyBalanceDataframes | null = null;
 	let unitData: Record<string, string>[] | null = $state(null);
@@ -99,7 +101,7 @@
 
 	let plotOptions: ChartOptions = $derived.by(() => getPlotOptions(`Energy [${unit}]`));
 	let dualsPlotOptions: ChartOptions = $derived.by(() =>
-		getPlotOptions(`Dual [${dualUnit}]`, 5, false)
+		getPlotOptions(`Shadow Price [${dualUnit}]`, 5, false)
 	);
 
 	function getPlotOptions(
@@ -409,7 +411,7 @@
 
 				return {
 					data: datasetData,
-					label: `dual_${entry.index.carrier}_${entry.index.node}`,
+					label: `shadow_price_${entry.index.carrier}_${entry.index.node}`,
 					fill: false,
 					borderColor: 'rgb(0, 0, 0)',
 					backgroundColor: 'rgb(0, 0, 0)',
@@ -443,7 +445,11 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Energy Balance" pageTitle="Nodal">
+<DiagramPage
+	parentTitle="The Energy Balance"
+	pageTitle="Nodal"
+	subtitle="Hourly production and consumption of a carrier"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
@@ -481,7 +487,11 @@
 						bind:value={selectedWindowSize}
 						label="Smoothing Window Size"
 						disabled={fetching || solutionLoading}
-					></Dropdown>
+					>
+						{#snippet helpText()}
+							Visualize the rolling average of hourly values over a longer time period
+						{/snippet}
+					</Dropdown>
 				{/if}
 			</FilterSection>
 		{/if}
@@ -513,22 +523,34 @@
 				bind:this={plot}
 			></Chart>
 			{#if dualsDatasetsLength > 0}
-				<Chart
-					id="chart-duals"
-					type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
-					{labels}
-					datasets={[]}
-					options={dualsPlotOptions}
-					pluginOptions={dualsPlotPluginOptions}
-					plotName={dualsPlotName}
-					zoom={true}
-					initialHeight={300}
-					generateLabels={() => []}
-					bind:zoomLevel
-					bind:this={dualsPlot}
-				></Chart>
+				<ContentBox>
+					<h2 class="font-bold text-lg">
+						<span class="me-2">Shadow Prices</span>
+						<HelpTooltip>
+							Shadow price of the nodal energy balance of carrier {selectedCarrier}. Indicates the
+							change in total cost for the next marginal unit of demand.
+						</HelpTooltip>
+					</h2>
+					<Chart
+						id="chart-duals"
+						type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
+						{labels}
+						datasets={[]}
+						options={dualsPlotOptions}
+						pluginOptions={dualsPlotPluginOptions}
+						plotName={dualsPlotName}
+						zoom={true}
+						initialHeight={300}
+						generateLabels={() => []}
+						bind:zoomLevel
+						bind:this={dualsPlot}
+						boxed={false}
+					></Chart>
+				</ContentBox>
 			{:else}
-				<div class="text-center text-muted mt-2">No dual data available.</div>
+				<ContentBox>
+					<div class="text-center text-xl text-muted my-2">No shadow prices available.</div>
+				</ContentBox>
 			{/if}
 		{/if}
 	{/snippet}

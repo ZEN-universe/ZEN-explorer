@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Chart from '$components/Chart.svelte';
 	import Button from './Button.svelte';
+	import HelpTooltip from './HelpTooltip.svelte';
 
 	interface Props {
 		charts: (Chart | undefined)[];
@@ -42,6 +43,9 @@
 					<i class="bi bi-arrows-angle-contract me-2"></i>
 					<div>Zoom out</div>
 				</Button>
+				<div class="ms-1">
+					<HelpTooltip>Click and drag over the plot to select a custom time horizon.</HelpTooltip>
+				</div>
 			</div>
 		{/if}
 		{#if downloadable}

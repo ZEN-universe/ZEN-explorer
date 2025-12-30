@@ -138,7 +138,7 @@ export async function fetchFullTs(
 	urlObj.searchParams.set('solution_name', solution_name);
 	urlObj.searchParams.set('components', components.join(','));
 	urlObj.searchParams.set('unit_component', unit_component);
-	urlObj.searchParams.set('scenario', scenario_name);
+	urlObj.searchParams.set('scenario_name', scenario_name);
 	urlObj.searchParams.set('year', year_index.toString());
 	urlObj.searchParams.set('rolling_average_window_size', window_size.toString());
 	if (carrier !== '') {

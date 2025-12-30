@@ -51,7 +51,7 @@
 						}
 					},
 					beforeChange(newValue) {
-						if (multiple || newValue.length > 0) return;
+						if (multiple || newValue.length > 0) return true;
 						slimSelect?.close();
 						return false;
 					}

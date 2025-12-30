@@ -91,6 +91,7 @@
 		subdivision: boolean;
 		showSubdivision: boolean;
 		label?: string;
+		helpText: string;
 	}
 	let variables: { [id: string]: Variable } = $state({
 		capex: {
@@ -98,34 +99,39 @@
 			show: true,
 			subdivision: false,
 			showSubdivision: true,
-			label: capexLabel
+			label: capexLabel,
+			helpText: 'Annualized investment cost to expand technology capacity.'
 		},
 		opex: {
 			title: 'Opex',
 			show: true,
 			subdivision: false,
 			showSubdivision: true,
-			label: opexLabel
+			label: opexLabel,
+			helpText: 'Annual (fixed and variable) operational cost of technologies.'
 		},
 		carrier: {
 			title: 'Carrier',
 			show: true,
 			subdivision: false,
 			showSubdivision: true,
-			label: carrierLabel
+			label: carrierLabel,
+			helpText: 'Annual cost of importing and exporting carriers.'
 		},
 		shed_demand: {
 			title: 'Shed Demand',
 			show: true,
 			subdivision: false,
 			showSubdivision: true,
-			label: shedDemandLabel
+			label: shedDemandLabel,
+			helpText: 'Annual cost of shed demand of carriers.'
 		},
 		carbon_emission: {
 			title: 'Carbon Emissions',
 			show: true,
 			subdivision: false,
-			showSubdivision: false
+			showSubdivision: false,
+			helpText: 'Annual cost associated with carbon dioxide emissions.'
 		}
 	});
 
@@ -605,7 +611,11 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Transition Pathway" pageTitle="Costs">
+<DiagramPage
+	parentTitle="The Transition Pathway"
+	pageTitle="Costs"
+	subtitle="Total annualized system costs by capex, opex, carrier cost, and carbon cost"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<MultiSolutionFilter
@@ -621,7 +631,11 @@
 				{#each Object.values(variables) as variable (variable.title)}
 					<div class="grid grid-cols-2">
 						<div>
-							<ToggleButton bind:value={variable.show} label={variable.title}></ToggleButton>
+							<ToggleButton bind:value={variable.show} label={variable.title}>
+								{#snippet helpText()}
+									{variable.helpText}
+								{/snippet}
+							</ToggleButton>
 						</div>
 						{#if variable.show && variable.showSubdivision}
 							<div>

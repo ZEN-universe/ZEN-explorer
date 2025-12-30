@@ -452,7 +452,11 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Energy Balance" pageTitle="Storage">
+<DiagramPage
+	parentTitle="The Energy Balance"
+	pageTitle="Storage"
+	subtitle="Charging and discharging flows and storage levels"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
@@ -482,7 +486,11 @@
 						bind:value={selectedWindowSize}
 						label="Smoothing Window Size"
 						disabled={fetching || solutionLoading}
-					></Dropdown>
+					>
+						{#snippet helpText()}
+							Visualize the rolling average of hourly values over a longer time period.
+						{/snippet}
+					</Dropdown>
 				{/if}
 			</FilterSection>
 			{#if selectedSolution !== null && selectedCarrier !== null}
@@ -491,7 +499,11 @@
 						bind:value={selectedSubdivision}
 						label="Technology Subdivision"
 						disabled={fetching || solutionLoading}
-					></ToggleButton>
+					>
+						{#snippet helpText()}
+							Aggregate or disaggregate all the storage technologies.
+						{/snippet}
+					</ToggleButton>
 					<MultiSelect
 						options={technologies}
 						bind:value={selectedTechnologies}

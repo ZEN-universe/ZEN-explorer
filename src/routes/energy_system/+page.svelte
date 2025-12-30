@@ -494,7 +494,7 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Energy System" pageTitle="Sankey">
+<DiagramPage pageTitle="The Energy System" subtitle="Sankey diagram of energy flows">
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
