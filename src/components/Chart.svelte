@@ -297,7 +297,7 @@
 				onclick={() => toggleLegendItem(item)}
 			>
 				<ColorBox item={item as ColorBoxItem}></ColorBox>
-				<span class={[item.hidden && 'text-decoration-line-through']}>{item.text}</span>
+				<span class={[item.hidden && 'line-through']}>{item.text}</span>
 			</button>
 		{/each}
 	</div>
