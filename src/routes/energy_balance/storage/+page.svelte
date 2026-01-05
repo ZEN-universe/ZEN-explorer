@@ -64,8 +64,8 @@
 		].join('_');
 	});
 	let plotNameFlows: string = $derived(plotName + '_flows');
-	let plotOptions: ChartOptions<'line'> = $derived(getPlotOptions('Storage Level'));
-	let plotOptionsFlows: ChartOptions<'line'> = $derived(getPlotOptions('Storage Flow'));
+	let plotOptions: ChartOptions = $derived(getPlotOptions('Storage Level'));
+	let plotOptionsFlows: ChartOptions = $derived(getPlotOptions('Storage Flow'));
 
 	// Zoom level for both plots
 	let zoomLevel: [number, number] | null = $state(null);
@@ -86,7 +86,7 @@
 		});
 	});
 
-	function getPlotOptions(label: string): ChartOptions<'line'> {
+	function getPlotOptions(label: string): ChartOptions {
 		return {
 			animation: false,
 			normalized: true,
@@ -318,12 +318,12 @@
 		return Array.from({ length: numberOfTimeSteps }, (_, i) => i.toString());
 	});
 
-	let levelDatasets: ChartDataset<'bar' | 'line'>[] = [];
-	let flowDatasets: ChartDataset<'bar' | 'line'>[] = [];
+	let levelDatasets: ChartDataset[] = [];
+	let flowDatasets: ChartDataset[] = [];
 	let levelDatasetsLength: number = $state(0);
 	let numberOfTimeSteps: number = $state(0);
 
-	function computeDatasets(): [ChartDataset<'bar' | 'line'>[], ChartDataset<'bar' | 'line'>[]] {
+	function computeDatasets(): [ChartDataset[], ChartDataset[]] {
 		if (
 			selectedSolution === null ||
 			fetching ||
@@ -510,7 +510,7 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons chart={levelPlot as Chart} downloadable zoomable></ChartButtons>
+		<ChartButtons charts={[levelPlot as Chart, flowPlot as Chart]} downloadable zoomable></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}

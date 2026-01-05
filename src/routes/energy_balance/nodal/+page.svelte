@@ -488,7 +488,7 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons chart={plot as Chart} downloadable zoomable></ChartButtons>
+		<ChartButtons charts={[plot as Chart, dualsPlot as Chart]} downloadable zoomable></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}

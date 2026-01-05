@@ -701,7 +701,7 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons chart={chart as Chart} downloadable></ChartButtons>
+		<ChartButtons charts={[chart as Chart]} downloadable></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}

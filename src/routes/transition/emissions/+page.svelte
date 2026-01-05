@@ -266,7 +266,7 @@
 
 		if (annual_unit_data.data) {
 			cumulationUnits = Object.fromEntries(
-				annual_unit_data.data.map((unit: any) => {
+				annual_unit_data.data.map((unit: Record<string, string>) => {
 					return [unit.carrier, unit[0] || unit.units];
 				})
 			);
@@ -511,7 +511,7 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons chart={chart as Chart} downloadable></ChartButtons>
+		<ChartButtons charts={[chart as Chart]} downloadable></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}
