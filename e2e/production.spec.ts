@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test(`production: carrier`, async ({ page }) => {
+test(`production: carrier subdivision off`, async ({ page }) => {
 	await page.goto('/transition/production/');
 	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
 	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
@@ -8,10 +8,12 @@ test(`production: carrier`, async ({ page }) => {
 	await page.getByRole('option', { name: 'perfect_foresight' }).click();
 	await page.getByRole('combobox', { name: 'Carrier' }).click();
 	await page.getByRole('option', { name: 'carbon' }).click();
+	await page.getByText('with Subdivision on').first().getByRole('switch').click();
+	await page.getByText('with Subdivision on').first().getByRole('switch').click();
 	await expect(page.locator('#chart-container')).toHaveScreenshot(`eeht_pf/carbon.png`);
 });
 
-test('production: conversion subdivision', async ({ page }) => {
+test('production: conversion subdivision on', async ({ page }) => {
 	await page.goto('/transition/production/');
 	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
 	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
@@ -19,7 +21,6 @@ test('production: conversion subdivision', async ({ page }) => {
 	await page.getByRole('option', { name: 'perfect_foresight' }).click();
 	await page.getByRole('combobox', { name: 'Carrier' }).click();
 	await page.getByRole('option', { name: 'biomass' }).click();
-	await page.getByText('with Subdivision off').getByRole('switch').click();
 	await expect(page.locator('#chart-container')).toHaveScreenshot(
 		`eeht_pf/biomass/conversion-subdivision.png`
 	);
@@ -33,6 +34,7 @@ test('production: conversion technology', async ({ page }) => {
 	await page.getByRole('option', { name: 'perfect_foresight' }).click();
 	await page.getByRole('combobox', { name: 'Carrier' }).click();
 	await page.getByRole('option', { name: 'biomass' }).click();
+	await page.getByText('with Subdivision on').first().getByRole('switch').click();
 	await page.getByRole('combobox', { name: 'Conversion' }).click();
 	await page.getByRole('option', { name: 'biomass_boiler', exact: true }).click();
 	await expect(page.locator('#chart-container')).toHaveScreenshot(
@@ -48,6 +50,9 @@ test('production: normalization', async ({ page }) => {
 	await page.getByRole('option', { name: 'perfect_foresight' }).click();
 	await page.getByRole('combobox', { name: 'Carrier' }).click();
 	await page.getByRole('option', { name: 'electricity', exact: true }).click();
+	await page.getByText('with Subdivision on').first().getByRole('switch').click();
+	await page.getByText('with Subdivision on').first().getByRole('switch').click();
+	await page.getByText('with Subdivision on').first().getByRole('switch').click();
 	await page.getByRole('switch', { name: 'Normalization off' }).click();
 	await expect(page.locator('#chart-container')).toHaveScreenshot(
 		`eeht_pf/electricity/normalization-on.png`
@@ -78,6 +83,7 @@ test('production: nodes', async ({ page }) => {
 	await page.getByRole('option', { name: 'perfect_foresight' }).click();
 	await page.getByRole('combobox', { name: 'Carrier' }).click();
 	await page.getByRole('option', { name: 'biomass' }).click();
+	await page.getByText('with Subdivision on').first().getByRole('switch').click();
 	await page.getByText('Nodes Deselect All').getByRole('button').click();
 	await expect(page.getByRole('main')).toHaveText('No data with this selection');
 	await page.getByRole('combobox', { name: 'Nodes' }).click();
@@ -95,6 +101,7 @@ test('production: years', async ({ page }) => {
 	await page.getByRole('option', { name: 'perfect_foresight' }).click();
 	await page.getByRole('combobox', { name: 'Carrier' }).click();
 	await page.getByRole('option', { name: 'biomass' }).click();
+	await page.getByText('with Subdivision on').first().getByRole('switch').click();
 	await page.getByText('Years Deselect All').getByRole('button').click();
 	await expect(page.getByRole('main')).toHaveText('No data with this selection');
 	await page.getByRole('combobox', { name: 'Years' }).click();
