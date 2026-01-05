@@ -522,7 +522,8 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons charts={[levelPlot as Chart, flowPlot as Chart]} downloadable zoomable></ChartButtons>
+		<ChartButtons charts={[levelPlot as Chart, flowPlot as Chart]} downloadable zoomable
+		></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}

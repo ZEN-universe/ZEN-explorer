@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.0 (2026-01-05)
+
+- [Production] Enable subdivision by default.
+- Download data and PNGs of all charts at once.
+- Restore strike through line for disabled legend items.
+- Integrate Floating UI to position tooltips.
+- Add Apache v2 license.
+- [Nodal, Storage] Use Entries class.
+- Refactor: make all functions camelCase, rename, and reorder them.
+- Add brief installation and usage instructions to README.
+- Show filter options while data is being fetched.
+- Update ZEN-temple endpoints and use new server-side filter by carrier option.
+- Add custom error and warning messages.
+
 ## 0.8.1 (2025-11-24)
 
 - Fix resetting selection in dropdowns when options change.

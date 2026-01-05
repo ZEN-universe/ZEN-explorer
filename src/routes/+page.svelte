@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { computePosition, shift, offset, arrow, autoPlacement, flip } from '@floating-ui/dom';
+	import { computePosition, shift, offset, arrow, flip } from '@floating-ui/dom';
 	import { resolve } from '$app/paths';
 	import { tick } from 'svelte';
 
