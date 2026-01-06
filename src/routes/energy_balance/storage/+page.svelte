@@ -20,6 +20,7 @@
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import Entries from '$lib/entries';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	// All but one data variable are non-reactive because of their size
 	let levelResponse: Entries | null = null;
@@ -178,7 +179,12 @@
 			return [];
 		}
 
-		return removeDuplicates(Object.values(selectedSolution.detail.reference_carrier)).sort();
+		const set: Set<string> = new SvelteSet();
+		selectedSolution.detail.system.set_storage_technologies.forEach((tech) => {
+			const carrier = selectedSolution!.detail.reference_carrier[tech];
+			if (carrier) set.add(carrier);
+		});
+		return Array.from(set).sort();
 	});
 
 	let technologies: string[] = $derived.by(() => {
