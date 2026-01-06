@@ -36,6 +36,8 @@
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import { SvelteSet } from 'svelte/reactivity';
+	import PiePlot from './PiePlot.svelte';
+	import { getTheme } from '@/lib/theme.svelte';
 
 	const technologyCarrierLabel = 'Technology / Carrier';
 	const capexSuffix = ' (Capex)';
@@ -64,6 +66,9 @@
 	let selectedAggregation: string = $state('Location');
 	let selectedLocations: string[] = $state([]);
 	let selectedYears: string[] = $state([]);
+
+	let activeYear: string | null = $state(null);
+	let activeSolution: string | null = $state(null);
 
 	let urlConversionTechnologies: number[] | null = null;
 	let urlStorageTechnologies: number[] | null = null;
@@ -159,6 +164,24 @@
 		return '';
 	});
 	let plotOptions: ChartOptions = $derived({
+		datasets: {
+			bar: {
+				borderColor: getTheme() === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+				borderWidth: (e) => {
+					if (
+						!activeYear ||
+						!activeSolution ||
+						e.chart.data.labels?.[e.dataIndex] !== activeYear ||
+						e.chart.data.datasets[e.datasetIndex].stack !== activeSolution
+					) {
+						return 0;
+					}
+					return 7;
+				},
+				borderRadius: 0,
+				borderSkipped: 'middle'
+			}
+		},
 		maintainAspectRatio: false,
 		scales: {
 			x: {
@@ -182,7 +205,7 @@
 			axis: 'x'
 		}
 	});
-	let plotPluginOptions = {
+	let plotPluginOptions: ChartOptions['plugins'] = {
 		tooltip: {
 			callbacks: {
 				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
@@ -191,8 +214,17 @@
 					if (items.length > 0) {
 						return `${items[0].label} - ${items[0].dataset.stack}`;
 					}
+				},
+				labelColor: (context) => {
+					return {
+						borderColor: context.dataset.backgroundColor as string,
+						backgroundColor: context.dataset.backgroundColor as string,
+						borderWidth: 0
+					};
 				}
-			}
+			},
+			filter: (item) => Math.abs(item.parsed.y || 0) > 1.0e-6,
+			borderWidth: 0
 		}
 	};
 
@@ -426,7 +458,22 @@
 	//#endregion
 
 	function onSolutionChanged() {
+		activeYear = null;
+		activeSolution = null;
 		fetchData();
+	}
+
+	function onClickBar(year: string, datasetIndex: number) {
+		if (!year) return;
+
+		const stack = datasets[datasetIndex].stack;
+		if (!stack || (activeYear === year && activeSolution === stack)) {
+			activeYear = null;
+			activeSolution = null;
+		} else {
+			activeYear = year;
+			activeSolution = stack;
+		}
 	}
 
 	//#region Data fetching and processing
@@ -496,7 +543,7 @@
 		debounceUpdateAllSelectedTechnologies();
 	});
 
-	let [datasets, patterns]: [ChartDataset<'bar' | 'line'>[], ColorBoxItem[]] = $derived.by(() => {
+	let [datasets, patterns]: [ChartDataset[], ColorBoxItem[]] = $derived.by(() => {
 		if (allSelectedTechnologies.length == 0) {
 			return [[], []];
 		}
@@ -575,7 +622,6 @@
 				return {
 					label,
 					data: entry.data,
-					borderColor: color,
 					backgroundColor:
 						pattern !== undefined
 							? drawPattern(pattern, addTransparency(color))
@@ -593,7 +639,6 @@
 				datasets.push({
 					data: carbonCostEntries.get(0)!.data,
 					label: 'Total Carbon Costs',
-					borderColor: color,
 					backgroundColor:
 						pattern !== undefined
 							? drawPattern(pattern, addTransparency(color))
@@ -738,8 +783,16 @@
 				{patterns}
 				generateLabels={generateLabelsForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
+				{onClickBar}
 				bind:this={chart}
 			></Chart>
+			<PiePlot
+				datasets={datasets as ChartDataset<'bar'>[]}
+				{labels}
+				year={activeYear}
+				solution={activeSolution}
+				tooltipSuffix={` ${unit}`}
+			></PiePlot>
 		{/if}
 	{/snippet}
 </DiagramPage>

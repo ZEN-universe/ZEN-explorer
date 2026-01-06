@@ -1,7 +1,12 @@
 <script lang="ts">
 	import Chart from '$components/Chart.svelte';
 	import ContentBox from '$components/ContentBox.svelte';
-	import type { ChartDataset, ChartTypeRegistry, TooltipItem } from 'chart.js';
+	import {
+		getDataForActiveYear,
+		getPlotOptions,
+		hasMultipleSolutions as hasMultipleSolutionsFn
+	} from '@/lib/piePlots';
+	import type { ChartDataset } from 'chart.js';
 
 	interface Props {
 		datasets: ChartDataset<'bar'>[];
@@ -12,49 +17,9 @@
 	}
 	let { datasets, labels, year, solution, tooltipSuffix }: Props = $props();
 
-	let dataForActiveYear = $derived.by(() => {
-		if (year == null) return [];
+	let dataForActiveYear = $derived(getDataForActiveYear(datasets, year, solution, labels));
 
-		const idx = labels.findIndex((label) => label === year);
-		return datasets
-			.filter((d) => d.stack === solution)
-			.map((d) => {
-				return {
-					data: d.data.find((_, i) => i === idx),
-					color: d.backgroundColor,
-					label: d.label
-				};
-			});
-	});
-
-	let hasMultipleSolutions = $derived(new Set(datasets.map((d) => d.stack)).size > 1);
-
-	function getPlotOptions() {
-		return {
-			animation: {
-				duration: 0
-			},
-			maintainAspectRatio: true,
-			radius: '90%',
-			plugins: {
-				tooltip: {
-					callbacks: {
-						label: (item: TooltipItem<keyof ChartTypeRegistry>) => {
-							const value = Number(item.raw || 0);
-							const total = item.dataset.data
-								.map((val) => Number(val || 0))
-								.reduce((acc, val) => acc + val, 0);
-							const percentage = ((value * 100) / total).toFixed(2);
-							return `${item.dataset.label}: ${item.formattedValue}${tooltipSuffix} (${percentage}%)`;
-						}
-					}
-				},
-				legend: {
-					position: 'top' as const
-				}
-			}
-		};
-	}
+	let hasMultipleSolutions = $derived(hasMultipleSolutionsFn(datasets));
 
 	function filterDatasets(
 		criteria: (value: number) => boolean,
@@ -86,15 +51,15 @@
 
 	let productionDatasets = $derived(
 		filterDatasets((value) => value > 1.0e-6, 'Production')
-	) as unknown as ChartDataset<keyof ChartTypeRegistry>[];
+	) as unknown as ChartDataset<'pie'>[];
 	let productionLabels = $derived(filterLabels((value) => value > 1.0e-6));
-	let productionOptions = $derived(getPlotOptions());
+	let productionOptions = $derived(getPlotOptions(tooltipSuffix));
 
 	let consumptionDatasets = $derived(
 		filterDatasets((value) => value < -1.0e-6, 'Consumption')
-	) as unknown as ChartDataset<keyof ChartTypeRegistry>[];
+	) as unknown as ChartDataset<'pie'>[];
 	let consumptionLabels = $derived(filterLabels((value) => value < -1.0e-6));
-	let consumptionOptions = $derived(getPlotOptions());
+	let consumptionOptions = $derived(getPlotOptions(tooltipSuffix));
 </script>
 
 {#if year == null || solution == null}

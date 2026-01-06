@@ -152,6 +152,7 @@
 	let selectedNormalization: boolean = $state(false);
 	let selectedNodes: string[] = $state([]);
 	let selectedYears: string[] = $state([]);
+
 	let activeYear: string | null = $state(null);
 	let activeSolution: string | null = $state(null);
 
@@ -486,7 +487,7 @@
 		fetchData();
 	}
 
-	function onBarClick(year: string, datasetIndex: number) {
+	function onClickBar(year: string, datasetIndex: number) {
 		if (!year) {
 			return;
 		}
@@ -494,10 +495,10 @@
 		if (!stack || (activeYear === year && activeSolution === stack)) {
 			activeYear = null;
 			activeSolution = null;
-			return;
+		} else {
+			activeYear = year;
+			activeSolution = stack || null;
 		}
-		activeYear = year;
-		activeSolution = stack || null;
 	}
 
 	//#region Fetch and process data
@@ -814,7 +815,7 @@
 				{patterns}
 				{generateLabels}
 				onClickLegend={onClickLegendForSolutionComparison}
-				onClickBar={onBarClick}
+				{onClickBar}
 				bind:this={chart}
 			></Chart>
 

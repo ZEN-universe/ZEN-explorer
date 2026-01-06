@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { addCurrentSolutionToURL } from '$lib/queryParams.svelte';
+	import { getTheme, toggleTheme } from '@/lib/theme.svelte';
 
 	const transition_urls = {
 		Capacity: resolve('/transition/capacity'),
@@ -17,43 +18,18 @@
 
 	let currentPage = $derived(page.url.pathname.slice(0, -1));
 
-	//#region Theme
+	let theme = $derived(getTheme());
 
-	let theme: 'light' | 'dark' | 'system' = $state(localStorage.theme || 'system');
-
-	function toggleTheme() {
-		theme = theme === 'dark' ? 'light' : 'dark';
-		localStorage.theme = theme;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		(window as any).updateTheme();
-	}
-
-	//#endregion
-
-	//#region Navigation
+	$effect(() => {
+		document.documentElement.classList.toggle('dark', theme === 'dark');
+	});
 
 	let showSidebarNav: boolean = $state(false);
 
 	function toggleNavigation() {
 		showSidebarNav = !showSidebarNav;
 	}
-
-	//#endregion
 </script>
-
-<svelte:head>
-	<script>
-		updateTheme = () => {
-			document.documentElement.classList.toggle(
-				'dark',
-				localStorage.theme === 'dark' ||
-					(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-			);
-			window.dispatchEvent(new Event('themeChange'));
-		};
-		updateTheme();
-	</script>
-</svelte:head>
 
 <nav
 	class="flex gap-4 xl:gap-0 xl:grid grid-cols-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2"

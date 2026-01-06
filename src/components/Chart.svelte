@@ -2,12 +2,13 @@
 	import BaseChart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
-	import { onDestroy, onMount, tick } from 'svelte';
+	import { onDestroy, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
 
 	import ColorBox, { type ColorBoxItem } from '$components/ColorBox.svelte';
 	import HelpTooltip from './HelpTooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
+	import { getTheme } from '@/lib/theme.svelte';
 
 	BaseChart.register(zoomPlugin);
 
@@ -125,13 +126,8 @@
 	// Used to temporarily hide and show the chart when updating colors
 	let showChart: boolean = $state(true);
 
-	onMount(() => {
-		updateDefaultColor();
-		window.addEventListener('themeChange', onUpdateColor);
-	});
-
-	onDestroy(() => {
-		window.removeEventListener('themeChange', onUpdateColor);
+	$effect(() => {
+		onUpdateColor();
 	});
 
 	async function onUpdateColor() {
@@ -142,10 +138,7 @@
 	}
 
 	function updateDefaultColor() {
-		const isDark =
-			window.localStorage.getItem('theme') === 'dark' ||
-			(!window.localStorage.getItem('theme') &&
-				window.matchMedia('(prefers-color-scheme: dark)').matches);
+		const isDark = getTheme() === 'dark';
 		BaseChart.defaults.color = isDark ? '#ddd' : '#222';
 		BaseChart.defaults.borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 	}
@@ -339,8 +332,10 @@
 			{@render legend()}
 		</div>
 	{/if}
-	<div class="flex mb-4">
-		{@render patternSnippet()}
-	</div>
+	{#if patterns.length > 1}
+		<div class="flex mb-4">
+			{@render patternSnippet()}
+		</div>
+	{/if}
 	{@render chartSnippet()}
 {/if}
