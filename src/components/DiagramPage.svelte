@@ -29,7 +29,7 @@
 			{/if}
 			<h1 class="text-3xl font-bold">{pageTitle}</h1>
 			{#if subtitle}
-				<div class="text-gray-600 dark:text-gray-400 mt-1">{subtitle}</div>
+				<div class="text-gray-600 dark:text-gray-400 mt-1 text-xl">{subtitle}</div>
 			{/if}
 		</div>
 	</div>

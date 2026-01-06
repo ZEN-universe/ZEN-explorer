@@ -1,7 +1,6 @@
 <script lang="ts">
 	import Chart from '$components/Chart.svelte';
 	import Button from './Button.svelte';
-	import HelpTooltip from './HelpTooltip.svelte';
 
 	interface Props {
 		charts: (Chart | undefined)[];
@@ -11,6 +10,13 @@
 	let { charts, zoomable = false, downloadable = false }: Props = $props();
 
 	let hasCharts: boolean = $derived(charts.filter((c) => c).length > 0);
+
+	let canMoveLeft: boolean = $derived(
+		zoomable && hasCharts && charts[0] ? charts[0].canMove(false) : false
+	);
+	let canMoveRight: boolean = $derived(
+		zoomable && hasCharts && charts[0] ? charts[0].canMove(true) : false
+	);
 
 	function downloadAllChartsData() {
 		if (!hasCharts) return;
@@ -39,13 +45,26 @@
 					<i class="bi bi-arrows-angle-expand me-2"></i>
 					<div>Zoom in</div>
 				</Button>
-				<Button class="-ml-[2px] rounded-l-none rounded-r-lg" onclick={charts[0]?.zoomOut}>
+				<Button class="-ml-[2px] rounded-none" onclick={charts[0]?.zoomOut}>
 					<i class="bi bi-arrows-angle-contract me-2"></i>
 					<div>Zoom out</div>
 				</Button>
-				<div class="ms-1">
-					<HelpTooltip>Click and drag over the plot to select a custom time horizon.</HelpTooltip>
-				</div>
+				<Button
+					class="-ml-[2px] rounded-none"
+					disabled={!canMoveLeft}
+					onclick={() => charts[0]?.move(false)}
+				>
+					<i class="bi bi-arrow-bar-left me-2"></i>
+					<div>Move left</div>
+				</Button>
+				<Button
+					class="-ml-[2px] rounded-l-none rounded-r-lg"
+					disabled={!canMoveRight}
+					onclick={() => charts[0]?.move(true)}
+				>
+					<i class="bi bi-arrow-bar-right me-2"></i>
+					<div>Move right</div>
+				</Button>
 			</div>
 		{/if}
 		{#if downloadable}

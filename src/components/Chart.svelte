@@ -147,6 +147,8 @@
 
 	//#region Zooming
 
+	let xScale: [number, number] | null = $state(null);
+
 	function setZoomLevel({ chart }: { chart: BaseChart }) {
 		if (chart == undefined || chart.canvas == null) {
 			return;
@@ -159,19 +161,58 @@
 			return;
 		}
 		chart.zoomScale('x', { min: zoomLevel[0], max: zoomLevel[1] });
+		updateXScale();
 	}
 	$effect(updateZoomLevel);
 
+	function updateXScale() {
+		if (chart == undefined || chart.canvas == null) {
+			return;
+		}
+		xScale = [chart.scales['x'].min as number, chart.scales['x'].max as number];
+	}
+
 	export function resetZoom() {
 		chart?.resetZoom();
+		updateXScale();
 	}
 
 	export function zoomIn() {
 		chart?.zoom(1.2);
+		updateXScale();
 	}
 
 	export function zoomOut() {
 		chart?.zoom(0.8);
+		updateXScale();
+	}
+
+	export function move(forward: boolean) {
+		if (chart == undefined || chart.canvas == null) {
+			return;
+		}
+		const xScale = chart.scales['x'];
+		const range = xScale.max! - xScale.min!;
+		const sign = forward ? 1 : -1;
+		let amount = 0.3 * range;
+		if (forward) {
+			amount = Math.min(amount, (chart.data.labels as string[]).length - 1 - xScale.max!);
+		} else {
+			amount = Math.min(amount, xScale.min!);
+		}
+		chart.zoomScale('x', { min: xScale.min! + sign * amount, max: xScale.max! + sign * amount });
+		updateXScale();
+	}
+
+	export function canMove(forward: boolean): boolean {
+		if (chart == undefined || chart.canvas == null || xScale == null) {
+			return false;
+		}
+		if (forward) {
+			return xScale[1] < (chart.data.labels as string[]).length - 1;
+		} else {
+			return xScale[0] > 0;
+		}
 	}
 
 	//#endregion
