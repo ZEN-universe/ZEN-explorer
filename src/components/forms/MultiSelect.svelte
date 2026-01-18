@@ -1,6 +1,6 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
-	import SlimSelect from './SlimSelect.svelte';
+	import Select from './Select.svelte';
 
 	interface Props {
 		label: string;
@@ -59,5 +59,5 @@
 {#if options.length == 0}
 	<div class="text-gray-500 italic text-sm mb-2">{emptyText}</div>
 {:else}
-	<SlimSelect id={formId} {label} bind:value {options} {disabled} multiple {onUpdate}></SlimSelect>
+	<Select id={formId} {label} bind:value {options} {disabled} multiple {onUpdate}></Select>
 {/if}

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import '../app.css';
 	import 'bootstrap-icons/font/bootstrap-icons.min.css';
-	import 'slim-select/styles';
 
 	import Navigation from '$components/Navigation.svelte';
 	import { env } from '$env/dynamic/public';

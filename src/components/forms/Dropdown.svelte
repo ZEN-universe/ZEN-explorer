@@ -1,7 +1,7 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
 	import type { Snippet } from 'svelte';
-	import SlimSelect from './SlimSelect.svelte';
+	import Select from './Select.svelte';
 
 	interface Props {
 		options: ({ label: string; value: string } | string)[];
@@ -9,8 +9,7 @@
 		label: string;
 		helpText?: Snippet;
 		disabled?: boolean;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		onUpdate?: (value: any) => void;
+		onUpdate?: (value: string) => void;
 	}
 
 	let {
@@ -39,5 +38,5 @@
 {#if options.length == 0}
 	<div class="text-gray-500 dark:text-gray-400 italic">No options available</div>
 {:else}
-	<SlimSelect id={formId} {label} bind:value {options} {disabled} {onUpdate}></SlimSelect>
+	<Select id={formId} {label} bind:value {options} {disabled} {onUpdate}></Select>
 {/if}
