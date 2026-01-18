@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.1 (2026-01-18)
+
+- Add legend to PNGs of charts.
+- Add error route.
+- Replace slim-select by custom implementation.
+- [Nodal, Storage] Add move in and out buttons.
+- [Storage] Only show carriers with storage technologies.
+- [Costs] Add pie plot.
+
 ## 0.9.0 (2026-01-05)
 
 - [Production] Enable subdivision by default.
