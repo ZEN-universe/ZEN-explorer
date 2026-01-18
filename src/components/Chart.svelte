@@ -50,6 +50,8 @@
 		onClickBar
 	}: Props = $props();
 
+	let captureScreenshot: boolean = $state(false);
+
 	let chart: BaseChart | undefined = undefined;
 
 	let manualChartDatasets: ChartDataset[] | undefined = undefined;
@@ -102,8 +104,11 @@
 		};
 
 		optionsSnapshot.plugins.legend = {
-			display: false
+			display: captureScreenshot
 		};
+		if (captureScreenshot) {
+			optionsSnapshot.animation = false;
+		}
 
 		if (!zoom) {
 			return optionsSnapshot as ChartOptions;
@@ -295,15 +300,20 @@
 	//#endregion
 
 	//#region Download chart as image
-	export function downloadChartAsImage() {
+	export async function downloadChartAsImage() {
 		if (chart == undefined) {
 			return;
 		}
+
+		captureScreenshot = true;
+		await tick();
+
 		const link = document.createElement('a');
 		link.download = plotName + '.png';
-		link.href = chart.toBase64Image();
+		link.href = chart!.toBase64Image();
 		document.body.appendChild(link); // Required for Firefox
 		link.click();
+		captureScreenshot = false;
 	}
 	//#endregion
 

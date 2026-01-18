@@ -125,7 +125,7 @@
 </script>
 
 <input type="hidden" bind:value {id} />
-<div class="mb-4 relative" bind:this={container}>
+<div class="mb-2 relative" bind:this={container}>
 	<div
 		class={[
 			'relative rounded-md pl-2 pr-6 py-2 cursor-pointer w-full',
