@@ -3,8 +3,6 @@
 	import { resolve } from '$app/paths';
 	import { tick } from 'svelte';
 
-	import transitionPathwaySketch from '@/plot-sketches/transition-pathway.svg';
-
 	let transitionPathwaySection = $state<HTMLElement>();
 	let energyBalanceSection = $state<HTMLElement>();
 	let energySystemSection = $state<HTMLElement>();
@@ -242,7 +240,6 @@
 		>
 			{#if activeSectionId === 'transition-pathway'}
 				<p>Annual values and how they change over time</p>
-				<img src={transitionPathwaySketch} width="400" alt="Transition Pathway Sketch" />
 			{:else if activeSectionId === 'energy-balance'}
 				<p>Hourly time series of operational variables</p>
 			{:else if activeSectionId === 'energy-system'}

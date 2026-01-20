@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.2 (2026-01-20)
+
+- Remove sketch plot for transition pathway.
+
 ## 0.9.1 (2026-01-18)
 
 - Add legend to PNGs of charts.
