@@ -19,7 +19,7 @@
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
-	} from '$lib/compareSolutions';
+	} from '$lib/compareSolutions.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';

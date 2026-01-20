@@ -1,5 +1,5 @@
 <script lang="ts">
-	import ErrorMessage from "$components/ErrorMessage.svelte";
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import { page } from '$app/state';
 </script>
 

@@ -31,7 +31,12 @@
 </script>
 
 {#if isCanvasPattern}
-	<canvas width="40" height="12" class="legend-box me-1" {@attach renderCanvas}></canvas>
+	<canvas
+		width="40"
+		height="12"
+		class={['legend-box me-1', item.hidden && 'opacity-50']}
+		{@attach renderCanvas}
+	></canvas>
 {:else}
 	<svg width="40" height="12" class="legend-box me-1">
 		<rect

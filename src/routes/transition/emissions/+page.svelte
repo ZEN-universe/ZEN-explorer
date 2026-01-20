@@ -23,7 +23,7 @@
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
-	} from '$lib/compareSolutions';
+	} from '$lib/compareSolutions.svelte';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import Spinner from '$components/Spinner.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';

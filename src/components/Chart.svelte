@@ -9,6 +9,7 @@
 	import HelpTooltip from './HelpTooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
 	import { getTheme } from '@/lib/theme.svelte';
+	import { getHiddenPatterns, onClickPattern } from '@/lib/compareSolutions.svelte';
 
 	BaseChart.register(zoomPlugin);
 
@@ -100,7 +101,7 @@
 			plugins: {
 				...(options?.plugins ?? {}),
 				...pluginOptions
-			} as Record<string, any>
+			} as NonNullable<ChartOptions<ChartType>['plugins']>
 		};
 
 		optionsSnapshot.plugins.legend = {
@@ -262,6 +263,19 @@
 		chart.update();
 	}
 
+	let patternsWithHiddenState: ColorBoxItem[] = $derived.by(() => {
+		const hiddenPatterns = getHiddenPatterns();
+		return patterns.map((pattern) => ({
+			...pattern,
+			hidden: hiddenPatterns.has(pattern.text)
+		}));
+	});
+
+	function togglePattern(pattern: ColorBoxItem) {
+		if (chart === undefined) return;
+		onClickPattern(pattern, chart);
+	}
+
 	//#endregion
 
 	//#region Download data
@@ -332,7 +346,7 @@
 {#snippet legend()}
 	<h2 class="flex items-start font-bold text-lg me-4">
 		<span class="me-2">Legend</span>
-		<HelpTooltip>Click on legend items to show/hide them in the chart.</HelpTooltip>
+		<HelpTooltip>Click on legend items to temporarily show/hide them in the chart.</HelpTooltip>
 	</h2>
 	<div class="flex flex-wrap gap-2">
 		{#each legendItems as item, idx (idx)}
@@ -348,14 +362,20 @@
 {/snippet}
 
 {#snippet patternSnippet()}
-	{#if patterns.length > 1}
-		<h2 class="font-bold text-lg me-4">Patterns</h2>
+	{#if patternsWithHiddenState.length > 1}
+		<h2 class="font-bold text-lg me-4">
+			<span class="me-2">Patterns</span>
+			<HelpTooltip>Click on pattern items to temporarily show/hide them in the chart.</HelpTooltip>
+		</h2>
 		<div class="legend flex flex-wrap gap-2">
-			{#each patterns as pattern, idx (idx)}
-				<div class="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+			{#each patternsWithHiddenState as pattern, idx (idx)}
+				<button
+					class="flex items-center text-gray-600 dark:text-gray-400 text-sm"
+					onclick={() => togglePattern(pattern)}
+				>
 					<ColorBox item={pattern}></ColorBox>
-					<span>{pattern.text}</span>
-				</div>
+					<span class={[pattern.hidden && 'line-through']}>{pattern.text}</span>
+				</button>
 			{/each}
 		</div>
 	{/if}

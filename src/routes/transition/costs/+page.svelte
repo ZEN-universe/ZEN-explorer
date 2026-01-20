@@ -28,7 +28,7 @@
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
-	} from '$lib/compareSolutions';
+	} from '$lib/compareSolutions.svelte';
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';

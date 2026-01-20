@@ -26,7 +26,7 @@
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
-	} from '$lib/compareSolutions';
+	} from '$lib/compareSolutions.svelte';
 	import { getTransportEdges } from '$lib/utils';
 	import {
 		getURLParam,
