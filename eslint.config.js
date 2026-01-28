@@ -25,7 +25,6 @@ export default defineConfig(
 	},
 	{
 		files: ['**/*.svelte', '**/*.svelte.ts'],
-
 		languageOptions: {
 			parserOptions: {
 				parser: ts.parser
