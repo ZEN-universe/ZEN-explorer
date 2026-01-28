@@ -377,7 +377,7 @@
 
 	{#snippet buttons()}
 		{#if plot}
-			<div class="flex justify-end items-end h-full gap-4">
+			<div class="flex h-full items-end justify-end gap-4">
 				<Button onclick={plot?.resetZoom}>
 					<i class="bi bi-house me-2"></i>
 					<div class="visually-hidden">Reset zoom</div>

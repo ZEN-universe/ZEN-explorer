@@ -11,9 +11,9 @@
 	let { formId, label, helpText, rightSide }: Props = $props();
 </script>
 
-<div class="flex justify-between items-center mb-1">
+<div class="mb-1 flex items-center justify-between">
 	<div class="flex items-center gap-2">
-		<div class="uppercase text-gray-600 dark:text-gray-400 tracking-wide text-sm">
+		<div class="text-sm tracking-wide text-gray-600 uppercase dark:text-gray-400">
 			{#if formId}
 				<label for={formId} class="fw-medium fs-4">{label}</label>
 			{:else}

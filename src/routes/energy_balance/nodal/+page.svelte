@@ -524,7 +524,7 @@
 			></Chart>
 			{#if dualsDatasetsLength > 0}
 				<ContentBox>
-					<h2 class="font-bold text-lg">
+					<h2 class="text-lg font-bold">
 						<span class="me-2">Shadow Prices</span>
 						<HelpTooltip>
 							Shadow price of the nodal energy balance of carrier {selectedCarrier}. Indicates the
@@ -549,7 +549,7 @@
 				</ContentBox>
 			{:else}
 				<ContentBox>
-					<div class="text-center text-xl text-muted my-2">No shadow prices available.</div>
+					<div class="text-muted my-2 text-center text-xl">No shadow prices available.</div>
 				</ContentBox>
 			{/if}
 		{/if}

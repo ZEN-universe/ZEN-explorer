@@ -455,7 +455,7 @@
 						{#snippet helpText()}
 							<div>
 								Select the variable which to shown on the plot:
-								<ul class="list-disc list-outside ml-4">
+								<ul class="ml-4 list-outside list-disc">
 									<li>
 										The variable "capacity" shows the total capacity in a given year and consists of
 										the sum of existing capacities, previously installed capacities, and new
@@ -496,7 +496,7 @@
 					<Radio label="Aggregation" options={aggregationOptions} bind:value={selectedAggregation}>
 						{#snippet helpText()}
 							Aggregate capacities belonging to the same node or technology.
-							<ul class="list-disc list-outside ml-4">
+							<ul class="ml-4 list-outside list-disc">
 								<li>
 									Choosing "Node" will show the capacity allocations per technology for each node
 									(selected in the "Nodes" filter below).

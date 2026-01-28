@@ -531,7 +531,7 @@
 <svelte:window onresize={handleSize} onscroll={updateSvgRect} />
 
 <ContentBox class="flex">
-	<h2 class="flex items-start font-bold text-lg me-4">
+	<h2 class="me-4 flex items-start text-lg font-bold">
 		<span class="me-2">Legend</span>
 		<HelpTooltip>Click on legend items to focus on into in the diagram.</HelpTooltip>
 	</h2>
@@ -539,7 +539,7 @@
 		<div class="flex flex-wrap gap-2">
 			{#each legendItems as item (item.carrier)}
 				<button
-					class="flex items-center p-0 text-gray-600 dark:text-gray-400 text-sm"
+					class="flex items-center p-0 text-sm text-gray-600 dark:text-gray-400"
 					onclick={() => focusCarrier(item.carrier)}
 				>
 					<svg width="40" height="12" class="me-1">
@@ -633,16 +633,16 @@
 				minX={0}
 				maxX={width}
 			>
-				<div class="font-bold text-sm px-2">
+				<div class="px-2 text-sm font-bold">
 					{activeNode.label}
 				</div>
 				{#if activeNode.linksIn.length > 0}
 					<div class={[activeNode.linksOut.length > 0 && 'border-b border-gray-400 pb-1']}>
-						<div class="font-bold text-xs px-2">Inflows:</div>
+						<div class="px-2 text-xs font-bold">Inflows:</div>
 						{#each activeNode.linksIn as linkInIdx, idx (idx)}
 							{#if links[linkInIdx].value}
-								<div class="flex justify-between text-xs px-2 text-nowrap">
-									<div class="flex items-center me-1">
+								<div class="flex justify-between px-2 text-xs text-nowrap">
+									<div class="me-1 flex items-center">
 										<svg class="me-1" width="12" height="12">
 											<rect width="12" height="12" fill={links[linkInIdx].source.color} />
 										</svg>
@@ -656,7 +656,7 @@
 							{/if}
 						{/each}
 						{#if activeNode.showTotal && activeNode.linksIn.length > 1}
-							<div class="flex justify-between text-xs px-2 pt-1 text-nowrap">
+							<div class="flex justify-between px-2 pt-1 text-xs text-nowrap">
 								<strong>Total:</strong>
 								<div>
 									{sum(activeNode.linksIn.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}
@@ -667,11 +667,11 @@
 					</div>
 				{/if}
 				{#if activeNode.linksOut.length > 0}
-					<div class="font-bold mt-1 text-sm px-2">Outflows:</div>
+					<div class="mt-1 px-2 text-sm font-bold">Outflows:</div>
 					{#each activeNode.linksOut as linkOutIdx, idx (idx)}
 						{#if links[linkOutIdx].value}
-							<div class="flex justify-between text-xs px-2 text-nowrap">
-								<div class="flex items-center me-1">
+							<div class="flex justify-between px-2 text-xs text-nowrap">
+								<div class="me-1 flex items-center">
 									<svg class="me-1" width="12" height="12">
 										<rect width="12" height="12" fill={links[linkOutIdx].target.color} />
 									</svg>
@@ -685,7 +685,7 @@
 						{/if}
 					{/each}
 					{#if activeNode.showTotal && activeNode.linksOut.length > 1}
-						<div class="flex justify-between text-xs px-2 pt-1 text-nowrap">
+						<div class="flex justify-between px-2 pt-1 text-xs text-nowrap">
 							<strong>Total:</strong>
 							<div>
 								{sum(activeNode.linksOut.map((linkIdx) => links[linkIdx]?.value || 0)).toFixed(3)}

@@ -344,14 +344,14 @@
 </script>
 
 {#snippet legend()}
-	<h2 class="flex items-start font-bold text-lg me-4">
+	<h2 class="me-4 flex items-start text-lg font-bold">
 		<span class="me-2">Legend</span>
 		<HelpTooltip>Click on legend items to temporarily show/hide them in the chart.</HelpTooltip>
 	</h2>
 	<div class="flex flex-wrap gap-2">
 		{#each legendItems as item, idx (idx)}
 			<button
-				class="flex items-center text-gray-600 dark:text-gray-400 text-sm"
+				class="flex items-center text-sm text-gray-600 dark:text-gray-400"
 				onclick={() => toggleLegendItem(item)}
 			>
 				<ColorBox item={item as ColorBoxItem}></ColorBox>
@@ -363,14 +363,14 @@
 
 {#snippet patternSnippet()}
 	{#if patternsWithHiddenState.length > 1}
-		<h2 class="font-bold text-lg me-4">
+		<h2 class="me-4 text-lg font-bold">
 			<span class="me-2">Patterns</span>
 			<HelpTooltip>Click on pattern items to temporarily show/hide them in the chart.</HelpTooltip>
 		</h2>
 		<div class="legend flex flex-wrap gap-2">
 			{#each patternsWithHiddenState as pattern, idx (idx)}
 				<button
-					class="flex items-center text-gray-600 dark:text-gray-400 text-sm"
+					class="flex items-center text-sm text-gray-600 dark:text-gray-400"
 					onclick={() => togglePattern(pattern)}
 				>
 					<ColorBox item={pattern}></ColorBox>
@@ -399,12 +399,12 @@
 	<ContentBox class="resize-y overflow-y-auto" children={chartSnippet}></ContentBox>
 {:else}
 	{#if legendItems.length > 0}
-		<div class="flex mb-4">
+		<div class="mb-4 flex">
 			{@render legend()}
 		</div>
 	{/if}
 	{#if patterns.length > 1}
-		<div class="flex mb-4">
+		<div class="mb-4 flex">
 			{@render patternSnippet()}
 		</div>
 	{/if}

@@ -30,7 +30,7 @@
 
 <div class="relative mb-2">
 	<input
-		class="appearance-none absolute inset-y-0 w-12"
+		class="absolute inset-y-0 w-12 appearance-none"
 		type="checkbox"
 		role="switch"
 		id={formId}
@@ -38,16 +38,16 @@
 		{disabled}
 		onchange={dispatchEvent}
 	/>
-	<label class={['inline-flex', disabled && 'opacity-50 cursor-not-allowed']} for={formId}>
+	<label class={['inline-flex', disabled && 'cursor-not-allowed opacity-50']} for={formId}>
 		<div
 			class={[
-				'h-6 w-12 rounded-full flex me-2 px-1',
+				'me-2 flex h-6 w-12 rounded-full px-1',
 				value ? 'bg-blue-500' : 'bg-gray-400 dark:bg-gray-600'
 			]}
 		>
 			<div
 				class={[
-					'bg-white h-4 w-4 rounded-full transition-transform duration-300 mt-1',
+					'mt-1 h-4 w-4 rounded-full bg-white transition-transform duration-300',
 					value ? 'translate-x-6' : ''
 				]}
 			></div>

@@ -45,7 +45,7 @@
 
 <FilterLabel {label} {formId}>
 	{#snippet rightSide()}
-		<button class="text-blue-500 block ml-auto" onclick={toggleAll} {disabled}>
+		<button class="ml-auto block text-blue-500" onclick={toggleAll} {disabled}>
 			{#if areAllSelected}
 				<i class="bi bi-x"></i>
 			{:else}
@@ -57,7 +57,7 @@
 </FilterLabel>
 
 {#if options.length == 0}
-	<div class="text-gray-500 italic text-sm mb-2">{emptyText}</div>
+	<div class="mb-2 text-sm text-gray-500 italic">{emptyText}</div>
 {:else}
 	<Select id={formId} {label} bind:value {options} {disabled} multiple {onUpdate}></Select>
 {/if}

@@ -36,7 +36,7 @@
 <FilterLabel {label} {formId} {helpText}></FilterLabel>
 
 {#if options.length == 0}
-	<div class="text-gray-500 dark:text-gray-400 italic">No options available</div>
+	<div class="text-gray-500 italic dark:text-gray-400">No options available</div>
 {:else}
 	<Select id={formId} {label} bind:value {options} {disabled} {onUpdate}></Select>
 {/if}

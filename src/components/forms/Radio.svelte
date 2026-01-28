@@ -37,11 +37,11 @@
 
 <FilterLabel {label} {helpText}></FilterLabel>
 
-<div class="flex gap-2 mb-2" role="radiogroup">
+<div class="mb-2 flex gap-2" role="radiogroup">
 	{#each options as option (option.value)}
 		<div class="relative">
 			<input
-				class="appearance-none absolute inset-y-0 w-4"
+				class="absolute inset-y-0 w-4 appearance-none"
 				id={'radio-' + option.value}
 				type="radio"
 				bind:group={value}
@@ -52,14 +52,14 @@
 			<label class="flex items-center" for={'radio-' + option.value}>
 				<div
 					class={[
-						'h-4 w-4 border-2 rounded-full me-2 flex items-center justify-center',
+						'me-2 flex h-4 w-4 items-center justify-center rounded-full border-2',
 						!disabled && value === option.value
 							? 'border-blue-500'
 							: 'border-gray-400 dark:border-gray-600'
 					]}
 				>
 					{#if value === option.value}
-						<div class="bg-blue-500 h-2 w-2 rounded-full"></div>
+						<div class="h-2 w-2 rounded-full bg-blue-500"></div>
 					{/if}
 				</div>
 				{option.label}

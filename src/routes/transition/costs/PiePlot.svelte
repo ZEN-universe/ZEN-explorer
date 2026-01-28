@@ -46,11 +46,11 @@
 
 {#if year == null || solution == null}
 	<ContentBox>
-		<div class="text-center text-xl text-muted my-2">Click on a bar to see a costs breakdown.</div>
+		<div class="text-muted my-2 text-center text-xl">Click on a bar to see a costs breakdown.</div>
 	</ContentBox>
 {:else}
 	<ContentBox>
-		<h3 class="font-semibold text-lg mb-4">
+		<h3 class="mb-4 text-lg font-semibold">
 			Breakdown of Costs for {year}
 			{hasMultipleSolutions ? ` (${solution})` : ''}
 		</h3>

@@ -447,10 +447,10 @@
 {:else}
 	{#if technologies.length > 0}
 		<ContentBox class="flex">
-			<h2 class="flex items-start font-bold text-lg me-4">Legend</h2>
+			<h2 class="me-4 flex items-start text-lg font-bold">Legend</h2>
 			<div class="flex flex-wrap gap-2">
 				{#each technologies as tech (tech)}
-					<div class="flex items-center p-0 text-gray-600 dark:text-gray-400 text-sm">
+					<div class="flex items-center p-0 text-sm text-gray-600 dark:text-gray-400">
 						<svg width="40" height="12" class="me-1">
 							<rect width="40" height="12" fill={computeColor(tech)} />
 						</svg>
@@ -461,7 +461,7 @@
 		</ContentBox>
 	{/if}
 
-	<ContentBox class="relative overflow-hidden resize-y overflow-y-auto" noPadding>
+	<ContentBox class="relative resize-y overflow-hidden overflow-y-auto" noPadding>
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<svg
 			{width}
@@ -484,7 +484,7 @@
 			<g>
 				<path d={land} class="fill-gray-200 dark:fill-gray-700" />
 				{#if regions != null}
-					<path d={regions} class="fill-none stroke-gray-300 dark:stroke-gray-600 stroke-[1px]" />
+					<path d={regions} class="fill-none stroke-gray-300 stroke-[1px] dark:stroke-gray-600" />
 				{/if}
 				<path
 					d={countries}
@@ -523,9 +523,9 @@
 		{#if activePie || activeLines.length > 0}
 			<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
 				{#if activePie}
-					<h5 class="font-bold text-sm mb-0 px-2">{activePie.label}</h5>
+					<h5 class="mb-0 px-2 text-sm font-bold">{activePie.label}</h5>
 					{#each activePie.data as d (d.technology)}
-						<div class="flex justify-between items-center gap-2 text-xs px-2">
+						<div class="flex items-center justify-between gap-2 px-2 text-xs">
 							<div class="flex items-center">
 								<svg class="me-1" width="12" height="12">
 									<rect width="12" height="12" fill={d.color} />
@@ -539,15 +539,15 @@
 						</div>
 					{/each}
 					{#if activePie.data.length > 1}
-						<div class="flex justify-between items-center gap-1 font-bold text-xs px-2 mt-1">
+						<div class="mt-1 flex items-center justify-between gap-1 px-2 text-xs font-bold">
 							<div>Total:</div>
 							<div>{activePie.total.toFixed(3)} {unit}</div>
 						</div>
 					{/if}
 				{:else if activeLines.length > 0}
 					{#each activeLines as line, i (i)}
-						<div class={['px-2 text-xs', i > 0 && 'border-t border-gray-500 mt-2 pt-2']}>
-							<h5 class="font-bold text-sm mb-0">{line.label}</h5>
+						<div class={['px-2 text-xs', i > 0 && 'mt-2 border-t border-gray-500 pt-2']}>
+							<h5 class="mb-0 text-sm font-bold">{line.label}</h5>
 							{#each line.values as d (d.technology)}
 								<div>
 									{d.technology}: {d.value.toFixed(3)}

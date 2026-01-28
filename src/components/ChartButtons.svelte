@@ -34,7 +34,7 @@
 </script>
 
 {#if hasCharts}
-	<div class="flex flex-wrap justify-end items-end h-full gap-4">
+	<div class="flex h-full flex-wrap items-end justify-end gap-4">
 		{#if zoomable}
 			<div class={['flex flex-wrap items-center']}>
 				<Button class="rounded-l-lg rounded-r-none" onclick={charts[0]?.resetZoom}>

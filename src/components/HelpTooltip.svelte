@@ -84,7 +84,7 @@
 </button>
 
 <div
-	class="absolute w-[max-content] font-normal z-3 border bg-gray-200 dark:bg-gray-800 border-black dark:border-white rounded-lg p-2 text-base"
+	class="absolute z-3 w-[max-content] rounded-lg border border-black bg-gray-200 p-2 text-base font-normal dark:border-white dark:bg-gray-800"
 	style:display={isHovered || isFocused ? 'block' : 'none'}
 	style:top={tooltipTop !== null ? `${tooltipTop}px` : 0}
 	style:left={tooltipLeft !== null ? `${tooltipLeft}px` : 0}

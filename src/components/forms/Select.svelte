@@ -125,11 +125,11 @@
 </script>
 
 <input type="hidden" bind:value {id} />
-<div class="mb-2 relative" bind:this={container}>
+<div class="relative mb-2" bind:this={container}>
 	<div
 		class={[
-			'relative rounded-md pl-2 pr-6 py-2 cursor-pointer w-full',
-			'bg-white dark:bg-gray-800 border border-gray-400 dark:border-gray-600'
+			'relative w-full cursor-pointer rounded-md py-2 pr-6 pl-2',
+			'border border-gray-400 bg-white dark:border-gray-600 dark:bg-gray-800'
 		]}
 		class:opacity-50={disabled}
 		onclick={openDropdown}
@@ -152,14 +152,14 @@
 				{getLabel(value)}
 			</div>
 		{:else if multiple && Array.isArray(value) && value.length > 0}
-			<div class="flex flex-wrap gap-2 my-0.5">
+			<div class="my-0.5 flex flex-wrap gap-2">
 				{#each selectedOptions as val (val)}
-					<div class="flex items-center bg-blue-500 rounded-md text-xs text-white truncate">
+					<div class="flex items-center truncate rounded-md bg-blue-500 text-xs text-white">
 						<div class="px-2 py-0.5">
 							{getLabel(val as T)}
 						</div>
 						<button
-							class="border-l border-black dark:border-white text-lg/1 py-0 px-0.5"
+							class="border-l border-black px-0.5 py-0 text-lg/1 dark:border-white"
 							onclick={(event) => deselectOption(event, val)}
 							aria-label="Deselect option"
 						>
@@ -169,7 +169,7 @@
 				{/each}
 			</div>
 		{:else}
-			<div class="text-gray-500 dark:text-gray-400 truncate">
+			<div class="truncate text-gray-500 dark:text-gray-400">
 				{placeholderText}
 			</div>
 		{/if}
@@ -187,10 +187,10 @@
 	{#if open}
 		<div
 			class={[
-				'absolute z-10 w-full max-h-60 py-1 overflow-auto focus:outline-none',
+				'absolute z-10 max-h-60 w-full overflow-auto py-1 focus:outline-none',
 				'flex flex-col items-start',
 				'bg-white dark:bg-gray-800',
-				'rounded-md shadow-lg shadow-black/20 dark:shadow-white/10 ring-1 ring-black dark:ring-gray-400'
+				'rounded-md shadow-lg ring-1 shadow-black/20 ring-black dark:shadow-white/10 dark:ring-gray-400'
 			]}
 			id={id + '-listbox'}
 			transition:slide={{ duration: 300 }}
@@ -198,9 +198,9 @@
 			{#each options as option (option.value)}
 				<button
 					class={[
-						'cursor-pointer select-none relative py-2 pl-2 pr-6 w-full text-left',
+						'relative w-full cursor-pointer py-2 pr-6 pl-2 text-left select-none',
 						isSelected(option)
-							? 'bg-blue-200 dark:bg-blue-800 hover:bg-blue-300 dark:hover:bg-blue-700'
+							? 'bg-blue-200 hover:bg-blue-300 dark:bg-blue-800 dark:hover:bg-blue-700'
 							: 'hover:bg-gray-100 dark:hover:bg-gray-700'
 					]}
 					onclick={() => selectOption(option.value)}

@@ -79,27 +79,27 @@
 	}
 </script>
 
-<div class="grid grid-cols-1 grow dark:bg-gray-800 place-content-center">
-	<main class="relative w-full max-w-300 mx-auto py-8 px-4">
-		<div class="w-full grid md:grid-cols-2 md:grid-rows-2 gap-6" bind:this={boundaryElement}>
+<div class="grid grow grid-cols-1 place-content-center dark:bg-gray-800">
+	<main class="relative mx-auto w-full max-w-300 px-4 py-8">
+		<div class="grid w-full gap-6 md:grid-cols-2 md:grid-rows-2" bind:this={boundaryElement}>
 			<!-- Transition -->
 			<section
 				aria-label="The Transition Pathway"
-				class="bg-[#6e7e2c] lg:grid-cols-4 border border-gray-400 dark:border-gray-800 md:rounded-tl-lg min-h-60 grid overflow-hidden"
+				class="grid min-h-60 overflow-hidden border border-gray-400 bg-[#6e7e2c] md:rounded-tl-lg lg:grid-cols-4 dark:border-gray-800"
 				onmouseenter={() => showPopup('transition-pathway')}
 				onmouseleave={hidePopup}
 				onfocusin={() => showPopup('transition-pathway')}
 				onfocusout={hidePopup}
 			>
 				<h2
-					class="font-extrabold text-3xl lg:order-1 lg:col-span-2 my-auto text-center text-white tracking-tight"
+					class="my-auto text-center text-3xl font-extrabold tracking-tight text-white lg:order-1 lg:col-span-2"
 					bind:this={transitionPathwaySection}
 				>
 					The Transition Pathway
 				</h2>
 				<nav
 					aria-label="Transition links"
-					class="lg:order-0 grid grid-cols-2 lg:grid-cols-1 lg:grid-rows-4 lg:h-full bg-white/60 dark:bg-gray-800/40 text-xl"
+					class="grid grid-cols-2 bg-white/60 text-xl lg:order-0 lg:h-full lg:grid-cols-1 lg:grid-rows-4 dark:bg-gray-800/40"
 				>
 					<div
 						class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50"
@@ -143,21 +143,21 @@
 			<!-- Energy Balance -->
 			<section
 				aria-label="The Energy Balance"
-				class="bg-[#387e70] border border-gray-400 dark:border-gray-800 md:rounded-tr-lg min-h-60 grid md:grid-cols-4 overflow-hidden"
+				class="grid min-h-60 overflow-hidden border border-gray-400 bg-[#387e70] md:grid-cols-4 md:rounded-tr-lg dark:border-gray-800"
 				onmouseenter={() => showPopup('energy-balance')}
 				onmouseleave={hidePopup}
 				onfocusin={() => showPopup('energy-balance')}
 				onfocusout={hidePopup}
 			>
 				<h2
-					class="font-extrabold text-3xl md:col-start-2 md:col-span-2 my-auto text-center text-white tracking-tight"
+					class="my-auto text-center text-3xl font-extrabold tracking-tight text-white md:col-span-2 md:col-start-2"
 					bind:this={energyBalanceSection}
 				>
 					The Energy Balance
 				</h2>
 				<nav
 					aria-label="Energy balance links"
-					class="grid grid-cols-2 md:grid-cols-1 md:grid-rows-2 h-full bg-white/60 dark:bg-gray-800/40 text-xl"
+					class="grid h-full grid-cols-2 bg-white/60 text-xl md:grid-cols-1 md:grid-rows-2 dark:bg-gray-800/40"
 				>
 					<div
 						class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50"
@@ -182,17 +182,17 @@
 			<!-- Energy System -->
 			<div
 				role="region"
-				class="bg-[#4270a8] border border-gray-400 dark:border-gray-800 md:rounded-bl-lg min-h-60 relative grid place-content-center group p-4 overflow-hidden"
+				class="group relative grid min-h-60 place-content-center overflow-hidden border border-gray-400 bg-[#4270a8] p-4 md:rounded-bl-lg dark:border-gray-800"
 				onmouseenter={() => showPopup('energy-system')}
 				onmouseleave={hidePopup}
 				onfocusin={() => showPopup('energy-system')}
 				onfocusout={hidePopup}
 			>
-				<h2 class="font-extrabold text-3xl text-white" bind:this={energySystemSection}>
+				<h2 class="text-3xl font-extrabold text-white" bind:this={energySystemSection}>
 					The Energy System
 				</h2>
 				<a
-					class="absolute inset-0 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-white/80 dark:focus:ring-gray-700/80"
+					class="absolute inset-0 focus:ring-4 focus:ring-white/80 focus:ring-offset-2 focus:outline-none dark:focus:ring-gray-700/80"
 					href={resolve('/energy_system')}
 					aria-label="The Energy System"
 				></a>
@@ -201,24 +201,24 @@
 			<!-- Map -->
 			<div
 				role="region"
-				class="bg-[#ae995e] border border-gray-400 dark:border-gray-800 md:rounded-br-lg min-h-60 relative grid place-content-center group p-4 overflow-hidden"
+				class="group relative grid min-h-60 place-content-center overflow-hidden border border-gray-400 bg-[#ae995e] p-4 md:rounded-br-lg dark:border-gray-800"
 				onmouseenter={() => showPopup('map')}
 				onmouseleave={hidePopup}
 				onfocusin={() => showPopup('map')}
 				onfocusout={hidePopup}
 			>
-				<h2 class="font-extrabold text-3xl text-white" bind:this={mapSection}>The Map</h2>
+				<h2 class="text-3xl font-extrabold text-white" bind:this={mapSection}>The Map</h2>
 				<a
-					class="absolute inset-0 focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-white/80 dark:focus:ring-gray-700/80"
+					class="absolute inset-0 focus:ring-4 focus:ring-white/80 focus:ring-offset-2 focus:outline-none dark:focus:ring-gray-700/80"
 					href={resolve('/map')}
 					aria-label="The Map"
 				></a>
 			</div>
 
 			<!-- decorative centered logo for large screens -->
-			<div class="absolute inset-0 hidden lg:grid place-content-center pointer-events-none">
+			<div class="pointer-events-none absolute inset-0 hidden place-content-center lg:grid">
 				<div class="relative">
-					<div class="absolute inset-1 rounded-full bg-white z-0"></div>
+					<div class="absolute inset-1 z-0 rounded-full bg-white"></div>
 					<img
 						class="relative z-1"
 						width="340"
@@ -232,7 +232,7 @@
 
 		<div
 			class={[
-				'absolute top-0 left-0 z-3 w-[320px] lg:w-[500px] border bg-gray-200 text-gray-800 border-black rounded-lg p-2 pointer-events-none',
+				'pointer-events-none absolute top-0 left-0 z-3 w-[320px] rounded-lg border border-black bg-gray-200 p-2 text-gray-800 lg:w-[500px]',
 				isPopupVisible ? 'hidden md:block' : 'hidden'
 			]}
 			style={popupStyle()}
