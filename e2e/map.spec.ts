@@ -1,82 +1,49 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
+import { expectScreenshot, selectFromDropdown, selectSolution } from './helper';
 
 test('map: default', async ({ page }) => {
 	await page.goto('/map');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'heat', exact: true }).click();
-	await expect(page.locator('#map')).toHaveScreenshot(`eeht_pf/conversion/heat/2022/countries.png`);
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'heat');
+	await expectScreenshot(page, '#map', `eeht_pf/conversion/heat/2022/countries.png`);
 });
 
 test('map: technology type', async ({ page }) => {
 	await page.goto('/map');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'carbon', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Technology Type' }).click();
-	await page.getByRole('option', { name: 'storage' }).click();
-	await expect(page.locator('#map')).toHaveScreenshot(
-		`eeht_pf/storage-energy/carbon/2022/countries.png`
-	);
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'carbon');
+	await selectFromDropdown(page, 'Technology Type', 'storage');
+	await expectScreenshot(page, '#map', `eeht_pf/storage-energy/carbon/2022/countries.png`);
 });
 
 test('map: storage type', async ({ page }) => {
 	await page.goto('/map');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'carbon', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Technology Type' }).click();
-	await page.getByRole('option', { name: 'storage' }).click();
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'carbon');
+	await selectFromDropdown(page, 'Technology Type', 'storage');
 	await page.getByRole('radio', { name: 'power' }).check();
-	await expect(page.locator('#map')).toHaveScreenshot(
-		`eeht_pf/storage-power/carbon/2022/countries.png`
-	);
+	await expectScreenshot(page, '#map', `eeht_pf/storage-power/carbon/2022/countries.png`);
 });
 
 test('map: carrier', async ({ page }) => {
 	await page.goto('/map');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'electricity', exact: true }).click();
-	await expect(page.locator('#map')).toHaveScreenshot(
-		`eeht_pf/conversion/electricity/2022/countries.png`
-	);
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'electricity');
+	await expectScreenshot(page, '#map', `eeht_pf/conversion/electricity/2022/countries.png`);
 });
 
 test('map: year', async ({ page }) => {
 	await page.goto('/map');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'heat', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Year' }).click();
-	await page.getByRole('option', { name: '2050' }).click();
-	await expect(page.locator('#map')).toHaveScreenshot(`eeht_pf/conversion/heat/2050/countries.png`);
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'heat');
+	await selectFromDropdown(page, 'Year', '2050');
+	await expectScreenshot(page, '#map', `eeht_pf/conversion/heat/2050/countries.png`);
 });
 
 test('map: underlying map', async ({ page }) => {
 	await page.goto('/map');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'heat', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Map' }).click();
-	await page.getByRole('option', { name: 'NUTS 1 (only Europe)' }).click();
-	await expect(page.locator('#map')).toHaveScreenshot(`eeht_pf/conversion/heat/2022/nuts-1.png`);
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'heat');
+	await selectFromDropdown(page, 'Map', 'NUTS 1 (only Europe)');
+	await expectScreenshot(page, '#map', `eeht_pf/conversion/heat/2022/nuts-1.png`);
 });

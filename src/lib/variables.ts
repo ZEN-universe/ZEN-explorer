@@ -14,8 +14,8 @@ const versions: Versions = {
 };
 
 function smallerThan(version_a: string, version_b: string) {
-	let split_a = version_a.split('.');
-	let split_b = version_b.split('.');
+	const split_a = version_a.split('.');
+	const split_b = version_b.split('.');
 
 	for (let i = 0; i < 3; i++) {
 		if (Number(split_a[i]) < Number(split_b[i])) {
@@ -29,7 +29,7 @@ function smallerThan(version_a: string, version_b: string) {
 
 export function getVariableName(name: string, version: string = '0.0.0') {
 	let current_version: string | null = null;
-	for (let defined_version of Object.keys(versions)) {
+	for (const defined_version of Object.keys(versions)) {
 		if (smallerThan(defined_version, version)) {
 			current_version = defined_version;
 		}

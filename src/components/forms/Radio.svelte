@@ -1,10 +1,12 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
+	import type { Snippet } from 'svelte';
 
 	interface Props {
 		options: ({ value: string; label: string } | string)[];
 		value: string;
 		label: string;
+		helpText?: Snippet;
 		disabled?: boolean;
 		onUpdate?: (newValue: string) => void;
 	}
@@ -13,6 +15,7 @@
 		options: initialOptions,
 		value = $bindable(),
 		label,
+		helpText,
 		disabled = false,
 		onUpdate = () => {}
 	}: Props = $props();
@@ -32,10 +35,10 @@
 	}
 </script>
 
-<FilterLabel {label}></FilterLabel>
+<FilterLabel {label} {helpText}></FilterLabel>
 
 <div class="mb-2 flex gap-2" role="radiogroup">
-	{#each options as option}
+	{#each options as option (option.value)}
 		<div class="relative">
 			<input
 				class="absolute inset-y-0 w-4 appearance-none"

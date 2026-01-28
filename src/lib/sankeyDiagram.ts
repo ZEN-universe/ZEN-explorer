@@ -91,7 +91,7 @@ function filterEmptyNodes() {
  */
 function markCycles() {
 	let nextCycleIndex = 0;
-	let addedLinks = [] as SankeyLink[];
+	const addedLinks = [] as SankeyLink[];
 	links.forEach((link) => {
 		if (createsCycle(link.source, link.target, addedLinks)) {
 			link.causesCycle = true;
@@ -115,7 +115,7 @@ function createsCycle(
 	graph: SankeyLink[]
 ): boolean {
 	// find all links for which this node is a source in the current 'known' graph
-	let nextLinks = graph.filter((link) => link.source === currentNode);
+	const nextLinks = graph.filter((link) => link.source === currentNode);
 
 	// base cases
 	if (graph.length == 0 || nextLinks.length == 0) return false;
@@ -202,7 +202,7 @@ function scaleNodeBreadths(kx: number) {
  * Return an array of nodes grouped by their breadth (x position).
  */
 function nodesGroupedByBreadth() {
-	let nodesByBreadth: { [key: number]: SankeyNode[] } = {};
+	const nodesByBreadth: { [key: number]: SankeyNode[] } = {};
 	nodes.forEach((node) => {
 		const breadth = node.x;
 		if (!nodesByBreadth[breadth]) nodesByBreadth[breadth] = [];
@@ -224,7 +224,7 @@ function center(node: SankeyNode) {
  * adjusted iteratively to minimize link crossings and node overlaps.
  */
 function computeNodeDepths() {
-	let nodesByBreadth = nodesGroupedByBreadth();
+	const nodesByBreadth = nodesGroupedByBreadth();
 
 	initializeNodeDepth();
 	resolveCollisions();
@@ -333,7 +333,7 @@ function computeNodeDepths() {
 			let node: SankeyNode = nodes[0];
 			let dy: number;
 			let y0: number = 0;
-			let n = nodes.length;
+			const n = nodes.length;
 			let i: number;
 
 			// Push any overlapping nodes down.
@@ -363,7 +363,7 @@ function computeNodeDepths() {
  * Compute the vertical offsets (sy, ty) of each link within their source and target nodes.
  */
 function computeLinkDepths() {
-	let compareFn =
+	const compareFn =
 		(property: 'source' | 'target', isOnTop: boolean) => (a: SankeyLink, b: SankeyLink) => {
 			const onTopFactor = isOnTop ? 1 : -1;
 			if (a.causesCycle && b.causesCycle) {
@@ -376,7 +376,7 @@ function computeLinkDepths() {
 			return a[property].y - b[property].y; // neither cause cycles, sort by target y position
 		};
 
-	let maxHeight = Math.max(...nodes.map((node) => node.y + node.dy));
+	const maxHeight = Math.max(...nodes.map((node) => node.y + node.dy));
 	nodes.forEach((node) => {
 		node.linksIn.sort(compareFn('source', node.y < maxHeight / 2));
 		node.linksOut.sort(compareFn('target', node.y < maxHeight / 2));

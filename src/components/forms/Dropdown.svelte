@@ -1,19 +1,22 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
-	import SlimSelect from './SlimSelect.svelte';
+	import type { Snippet } from 'svelte';
+	import Select from './Select.svelte';
 
 	interface Props {
 		options: ({ label: string; value: string } | string)[];
 		value: string | null;
 		label: string;
+		helpText?: Snippet;
 		disabled?: boolean;
-		onUpdate?: (value: any) => void;
+		onUpdate?: (value: string) => void;
 	}
 
 	let {
 		options: initialOptions,
 		value = $bindable(),
 		label,
+		helpText,
 		disabled = false,
 		onUpdate = () => {}
 	}: Props = $props();
@@ -30,10 +33,10 @@
 	});
 </script>
 
-<FilterLabel {label} {formId}></FilterLabel>
+<FilterLabel {label} {formId} {helpText}></FilterLabel>
 
 {#if options.length == 0}
 	<div class="text-gray-500 italic dark:text-gray-400">No options available</div>
 {:else}
-	<SlimSelect id={formId} {label} bind:value {options} {disabled} {onUpdate}></SlimSelect>
+	<Select id={formId} {label} bind:value {options} {disabled} {onUpdate}></Select>
 {/if}

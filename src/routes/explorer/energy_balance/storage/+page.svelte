@@ -20,6 +20,7 @@
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import Entries from '$lib/entries';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	// All but one data variable are non-reactive because of their size
 	let levelResponse: Entries | null = null;
@@ -44,8 +45,8 @@
 	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
-	let levelPlot = $state<Chart<any>>();
-	let flowPlot = $state<Chart<any>>();
+	let levelPlot = $state<Chart>();
+	let flowPlot = $state<Chart>();
 
 	let unit: string = $derived.by(() => (technologies.length > 0 ? units[technologies[0]] : ''));
 
@@ -64,8 +65,8 @@
 		].join('_');
 	});
 	let plotNameFlows: string = $derived(plotName + '_flows');
-	let plotOptions: ChartOptions<'line'> = $derived(getPlotOptions('Storage Level'));
-	let plotOptionsFlows: ChartOptions<'line'> = $derived(getPlotOptions('Storage Flow'));
+	let plotOptions: ChartOptions = $derived(getPlotOptions('Storage Level'));
+	let plotOptionsFlows: ChartOptions = $derived(getPlotOptions('Storage Flow'));
 
 	// Zoom level for both plots
 	let zoomLevel: [number, number] | null = $state(null);
@@ -86,7 +87,7 @@
 		});
 	});
 
-	function getPlotOptions(label: string): ChartOptions<'line'> {
+	function getPlotOptions(label: string): ChartOptions {
 		return {
 			animation: false,
 			normalized: true,
@@ -178,7 +179,12 @@
 			return [];
 		}
 
-		return removeDuplicates(Object.values(selectedSolution.detail.reference_carrier)).sort();
+		const set: Set<string> = new SvelteSet();
+		selectedSolution.detail.system.set_storage_technologies.forEach((tech) => {
+			const carrier = selectedSolution!.detail.reference_carrier[tech];
+			if (carrier) set.add(carrier);
+		});
+		return Array.from(set).sort();
 	});
 
 	let technologies: string[] = $derived.by(() => {
@@ -318,12 +324,12 @@
 		return Array.from({ length: numberOfTimeSteps }, (_, i) => i.toString());
 	});
 
-	let levelDatasets: ChartDataset<'bar' | 'line'>[] = [];
-	let flowDatasets: ChartDataset<'bar' | 'line'>[] = [];
+	let levelDatasets: ChartDataset[] = [];
+	let flowDatasets: ChartDataset[] = [];
 	let levelDatasetsLength: number = $state(0);
 	let numberOfTimeSteps: number = $state(0);
 
-	function computeDatasets(): [ChartDataset<'bar' | 'line'>[], ChartDataset<'bar' | 'line'>[]] {
+	function computeDatasets(): [ChartDataset[], ChartDataset[]] {
 		if (
 			selectedSolution === null ||
 			fetching ||
@@ -452,7 +458,11 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Energy Balance" pageTitle="Storage">
+<DiagramPage
+	parentTitle="The Energy Balance"
+	pageTitle="Storage"
+	subtitle="Charging and discharging flows and storage levels"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
@@ -482,7 +492,11 @@
 						bind:value={selectedWindowSize}
 						label="Smoothing Window Size"
 						disabled={fetching || solutionLoading}
-					></Dropdown>
+					>
+						{#snippet helpText()}
+							Visualize the rolling average of hourly values over a longer time period.
+						{/snippet}
+					</Dropdown>
 				{/if}
 			</FilterSection>
 			{#if selectedSolution !== null && selectedCarrier !== null}
@@ -491,7 +505,11 @@
 						bind:value={selectedSubdivision}
 						label="Technology Subdivision"
 						disabled={fetching || solutionLoading}
-					></ToggleButton>
+					>
+						{#snippet helpText()}
+							Aggregate or disaggregate all the storage technologies.
+						{/snippet}
+					</ToggleButton>
 					<MultiSelect
 						options={technologies}
 						bind:value={selectedTechnologies}
@@ -510,7 +528,8 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons chart={levelPlot as Chart} downloadable zoomable></ChartButtons>
+		<ChartButtons charts={[levelPlot as Chart, flowPlot as Chart]} downloadable zoomable
+		></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}

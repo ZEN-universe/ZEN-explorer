@@ -26,7 +26,7 @@
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
-	} from '$lib/compareSolutions';
+	} from '$lib/compareSolutions.svelte';
 	import { getTransportEdges } from '$lib/utils';
 	import {
 		getURLParam,
@@ -43,6 +43,7 @@
 	import Entries, { type FilterCriteria } from '$lib/entries';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	// Data
 	let data: Row[][][] = $state([]);
@@ -71,7 +72,7 @@
 			short_id: 'conv',
 			title: 'Conversion',
 			show: true,
-			subdivision: false,
+			subdivision: true,
 			show_subdivision: true,
 			filter_by_technologies: true,
 			positive: 'flow_conversion_output',
@@ -84,7 +85,7 @@
 			short_id: 'stor',
 			title: 'Storage',
 			show: true,
-			subdivision: false,
+			subdivision: true,
 			show_subdivision: true,
 			filter_by_technologies: true,
 			positive: 'flow_storage_discharge',
@@ -99,7 +100,7 @@
 			short_id: 'tran',
 			title: 'Transport',
 			show: true,
-			subdivision: false,
+			subdivision: true,
 			show_subdivision: true,
 			filter_by_technologies: true,
 			positive: 'flow_transport',
@@ -151,6 +152,7 @@
 	let selectedNormalization: boolean = $state(false);
 	let selectedNodes: string[] = $state([]);
 	let selectedYears: string[] = $state([]);
+
 	let activeYear: string | null = $state(null);
 	let activeSolution: string | null = $state(null);
 
@@ -286,7 +288,7 @@
 	let carriers: string[] = $derived.by(() => {
 		if (hasSomeUnsetSolutions) return [];
 
-		const setCarriers: Set<string> = new Set();
+		const setCarriers: Set<string> = new SvelteSet();
 		const solutions = selectedSolutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
@@ -298,7 +300,7 @@
 	let conversionTechnologies = $derived.by(() => {
 		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
 
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		const solutions = selectedSolutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
@@ -313,7 +315,7 @@
 	let storageTechnologies = $derived.by(() => {
 		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
 
-		const setStorageTechnologies: Set<string> = new Set();
+		const setStorageTechnologies: Set<string> = new SvelteSet();
 		const solutions = selectedSolutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
@@ -330,7 +332,7 @@
 	let transportTechnologies = $derived.by(() => {
 		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
 
-		const setTransportTechnologies: Set<string> = new Set();
+		const setTransportTechnologies: Set<string> = new SvelteSet();
 		const solutions = selectedSolutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
@@ -485,7 +487,7 @@
 		fetchData();
 	}
 
-	function onBarClick(year: string, datasetIndex: number) {
+	function onClickBar(year: string, datasetIndex: number) {
 		if (!year) {
 			return;
 		}
@@ -493,10 +495,10 @@
 		if (!stack || (activeYear === year && activeSolution === stack)) {
 			activeYear = null;
 			activeSolution = null;
-			return;
+		} else {
+			activeYear = year;
+			activeSolution = stack || null;
 		}
-		activeYear = year;
-		activeSolution = stack || null;
 	}
 
 	//#region Fetch and process data
@@ -685,7 +687,11 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Transition Pathway" pageTitle="Production">
+<DiagramPage
+	parentTitle="The Transition Pathway"
+	pageTitle="Production"
+	subtitle="Annual production and consumption of a carrier"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<MultiSolutionFilter
@@ -709,7 +715,7 @@
 			</FilterSection>
 			{#if selectedCarrier !== null}
 				<FilterSection title="Production Component Selection">
-					{#each variables as variable}
+					{#each variables as variable (variable.id)}
 						{#if !hasDataForVariable(variable)}
 							<FilterLabel label={variable.title}></FilterLabel>
 							<div class="mb-2 text-sm text-gray-500 italic">
@@ -728,7 +734,7 @@
 									<div>
 										<ToggleButton
 											bind:value={variable.subdivision}
-											label={'with Subdivision'}
+											label="with Subdivision"
 											disabled={solutionLoading || fetching}
 										/>
 									</div>
@@ -786,7 +792,7 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons chart={chart as Chart} downloadable></ChartButtons>
+		<ChartButtons charts={[chart as Chart]} downloadable></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}
@@ -809,7 +815,7 @@
 				{patterns}
 				{generateLabels}
 				onClickLegend={onClickLegendForSolutionComparison}
-				onClickBar={onBarClick}
+				{onClickBar}
 				bind:this={chart}
 			></Chart>
 

@@ -10,7 +10,7 @@
 	import { fetchEnergyBalance, fetchUnit } from '$lib/temple';
 	import { getVariableName } from '$lib/variables';
 	import { nextColor, resetColorState } from '$lib/colors';
-	import type { ActivatedSolution, EnergyBalanceDataframes, Entry } from '$lib/types';
+	import type { ActivatedSolution, EnergyBalanceDataframes } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
@@ -18,7 +18,8 @@
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import type Entries from '$lib/entries';
-	import type { FilterCriteria } from '$lib/entries';
+	import ContentBox from '$components/ContentBox.svelte';
+	import HelpTooltip from '$components/HelpTooltip.svelte';
 
 	let energyBalanceData: EnergyBalanceDataframes | null = null;
 	let unitData: Record<string, string>[] | null = $state(null);
@@ -27,8 +28,8 @@
 	let solutionLoading: boolean = $state(false);
 	let fetching = $state(false);
 
-	let plot = $state<Chart<any>>();
-	let dualsPlot = $state<Chart<any>>();
+	let plot = $state<Chart>();
+	let dualsPlot = $state<Chart>();
 
 	let nodes: string[] = $state([]);
 	let carriers: string[] = $state([]);
@@ -64,7 +65,7 @@
 		if (unitData === null) {
 			return '';
 		}
-		let unitEntry = unitData.find((entry: any) => entry['carrier'] === selectedCarrier);
+		let unitEntry = unitData.find((entry) => entry['carrier'] === selectedCarrier);
 		if (unitEntry) {
 			return unitEntry[0] || unitEntry['units'] || '';
 		}
@@ -100,7 +101,7 @@
 
 	let plotOptions: ChartOptions = $derived.by(() => getPlotOptions(`Energy [${unit}]`));
 	let dualsPlotOptions: ChartOptions = $derived.by(() =>
-		getPlotOptions(`Dual [${dualUnit}]`, 5, false)
+		getPlotOptions(`Shadow Price [${dualUnit}]`, 5, false)
 	);
 
 	function getPlotOptions(
@@ -410,7 +411,7 @@
 
 				return {
 					data: datasetData,
-					label: `dual_${entry.index.carrier}_${entry.index.node}`,
+					label: `shadow_price_${entry.index.carrier}_${entry.index.node}`,
 					fill: false,
 					borderColor: 'rgb(0, 0, 0)',
 					backgroundColor: 'rgb(0, 0, 0)',
@@ -444,7 +445,11 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Energy Balance" pageTitle="Nodal">
+<DiagramPage
+	parentTitle="The Energy Balance"
+	pageTitle="Nodal"
+	subtitle="Hourly production and consumption of a carrier"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
@@ -482,14 +487,18 @@
 						bind:value={selectedWindowSize}
 						label="Smoothing Window Size"
 						disabled={fetching || solutionLoading}
-					></Dropdown>
+					>
+						{#snippet helpText()}
+							Visualize the rolling average of hourly values over a longer time period
+						{/snippet}
+					</Dropdown>
 				{/if}
 			</FilterSection>
 		{/if}
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons chart={plot as Chart} downloadable zoomable></ChartButtons>
+		<ChartButtons charts={[plot as Chart, dualsPlot as Chart]} downloadable zoomable></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}
@@ -514,22 +523,34 @@
 				bind:this={plot}
 			></Chart>
 			{#if dualsDatasetsLength > 0}
-				<Chart
-					id="chart-duals"
-					type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
-					{labels}
-					datasets={[]}
-					options={dualsPlotOptions}
-					pluginOptions={dualsPlotPluginOptions}
-					plotName={dualsPlotName}
-					zoom={true}
-					initialHeight={300}
-					generateLabels={() => []}
-					bind:zoomLevel
-					bind:this={dualsPlot}
-				></Chart>
+				<ContentBox>
+					<h2 class="text-lg font-bold">
+						<span class="me-2">Shadow Prices</span>
+						<HelpTooltip>
+							Shadow price of the nodal energy balance of carrier {selectedCarrier}. Indicates the
+							change in total cost for the next marginal unit of demand.
+						</HelpTooltip>
+					</h2>
+					<Chart
+						id="chart-duals"
+						type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
+						{labels}
+						datasets={[]}
+						options={dualsPlotOptions}
+						pluginOptions={dualsPlotPluginOptions}
+						plotName={dualsPlotName}
+						zoom={true}
+						initialHeight={300}
+						generateLabels={() => []}
+						bind:zoomLevel
+						bind:this={dualsPlot}
+						boxed={false}
+					></Chart>
+				</ContentBox>
 			{:else}
-				<div class="text-muted mt-2 text-center">No dual data available.</div>
+				<ContentBox>
+					<div class="text-muted my-2 text-center text-xl">No shadow prices available.</div>
+				</ContentBox>
 			{/if}
 		{/if}
 	{/snippet}

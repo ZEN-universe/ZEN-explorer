@@ -533,11 +533,11 @@
 <ContentBox class="flex">
 	<h2 class="me-4 flex items-start text-lg font-bold">
 		<span class="me-2">Legend</span>
-		<HelpTooltip content="Click on legend items to focus on into in the diagram." />
+		<HelpTooltip>Click on legend items to focus on into in the diagram.</HelpTooltip>
 	</h2>
 	{#if legendItems && legendItems.length > 0}
 		<div class="flex flex-wrap gap-2">
-			{#each legendItems as item}
+			{#each legendItems as item (item.carrier)}
 				<button
 					class="flex items-center p-0 text-sm text-gray-600 dark:text-gray-400"
 					onclick={() => focusCarrier(item.carrier)}
@@ -568,7 +568,7 @@
 		>
 			<g {transform}>
 				<g class="links">
-					{#each links.toSorted((a, b) => b.value - a.value) as link}
+					{#each links.toSorted((a, b) => b.value - a.value) as link, idx (idx)}
 						{#if link.causesCycle}
 							<path
 								class="cycle-link"
@@ -594,7 +594,7 @@
 					{/each}
 				</g>
 				<g class="nodes">
-					{#each nodes as node, idx}
+					{#each nodes as node, idx (idx)}
 						<g class="node" data-idx={idx}>
 							<rect
 								x={node.x}
@@ -639,7 +639,7 @@
 				{#if activeNode.linksIn.length > 0}
 					<div class={[activeNode.linksOut.length > 0 && 'border-b border-gray-400 pb-1']}>
 						<div class="px-2 text-xs font-bold">Inflows:</div>
-						{#each activeNode.linksIn as linkInIdx}
+						{#each activeNode.linksIn as linkInIdx, idx (idx)}
 							{#if links[linkInIdx].value}
 								<div class="flex justify-between px-2 text-xs text-nowrap">
 									<div class="me-1 flex items-center">
@@ -668,7 +668,7 @@
 				{/if}
 				{#if activeNode.linksOut.length > 0}
 					<div class="mt-1 px-2 text-sm font-bold">Outflows:</div>
-					{#each activeNode.linksOut as linkOutIdx}
+					{#each activeNode.linksOut as linkOutIdx, idx (idx)}
 						{#if links[linkOutIdx].value}
 							<div class="flex justify-between px-2 text-xs text-nowrap">
 								<div class="me-1 flex items-center">

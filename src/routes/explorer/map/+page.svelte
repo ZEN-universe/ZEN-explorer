@@ -199,28 +199,31 @@
 			return null;
 		}
 
-		return fetchedData.data.reduce((acc: any, row) => {
-			const { technology, capacity_type, location } = row;
+		return fetchedData.data.reduce(
+			(acc: Record<string, { technology: string; years: number[] }[]>, row) => {
+				const { technology, capacity_type, location } = row;
 
-			if (
-				!technologies.includes(technology) ||
-				(filter_capacity_type && filter_capacity_type !== capacity_type)
-			) {
+				if (
+					!technologies.includes(technology) ||
+					(filter_capacity_type && filter_capacity_type !== capacity_type)
+				) {
+					return acc;
+				}
+
+				const years = Object.entries(row)
+					.filter(([key]) => !isNaN(parseInt(key)))
+					.map(([, value]) => parseFloat(value));
+
+				if (years.length === 0) {
+					return acc;
+				}
+
+				acc[location] = acc[location] || [];
+				acc[location].push({ technology, years: years });
 				return acc;
-			}
-
-			const years = Object.entries(row)
-				.filter(([key, _]) => !isNaN(parseInt(key)))
-				.map(([_, value]) => parseFloat(value));
-
-			if (years.length === 0) {
-				return acc;
-			}
-
-			acc[location] = acc[location] || [];
-			acc[location].push({ technology, years: years });
-			return acc;
-		}, {});
+			},
+			{}
+		);
 	}
 
 	let data: AggregatedData | null = $derived.by(() => {
@@ -258,7 +261,7 @@
 					.filter((d) => d.value > 1e-6);
 				return [location, mappedData];
 			})
-			.filter(([_location, data]) => data.length > 0);
+			.filter(([, data]) => data.length > 0);
 		return Object.fromEntries(entries);
 	});
 
@@ -322,7 +325,7 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Map" pageTitle="Map">
+<DiagramPage pageTitle="The Map" subtitle="Map of conversion, storage, and transport capacities">
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter

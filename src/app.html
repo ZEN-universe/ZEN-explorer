@@ -9,18 +9,6 @@
 		<link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/apple-touch-icon.png" />
 		<meta name="apple-mobile-web-app-title" content="ZEN Garden" />
 		<link rel="manifest" href="%sveltekit.assets%/site.webmanifest" />
-		<script>
-			updateTheme = () => {
-				document.documentElement.classList.toggle(
-					'dark',
-					localStorage.theme === 'dark' ||
-						(!('theme' in localStorage) &&
-							window.matchMedia('(prefers-color-scheme: dark)').matches)
-				);
-				window.dispatchEvent(new Event('themeChange'));
-			};
-			updateTheme();
-		</script>
 		%sveltekit.head%
 	</head>
 	<body

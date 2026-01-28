@@ -19,7 +19,7 @@
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
-	} from '$lib/compareSolutions';
+	} from '$lib/compareSolutions.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
@@ -34,6 +34,7 @@
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import { removeDuplicates } from '$lib/utils';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	let data: Row[][] = $state([]);
 
@@ -173,7 +174,7 @@
 			return [];
 		}
 
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		(selectedSolutions as ActivatedSolution[]).forEach((solution, solutionIndex) => {
 			(technologiesPerSolution[solutionIndex] ?? []).forEach((tech) => {
 				if (solution.detail.reference_carrier[tech] === selectedCarrier) {
@@ -189,7 +190,7 @@
 			return [];
 		}
 
-		const setLocations: Set<string> = new Set();
+		const setLocations: Set<string> = new SvelteSet();
 		data.forEach((items) => {
 			items.forEach((d) => {
 				if (technologies.includes(d.technology)) {
@@ -412,7 +413,11 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Transition Pathway" pageTitle="Capacity">
+<DiagramPage
+	parentTitle="The Transition Pathway"
+	pageTitle="Capacity"
+	subtitle="Annual capacity and capacity addition"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<MultiSolutionFilter
@@ -431,7 +436,12 @@
 					bind:value={selectedCarrier}
 					disabled={fetching || solutionLoading}
 					onUpdate={onCarrierChanged}
-				></Dropdown>
+				>
+					{#snippet helpText()}
+						Select the energy carrier for which to view results. Only capacities of technologies
+						which have the selected carrier as the reference carrier are shown.
+					{/snippet}
+				</Dropdown>
 			</FilterSection>
 			{#if selectedCarrier !== null}
 				<FilterSection title="Variable Selection">
@@ -441,14 +451,35 @@
 						bind:value={selectedVariable}
 						disabled={fetching || solutionLoading}
 						onUpdate={onVariableChanged}
-					></Dropdown>
+					>
+						{#snippet helpText()}
+							<div>
+								Select the variable which to shown on the plot:
+								<ul class="ml-4 list-outside list-disc">
+									<li>
+										The variable "capacity" shows the total capacity in a given year and consists of
+										the sum of existing capacities, previously installed capacities, and new
+										capacity additions.
+									</li>
+									<li>
+										The variable "capacity_addition" shows only the capacity which is newly
+										installed in the system in the given year.
+									</li>
+								</ul>
+							</div>
+						{/snippet}
+					</Dropdown>
 					<Dropdown
 						label="Technology Type"
 						options={technologyTypes}
 						bind:value={selectedTechnologyType}
 						disabled={fetching || solutionLoading}
 						onUpdate={onTechnologyTypeChanged}
-					></Dropdown>
+					>
+						{#snippet helpText()}
+							Select whether to show capacities for conversion, storage, or transport technologies.
+						{/snippet}
+					</Dropdown>
 					{#if selectedTechnologyType == 'storage'}
 						<Radio
 							label="Storage Type"
@@ -462,9 +493,26 @@
 			{/if}
 			{#if selectedCarrier !== null}
 				<FilterSection title="Data Selection">
-					<Radio label="Aggregation" options={aggregationOptions} bind:value={selectedAggregation}
-					></Radio>
-					<ToggleButton label="Normalization" bind:value={selectedNormalization}></ToggleButton>
+					<Radio label="Aggregation" options={aggregationOptions} bind:value={selectedAggregation}>
+						{#snippet helpText()}
+							Aggregate capacities belonging to the same node or technology.
+							<ul class="ml-4 list-outside list-disc">
+								<li>
+									Choosing "Node" will show the capacity allocations per technology for each node
+									(selected in the "Nodes" filter below).
+								</li>
+								<li>
+									Choosing "Technology" will show the capacity allocations per node for each
+									technology (selected in the "Technologies" filter below).
+								</li>
+							</ul>
+						{/snippet}
+					</Radio>
+					<ToggleButton label="Normalization" bind:value={selectedNormalization}>
+						{#snippet helpText()}
+							Normalize the bars to have a height of one.
+						{/snippet}
+					</ToggleButton>
 					{#if selectedAggregation == 'technology'}
 						<MultiSelect
 							label="Technologies"
@@ -486,7 +534,7 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons chart={chart as Chart} downloadable></ChartButtons>
+		<ChartButtons charts={[chart as Chart]} downloadable></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}

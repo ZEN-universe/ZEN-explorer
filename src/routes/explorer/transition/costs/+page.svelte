@@ -1,12 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
-	import type {
-		ChartDataset,
-		ChartOptions,
-		ChartType,
-		ChartTypeRegistry,
-		TooltipItem
-	} from 'chart.js';
+	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import { draw as drawPattern } from 'patternomaly';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
@@ -34,13 +28,16 @@
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
-	} from '$lib/compareSolutions';
+	} from '$lib/compareSolutions.svelte';
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import { SvelteSet } from 'svelte/reactivity';
+	import PiePlot from './PiePlot.svelte';
+	import { getTheme } from '@/lib/theme.svelte';
 
 	const technologyCarrierLabel = 'Technology / Carrier';
 	const capexSuffix = ' (Capex)';
@@ -70,6 +67,9 @@
 	let selectedLocations: string[] = $state([]);
 	let selectedYears: string[] = $state([]);
 
+	let activeYear: string | null = $state(null);
+	let activeSolution: string | null = $state(null);
+
 	let urlConversionTechnologies: number[] | null = null;
 	let urlStorageTechnologies: number[] | null = null;
 	let urlTransportTechnologies: number[] | null = null;
@@ -96,6 +96,7 @@
 		subdivision: boolean;
 		showSubdivision: boolean;
 		label?: string;
+		helpText: string;
 	}
 	let variables: { [id: string]: Variable } = $state({
 		capex: {
@@ -103,34 +104,39 @@
 			show: true,
 			subdivision: false,
 			showSubdivision: true,
-			label: capexLabel
+			label: capexLabel,
+			helpText: 'Annualized investment cost to expand technology capacity.'
 		},
 		opex: {
 			title: 'Opex',
 			show: true,
 			subdivision: false,
 			showSubdivision: true,
-			label: opexLabel
+			label: opexLabel,
+			helpText: 'Annual (fixed and variable) operational cost of technologies.'
 		},
 		carrier: {
 			title: 'Carrier',
 			show: true,
 			subdivision: false,
 			showSubdivision: true,
-			label: carrierLabel
+			label: carrierLabel,
+			helpText: 'Annual cost of importing and exporting carriers.'
 		},
 		shed_demand: {
 			title: 'Shed Demand',
 			show: true,
 			subdivision: false,
 			showSubdivision: true,
-			label: shedDemandLabel
+			label: shedDemandLabel,
+			helpText: 'Annual cost of shed demand of carriers.'
 		},
 		carbon_emission: {
 			title: 'Carbon Emissions',
 			show: true,
 			subdivision: false,
-			showSubdivision: false
+			showSubdivision: false,
+			helpText: 'Annual cost associated with carbon dioxide emissions.'
 		}
 	});
 
@@ -158,6 +164,24 @@
 		return '';
 	});
 	let plotOptions: ChartOptions = $derived({
+		datasets: {
+			bar: {
+				borderColor: getTheme() === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+				borderWidth: (e) => {
+					if (
+						!activeYear ||
+						!activeSolution ||
+						e.chart.data.labels?.[e.dataIndex] !== activeYear ||
+						e.chart.data.datasets[e.datasetIndex].stack !== activeSolution
+					) {
+						return 0;
+					}
+					return 7;
+				},
+				borderRadius: 0,
+				borderSkipped: 'middle'
+			}
+		},
 		maintainAspectRatio: false,
 		scales: {
 			x: {
@@ -181,7 +205,7 @@
 			axis: 'x'
 		}
 	});
-	let plotPluginOptions = {
+	let plotPluginOptions: ChartOptions['plugins'] = {
 		tooltip: {
 			callbacks: {
 				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
@@ -190,8 +214,17 @@
 					if (items.length > 0) {
 						return `${items[0].label} - ${items[0].dataset.stack}`;
 					}
+				},
+				labelColor: (context) => {
+					return {
+						borderColor: context.dataset.backgroundColor as string,
+						backgroundColor: context.dataset.backgroundColor as string,
+						borderWidth: 0
+					};
 				}
-			}
+			},
+			filter: (item) => Math.abs(item.parsed.y || 0) > 1.0e-6,
+			borderWidth: 0
 		}
 	};
 
@@ -217,7 +250,7 @@
 			return [];
 		}
 		const solutions = selectedSolutions as ActivatedSolution[];
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		solutions.forEach((solution) => {
 			solution.detail.system.set_transport_technologies.forEach((t) => {
 				if (setCapexOpexTechnologies.has(t)) {
@@ -233,7 +266,7 @@
 			return [];
 		}
 		const solutions = selectedSolutions as ActivatedSolution[];
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		solutions.forEach((solution) => {
 			solution.detail.system.set_conversion_technologies.forEach((t) => {
 				if (setCapexOpexTechnologies.has(t)) {
@@ -249,7 +282,7 @@
 			return [];
 		}
 		const solutions = selectedSolutions as ActivatedSolution[];
-		const setTechnologies: Set<string> = new Set();
+		const setTechnologies: Set<string> = new SvelteSet();
 		solutions.forEach((solution) => {
 			solution.detail.system.set_storage_technologies.forEach((t) => {
 				if (setCapexOpexTechnologies.has(t)) {
@@ -264,7 +297,7 @@
 		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		const setCarriers = new Set<string>();
+		const setCarriers: Set<string> = new SvelteSet();
 		fetchedCostCarrier.forEach((data) => {
 			data.forEach((row) => {
 				setCarriers.add(row['carrier']);
@@ -277,7 +310,7 @@
 		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		const setCarriers = new Set<string>();
+		const setCarriers: Set<string> = new SvelteSet();
 		fetchedCostShedDemand.forEach((data) => {
 			data.forEach((row) => {
 				setCarriers.add(row['carrier']);
@@ -291,7 +324,7 @@
 			return [];
 		}
 		const solutions = selectedSolutions as ActivatedSolution[];
-		const setLocations = new Set<string>();
+		const setLocations: Set<string> = new SvelteSet();
 		solutions.forEach((solution) => {
 			Object.keys(solution.detail.edges).forEach((edge) => {
 				setLocations.add(edge);
@@ -425,7 +458,22 @@
 	//#endregion
 
 	function onSolutionChanged() {
+		activeYear = null;
+		activeSolution = null;
 		fetchData();
+	}
+
+	function onClickBar(year: string, datasetIndex: number) {
+		if (!year) return;
+
+		const stack = datasets[datasetIndex].stack;
+		if (!stack || (activeYear === year && activeSolution === stack)) {
+			activeYear = null;
+			activeSolution = null;
+		} else {
+			activeYear = year;
+			activeSolution = stack;
+		}
 	}
 
 	//#region Data fetching and processing
@@ -495,7 +543,7 @@
 		debounceUpdateAllSelectedTechnologies();
 	});
 
-	let [datasets, patterns]: [ChartDataset<'bar' | 'line'>[], ColorBoxItem[]] = $derived.by(() => {
+	let [datasets, patterns]: [ChartDataset[], ColorBoxItem[]] = $derived.by(() => {
 		if (allSelectedTechnologies.length == 0) {
 			return [[], []];
 		}
@@ -574,7 +622,6 @@
 				return {
 					label,
 					data: entry.data,
-					borderColor: color,
 					backgroundColor:
 						pattern !== undefined
 							? drawPattern(pattern, addTransparency(color))
@@ -592,7 +639,6 @@
 				datasets.push({
 					data: carbonCostEntries.get(0)!.data,
 					label: 'Total Carbon Costs',
-					borderColor: color,
 					backgroundColor:
 						pattern !== undefined
 							? drawPattern(pattern, addTransparency(color))
@@ -610,7 +656,11 @@
 	//#endregion
 </script>
 
-<DiagramPage parentTitle="The Transition Pathway" pageTitle="Costs">
+<DiagramPage
+	parentTitle="The Transition Pathway"
+	pageTitle="Costs"
+	subtitle="Total annualized system costs by capex, opex, carrier cost, and carbon cost"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<MultiSolutionFilter
@@ -623,14 +673,18 @@
 		</FilterSection>
 		{#if !solutionLoading && !hasSomeUnsetSolutions}
 			<FilterSection title="Cost Selection">
-				{#each Object.values(variables) as variable, i}
+				{#each Object.values(variables) as variable (variable.title)}
 					<div class="grid grid-cols-2">
 						<div>
-							<ToggleButton bind:value={variable.show} label={variable.title}></ToggleButton>
+							<ToggleButton bind:value={variable.show} label={variable.title}>
+								{#snippet helpText()}
+									{variable.helpText}
+								{/snippet}
+							</ToggleButton>
 						</div>
 						{#if variable.show && variable.showSubdivision}
 							<div>
-								<ToggleButton bind:value={variable.subdivision} label={'with Subdivision'} />
+								<ToggleButton bind:value={variable.subdivision} label="with Subdivision" />
 							</div>
 						{/if}
 					</div>
@@ -706,7 +760,7 @@
 	{/snippet}
 
 	{#snippet buttons()}
-		<ChartButtons chart={chart as Chart} downloadable></ChartButtons>
+		<ChartButtons charts={[chart as Chart]} downloadable></ChartButtons>
 	{/snippet}
 
 	{#snippet mainContent()}
@@ -729,8 +783,16 @@
 				{patterns}
 				generateLabels={generateLabelsForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
+				{onClickBar}
 				bind:this={chart}
 			></Chart>
+			<PiePlot
+				datasets={datasets as ChartDataset<'bar'>[]}
+				{labels}
+				year={activeYear}
+				solution={activeSolution}
+				tooltipSuffix={` ${unit}`}
+			></PiePlot>
 		{/if}
 	{/snippet}
 </DiagramPage>

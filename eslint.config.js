@@ -33,7 +33,9 @@ export default defineConfig(
 	},
 	{
 		rules: {
-			'@typescript-eslint/no-explicit-any': 'warn'
+			'@typescript-eslint/no-explicit-any': 'warn',
+			'@typescript-eslint/no-unused-expressions': 'off',
+			'svelte/prefer-writable-derived': 'off'
 		}
 	}
 );

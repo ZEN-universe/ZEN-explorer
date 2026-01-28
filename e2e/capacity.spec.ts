@@ -1,148 +1,116 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
+import {
+	expectScreenshot,
+	selectFromDropdown,
+	selectFromMultiSelect,
+	selectSolution
+} from './helper';
 
 test(`capacity: variable`, async ({ page }) => {
 	await page.goto('/transition/capacity/');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'heat', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Variable' }).click();
-	await page.getByRole('option', { name: 'capacity_addition' }).click();
-	await page.getByRole('combobox', { name: 'Technology Type' }).click();
-	await page.getByRole('option', { name: 'conversion' }).click();
-	await expect(page.locator('#chart-container')).toHaveScreenshot(
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'heat');
+	await selectFromDropdown(page, 'Variable', 'capacity_addition');
+	await selectFromDropdown(page, 'Technology Type', 'conversion');
+	await expectScreenshot(
+		page,
+		'#chart-container',
 		`eeht_pf/capacity_addition/conversion/energy/heat.png`
 	);
 });
 
 test('capacity: technology_type', async ({ page }) => {
 	await page.goto('/transition/capacity/');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'natural_gas', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Variable' }).click();
-	await page.getByRole('option', { name: 'capacity', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Technology Type' }).click();
-	await page.getByRole('option', { name: 'transport', exact: true }).click();
-	await expect(page.locator('#chart-container')).toHaveScreenshot(
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'natural_gas');
+	await selectFromDropdown(page, 'Variable', 'capacity');
+	await selectFromDropdown(page, 'Technology Type', 'transport');
+	await expectScreenshot(
+		page,
+		'#chart-container',
 		`eeht_pf/capacity/transport/energy/natural_gas.png`
 	);
 });
 
 test('capacity: storage_type', async ({ page }) => {
 	await page.goto('/transition/capacity/');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'electricity', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Variable' }).click();
-	await page.getByRole('option', { name: 'capacity', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Technology Type' }).click();
-	await page.getByRole('option', { name: 'storage' }).click();
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'electricity');
+	await selectFromDropdown(page, 'Variable', 'capacity');
+	await selectFromDropdown(page, 'Technology Type', 'storage');
 	await page.getByRole('radio', { name: 'power' }).click();
-	await expect(page.locator('#chart-container')).toHaveScreenshot(
+	await expectScreenshot(
+		page,
+		'#chart-container',
 		`eeht_pf/capacity/storage/power/electricity.png`
 	);
 });
 
 test('capacity: carrier', async ({ page }) => {
 	await page.goto('/transition/capacity/');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'electricity', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Variable' }).click();
-	await page.getByRole('option', { name: 'capacity', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Technology Type' }).click();
-	await page.getByRole('option', { name: 'conversion' }).click();
-	await expect(page.locator('#chart-container')).toHaveScreenshot(
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'electricity');
+	await selectFromDropdown(page, 'Variable', 'capacity');
+	await selectFromDropdown(page, 'Technology Type', 'conversion');
+	await expectScreenshot(
+		page,
+		'#chart-container',
 		`eeht_pf/capacity/conversion/energy/electricity.png`
 	);
 });
 
 test(`capacity: aggregation`, async ({ page }) => {
 	await page.goto('/transition/capacity/');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'heat', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Variable' }).click();
-	await page.getByRole('option', { name: 'capacity', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Technology Type' }).click();
-	await page.getByRole('option', { name: 'conversion' }).click();
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'heat');
+	await selectFromDropdown(page, 'Variable', 'capacity');
+	await selectFromDropdown(page, 'Technology Type', 'conversion');
 	await page.getByRole('radio', { name: 'Technology' }).check();
-	await expect(page.locator('#chart-container')).toHaveScreenshot(
+	await expectScreenshot(
+		page,
+		'#chart-container',
 		`eeht_pf/capacity/conversion/energy/heat--aggregation-technology.png`
 	);
 });
 
 test(`capacity: normalization`, async ({ page }) => {
 	await page.goto('/transition/capacity/');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'heat', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Variable' }).click();
-	await page.getByRole('option', { name: 'capacity', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Technology Type' }).click();
-	await page.getByRole('option', { name: 'conversion' }).click();
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'heat');
+	await selectFromDropdown(page, 'Variable', 'capacity');
+	await selectFromDropdown(page, 'Technology Type', 'conversion');
 	await page.getByRole('switch', { name: 'Normalization off' }).click();
-	await expect(page.locator('#chart-container')).toHaveScreenshot(
+	await expectScreenshot(
+		page,
+		'#chart-container',
 		`eeht_pf/capacity/conversion/energy/heat--normalization-on.png`
 	);
 });
 
 test('capacity: node selection', async ({ page }) => {
 	await page.goto('/transition/capacity/');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'heat', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Variable' }).click();
-	await page.getByRole('option', { name: 'capacity', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Technology Type' }).click();
-	await page.getByRole('option', { name: 'conversion' }).click();
-	await page.getByText('Nodes Deselect All').getByRole('button').click();
-	await expect(page.getByRole('main')).toHaveText('No data for this selection found');
-	await page.getByRole('combobox', { name: 'Nodes' }).click();
-	await page.getByRole('option', { name: 'DE' }).click();
-	await expect(page.locator('#chart-container')).toHaveScreenshot(
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'heat');
+	await selectFromDropdown(page, 'Variable', 'capacity');
+	await selectFromDropdown(page, 'Technology Type', 'conversion');
+	await selectFromMultiSelect(page, 'Nodes', ['DE']);
+	await expectScreenshot(
+		page,
+		'#chart-container',
 		`eeht_pf/capacity/conversion/energy/heat--node-DE.png`
 	);
 });
 
 test('capacity: year selection', async ({ page }) => {
 	await page.goto('/transition/capacity/');
-	await page.getByRole('combobox', { name: 'Solution', exact: true }).click();
-	await page.getByRole('option', { name: 'european_electricity_heating_transition' }).click();
-	await page.getByRole('combobox', { name: 'Subsolution' }).click();
-	await page.getByRole('option', { name: 'perfect_foresight' }).click();
-	await page.getByRole('combobox', { name: 'Carrier' }).click();
-	await page.getByRole('option', { name: 'heat', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Variable' }).click();
-	await page.getByRole('option', { name: 'capacity', exact: true }).click();
-	await page.getByRole('combobox', { name: 'Technology Type' }).click();
-	await page.getByRole('option', { name: 'conversion' }).click();
-	await page.getByText('Years Deselect All').getByRole('button').click();
-	await expect(page.getByRole('main')).toHaveText('No data for this selection found');
-	await page.getByRole('combobox', { name: 'Years' }).click();
-	await page.getByRole('option', { name: '2024' }).click();
-	await expect(page.locator('#chart-container')).toHaveScreenshot(
+	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
+	await selectFromDropdown(page, 'Carrier', 'heat');
+	await selectFromDropdown(page, 'Variable', 'capacity');
+	await selectFromDropdown(page, 'Technology Type', 'conversion');
+	await selectFromMultiSelect(page, 'Years', ['2024']);
+	await expectScreenshot(
+		page,
+		'#chart-container',
 		`eeht_pf/capacity/conversion/energy/heat--year-selection.png`
 	);
 });

@@ -1,15 +1,11 @@
 <script lang="ts">
-	let theme: 'light' | 'dark' | 'system' = $state(localStorage.theme || 'system');
+	import { getTheme, toggleTheme } from '$lib/theme.svelte';
 
-	function toggleTheme() {
-		if (theme === 'system') {
-			theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'light' : 'dark';
-		} else {
-			theme = theme === 'dark' ? 'light' : 'dark';
-		}
-		localStorage.theme = theme;
-		(window as any).updateTheme();
-	}
+	let theme = $derived(getTheme());
+
+	$effect(() => {
+		document.documentElement.classList.toggle('dark', theme === 'dark');
+	});
 </script>
 
 <button

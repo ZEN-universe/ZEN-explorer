@@ -1,10 +1,12 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
+	import type { Snippet } from 'svelte';
 
 	interface Props {
 		value: boolean;
 		texts?: string[];
 		label: string;
+		helpText?: Snippet;
 		disabled?: boolean;
 		onUpdate?: () => void;
 	}
@@ -13,6 +15,7 @@
 		value = $bindable(),
 		texts = ['on', 'off'],
 		label,
+		helpText,
 		disabled = false,
 		onUpdate
 	}: Props = $props();
@@ -23,7 +26,7 @@
 	}
 </script>
 
-<FilterLabel {label} {formId}></FilterLabel>
+<FilterLabel {label} {formId} {helpText}></FilterLabel>
 
 <div class="relative mb-2">
 	<input

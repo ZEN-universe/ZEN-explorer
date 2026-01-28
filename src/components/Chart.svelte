@@ -2,12 +2,14 @@
 	import BaseChart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
-	import { onDestroy, onMount, tick } from 'svelte';
+	import { onDestroy, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
 
 	import ColorBox, { type ColorBoxItem } from '$components/ColorBox.svelte';
 	import HelpTooltip from './HelpTooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
+	import { getTheme } from '@/lib/theme.svelte';
+	import { getHiddenPatterns, onClickPattern } from '@/lib/compareSolutions.svelte';
 
 	BaseChart.register(zoomPlugin);
 
@@ -48,6 +50,8 @@
 		onClickLegend,
 		onClickBar
 	}: Props = $props();
+
+	let captureScreenshot: boolean = $state(false);
 
 	let chart: BaseChart | undefined = undefined;
 
@@ -97,12 +101,15 @@
 			plugins: {
 				...(options?.plugins ?? {}),
 				...pluginOptions
-			} as Record<string, any>
+			} as NonNullable<ChartOptions<ChartType>['plugins']>
 		};
 
 		optionsSnapshot.plugins.legend = {
-			display: false
+			display: captureScreenshot
 		};
+		if (captureScreenshot) {
+			optionsSnapshot.animation = false;
+		}
 
 		if (!zoom) {
 			return optionsSnapshot as ChartOptions;
@@ -125,13 +132,8 @@
 	// Used to temporarily hide and show the chart when updating colors
 	let showChart: boolean = $state(true);
 
-	onMount(() => {
-		updateDefaultColor();
-		window.addEventListener('themeChange', onUpdateColor);
-	});
-
-	onDestroy(() => {
-		window.removeEventListener('themeChange', onUpdateColor);
+	$effect(() => {
+		onUpdateColor();
 	});
 
 	async function onUpdateColor() {
@@ -142,10 +144,7 @@
 	}
 
 	function updateDefaultColor() {
-		const isDark =
-			window.localStorage.getItem('theme') === 'dark' ||
-			(!window.localStorage.getItem('theme') &&
-				window.matchMedia('(prefers-color-scheme: dark)').matches);
+		const isDark = getTheme() === 'dark';
 		BaseChart.defaults.color = isDark ? '#ddd' : '#222';
 		BaseChart.defaults.borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
 	}
@@ -153,6 +152,8 @@
 	//#endregion
 
 	//#region Zooming
+
+	let xScale: [number, number] | null = $state(null);
 
 	function setZoomLevel({ chart }: { chart: BaseChart }) {
 		if (chart == undefined || chart.canvas == null) {
@@ -166,19 +167,58 @@
 			return;
 		}
 		chart.zoomScale('x', { min: zoomLevel[0], max: zoomLevel[1] });
+		updateXScale();
 	}
 	$effect(updateZoomLevel);
 
+	function updateXScale() {
+		if (chart == undefined || chart.canvas == null) {
+			return;
+		}
+		xScale = [chart.scales['x'].min as number, chart.scales['x'].max as number];
+	}
+
 	export function resetZoom() {
 		chart?.resetZoom();
+		updateXScale();
 	}
 
 	export function zoomIn() {
 		chart?.zoom(1.2);
+		updateXScale();
 	}
 
 	export function zoomOut() {
 		chart?.zoom(0.8);
+		updateXScale();
+	}
+
+	export function move(forward: boolean) {
+		if (chart == undefined || chart.canvas == null) {
+			return;
+		}
+		const xScale = chart.scales['x'];
+		const range = xScale.max! - xScale.min!;
+		const sign = forward ? 1 : -1;
+		let amount = 0.3 * range;
+		if (forward) {
+			amount = Math.min(amount, (chart.data.labels as string[]).length - 1 - xScale.max!);
+		} else {
+			amount = Math.min(amount, xScale.min!);
+		}
+		chart.zoomScale('x', { min: xScale.min! + sign * amount, max: xScale.max! + sign * amount });
+		updateXScale();
+	}
+
+	export function canMove(forward: boolean): boolean {
+		if (chart == undefined || chart.canvas == null || xScale == null) {
+			return false;
+		}
+		if (forward) {
+			return xScale[1] < (chart.data.labels as string[]).length - 1;
+		} else {
+			return xScale[0] > 0;
+		}
 	}
 
 	//#endregion
@@ -223,6 +263,19 @@
 		chart.update();
 	}
 
+	let patternsWithHiddenState: ColorBoxItem[] = $derived.by(() => {
+		const hiddenPatterns = getHiddenPatterns();
+		return patterns.map((pattern) => ({
+			...pattern,
+			hidden: hiddenPatterns.has(pattern.text)
+		}));
+	});
+
+	function togglePattern(pattern: ColorBoxItem) {
+		if (chart === undefined) return;
+		onClickPattern(pattern, chart);
+	}
+
 	//#endregion
 
 	//#region Download data
@@ -261,15 +314,20 @@
 	//#endregion
 
 	//#region Download chart as image
-	export function downloadChartAsImage() {
+	export async function downloadChartAsImage() {
 		if (chart == undefined) {
 			return;
 		}
+
+		captureScreenshot = true;
+		await tick();
+
 		const link = document.createElement('a');
 		link.download = plotName + '.png';
-		link.href = chart.toBase64Image();
+		link.href = chart!.toBase64Image();
 		document.body.appendChild(link); // Required for Firefox
 		link.click();
+		captureScreenshot = false;
 	}
 	//#endregion
 
@@ -288,30 +346,36 @@
 {#snippet legend()}
 	<h2 class="me-4 flex items-start text-lg font-bold">
 		<span class="me-2">Legend</span>
-		<HelpTooltip content="Click on legend items to show/hide them in the chart." />
+		<HelpTooltip>Click on legend items to temporarily show/hide them in the chart.</HelpTooltip>
 	</h2>
 	<div class="flex flex-wrap gap-2">
-		{#each legendItems as item}
+		{#each legendItems as item, idx (idx)}
 			<button
 				class="flex items-center text-sm text-gray-600 dark:text-gray-400"
 				onclick={() => toggleLegendItem(item)}
 			>
 				<ColorBox item={item as ColorBoxItem}></ColorBox>
-				<span class={[item.hidden && 'text-decoration-line-through']}>{item.text}</span>
+				<span class={[item.hidden && 'line-through']}>{item.text}</span>
 			</button>
 		{/each}
 	</div>
 {/snippet}
 
 {#snippet patternSnippet()}
-	{#if patterns.length > 1}
-		<h2 class="me-4 text-lg font-bold">Patterns</h2>
+	{#if patternsWithHiddenState.length > 1}
+		<h2 class="me-4 text-lg font-bold">
+			<span class="me-2">Patterns</span>
+			<HelpTooltip>Click on pattern items to temporarily show/hide them in the chart.</HelpTooltip>
+		</h2>
 		<div class="legend flex flex-wrap gap-2">
-			{#each patterns as pattern}
-				<div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+			{#each patternsWithHiddenState as pattern, idx (idx)}
+				<button
+					class="flex items-center text-sm text-gray-600 dark:text-gray-400"
+					onclick={() => togglePattern(pattern)}
+				>
 					<ColorBox item={pattern}></ColorBox>
-					<span>{pattern.text}</span>
-				</div>
+					<span class={[pattern.hidden && 'line-through']}>{pattern.text}</span>
+				</button>
 			{/each}
 		</div>
 	{/if}
@@ -334,11 +398,15 @@
 	{/if}
 	<ContentBox class="resize-y overflow-y-auto" children={chartSnippet}></ContentBox>
 {:else}
-	<div class="mb-4 flex">
-		{@render legend()}
-	</div>
-	<div class="mb-4 flex">
-		{@render patternSnippet()}
-	</div>
+	{#if legendItems.length > 0}
+		<div class="mb-4 flex">
+			{@render legend()}
+		</div>
+	{/if}
+	{#if patterns.length > 1}
+		<div class="mb-4 flex">
+			{@render patternSnippet()}
+		</div>
+	{/if}
 	{@render chartSnippet()}
 {/if}

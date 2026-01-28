@@ -4,7 +4,7 @@
 	import { pointer, select } from 'd3-selection';
 	import { pie as d3pie, arc as d3arc } from 'd3-shape';
 	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3-zoom';
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
@@ -80,7 +80,7 @@
 		const usedNodes = new Set(
 			Object.keys(pieData).concat(Object.keys(lineData).flatMap((d) => d.split('-')))
 		);
-		const filteredNodeCoords = Object.entries(nodeCoords).filter(([key, _]) => usedNodes.has(key));
+		const filteredNodeCoords = Object.entries(nodeCoords).filter(([key]) => usedNodes.has(key));
 
 		if (!nodeCoords || filteredNodeCoords.length == 0) {
 			// Default projection for the world map
@@ -102,7 +102,7 @@
 
 		const featureCollection: ExtendedFeatureCollection = {
 			type: 'FeatureCollection',
-			features: filteredNodeCoords.map(([_, coords]) => ({
+			features: filteredNodeCoords.map(([, coords]) => ({
 				type: 'Feature',
 				geometry: {
 					type: 'Point',
@@ -449,7 +449,7 @@
 		<ContentBox class="flex">
 			<h2 class="me-4 flex items-start text-lg font-bold">Legend</h2>
 			<div class="flex flex-wrap gap-2">
-				{#each technologies as tech}
+				{#each technologies as tech (tech)}
 					<div class="flex items-center p-0 text-sm text-gray-600 dark:text-gray-400">
 						<svg width="40" height="12" class="me-1">
 							<rect width="40" height="12" fill={computeColor(tech)} />
@@ -494,14 +494,14 @@
 				/>
 			</g>
 			<g>
-				{#each lines as line}
+				{#each lines as line (line.label)}
 					<path d={straightLine(line.start, line.end)} stroke="#000" stroke-width={line.width} />
 				{/each}
 			</g>
 			<g>
-				{#each pies as pie}
+				{#each pies as pie (pie.label)}
 					<g transform={`translate(${pie.x}, ${pie.y})`}>
-						{#each pie.data as d}
+						{#each pie.data as d (d.technology)}
 							<path d={d.arc} fill={d.color} />
 						{/each}
 					</g>
@@ -524,7 +524,7 @@
 			<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
 				{#if activePie}
 					<h5 class="mb-0 px-2 text-sm font-bold">{activePie.label}</h5>
-					{#each activePie.data as d}
+					{#each activePie.data as d (d.technology)}
 						<div class="flex items-center justify-between gap-2 px-2 text-xs">
 							<div class="flex items-center">
 								<svg class="me-1" width="12" height="12">
@@ -545,10 +545,10 @@
 						</div>
 					{/if}
 				{:else if activeLines.length > 0}
-					{#each activeLines as line, i}
+					{#each activeLines as line, i (i)}
 						<div class={['px-2 text-xs', i > 0 && 'mt-2 border-t border-gray-500 pt-2']}>
 							<h5 class="mb-0 text-sm font-bold">{line.label}</h5>
-							{#each line.values as d}
+							{#each line.values as d (d.technology)}
 								<div>
 									{d.technology}: {d.value.toFixed(3)}
 									{unit}

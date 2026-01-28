@@ -18,15 +18,11 @@
 
 	let currentPage = $derived(page.url.pathname.slice(0, -1));
 
-	//#region Navigation
-
 	let showSidebarNav: boolean = $state(false);
 
 	function toggleNavigation() {
 		showSidebarNav = !showSidebarNav;
 	}
-
-	//#endregion
 </script>
 
 <nav
@@ -35,7 +31,7 @@
 	<div>
 		<a class="inline-flex h-full items-center text-xl font-semibold" href={resolve('/explorer/')}>
 			<img src="/logo.png" alt="ZEN-garden Logo" class="mr-2 inline h-8" />
-			ZEN-garden
+			ZEN&#8209;garden
 		</a>
 	</div>
 	<div class="col-span-3 flex flex-1 items-center justify-end px-2 lg:justify-between">
@@ -43,8 +39,9 @@
 			<li>
 				<div class="text-sm tracking-wide text-gray-400 uppercase">The Transition Pathway</div>
 				<ul class="flex gap-4 text-lg font-semibold 2xl:gap-6">
-					{#each Object.entries(transition_urls) as [title, url]}
+					{#each Object.entries(transition_urls) as [title, url] (title)}
 						<li>
+							<!-- eslint-disable svelte/no-navigation-without-resolve -->
 							<a
 								class={[
 									'hover:text-gray-600 dark:hover:text-gray-400',
@@ -59,7 +56,7 @@
 			<li>
 				<div class="text-sm tracking-wide text-gray-400 uppercase">The Energy Balance</div>
 				<ul class="flex gap-4 text-lg font-semibold">
-					{#each Object.entries(energy_balance_urls) as [title, url]}
+					{#each Object.entries(energy_balance_urls) as [title, url] (title)}
 						<li>
 							<a
 								class={[
@@ -73,23 +70,21 @@
 				</ul>
 			</li>
 			<li>
-				<div class="text-sm tracking-wide text-gray-400 uppercase">The Energy System</div>
 				<a
 					class={[
 						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
 						currentPage == '/explorer/energy_system' && 'border-b-2 pb-1'
 					]}
-					href={addCurrentSolutionToURL('/explorer/energy_system', false)}>Sankey</a
+					href={addCurrentSolutionToURL('/explorer/energy_system', false)}>The Energy System</a
 				>
 			</li>
 			<li>
-				<div class="text-sm tracking-wide text-gray-400 uppercase">The Map</div>
 				<a
 					class={[
 						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
 						currentPage == '/explorer/map' && 'border-b-2 pb-1'
 					]}
-					href={addCurrentSolutionToURL('/explorer/map', false)}>Map</a
+					href={addCurrentSolutionToURL('/explorer/map', false)}>The Map</a
 				>
 			</li>
 		</ul>
@@ -158,7 +153,7 @@
 	<div class="space-y-1 px-2 pt-2 pb-3">
 		<h2 class="mb-0 px-3 text-sm tracking-wide text-gray-500 uppercase">The Transition Pathway</h2>
 		<div class="mb-4">
-			{#each Object.entries(transition_urls) as [title, url]}
+			{#each Object.entries(transition_urls) as [title, url] (title)}
 				<a
 					href={addCurrentSolutionToURL(url, true)}
 					class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -168,7 +163,7 @@
 		</div>
 		<h2 class="mb-0 px-3 text-sm tracking-wide text-gray-500 uppercase">The Energy Balance</h2>
 		<div class="mb-4">
-			{#each Object.entries(energy_balance_urls) as [title, url]}
+			{#each Object.entries(energy_balance_urls) as [title, url] (title)}
 				<a
 					href={addCurrentSolutionToURL(url, false)}
 					class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -176,17 +171,15 @@
 				>
 			{/each}
 		</div>
-		<h2 class="mb-0 px-3 text-sm tracking-wide text-gray-500 uppercase">The Energy System</h2>
 		<a
-			href={addCurrentSolutionToURL('/energy_system', false)}
+			href={addCurrentSolutionToURL('/explorer/energy_system', false)}
 			class="mb-4 block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
-			>Sankey</a
+			>The Energy System</a
 		>
-		<h2 class="mb-0 px-3 text-sm tracking-wide text-gray-500 uppercase">The Map</h2>
 		<a
-			href={addCurrentSolutionToURL('/map', false)}
+			href={addCurrentSolutionToURL('/explorer/map', false)}
 			class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
-			>Map</a
+			>The Map</a
 		>
 	</div>
 </aside>

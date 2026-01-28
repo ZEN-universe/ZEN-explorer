@@ -39,10 +39,6 @@
 	];
 </script>
 
-<svelte:head>
-	<title>ZEN&#8209;garden</title>
-</svelte:head>
-
 {#snippet navButton(href: string, label: string, iconClass: string)}
 	<a
 		{href}
@@ -64,7 +60,7 @@
 		<div>
 			<a class="inline-flex h-full items-center text-xl font-semibold" href={resolve('/')}>
 				<img src="/logo.png" alt="ZEN-garden Logo" class="mr-2 inline h-8" />
-				<span class="hidden sm:inline">ZEN-garden</span>
+				<span class="hidden sm:inline">ZEN&#8209;garden</span>
 			</a>
 		</div>
 		<div class="flex items-center gap-2">
