@@ -43,7 +43,7 @@
 </script>
 
 <div
-	class="absolute bg-black dark:bg-white opacity-75 text-white dark:text-black pointer-events-none py-2 rounded pe-0 z-3"
+	class="pointer-events-none absolute z-3 rounded bg-black py-2 pe-0 text-white opacity-75 dark:bg-white dark:text-black"
 	style:left={`${adjustedX}px`}
 	style:top={`${adjustedY}px`}
 	style:transform={isOnTop ? `translate(-50%, -100%)` : `translate(-50%, 0%)`}
@@ -55,7 +55,7 @@
 </div>
 
 <svg
-	class="absolute opacity-75 translate-middle-x pointer-events-none"
+	class="translate-middle-x pointer-events-none absolute opacity-75"
 	style:left={`${x}px`}
 	style:top={`${adjustedY + (isOnTop ? 0 : -5)}px`}
 	width="10"

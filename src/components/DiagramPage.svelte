@@ -19,15 +19,15 @@
 </script>
 
 <div class={['grid', 'grid-cols-1 lg:grid-cols-4', 'gap-x-4 p-4 pb-0']}>
-	<div class="lg:col-span-1 flex items-end justify-between">
+	<div class="flex items-end justify-between lg:col-span-1">
 		<div>
-			<div class="text-sm text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">
+			<div class="mb-1 text-sm tracking-wide text-gray-600 uppercase dark:text-gray-400">
 				{parentTitle}
 			</div>
 			<h1 class="text-3xl font-bold">{pageTitle}</h1>
 		</div>
 	</div>
-	<div class="lg:col-span-3 order-3 lg:order-2">
+	<div class="order-3 lg:order-2 lg:col-span-3">
 		{@render buttons?.()}
 	</div>
 </div>
@@ -40,22 +40,22 @@
 			: 'lg:grid-cols-[calc(25%-0.5rem)_calc(75%-0.5rem)]'
 	]}
 >
-	<div class="col-span-1 order-2 lg:order-3 pb-4">
+	<div class="order-2 col-span-1 pb-4 lg:order-3">
 		<ContentBox
 			noPadding
 			class={'flex flex-col items-center' + (sidebarCollapsed ? ' h-full' : '')}
 		>
-			<div class="flex justify-between w-full">
+			<div class="flex w-full justify-between">
 				<h2
-					class={['font-bold text-lg px-4 pt-4 pb-2 text-ellipsis', sidebarCollapsed && 'sr-only']}
+					class={['px-4 pt-4 pb-2 text-lg font-bold text-ellipsis', sidebarCollapsed && 'sr-only']}
 				>
 					Selection
 				</h2>
 				<button
 					class={[
 						'hidden lg:block',
-						'rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200',
-						'p-2 mt-2 mx-2'
+						'rounded-lg text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700',
+						'mx-2 mt-2 p-2'
 					]}
 					onclick={toggleSidebarCollapse}
 				>
@@ -69,7 +69,7 @@
 			</div>
 			{#if sidebarCollapsed}
 				<div
-					class="text-md font-bold text-gray-600 dark:text-gray-400 [writing-mode:sideways-lr] mt-2"
+					class="text-md mt-2 font-bold text-gray-600 [writing-mode:sideways-lr] dark:text-gray-400"
 				>
 					Selection
 				</div>

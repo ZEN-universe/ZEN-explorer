@@ -529,7 +529,7 @@
 					bind:this={dualsPlot}
 				></Chart>
 			{:else}
-				<div class="text-center text-muted mt-2">No dual data available.</div>
+				<div class="text-muted mt-2 text-center">No dual data available.</div>
 			{/if}
 		{/if}
 	{/snippet}

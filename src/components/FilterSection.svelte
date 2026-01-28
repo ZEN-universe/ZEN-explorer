@@ -10,7 +10,7 @@
 </script>
 
 <div
-	class="[&:not(:last-child)]:border-b border-gray-300 dark:border-gray-600 p-4 [&:first-child]:pt-0"
+	class="border-gray-300 p-4 dark:border-gray-600 [&:first-child]:pt-0 [&:not(:last-child)]:border-b"
 >
 	<h3 class="sr-only">{title}</h3>
 	{@render children?.()}

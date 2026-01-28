@@ -99,14 +99,14 @@
 
 {#if year == null || solution == null}
 	<ContentBox>
-		<div class="text-center text-muted my-4">
+		<div class="text-muted my-4 text-center">
 			Click on a bar to see a production and consumption breakdown.
 		</div>
 	</ContentBox>
 {:else}
 	<div class="grid grid-cols-2 gap-4">
 		<ContentBox>
-			<h3 class="font-semibold text-lg mb-4">
+			<h3 class="mb-4 text-lg font-semibold">
 				Breakdown of Production for {year}
 				{hasMultipleSolutions ? ` (${solution})` : ''}
 			</h3>
@@ -119,7 +119,7 @@
 			></Chart>
 		</ContentBox>
 		<ContentBox>
-			<h3 class="font-semibold text-lg mb-4">
+			<h3 class="mb-4 text-lg font-semibold">
 				Breakdown of Consumption for {year}
 				{hasMultipleSolutions ? ` (${solution})` : ''}
 			</h3>

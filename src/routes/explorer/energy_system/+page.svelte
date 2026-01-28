@@ -526,7 +526,7 @@
 
 	{#snippet buttons()}
 		{#if diagram}
-			<div class="flex justify-end items-end h-full gap-4">
+			<div class="flex h-full items-end justify-end gap-4">
 				<Button onclick={diagram?.resetZoom}>
 					<i class="bi bi-house me-2"></i>
 					<div>Reset zoom</div>

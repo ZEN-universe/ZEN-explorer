@@ -144,12 +144,12 @@
 	<!-- Not showing anything while mounting component -->
 {:else}
 	{#each solutions as _, idx}
-		<div class={[idx > 0 && 'mb-2 mt-4']}>
+		<div class={[idx > 0 && 'mt-4 mb-2']}>
 			{#if idx > 0}
 				<div
 					class={[
 						'flex justify-between border-b',
-						'border border-gray-300 dark:border-gray-600 rounded-t bg-gray-200 dark:bg-gray-900',
+						'rounded-t border border-gray-300 bg-gray-200 dark:border-gray-600 dark:bg-gray-900',
 						'px-2 py-2'
 					]}
 				>
@@ -164,7 +164,7 @@
 			{#if activeSecondLevels[idx] !== undefined && activeScenarios[idx] !== undefined}
 				<div
 					class={[
-						idx > 0 && 'border border-t-0 border-gray-300 dark:border-gray-600 rounded-b p-2'
+						idx > 0 && 'rounded-b border border-t-0 border-gray-300 p-2 dark:border-gray-600'
 					]}
 				>
 					<SolutionFilter
@@ -188,7 +188,7 @@
 	{#if moreSolutionsExist && !solutions.includes(null)}
 		<div class="mt-4">
 			<button
-				class="border-2 rounded p-2 w-full text-blue-500 hover:bg-gray-200 hover:dark:bg-gray-700"
+				class="w-full rounded border-2 p-2 text-blue-500 hover:bg-gray-200 hover:dark:bg-gray-700"
 				onclick={addSolution}
 			>
 				<i class="bi bi-plus-lg me-1"></i>

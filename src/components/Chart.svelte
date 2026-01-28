@@ -286,14 +286,14 @@
 </script>
 
 {#snippet legend()}
-	<h2 class="flex items-start font-bold text-lg me-4">
+	<h2 class="me-4 flex items-start text-lg font-bold">
 		<span class="me-2">Legend</span>
 		<HelpTooltip content="Click on legend items to show/hide them in the chart." />
 	</h2>
 	<div class="flex flex-wrap gap-2">
 		{#each legendItems as item}
 			<button
-				class="flex items-center text-gray-600 dark:text-gray-400 text-sm"
+				class="flex items-center text-sm text-gray-600 dark:text-gray-400"
 				onclick={() => toggleLegendItem(item)}
 			>
 				<ColorBox item={item as ColorBoxItem}></ColorBox>
@@ -305,10 +305,10 @@
 
 {#snippet patternSnippet()}
 	{#if patterns.length > 1}
-		<h2 class="font-bold text-lg me-4">Patterns</h2>
+		<h2 class="me-4 text-lg font-bold">Patterns</h2>
 		<div class="legend flex flex-wrap gap-2">
 			{#each patterns as pattern}
-				<div class="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+				<div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
 					<ColorBox item={pattern}></ColorBox>
 					<span>{pattern.text}</span>
 				</div>
@@ -334,10 +334,10 @@
 	{/if}
 	<ContentBox class="resize-y overflow-y-auto" children={chartSnippet}></ContentBox>
 {:else}
-	<div class="flex mb-4">
+	<div class="mb-4 flex">
 		{@render legend()}
 	</div>
-	<div class="flex mb-4">
+	<div class="mb-4 flex">
 		{@render patternSnippet()}
 	</div>
 	{@render chartSnippet()}

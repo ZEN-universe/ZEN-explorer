@@ -2,6 +2,56 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+	--color-pacifika-50: #f8f9ec;
+	--color-pacifika-100: #eef1d6;
+	--color-pacifika-200: #dee5b1;
+	--color-pacifika-300: #c7d383;
+	--color-pacifika-400: #b0c05b;
+	--color-pacifika-500: #93a53d;
+	--color-pacifika-600: #6e7e2c;
+	--color-pacifika-700: #576427;
+	--color-pacifika-800: #475123;
+	--color-pacifika-900: #3d4522;
+	--color-pacifika-950: #1f250e;
+
+	--color-viridian-50: #f4f9f7;
+	--color-viridian-100: #d9eee8;
+	--color-viridian-200: #b2ddd0;
+	--color-viridian-300: #84c4b3;
+	--color-viridian-400: #5aa794;
+	--color-viridian-500: #408c7b;
+	--color-viridian-600: #387e70;
+	--color-viridian-700: #2b5a51;
+	--color-viridian-800: #264943;
+	--color-viridian-900: #233e39;
+	--color-viridian-950: #102321;
+
+	--color-san-marino-50: #f4f6fb;
+	--color-san-marino-100: #e8edf6;
+	--color-san-marino-200: #cbd9ec;
+	--color-san-marino-300: #9db9dc;
+	--color-san-marino-400: #6994c7;
+	--color-san-marino-500: #4270a8;
+	--color-san-marino-600: #345d95;
+	--color-san-marino-700: #2b4a79;
+	--color-san-marino-800: #274065;
+	--color-san-marino-900: #253855;
+	--color-san-marino-950: #192538;
+
+	--color-teak-50: #f7f6ef;
+	--color-teak-100: #ebe8d6;
+	--color-teak-200: #d8d1b0;
+	--color-teak-300: #c1b383;
+	--color-teak-400: #ae995e;
+	--color-teak-500: #a08852;
+	--color-teak-600: #896f45;
+	--color-teak-700: #6f5639;
+	--color-teak-800: #5e4835;
+	--color-teak-900: #523f31;
+	--color-teak-950: #2e221a;
+}
+
 @layer base {
 	button:not(:disabled),
 	[role='button']:not(:disabled) {

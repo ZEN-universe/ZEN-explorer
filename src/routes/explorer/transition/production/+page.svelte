@@ -712,7 +712,7 @@
 					{#each variables as variable}
 						{#if !hasDataForVariable(variable)}
 							<FilterLabel label={variable.title}></FilterLabel>
-							<div class="text-gray-500 italic text-sm mb-2">
+							<div class="mb-2 text-sm text-gray-500 italic">
 								No data available for {variable.title}.
 							</div>
 						{:else}

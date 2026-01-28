@@ -30,19 +30,19 @@
 </script>
 
 <nav
-	class="flex gap-4 xl:gap-0 xl:grid grid-cols-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2"
+	class="flex grid-cols-4 gap-4 border-b border-gray-200 bg-white px-4 py-2 text-gray-800 xl:grid xl:gap-0 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
 >
 	<div>
-		<a class="text-xl font-semibold inline-flex items-center h-full" href={resolve('/explorer/')}>
-			<img src="/logo.png" alt="ZEN-garden Logo" class="inline h-8 mr-2" />
+		<a class="inline-flex h-full items-center text-xl font-semibold" href={resolve('/explorer/')}>
+			<img src="/logo.png" alt="ZEN-garden Logo" class="mr-2 inline h-8" />
 			ZEN-garden
 		</a>
 	</div>
-	<div class="col-span-3 px-2 flex justify-end lg:justify-between items-center flex-1">
-		<ul class="hidden lg:flex items-end gap-6 xl:gap-12">
+	<div class="col-span-3 flex flex-1 items-center justify-end px-2 lg:justify-between">
+		<ul class="hidden items-end gap-6 lg:flex xl:gap-12">
 			<li>
-				<div class="uppercase tracking-wide text-sm text-gray-400">The Transition Pathway</div>
-				<ul class="flex gap-4 2xl:gap-6 text-lg font-semibold">
+				<div class="text-sm tracking-wide text-gray-400 uppercase">The Transition Pathway</div>
+				<ul class="flex gap-4 text-lg font-semibold 2xl:gap-6">
 					{#each Object.entries(transition_urls) as [title, url]}
 						<li>
 							<a
@@ -57,7 +57,7 @@
 				</ul>
 			</li>
 			<li>
-				<div class="uppercase tracking-wide text-sm text-gray-400">The Energy Balance</div>
+				<div class="text-sm tracking-wide text-gray-400 uppercase">The Energy Balance</div>
 				<ul class="flex gap-4 text-lg font-semibold">
 					{#each Object.entries(energy_balance_urls) as [title, url]}
 						<li>
@@ -73,7 +73,7 @@
 				</ul>
 			</li>
 			<li>
-				<div class="uppercase tracking-wide text-sm text-gray-400">The Energy System</div>
+				<div class="text-sm tracking-wide text-gray-400 uppercase">The Energy System</div>
 				<a
 					class={[
 						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
@@ -83,7 +83,7 @@
 				>
 			</li>
 			<li>
-				<div class="uppercase tracking-wide text-sm text-gray-400">The Map</div>
+				<div class="text-sm tracking-wide text-gray-400 uppercase">The Map</div>
 				<a
 					class={[
 						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
@@ -93,10 +93,10 @@
 				>
 			</li>
 		</ul>
-		<div class="flex justify-end items-center gap-2">
+		<div class="flex items-center justify-end gap-2">
 			<ToggleThemeButton></ToggleThemeButton>
 			<button
-				class="rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 p-2 lg:hidden"
+				class="rounded-lg p-2 text-gray-700 hover:bg-gray-200 lg:hidden dark:text-gray-200 dark:hover:bg-gray-700"
 				aria-controls="sidebar-nav"
 				aria-expanded={showSidebarNav ? 'true' : 'false'}
 				aria-label="Toggle navigation"
@@ -119,15 +119,15 @@
 	id="sidebar-nav"
 	class={[
 		'block lg:hidden',
-		'fixed lg:translate-x-0 transition-transform duration-300',
-		'inset-y-0 -right-64 w-64 z-5 h-full overflow-y-auto',
-		'bg-gray-100 dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700',
+		'fixed transition-transform duration-300 lg:translate-x-0',
+		'inset-y-0 -right-64 z-5 h-full w-64 overflow-y-auto',
+		'border-l border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-900',
 		showSidebarNav && '-translate-x-full'
 	]}
 >
 	<div class="flex justify-end px-4 py-2">
 		<button
-			class="rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 p-2"
+			class="rounded-lg p-2 text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700"
 			aria-controls="sidebar-nav"
 			aria-expanded={showSidebarNav ? 'true' : 'false'}
 			aria-label="Toggle navigation"
@@ -155,37 +155,37 @@
 			</svg>
 		</button>
 	</div>
-	<div class="px-2 pt-2 pb-3 space-y-1">
-		<h2 class="px-3 mb-0 text-gray-500 uppercase tracking-wide text-sm">The Transition Pathway</h2>
+	<div class="space-y-1 px-2 pt-2 pb-3">
+		<h2 class="mb-0 px-3 text-sm tracking-wide text-gray-500 uppercase">The Transition Pathway</h2>
 		<div class="mb-4">
 			{#each Object.entries(transition_urls) as [title, url]}
 				<a
 					href={addCurrentSolutionToURL(url, true)}
-					class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
+					class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
 					>{title}</a
 				>
 			{/each}
 		</div>
-		<h2 class="px-3 mb-0 text-gray-500 uppercase tracking-wide text-sm">The Energy Balance</h2>
+		<h2 class="mb-0 px-3 text-sm tracking-wide text-gray-500 uppercase">The Energy Balance</h2>
 		<div class="mb-4">
 			{#each Object.entries(energy_balance_urls) as [title, url]}
 				<a
 					href={addCurrentSolutionToURL(url, false)}
-					class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
+					class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
 					>{title}</a
 				>
 			{/each}
 		</div>
-		<h2 class="px-3 mb-0 text-gray-500 uppercase tracking-wide text-sm">The Energy System</h2>
+		<h2 class="mb-0 px-3 text-sm tracking-wide text-gray-500 uppercase">The Energy System</h2>
 		<a
 			href={addCurrentSolutionToURL('/energy_system', false)}
-			class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700 mb-4"
+			class="mb-4 block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
 			>Sankey</a
 		>
-		<h2 class="px-3 mb-0 text-gray-500 uppercase tracking-wide text-sm">The Map</h2>
+		<h2 class="mb-0 px-3 text-sm tracking-wide text-gray-500 uppercase">The Map</h2>
 		<a
 			href={addCurrentSolutionToURL('/map', false)}
-			class="block px-3 py-2 rounded-md text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
+			class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
 			>Map</a
 		>
 	</div>

@@ -26,7 +26,7 @@ const config = {
 		},
 		alias: {
 			$components: 'src/components',
-			'@': 'src',
+			'@': 'src'
 		}
 	}
 };
