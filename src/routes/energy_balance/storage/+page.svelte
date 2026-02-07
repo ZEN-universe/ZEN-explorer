@@ -36,7 +36,7 @@
 
 	let selectedSolution: ActivatedSolution | null = $state(null);
 	let selectedCarrier: string | null = $state(null);
-	let selectedYear: string = $state('');
+	let selectedYear: string | null = $state(null);
 	let selectedWindowSize: string = $state('Hourly');
 	let selectedSubdivision: boolean = $state(true);
 	let selectedTechnologies: string[] = $state([]);
@@ -215,8 +215,8 @@
 	$effect(() => {
 		carriers;
 		untrack(() => {
-			if (selectedSolution === null) return;
-			if (selectedCarrier !== null && !carriers.includes(selectedCarrier)) {
+			if (selectedSolution === null || selectedCarrier === null) return;
+			else if (!carriers.includes(selectedCarrier)) {
 				selectedCarrier = null;
 			}
 		});
@@ -225,9 +225,9 @@
 	$effect(() => {
 		years;
 		untrack(() => {
-			if (years.length > 0 && (!selectedYear || !years.includes(Number(selectedYear)))) {
-				selectedYear = years[0].toString();
-				updateDatasets();
+			if (selectedSolution === null || selectedYear === null) return;
+			else if (!years.includes(Number(selectedYear))) {
+				selectedYear = null;
 			}
 		});
 	});
@@ -276,7 +276,7 @@
 	//#region Data fetching and processing
 
 	async function fetchData() {
-		if (selectedSolution === null || !selectedYear || selectedCarrier === null) {
+		if (selectedSolution === null || selectedYear === null || selectedCarrier === null) {
 			return;
 		}
 
@@ -487,6 +487,8 @@
 						label="Year"
 						disabled={fetching || solutionLoading}
 					></Dropdown>
+				{/if}
+				{#if selectedCarrier !== null && selectedYear !== null}
 					<Dropdown
 						options={windowSizes}
 						bind:value={selectedWindowSize}
@@ -499,7 +501,7 @@
 					</Dropdown>
 				{/if}
 			</FilterSection>
-			{#if selectedSolution !== null && selectedCarrier !== null}
+			{#if selectedSolution !== null && selectedCarrier !== null && selectedYear !== null}
 				<FilterSection title="Data Selection">
 					<ToggleButton
 						bind:value={selectedSubdivision}
@@ -541,6 +543,8 @@
 			<ErrorMessage message="No carriers with this selection"></ErrorMessage>
 		{:else if selectedCarrier == null}
 			<WarningMessage message="Please select a carrier"></WarningMessage>
+		{:else if selectedYear == null}
+			<WarningMessage message="Please select a year"></WarningMessage>
 		{:else if technologies.length == 0}
 			<ErrorMessage message="No technologies with this selection"></ErrorMessage>
 		{:else if locations.length == 0}

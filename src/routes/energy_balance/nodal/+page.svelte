@@ -194,24 +194,26 @@
 	$effect(() => {
 		years;
 		untrack(() => {
-			if (years.length > 0 && (selectedYear == null || !years.includes(Number(selectedYear)))) {
-				selectedYear = years[0].toString();
+			if (selectedSolution === null || selectedYear === null) return;
+			else if (!years.includes(Number(selectedYear))) {
+				selectedYear = null;
 			}
 		});
 	});
 	$effect(() => {
 		nodes;
 		untrack(() => {
-			if (nodes.length > 0 && (selectedNode == null || !nodes.includes(selectedNode))) {
-				selectedNode = nodes[0];
+			if (selectedSolution === null || selectedNode === null) return;
+			else if (!nodes.includes(selectedNode)) {
+				selectedNode = null
 			}
 		});
 	});
 	$effect(() => {
 		carriers;
 		untrack(() => {
-			if (selectedSolution === null) return;
-			if (selectedCarrier !== null && !carriers.includes(selectedCarrier)) {
+			if (selectedSolution === null || selectedCarrier === null) return;
+			else if (!carriers.includes(selectedCarrier)) {
 				selectedCarrier = null;
 			}
 		});
@@ -476,12 +478,16 @@
 						label="Year"
 						disabled={fetching || solutionLoading}
 					></Dropdown>
+				{/if}
+				{#if selectedCarrier !== null && selectedYear !== null}
 					<Dropdown
 						options={nodes}
 						bind:value={selectedNode}
 						label="Node"
 						disabled={fetching || solutionLoading}
 					></Dropdown>
+				{/if}
+				{#if selectedCarrier !== null && selectedYear !== null && selectedNode !== null}
 					<Dropdown
 						options={windowSizes}
 						bind:value={selectedWindowSize}
@@ -508,6 +514,10 @@
 			<ErrorMessage message="No carriers available for the selected solution"></ErrorMessage>
 		{:else if selectedCarrier == null}
 			<WarningMessage message="Please select a carrier"></WarningMessage>
+		{:else if selectedYear == null}
+			<WarningMessage message="Please select a year"></WarningMessage>
+		{:else if selectedNode == null}
+			<WarningMessage message="Please select a node"></WarningMessage>
 		{:else if datasetsLength == 0 || selectedSolution == null}
 			<ErrorMessage message="No data with this selection"></ErrorMessage>
 		{:else}
