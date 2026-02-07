@@ -555,7 +555,7 @@
 		{:else}
 			<Chart
 				type="bar"
-				{datasets}
+				getDatasets={() => datasets}
 				{labels}
 				options={plotOptions}
 				pluginOptions={plotPluginOptions}

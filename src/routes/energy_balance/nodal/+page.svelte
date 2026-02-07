@@ -435,10 +435,10 @@
 		await tick();
 
 		if (plot) {
-			plot.updateChart(datasets);
+			plot.updateChart();
 		}
 		if (dualsPlot) {
-			dualsPlot.updateChart(dualsDatasets);
+			dualsPlot.updateChart();
 		}
 	}
 
@@ -514,7 +514,7 @@
 			<Chart
 				type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
 				{labels}
-				datasets={[]}
+				getDatasets={() => datasets}
 				options={plotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
@@ -535,7 +535,7 @@
 						id="chart-duals"
 						type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
 						{labels}
-						datasets={[]}
+						getDatasets={() => dualsDatasets}
 						options={dualsPlotOptions}
 						pluginOptions={dualsPlotPluginOptions}
 						plotName={dualsPlotName}

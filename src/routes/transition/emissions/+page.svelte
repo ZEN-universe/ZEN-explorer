@@ -533,7 +533,7 @@
 			<Chart
 				type="bar"
 				labels={selectedYears.map((year) => year.toString())}
-				{datasets}
+				getDatasets={() => datasets}
 				options={plotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}

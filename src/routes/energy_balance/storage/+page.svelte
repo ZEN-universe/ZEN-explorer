@@ -448,10 +448,10 @@
 		await tick();
 
 		if (levelPlot) {
-			levelPlot.updateChart(levelDatasets);
+			levelPlot.updateChart();
 		}
 		if (flowPlot) {
-			flowPlot.updateChart(flowDatasets);
+			flowPlot.updateChart();
 		}
 	}
 
@@ -552,7 +552,7 @@
 				id="level_chart"
 				type="line"
 				{labels}
-				datasets={[]}
+				getDatasets={() => levelDatasets}
 				options={plotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
@@ -564,7 +564,7 @@
 				id="flow_chart"
 				type="line"
 				{labels}
-				datasets={[]}
+				getDatasets={() => flowDatasets}
 				options={plotOptionsFlows}
 				pluginOptions={plotPluginOptions}
 				plotName={plotNameFlows}

@@ -17,7 +17,8 @@
 		id?: string;
 		type: Type;
 		labels?: string[];
-		datasets: ChartDataset<Type>[];
+		// datasets: ChartDataset<Type>[];
+		getDatasets: () => ChartDataset<Type>[];
 		options?: ChartOptions<Type>;
 		plugins?: Plugin<ChartType>[];
 		pluginOptions?: ChartOptions<ChartType>['plugins'];
@@ -36,7 +37,8 @@
 		id = 'chart',
 		type,
 		labels,
-		datasets,
+		// datasets,
+		getDatasets,
 		options,
 		pluginOptions = {},
 		plugins = [],
@@ -55,14 +57,12 @@
 
 	let chart: BaseChart | undefined = undefined;
 
-	let manualChartDatasets: ChartDataset[] | undefined = undefined;
-
 	const handleChart: Action<HTMLCanvasElement> = (element) => {
 		chart = new BaseChart(element, {
 			type: type,
 			data: {
 				labels: labels,
-				datasets: manualChartDatasets ?? ($state.snapshot(datasets) as ChartDataset[])
+				datasets: getDatasets() as ChartDataset[]
 			},
 			options: getOptions(),
 			plugins: [htmlLegend, ...plugins]
@@ -74,19 +74,18 @@
 			}
 			chart.data = {
 				labels: labels,
-				datasets: manualChartDatasets ?? ($state.snapshot(datasets) as ChartDataset[])
+				datasets: getDatasets() as ChartDataset[]
 			};
 			Object.assign(chart.options, getOptions());
 			chart.update();
 		});
 	};
 
-	export function updateChart(datasets: ChartDataset<Type>[]) {
+	export function updateChart() {
 		if (chart == undefined || chart.canvas == null) {
 			return;
 		}
-		manualChartDatasets = $state.snapshot(datasets) as ChartDataset[];
-		chart.data.datasets = manualChartDatasets;
+		chart.data.datasets = getDatasets() as ChartDataset[];
 		chart.update();
 		updateZoomLevel();
 	}

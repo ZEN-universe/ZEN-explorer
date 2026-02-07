@@ -776,7 +776,7 @@
 			<Chart
 				type="bar"
 				{labels}
-				{datasets}
+				getDatasets={() => datasets}
 				options={plotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
