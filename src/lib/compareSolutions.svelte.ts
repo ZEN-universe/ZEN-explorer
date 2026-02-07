@@ -35,12 +35,36 @@ export function generateLabelsForSolutionComparison(chart: Chart): LegendItem[] 
  * Handles the click event on a legend item for solution comparison charts.
  * @param legendItem The legend item that was clicked.
  * @param chart The chart instance.
+ * @param activateOnlyOneItem Whether to activate only one item.
  */
-export function onClickLegendForSolutionComparison(legendItem: LegendItem, chart: Chart): void {
-	if (hiddenDatasets.has(legendItem.text)) {
-		hiddenDatasets.delete(legendItem.text);
+export function onClickLegendForSolutionComparison(
+	legendItem: LegendItem,
+	chart: Chart,
+	activateOnlyOneItem: boolean
+): void {
+	if (activateOnlyOneItem) {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
+		const activeItems = new Set<string>();
+		chart.data.datasets
+			.filter((dataset) => !hiddenDatasets.has(dataset.label || ''))
+			.forEach((dataset) => activeItems.add(dataset.label || ''));
+		const itemWasActive = !hiddenDatasets.has(legendItem.text);
+
+		if (activeItems.size === 1 && itemWasActive) {
+			// If the clicked item was the only active one, unhide all items
+			hiddenDatasets.clear();
+		} else {
+			// Otherwise, hide all items ...
+			chart.data.datasets.forEach((dataset) => hiddenDatasets.add(dataset.label || ''));
+			// ... except the clicked one
+			hiddenDatasets.delete(legendItem.text);
+		}
 	} else {
-		hiddenDatasets.add(legendItem.text);
+		if (hiddenDatasets.has(legendItem.text)) {
+			hiddenDatasets.delete(legendItem.text);
+		} else {
+			hiddenDatasets.add(legendItem.text);
+		}
 	}
 	updateDatasetsVisibility(chart);
 }
@@ -69,14 +93,6 @@ export function onClickPattern(pattern: ColorBoxItem, chart: Chart): void {
  */
 function updateDatasetsVisibility(chart: Chart): void {
 	chart.data.datasets.forEach((dataset, i) => {
-		console.log(
-			'dataset',
-			dataset.label,
-			dataset.stack,
-			'set visibility to',
-			!(hiddenDatasets.has(dataset.label || '') || hiddenPatterns.has(dataset.stack || ''))
-		);
-
 		chart.setDatasetVisibility(
 			i,
 			!(hiddenDatasets.has(dataset.label || '') || hiddenPatterns.has(dataset.stack || ''))

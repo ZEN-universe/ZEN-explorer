@@ -28,7 +28,7 @@
 		patterns?: ColorBoxItem[];
 		boxed?: boolean;
 		generateLabels?: (chart: BaseChart) => LegendItem[];
-		onClickLegend?: (item: LegendItem, chart: BaseChart) => void;
+		onClickLegend?: (item: LegendItem, chart: BaseChart, activateOnlyOneItem: boolean) => void;
 		onClickBar?: (label: string, datasetIndex: number) => void;
 	}
 
@@ -239,12 +239,13 @@
 		}
 	};
 
-	function toggleLegendItem(item: LegendItem) {
+	function toggleLegendItem(event: Event, item: LegendItem) {
 		if (chart == undefined) {
 			return;
 		}
+		const activateOnlyOneItem = (event as MouseEvent).shiftKey;
 		if (onClickLegend) {
-			onClickLegend(item, chart);
+			onClickLegend(item, chart, activateOnlyOneItem);
 			return;
 		}
 		if (type === 'pie' || type === 'doughnut') {
@@ -257,7 +258,19 @@
 			if (item.datasetIndex == null) {
 				return;
 			}
-			chart.setDatasetVisibility(item.datasetIndex, !chart.isDatasetVisible(item.datasetIndex));
+			if (activateOnlyOneItem) {
+				const itemWasActive = chart.isDatasetVisible(item.datasetIndex);
+				const activeDatasets = chart.data.datasets.filter((_, idx) => chart!.isDatasetVisible(idx));
+				chart.data.datasets.forEach((_, idx) => {
+					// Activate if the clicked item was the only one active, otherwise toggle the item's visibility.
+					chart!.setDatasetVisibility(
+						idx,
+						(itemWasActive && activeDatasets.length === 1) || idx === item.datasetIndex
+					);
+				});
+			} else {
+				chart.setDatasetVisibility(item.datasetIndex, !chart.isDatasetVisible(item.datasetIndex));
+			}
 		}
 
 		chart.update();
@@ -346,13 +359,16 @@
 {#snippet legend()}
 	<h2 class="me-4 flex items-start text-lg font-bold">
 		<span class="me-2">Legend</span>
-		<HelpTooltip>Click on legend items to temporarily show/hide them in the chart.</HelpTooltip>
+		<HelpTooltip>
+			Click on legend items to temporarily show/hide them in the chart.<br />
+			Hold "Shift <i class="bi bi-shift"></i>" while clicking to show only the clicked item.
+		</HelpTooltip>
 	</h2>
 	<div class="flex flex-wrap gap-2">
 		{#each legendItems as item, idx (idx)}
 			<button
 				class="flex items-center text-sm text-gray-600 dark:text-gray-400"
-				onclick={() => toggleLegendItem(item)}
+				onclick={(event) => toggleLegendItem(event, item)}
 			>
 				<ColorBox item={item as ColorBoxItem}></ColorBox>
 				<span class={[item.hidden && 'line-through']}>{item.text}</span>
