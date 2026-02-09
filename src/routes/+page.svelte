@@ -64,17 +64,25 @@
 			</a>
 		</div>
 		<div class="flex items-center gap-2">
-			{@render navButton('mailto:zen-garden@ethz.ch', 'Mail to ZEN-garden', 'bi-envelope-fill')}
-			{@render navButton(
-				'https://groups.google.com/g/zen_garden',
-				'ZEN-garden on Google Groups',
-				'bi-people-fill'
-			)}
+			<a
+				href="https://github.com/ZEN-universe/ZEN-garden"
+				aria-label="ZEN-garden GitHub Repository"
+				class="inline-flex h-10 flex-col justify-center rounded-lg p-2 text-center font-bold text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700"
+				target="_blank"
+			>
+				<img src="/github_logo.svg" alt="GitHub Logo" class="h-6 w-6 dark:invert" />
+			</a>
 			{@render navButton(
 				'https://zen-garden.readthedocs.io/',
 				'ZEN-garden Documentation',
 				'bi-book-half'
 			)}
+			{@render navButton(
+				'https://groups.google.com/g/zen_garden',
+				'ZEN-garden on Google Groups',
+				'bi-people-fill'
+			)}
+			{@render navButton('mailto:zen-garden@ethz.ch', 'Mail to ZEN-garden', 'bi-envelope-fill')}
 			<a
 				href="https://rre.ethz.ch/"
 				aria-label="Reliability and Risk Engineering Lab at ETH Zurich"
@@ -83,7 +91,7 @@
 			>
 				<RRELogo />
 			</a>
-
+			
 			<ToggleThemeButton />
 		</div>
 	</div>
@@ -92,37 +100,47 @@
 <!-- Header -->
 <div class="container mx-auto mt-20 px-4">
 	<ContentBox
-		class="mb-4 flex flex-col gap-8 px-4 py-10 sm:mb-12 sm:py-16 md:px-8 lg:mb-12 lg:flex-row lg:gap-20 lg:px-16 xl:px-20 2xl:gap-24"
+		class="mb-4 flex w-full flex-col gap-8 px-4 py-10 sm:mb-12 sm:py-16 md:px-8 lg:mb-12 lg:px-16 xl:px-20"
 		noPadding
 	>
-		<div class="order-1 lg:order-0">
-			<h1 class="mb-8 text-5xl font-bold lg:mb-12 lg:text-6xl">Welcome to our ZEN&#8209;garden</h1>
+		<div class="flex w-full flex-col items-start gap-6 lg:flex-row lg:items-center lg:gap-16">
+			<img
+				src="/favicon.svg"
+				alt="ZEN-garden Logo"
+				class="w-16 sm:w-16 lg:w-20 xl:w-24"
+			/>
 
-			<p class="mb-12 max-w-270 text-xl leading-relaxed">
-				Far far away, behind the word mountains, far from the countries Vokalia and Consonantia,
-				there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the
-				Semantics, a large language ocean. A small river named Duden flows by their place and
-				supplies it with the necessary regelialia. It is a paradisematic country, in which roasted
-				parts of sentences fly into your mouth. Even the all-powerful Pointing has no control about
-				the blind texts it is an almost unorthographic life One day however a small line of blind
-				text by the name of Lorem Ipsum decided to leave for the far World of Grammar.
+			<h1 class="text-5xl font-bold lg:text-6xl">
+				Welcome to our ZEN&#8209;garden
+			</h1>
+			
+			
+		</div>
+
+		<div>
+			<p class="mb-12 text-xl leading-relaxed">
+				ZEN-garden is an open-source optimization software to model multi-year energy system transition pathways. 
+				To support research focused on the transition of sector-coupled energy systems toward net-zero emissions, 
+				ZEN-garden is built upon two principles: 
+				Optimizing highly complex sector-coupled energy transition pathways and supporting user-friendly data handling through small, 
+				flexible, and robust input datasets. 
 			</p>
-
+			
 			<a
-				class="bg-viridian-600 dark:bg-viridian-400 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white sm:w-auto dark:text-black"
+				class="opacity-60 transition hover:opacity-100 bg-[#B7352D] dark:bg-[#D48681] inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white sm:w-auto dark:text-black"
 				href="https://zen-garden.readthedocs.io/en/latest/files/quick_start/installation.html"
 				target="_blank"
 			>
-				Documentation
+				Get started with ZEN-garden
 				<i class="bi bi-arrow-up-right"></i>
 			</a>
-		</div>
-		<div class="order-0 flex items-center justify-center lg:order-1">
+			
 			<img
-				src="/zen_garden_700x700.png"
-				alt="ZEN-garden Logo"
-				class="w-48 sm:w-64 lg:w-96 xl:w-112"
+				src="/map_plot_H2_adap.svg"
+				alt="Example transition pathway"
+				class="mx-auto w-full leading-relaxed py-12 sm:w-auto"
 			/>
+			
 		</div>
 	</ContentBox>
 </div>
@@ -132,47 +150,47 @@
 	class="container mx-auto mb-4 grid gap-4 px-4 sm:grid-cols-3 md:mb-8 lg:mb-12 lg:gap-8 lg:gap-12"
 >
 	<ContentBox
-		class="bg-pacifika-200 dark:bg-pacifika-800 relative py-6 text-center lg:py-12"
+		class="bg-[#E7F4F7] dark:bg-[#00596D] relative py-6 text-center lg:py-12"
 		noMarginBottom
 		noColor
 	>
-		<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Case Studies</h2>
+		<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Build your model</h2>
 		<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
 			<i class="bi bi-signpost-2-fill"></i>
 		</div>
-		<a href="#case-studies" class="pointer-event-none absolute inset-0" aria-label="Case Studies"
+		<a href="#build-model" class="pointer-event-none absolute inset-0" aria-label="Build your model"
 		></a>
 	</ContentBox>
 	<ContentBox
-		class="bg-san-marino-200 dark:bg-san-marino-800 relative py-6 text-center lg:py-12"
+		class="bg-[#CCE4EA] dark:bg-[#007894] relative py-6 text-center lg:py-12"
 		noMarginBottom
 		noColor
 	>
-		<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Framework</h2>
+		<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Optimize your system</h2>
 		<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
 			<i class="bi bi-diagram-3-fill"></i>
 		</div>
-		<a href="#framework" class="pointer-event-none absolute inset-0" aria-label="Framework"></a>
+		<a href="#optimize-system" class="pointer-event-none absolute inset-0" aria-label="Optimize your system"></a>
 	</ContentBox>
 	<ContentBox
-		class="bg-teak-200 dark:bg-teak-800 relative py-6 text-center lg:py-12"
+		class="bg-[#99CAD5] dark:bg-[#3395AB] relative py-6 text-center lg:py-12"
 		noMarginBottom
 		noColor
 	>
-		<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Visualization</h2>
+		<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Visualize your results</h2>
 		<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
 			<i class="bi bi-eye-fill"></i>
 		</div>
-		<a href="#visualization" class="pointer-event-none absolute inset-0" aria-label="Visualization"
+		<a href="#visualize-results" class="pointer-event-none absolute inset-0" aria-label="Visualize your results"
 		></a>
 	</ContentBox>
 </div>
 
 <div class="mt-12" use:animate={{ topOffset: 57 }}>
-	<!-- Case Studies -->
-	<div id="case-studies" class="section container mx-auto flex gap-4 px-4 py-4 lg:gap-12">
+	<!-- Build your model -->
+	<div id="build-model" class="section container mx-auto flex gap-4 px-4 py-4 lg:gap-12">
 		<ContentBox
-			class="box bg-pacifika-200 dark:bg-pacifika-800 min-h-screen grow"
+			class="box bg-[#E7F4F7] dark:bg-[#00596D] min-h-screen grow"
 			noColor
 			noPadding
 			noMarginBottom
@@ -184,7 +202,7 @@
 					<i class="bi bi-signpost-2-fill"></i>
 				</div>
 				<div>
-					<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Case Studies</h2>
+					<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Build your model</h2>
 					<p class="text-lg">
 						Far far away, behind the word mountains, far from the countries Vokalia and Consonantia,
 						there live the blind texts. Separated they live in Bookmarksgrove right at the coast of
@@ -290,40 +308,40 @@
 			</div>
 		</ContentBox>
 		<ContentBox
-			class="box bg-san-marino-200 dark:bg-san-marino-800 relative hidden py-8 text-center md:block"
+			class="box bg-[#CCE4EA] dark:bg-[#007894] relative hidden py-8 text-center md:block"
 			noColor
 			noMarginBottom
 		>
-			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Framework</h2>
-			<a href="#framework" class="pointer-event-none absolute inset-0" aria-label="Framework"></a>
+			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Optimize your system</h2>
+			<a href="#optimize-system" class="pointer-event-none absolute inset-0" aria-label="Optimize your system"></a>
 		</ContentBox>
 		<ContentBox
-			class="box bg-teak-200 dark:bg-teak-800 relative hidden py-8 text-center md:block"
+			class="box bg-[#99CAD5] dark:bg-[#3395AB] relative hidden py-8 text-center md:block"
 			noColor
 			noMarginBottom
 		>
-			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Visualization</h2>
+			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Visualize your results</h2>
 			<a
-				href="#visualization"
+				href="#visualize-results"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Visualization"
+				aria-label="Visualize your results"
 			></a>
 		</ContentBox>
 	</div>
 
-	<!-- Framework -->
-	<div id="framework" class="section container mx-auto flex gap-4 px-4 py-4 lg:gap-12">
+	<!-- Optimize your system -->
+	<div id="optimize-system" class="section container mx-auto flex gap-4 px-4 py-4 lg:gap-12">
 		<ContentBox
-			class="box bg-pacifika-200 dark:bg-pacifika-800 relative hidden py-8 text-center md:block"
+			class="box bg-[#E7F4F7] dark:bg-[#00596D] relative hidden py-8 text-center md:block"
 			noColor
 			noMarginBottom
 		>
-			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Case Studies</h2>
-			<a href="#case-studies" class="pointer-event-none absolute inset-0" aria-label="Case Studies"
+			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Build your model</h2>
+			<a href="#build-model" class="pointer-event-none absolute inset-0" aria-label="Build your model"
 			></a>
 		</ContentBox>
 		<ContentBox
-			class="box bg-san-marino-200 dark:bg-san-marino-800 min-h-screen grow py-8"
+			class="box bg-[#CCE4EA] dark:bg-[#007894] min-h-screen grow py-8"
 			noColor
 			noMarginBottom
 			noPadding
@@ -335,115 +353,180 @@
 					<i class="bi bi-diagram-3-fill"></i>
 				</div>
 				<div>
-					<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Framework</h2>
+					<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Optimize your system</h2>
 					<p class="mb-8 text-lg">
-						Far far away, behind the word mountains, far from the countries Vokalia and Consonantia,
-						there live the blind texts. Separated they live in Bookmarksgrove right at the coast of
-						the Semantics, a large language ocean. Far far away, behind the word mountains, far from
-						the countries Vokalia and Consonantia, there live the blind texts. Separated they live
-						in Bookmarksgrove right at the coast of the Semantics, a large language ocean.
+						ZEN-garden optimizes the transition pathways of spatially resolved and sector-coupled energy systems.
+						All functionalities can be enabled through input data and configurations, and no adaptation of the codebase is required. 
 					</p>
 				</div>
 			</div>
+			<div class="w-full px-4 md:px-8 lg:px-12">
+				<div class="my-8 w-full overflow-hidden rounded-xl bg-slate-900 shadow-xl ring-1 ring-slate-800">
+					<div class="p-6 font-mono text-sm leading-relaxed text-slate-300 md:text-base">
+						
+						<style> @keyframes appear { to { opacity: 1; } } </style>
+						
+						<div class="flex opacity-0" style="animation: appear 0s linear forwards; animation-delay: 0.5s;">
+							<span class="mr-3 select-none text-pink-500">$</span>
+							<span>pip install <span class="text-yellow-300">zen-garden</span></span>
+						</div>
 
+						<div class="flex opacity-0" style="animation: appear 0s linear forwards; animation-delay: 1.5s;">
+							<span class="mr-3 select-none text-pink-500">$</span>
+							<span>zen-garden --dataset=<span class="text-cyan-300">my_model</span></span>
+						</div>
+
+						<div class="text-slate-500 opacity-0" style="animation: appear 0s linear forwards; animation-delay: 2s;">
+							Create ConversionTechnology photovoltaics<br>
+						</div>
+
+						<div class="text-slate-500 opacity-0" style="animation: appear 0s linear forwards; animation-delay: 2.25s;">
+							Create ConversionTechnology heat_pump<br>
+						</div>
+
+						<div class="text-slate-500 opacity-0" style="animation: appear 0s linear forwards; animation-delay: 2.5s;">
+							Create Carrier electricity<br>
+						</div>
+
+						<div class="text-slate-500 opacity-0" style="animation: appear 0s linear forwards; animation-delay: 2.75s;">
+							Create Carrier heat<br>
+						</div>
+
+						<div class="text-slate-500 opacity-0" style="animation: appear 0s linear forwards; animation-delay: 3s;">
+							...<br>
+						</div>
+
+						<div class="text-slate-500 opacity-0" style="animation: appear 0s linear forwards; animation-delay: 4s;">
+							--- Optimization finished --- <br>
+						</div>
+
+						<div class="flex opacity-0" style="animation: appear 0s linear forwards; animation-delay: 4.5s;">
+							<span class="mr-3 select-none text-pink-500">$</span>
+							<span>zen-visualization</span>
+							<span class="animate-pulse">|</span>
+						</div>
+					</div>
+				</div>
+			</div>
 			<div class="grid gap-4 px-4 py-8 sm:grid-cols-3 md:px-8 lg:px-12">
-				<div class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
-					<h3 class="mb-4 text-xl font-bold">Transition pathways</h3>
+				<a 
+				class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700"
+				href="https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/dataset_examples.html#multi-year-optimization"
+				target="_blank">
+					<h3 class="mb-4 text-xl font-bold">Transition pathways <i class="bi bi-arrow-up-right"></i></h3>
 					<p class="mb-2">
-						Short text about this super nice feature. I'm sure you know how useful it can be.
+						ZEN-garden is specifically designed to optimize multi-year transition pathways.
+						The definition of the optimized years is flexible to balance the trade-off between model complexity and pathway resolution.
 					</p>
-					<a class="mb-2 block" href="#">
-						<i class="bi bi-arrow-right"></i>
-						Read more on RtD
-					</a>
-				</div>
-				<div class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
-					<h3 class="mb-4 text-xl font-bold">Input data handling</h3>
+				</a>
+				<a class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700" 
+				href="https://zen-garden.readthedocs.io/en/latest/files/tutorial/05_time_series_aggregation.html#the-time-parameters-in-zen-garden"
+				target="_blank">
+					<h3 class="mb-4 text-xl font-bold">Flexible foresight <i class="bi bi-arrow-up-right"></i></h3>
 					<p class="mb-2">
-						Short text about this super nice feature. I'm sure you know how useful it can be.
+						The foresight and decision horizons can be flexibly defined from fully myopic foresight, i.e., a foresight of one optimization step,
+						to perfect foresight, i.e., the combined optimization of all optimization steps.
 					</p>
-					<a class="mb-2 block" href="#">
-						<i class="bi bi-arrow-right"></i>
-						Read more on RtD
-					</a>
-				</div>
-				<div class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
-					<h3 class="mb-4 text-xl font-bold">Scaling</h3>
+				</a>
+				<a class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700" 
+				href="https://zen-garden.readthedocs.io/en/latest/files/welcome/features.html#multiple-pre-defined-objective-functions"
+				target="_blank">
+					<h3 class="mb-4 text-xl font-bold">Objective functions <i class="bi bi-arrow-up-right"></i></h3>
 					<p class="mb-2">
-						Short text about this super nice feature. I'm sure you know how useful it can be.
+							ZEN-garden allows for minimizing total net present cost or cumulative emissions.
 					</p>
-					<a class="mb-2 block" href="#">
-						<i class="bi bi-arrow-right"></i>
-						Read more on RtD
-					</a>
-				</div>
-				<div class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
-					<h3 class="mb-4 text-xl font-bold">Feature</h3>
+				</a>
+				<a class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700" 
+				href="https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/dataset_examples.html#brown-field"
+				target="_blank">
+					<h3 class="mb-4 text-xl font-bold">Brownfield optimization <i class="bi bi-arrow-up-right"></i></h3>
 					<p class="mb-2">
-						Short text about this super nice feature. I'm sure you know how useful it can be.
+						Existing capacities can be easily specified in the input data to optimize brownfield transition pathways. 
+						This allows to analyze the impact of existing capacities on optimal transition pathways.
 					</p>
-					<a class="mb-2 block" href="#">
-						<i class="bi bi-arrow-right"></i>
-						Read more on RtD
-					</a>
-				</div>
-				<div class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
-					<h3 class="mb-4 text-xl font-bold">Feature</h3>
+				</a>
+				<a class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700" 
+				href="https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/additional_features.html#technology-diffusion"
+				target="_blank">
+					<h3 class="mb-4 text-xl font-bold">Capacity expansion constraints <i class="bi bi-arrow-up-right"></i></h3>
 					<p class="mb-2">
-						Short text about this super nice feature. I'm sure you know how useful it can be.
+						The capacity expansion can be further constrained to consider endogenous technology expansion dynamics, 
+						where the new capacity additions are limited by the existing capacity and a technology-specific expansion factor.
+						Spatial spillovers, introduction in niche markets, and lead times can be considered as well.
 					</p>
-					<a class="mb-2 block" href="#">
-						<i class="bi bi-arrow-right"></i>
-						Read more on RtD
-					</a>
-				</div>
-				<div class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
-					<h3 class="mb-4 text-xl font-bold">Feature</h3>
+				</a>
+				<a class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700" 
+				href="https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/additional_features.html#carbon-emission-modeling"
+				target="_blank">
+					<h3 class="mb-4 text-xl font-bold">Emission constraints <i class="bi bi-arrow-up-right"></i></h3>
 					<p class="mb-2">
-						Short text about this super nice feature. I'm sure you know how useful it can be.
+						The transition pathway is guided by emissions constraints. ZEN-garden allows for annual emission constraints, cumulative emission budgets, and carbon pricing.
 					</p>
-					<a class="mb-2 block" href="#">
-						<i class="bi bi-arrow-right"></i>
-						Read more on RtD
-					</a>
-				</div>
+				</a>
+				<a class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700" 
+				href="https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/additional_features.html#retrofitting-technologies"
+				target="_blank">
+					<h3 class="mb-4 text-xl font-bold">Retrofitting technologies <i class="bi bi-arrow-up-right"></i></h3>
+					<p class="mb-2">
+						Technologies can be coupled to model retrofitting options, e.g., to add carbon capture and storage or fuel switching.
+					</p>
+				</a>
+				<a class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700" 
+				href="https://zen-garden.readthedocs.io/en/latest/files/tutorial/04_scenario_analysis.html"
+				target="_blank">
+					<h3 class="mb-4 text-xl font-bold">Scenario analysis <i class="bi bi-arrow-up-right"></i></h3>
+					<p class="mb-2">
+						ZEN-garden simplifies the analysis of multiple scenarios by overwriting specific input data and configurations of a base model.
+						This avoids the need to duplicate the input data and configurations for each scenario.
+					</p>
+				</a>
+				<a class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700" 
+				href="https://zen-garden.readthedocs.io/en/latest/files/tutorial/05_time_series_aggregation.html"
+				target="_blank">
+					<h3 class="mb-4 text-xl font-bold">Timeseries aggregation <i class="bi bi-arrow-up-right"></i></h3>
+					<p class="mb-2">
+						ZEN-garden allows for the aggregation of timeseries data to reduce computational complexity while preserving the essential characteristics of the original data.
+						The storage level representation method allows for the efficient consideration of short- and long-term storage technologies.
+					</p>
+				</a>
+				
 			</div>
 		</ContentBox>
 		<ContentBox
-			class="box bg-teak-200 dark:bg-teak-800 relative hidden py-8 text-center md:block"
+			class="box bg-[#99CAD5] dark:bg-[#3395AB] relative hidden py-8 text-center md:block"
 			noColor
 			noMarginBottom
 		>
-			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Visualization</h2>
+			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Visualize your results</h2>
 			<a
-				href="#visualization"
+				href="#visualize-results"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Visualization"
+				aria-label="Visualize your results"
 			></a>
 		</ContentBox>
 	</div>
 
-	<!-- Visualization -->
-	<div id="visualization" class="section container mx-auto flex gap-4 px-4 py-4 lg:gap-12">
+	<!-- Visualize your results -->
+	<div id="visualize-results" class="section container mx-auto flex gap-4 px-4 py-4 lg:gap-12">
 		<ContentBox
-			class="box bg-pacifika-200 dark:bg-pacifika-800 relative hidden py-8 text-center md:block"
+			class="box bg-[#E7F4F7] dark:bg-[#00596D] relative hidden py-8 text-center md:block"
 			noColor
 			noMarginBottom
 		>
-			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Case Studies</h2>
-			<a href="#case-studies" class="pointer-event-none absolute inset-0" aria-label="Case Studies"
+			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Build your model</h2>
+			<a href="#build-model" class="pointer-event-none absolute inset-0" aria-label="Build your model"
 			></a>
 		</ContentBox>
 		<ContentBox
-			class="box bg-san-marino-200 dark:bg-san-marino-800 relative hidden py-8 text-center md:block"
+			class="box bg-[#CCE4EA] dark:bg-[#007894] relative hidden py-8 text-center md:block"
 			noColor
 			noMarginBottom
 		>
-			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Framework</h2>
-			<a href="#framework" class="pointer-event-none absolute inset-0" aria-label="Framework"></a>
+			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Optimize your system</h2>
+			<a href="#optimize-system" class="pointer-event-none absolute inset-0" aria-label="Optimize your system"></a>
 		</ContentBox>
 		<ContentBox
-			class="box bg-teak-200 dark:bg-teak-800 min-h-screen grow py-8"
+			class="box bg-[#99CAD5] dark:bg-[#3395AB] min-h-screen grow py-8"
 			noColor
 			noMarginBottom
 			noPadding
@@ -455,13 +538,31 @@
 					<i class="bi bi-eye-fill"></i>
 				</div>
 				<div>
-					<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Visualization</h2>
+					<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Visualize your results</h2>
 					<p class="mb-12 text-lg">
-						Far far away, behind the word mountains, far from the countries Vokalia and Consonantia,
-						there live the blind texts. Separated they live in Bookmarksgrove right at the coast of
-						the Semantics, a large language ocean. Far far away, behind the word mountains, far from
-						the countries Vokalia and Consonantia, there live the blind texts. Separated they live
-						in Bookmarksgrove right at the coast of the Semantics, a large language ocean.
+						ZEN-garden provides a wide range of visualization options to analyze the optimized transition pathways and the underlying optimization results.
+						The visualization is available online for published results and locally for user results.
+					</p>
+					<div class="my-8 w-full overflow-hidden rounded-xl bg-slate-900 shadow-xl ring-1 ring-slate-800">
+					<div class="p-6 font-mono text-sm leading-relaxed text-slate-300 md:text-base">
+						
+						<style> @keyframes appear { to { opacity: 1; } } </style>
+						
+						<div class="flex opacity-0" style="animation: appear 0s linear forwards; animation-delay: 0.5s;">
+							<span class="mr-3 select-none text-pink-500">$</span>
+							<span>zen-visualization</span>
+						</div>
+					</div>
+					</div>
+					<p class="mb-12 text-lg">
+						Annual capacity, production, emission, and cost results can be investigated under 
+						<a href={resolve('/explorer/transition/capacity')} class="text-[#B7352D] dark:text-[#D48681] font-bold opacity-60 transition hover:opacity-100">The Transition Pathway</a>.
+						Energy and storage balances in a specific year can be analyzed under 
+						<a href={resolve('/explorer/energy_balance/nodal')} class="text-[#B7352D] dark:text-[#D48681] font-bold opacity-60 transition hover:opacity-100">The Energy Balance</a>.
+						The flows of energy carriers between technologies can be investigated under 
+						<a href={resolve('/explorer/energy_system')} class="text-[#B7352D] dark:text-[#D48681] font-bold opacity-60 transition hover:opacity-100">The Energy System</a>.
+						Finally, the spatial distribution of capacities can be analyzed under 
+						<a href={resolve('/explorer/map')} class="text-[#B7352D] dark:text-[#D48681] font-bold opacity-60 transition hover:opacity-100">The Map</a>.
 					</p>
 				</div>
 			</div>
@@ -515,60 +616,109 @@
 	<div class="pointer-events-none fixed inset-x-0 top-[57px] bottom-0">
 		<div class="container mx-auto flex h-full gap-4 px-4 lg:gap-12">
 			<ContentBox
-				class="shape bg-pacifika-200 dark:bg-pacifika-800 relative mt-4 hidden w-full py-8 text-center opacity-0 md:block"
+				class="shape bg-[#E7F4F7] dark:bg-[#00596D] relative mt-4 hidden w-full py-8 text-center opacity-0 md:block"
 				noColor
 				noMarginBottom
 			>
-				<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Case Studies</div>
+				<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Build your model</div>
 			</ContentBox>
 			<ContentBox
-				class="shape bg-san-marino-200 dark:bg-san-marino-800 relative mt-4 hidden py-8 text-center md:block"
+				class="shape bg-[#CCE4EA] dark:bg-[#007894] relative mt-4 hidden py-8 text-center md:block"
 				noColor
 				noMarginBottom
 			>
-				<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Framework</div>
+				<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Optimize your system</div>
 			</ContentBox>
 			<ContentBox
-				class="shape bg-teak-200 dark:bg-teak-800 relative mt-4 hidden py-8 text-center md:block"
+				class="shape bg-[#99CAD5] dark:bg-[#3395AB] relative mt-4 hidden py-8 text-center md:block"
 				noColor
 				noMarginBottom
 			>
-				<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Visualization</div>
+				<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Visualize your results</div>
 			</ContentBox>
 		</div>
 	</div>
 </div>
 
+<!-- Projects and collaborations -->
+<div class="container mx-auto mt-20 px-4">
+    <ContentBox
+        class="mb-4 flex flex-col gap-8 px-4 py-10 sm:mb-12 sm:py-16 md:px-8 lg:mb-12 lg:px-16 xl:px-20"
+    >
+        <div class="w-full">
+            <h1 class="mb-8 text-4xl font-bold sm:text-5xl md:mb-12 lg:text-6xl">Projects and collaborations</h1>
+
+            <p class="mb-12 w-full text-xl leading-relaxed">
+                ZEN-garden is used in various research projects and collaborations. 
+                We are happy to share our research and collaborate with other researchers, practitioners, and stakeholders interested in energy system transition pathways. 
+            </p>
+
+            <div class="grid w-full grid-cols-4 items-center gap-4 md:gap-8 lg:gap-12">
+                
+                <a href="https://1komma5.com/en/" target="_blank" class="flex justify-center transition opacity-60 hover:opacity-100">
+                    <img src="/1KOMMA5°_Logo.svg" alt="1KOMMA5°" class="h-auto w-full object-contain">
+                </a>
+
+                <a href="https://esc.ethz.ch/" target="_blank" class="flex justify-center transition opacity-60 hover:opacity-100">
+                    <img src="/esc_logo.png" alt="Energy Science Center" class="h-auto w-full object-contain">
+                </a>
+
+                <a href="https://sweet-pathfndr.ch/" target="_blank" class="flex justify-center transition opacity-60 hover:opacity-100">
+                    <img src="/PATHFNDR.png" alt="SWEET PATHFNDR" class="h-auto w-full object-contain">
+                </a>
+
+                <a href="https://speed2zero.ethz.ch/en/" target="_blank" class="flex justify-center transition opacity-60 hover:opacity-100">
+                    <img src="/Speed2zero.png" alt="Speed2Zero" class="h-auto w-full object-contain">
+                </a>
+                
+                <a href="https://www.projectaccsess.eu/" target="_blank" class="flex justify-center transition opacity-60 hover:opacity-100">
+                    <img src="/accsess.png" alt="Project Accsess" class="h-auto w-full object-contain">
+                </a>
+                
+                
+                <a href="https://www.demoupcarma.ethz.ch/" target="_blank" class="flex justify-center transition opacity-60 hover:opacity-100">
+                    <img src="/demoupcarma.png" alt="Demo UpCarma" class="h-auto w-full object-contain">
+                </a>
+                
+            </div>
+
+        </div>
+    </ContentBox>
+</div>
+
+<!-- Contact -->
 <div class="container mx-auto mt-20 px-4">
 	<ContentBox
 		class="mb-4 flex flex-col gap-8 px-4 py-10 sm:mb-12 sm:py-16 md:px-8 lg:mb-12 lg:flex-row lg:gap-20 lg:px-16 xl:px-20 2xl:gap-24"
 	>
-		<div class="flex items-center justify-center">
+		<div class="flex items-center justify-center"> 
 			<img
-				src="/rre-icon.svg"
+				src="/RRE-logo.svg"
 				alt="Logo Risk and Reliability Engineering Lab at ETH Zurich"
-				class="w-32 sm:w-48 md:w-56 lg:w-96 xl:w-112"
+				class="block dark:hidden w-32 sm:w-48 md:w-56 lg:w-96 xl:w-112"
+			/>
+			<img
+				src="/RRE-logo-dark.svg"
+				alt="Logo Risk and Reliability Engineering Lab at ETH Zurich"
+				class="hidden dark:block w-32 sm:w-48 md:w-56 lg:w-96 xl:w-112"
 			/>
 		</div>
 		<div class="col-span-2">
 			<h1 class="mb-8 text-4xl font-bold sm:text-5xl md:mb-12 lg:text-6xl">Contact us</h1>
 
 			<p class="mb-12 max-w-270 text-xl leading-relaxed">
-				Far far away, behind the word mountains, far from the countries Vokalia and Consonantia,
-				there live the blind texts of
-				<a href="https://rre.ethz.ch" class="text-viridian-600 dark:text-viridian-400 font-bold"
+				ZEN-garden is developed by the
+				<a href="https://rre.ethz.ch" class="text-[#B7352D] dark:text-[#D48681] font-bold opacity-60 transition hover:opacity-100"
 					>Risk and Reliability Engineering Lab at ETH Zurich</a
-				>. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large
-				language ocean. A small river named Duden flows by their place and supplies it with the
-				necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly
-				into your mouth. Even the all-powerful Pointing has no control about the blind texts it is
-				an almost unorthographic life One day however a small line of blind text by the name of
-				Lorem Ipsum decided to leave for the far World of Grammar.
+				> and accessible to everyone as an open-source software via
+				<a href="https://github.com/zen-garden" class="text-[#B7352D] dark:text-[#D48681] font-bold opacity-60 transition hover:opacity-100">GitHub</a
+				> and <a href="https://pypi.org/project/zen-garden/" class="text-[#B7352D] dark:text-[#D48681] font-bold opacity-60 transition hover:opacity-100">PyPI</a>. We are happy to receive feedback, suggestions, and contributions to ZEN-garden. 
+				Please do not hesitate to contact us through email or our Google Group.
 			</p>
 
 			<div class="flex flex-col gap-4 md:flex-row md:flex-wrap">
 				<a
-					class="bg-viridian-600 dark:bg-viridian-400 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white sm:w-auto dark:text-black"
+					class="opacity-60 transition hover:opacity-100 bg-[#B7352D] dark:bg-[#D48681] inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white sm:w-auto dark:text-black"
 					href="mailto:zen-garden@ethz.ch"
 					target="_blank"
 				>
@@ -576,7 +726,7 @@
 					<i class="bi bi-arrow-up-right"></i>
 				</a>
 				<a
-					class="bg-viridian-600 dark:bg-viridian-400 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white sm:w-auto dark:text-black"
+					class="opacity-60 transition hover:opacity-100 bg-[#B7352D] dark:bg-[#D48681] inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white sm:w-auto dark:text-black"
 					href="https://groups.google.com/g/zen_garden"
 					target="_blank"
 					rel="external noopener"
