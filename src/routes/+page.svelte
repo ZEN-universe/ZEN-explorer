@@ -128,9 +128,16 @@
 				Explore sector-coupled energy transition pathways!
 			</h1>
 			<!-- add /?solution=technology_optimism_pessimism.Crystal_Ball&tech=conversion&car=electricity to the URL -->
-			<a href={resolve('/explorer/map')} target="_blank" class="flex justify-center mt-8"> 
-				<img src="/evolution_map_final.gif" alt="Example transition pathway" class="mx-auto w-full leading-relaxed py-12 sm:w-auto">
-			</a>
+			<div class="flex items-center justify-center"> 
+				<a href={resolve('/explorer/map')} target="_blank" class="block dark:hidden flex justify-center mt-8"> 
+					<img src="/evolution_map_final.gif" alt="Example transition pathway" class="mx-auto w-full leading-relaxed py-12 sm:w-auto">
+				</a>
+				<a href={resolve('/explorer/map')} target="_blank" class="hidden dark:block flex justify-center mt-8"> 
+					<img src="/evolution_map_final_dark.gif" alt="Example transition pathway" class="mx-auto w-full leading-relaxed py-12 sm:w-auto">
+				</a>
+
+			</div>
+			
 
 			<div class="flex justify-center">
 				<a
