@@ -50,6 +50,18 @@
 	--color-teak-800: #5e4835;
 	--color-teak-900: #523f31;
 	--color-teak-950: #2e221a;
+
+	--color-tall-poppy-50: #fdf4f3;
+	--color-tall-poppy-100: #fbe6e5;
+	--color-tall-poppy-200: #f9d1cf;
+	--color-tall-poppy-300: #f4b1ad;
+	--color-tall-poppy-400: #ec837d;
+	--color-tall-poppy-500: #e05b53;
+	--color-tall-poppy-600: #cc3f36;
+	--color-tall-poppy-700: #b7352d;
+	--color-tall-poppy-800: #8e2c26;
+	--color-tall-poppy-900: #762b26;
+	--color-tall-poppy-950: #40120f;
 }
 
 @layer base {

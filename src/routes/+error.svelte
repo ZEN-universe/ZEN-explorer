@@ -7,4 +7,3 @@
 <Navigation />
 
 <ErrorMessage message={`${page.status} - ${page.error?.message}`}></ErrorMessage>
-

@@ -53,7 +53,7 @@
 <!-- eslint-disable svelte/no-navigation-without-resolve -->
 <!-- Navbar -->
 <nav
-	class="fixed inset-x-0 top-0 z-1 border-b border-gray-200 bg-white py-2 text-gray-800 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
+	class="fixed inset-x-0 top-0 z-5 border-b border-gray-200 bg-white py-2 text-gray-800 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
 	bind:this={nav}
 >
 	<div class="container mx-auto flex justify-between gap-4 px-4">
@@ -101,7 +101,7 @@
 		noPadding
 	>
 		<div class="flex w-full flex-col items-start gap-6 lg:flex-row lg:items-center lg:gap-8">
-			<img src="/favicon.svg" alt="ZEN-garden Logo" class="w-16 sm:w-16 lg:w-20 xl:w-32 lg:mx-8" />
+			<img src="/favicon.svg" alt="ZEN-garden Logo" class="w-16 sm:w-16 lg:mx-8 lg:w-20 xl:w-32" />
 
 			<h1 class="text-5xl font-bold lg:text-6xl">Welcome to our ZEN&#8209;garden</h1>
 		</div>
@@ -114,25 +114,39 @@
 				highly complex sector-coupled energy transition pathways and supporting user-friendly data
 				handling through small, flexible, and robust input datasets.
 			</p>
-			
+
 			<h1 class="flex justify-center text-5xl font-bold lg:text-3xl">
 				Explore sector-coupled energy transition pathways!
 			</h1>
 			<!-- add /?solution=technology_optimism_pessimism.Crystal_Ball&tech=conversion&car=electricity to the URL -->
-			<div class="flex items-center justify-center"> 
-				<a href={resolve('/explorer/map')} target="_blank" class="block dark:hidden flex justify-center mt-8"> 
-					<img src="/evolution_map_final.gif" alt="Example transition pathway" class="mx-auto w-full leading-relaxed py-12 sm:w-auto">
+			<div class="flex items-center justify-center">
+				<a
+					href={resolve('/explorer/map')}
+					target="_blank"
+					class="mt-8 block flex justify-center dark:hidden"
+				>
+					<img
+						src="/evolution_map_final.gif"
+						alt="Example transition pathway"
+						class="mx-auto w-full py-12 leading-relaxed sm:w-auto"
+					/>
 				</a>
-				<a href={resolve('/explorer/map')} target="_blank" class="hidden dark:block flex justify-center mt-8"> 
-					<img src="/evolution_map_final_dark.gif" alt="Example transition pathway" class="mx-auto w-full leading-relaxed py-12 sm:w-auto">
+				<a
+					href={resolve('/explorer/map')}
+					target="_blank"
+					class="mt-8 flex hidden justify-center dark:block"
+				>
+					<img
+						src="/evolution_map_final_dark.gif"
+						alt="Example transition pathway"
+						class="mx-auto w-full py-12 leading-relaxed sm:w-auto"
+					/>
 				</a>
-
 			</div>
-			
 
 			<div class="flex justify-center">
 				<a
-					class="opacity-60 transition hover:opacity-100 bg-[#B7352D] dark:bg-[#D48681] inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white sm:w-auto dark:text-black"
+					class="inline-block w-full rounded bg-[#B7352D] px-8 py-4 text-center text-2xl font-bold text-white opacity-60 transition hover:opacity-100 sm:w-auto dark:bg-[#D48681] dark:text-black"
 					href="https://zen-garden.readthedocs.io/en/latest/files/quick_start/installation.html"
 					target="_blank"
 				>
@@ -144,57 +158,60 @@
 	</ContentBox>
 </div>
 
-<!-- 3 headline boxes -->
-<div
-	class="container mx-auto mb-4 grid gap-4 px-4 sm:grid-cols-3 md:mb-8 lg:mb-12 lg:gap-8 lg:gap-12"
->
-	<ContentBox
-		class="relative bg-[#E7F4F7] py-6 text-center lg:py-12 dark:bg-[#00596D]"
-		noMarginBottom
-		noColor
-	>
-		<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Build your model</h2>
-		<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
-			<i class="bi bi-signpost-2-fill"></i>
-		</div>
-		<a href="#build-model" class="pointer-event-none absolute inset-0" aria-label="Build your model"
-		></a>
-	</ContentBox>
-	<ContentBox
-		class="relative bg-[#CCE4EA] py-6 text-center lg:py-12 dark:bg-[#007894]"
-		noMarginBottom
-		noColor
-	>
-		<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Optimize your system</h2>
-		<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
-			<i class="bi bi-diagram-3-fill"></i>
-		</div>
-		<a
-			href="#optimize-system"
-			class="pointer-event-none absolute inset-0"
-			aria-label="Optimize your system"
-		></a>
-	</ContentBox>
-	<ContentBox
-		class="relative bg-[#99CAD5] py-6 text-center lg:py-12 dark:bg-[#3395AB]"
-		noMarginBottom
-		noColor
-	>
-		<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Visualize your results</h2>
-		<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
-			<i class="bi bi-eye-fill"></i>
-		</div>
-		<a
-			href="#visualize-results"
-			class="pointer-event-none absolute inset-0"
-			aria-label="Visualize your results"
-		></a>
-	</ContentBox>
-</div>
-
 <div class="mt-12" use:animate={{ topOffset: 57 }}>
+	<!-- 3 headline boxes -->
+	<div id="head-section" class="container mx-auto mb-12 px-4 md:mb-0">
+		<div class="grid gap-4 sm:grid-cols-3 lg:gap-12">
+			<ContentBox
+				class="box relative bg-[#E7F4F7] py-6 text-center lg:py-12 dark:bg-[#00596D]"
+				noMarginBottom
+				noColor
+			>
+				<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Build your model</h2>
+				<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
+					<i class="bi bi-signpost-2-fill"></i>
+				</div>
+				<a
+					href="#build-model"
+					class="pointer-event-none absolute inset-0"
+					aria-label="Build your model"
+				></a>
+			</ContentBox>
+			<ContentBox
+				class="box relative bg-[#CCE4EA] py-6 text-center lg:py-12 dark:bg-[#007894]"
+				noMarginBottom
+				noColor
+			>
+				<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Optimize your system</h2>
+				<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
+					<i class="bi bi-diagram-3-fill"></i>
+				</div>
+				<a
+					href="#optimize-system"
+					class="pointer-event-none absolute inset-0"
+					aria-label="Optimize your system"
+				></a>
+			</ContentBox>
+			<ContentBox
+				class="box relative bg-[#99CAD5] py-6 text-center lg:py-12 dark:bg-[#3395AB]"
+				noMarginBottom
+				noColor
+			>
+				<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Visualize your results</h2>
+				<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
+					<i class="bi bi-eye-fill"></i>
+				</div>
+				<a
+					href="#visualize-results"
+					class="pointer-event-none absolute inset-0"
+					aria-label="Visualize your results"
+				></a>
+			</ContentBox>
+		</div>
+	</div>
+
 	<!-- Build your model -->
-	<div id="build-model" class="section container mx-auto flex gap-4 px-4 py-4 lg:gap-12">
+	<div id="build-model" class="section container mx-auto flex gap-4 px-4 pb-12 lg:gap-12 lg:pb-4">
 		<ContentBox
 			class="box min-h-screen grow bg-[#E7F4F7] dark:bg-[#00596D]"
 			noColor
@@ -314,8 +331,9 @@
 			</div>
 		</ContentBox>
 		<ContentBox
-			class="box relative hidden bg-[#CCE4EA] py-8 text-center md:block dark:bg-[#007894]"
+			class="box relative hidden py-8 text-center md:block"
 			noColor
+			noShadow
 			noMarginBottom
 		>
 			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">
@@ -328,8 +346,9 @@
 			></a>
 		</ContentBox>
 		<ContentBox
-			class="box relative hidden bg-[#99CAD5] py-8 text-center md:block dark:bg-[#3395AB]"
+			class="box relative hidden py-8 text-center md:block"
 			noColor
+			noShadow
 			noMarginBottom
 		>
 			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">
@@ -344,10 +363,14 @@
 	</div>
 
 	<!-- Optimize your system -->
-	<div id="optimize-system" class="section container mx-auto flex gap-4 px-4 py-4 lg:gap-12">
+	<div
+		id="optimize-system"
+		class="section container mx-auto flex gap-4 px-4 pb-12 lg:gap-12 lg:pb-4"
+	>
 		<ContentBox
-			class="box relative hidden bg-[#E7F4F7] py-8 text-center md:block dark:bg-[#00596D]"
+			class="box relative hidden py-8 text-center md:block"
 			noColor
+			noShadow
 			noMarginBottom
 		>
 			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Build your model</h2>
@@ -383,76 +406,41 @@
 					class="my-8 w-full overflow-hidden rounded-xl bg-slate-900 shadow-xl ring-1 ring-slate-800"
 				>
 					<div class="p-6 font-mono text-sm leading-relaxed text-slate-300 md:text-base">
-						<style>
-							@keyframes appear {
-								to {
-									opacity: 1;
-								}
-							}
-						</style>
-
-						<div
-							class="flex opacity-0"
-							style="animation: appear 0s linear forwards; animation-delay: 0.5s;"
-						>
+						<div class="appear flex opacity-0" style="animation-delay: 0.5s;">
 							<span class="mr-3 text-pink-500 select-none">$</span>
 							<span>pip install <span class="text-yellow-300">zen-garden</span></span>
 						</div>
 
-						<div
-							class="flex opacity-0"
-							style="animation: appear 0s linear forwards; animation-delay: 1.5s;"
-						>
+						<div class="appear flex opacity-0" style="animation-delay: 1.5s;">
 							<span class="mr-3 text-pink-500 select-none">$</span>
 							<span>zen-garden --dataset=<span class="text-cyan-300">my_model</span></span>
 						</div>
 
-						<div
-							class="text-slate-500 opacity-0"
-							style="animation: appear 0s linear forwards; animation-delay: 2s;"
-						>
+						<div class="appear text-slate-500 opacity-0" style="animation-delay: 2s;">
 							Create ConversionTechnology photovoltaics<br />
 						</div>
 
-						<div
-							class="text-slate-500 opacity-0"
-							style="animation: appear 0s linear forwards; animation-delay: 2.25s;"
-						>
+						<div class="appear text-slate-500 opacity-0" style="animation-delay: 2.25s;">
 							Create ConversionTechnology heat_pump<br />
 						</div>
 
-						<div
-							class="text-slate-500 opacity-0"
-							style="animation: appear 0s linear forwards; animation-delay: 2.5s;"
-						>
+						<div class="appear text-slate-500 opacity-0" style="animation-delay: 2.5s;">
 							Create Carrier electricity<br />
 						</div>
 
-						<div
-							class="text-slate-500 opacity-0"
-							style="animation: appear 0s linear forwards; animation-delay: 2.75s;"
-						>
+						<div class="appear text-slate-500 opacity-0" style="animation-delay: 2.75s;">
 							Create Carrier heat<br />
 						</div>
 
-						<div
-							class="text-slate-500 opacity-0"
-							style="animation: appear 0s linear forwards; animation-delay: 3s;"
-						>
+						<div class="appear text-slate-500 opacity-0" style="animation-delay: 3s;">
 							...<br />
 						</div>
 
-						<div
-							class="text-slate-500 opacity-0"
-							style="animation: appear 0s linear forwards; animation-delay: 4s;"
-						>
+						<div class="appear text-slate-500 opacity-0" style="animation-delay: 4s;">
 							--- Optimization finished --- <br />
 						</div>
 
-						<div
-							class="flex opacity-0"
-							style="animation: appear 0s linear forwards; animation-delay: 4.5s;"
-						>
+						<div class="appear flex opacity-0" style="animation-delay: 4.5s;">
 							<span class="mr-3 text-pink-500 select-none">$</span>
 							<span>zen-visualization</span>
 							<span class="animate-pulse">|</span>
@@ -588,8 +576,9 @@
 			</div>
 		</ContentBox>
 		<ContentBox
-			class="box relative hidden bg-[#99CAD5] py-8 text-center md:block dark:bg-[#3395AB]"
+			class="box relative hidden py-8 text-center md:block"
 			noColor
+			noShadow
 			noMarginBottom
 		>
 			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">
@@ -604,10 +593,14 @@
 	</div>
 
 	<!-- Visualize your results -->
-	<div id="visualize-results" class="section container mx-auto flex gap-4 px-4 py-4 lg:gap-12">
+	<div
+		id="visualize-results"
+		class="section container mx-auto flex gap-4 px-4 pb-12 lg:gap-12 lg:pb-4"
+	>
 		<ContentBox
-			class="box relative hidden bg-[#E7F4F7] py-8 text-center md:block dark:bg-[#00596D]"
+			class="box relative hidden py-8 text-center md:block"
 			noColor
+			noShadow
 			noMarginBottom
 		>
 			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Build your model</h2>
@@ -618,8 +611,9 @@
 			></a>
 		</ContentBox>
 		<ContentBox
-			class="box relative hidden bg-[#CCE4EA] py-8 text-center md:block dark:bg-[#007894]"
+			class="box relative hidden py-8 text-center md:block"
 			noColor
+			noShadow
 			noMarginBottom
 		>
 			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">
@@ -654,14 +648,6 @@
 						class="my-8 w-full overflow-hidden rounded-xl bg-slate-900 shadow-xl ring-1 ring-slate-800"
 					>
 						<div class="p-6 font-mono text-sm leading-relaxed text-slate-300 md:text-base">
-							<style>
-								@keyframes appear {
-									to {
-										opacity: 1;
-									}
-								}
-							</style>
-
 							<div
 								class="flex opacity-0"
 								style="animation: appear 0s linear forwards; animation-delay: 0.5s;"
@@ -743,29 +729,37 @@
 		</ContentBox>
 	</div>
 	<!-- Shapes for the animation -->
-	<div class="pointer-events-none fixed inset-x-0 top-[57px] bottom-0">
+	<div class="pointer-events-none fixed inset-0">
 		<div class="container mx-auto flex h-full gap-4 px-4 lg:gap-12">
-			<ContentBox
-				class="shape relative mt-4 hidden w-full bg-[#E7F4F7] py-8 text-center opacity-0 md:block dark:bg-[#00596D]"
-				noColor
-				noMarginBottom
-			>
-				<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Build your model</div>
-			</ContentBox>
-			<ContentBox
-				class="shape relative mt-4 hidden bg-[#CCE4EA] py-8 text-center md:block dark:bg-[#007894]"
-				noColor
-				noMarginBottom
-			>
-				<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Optimize your system</div>
-			</ContentBox>
-			<ContentBox
-				class="shape relative mt-4 hidden bg-[#99CAD5] py-8 text-center md:block dark:bg-[#3395AB]"
-				noColor
-				noMarginBottom
-			>
-				<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Visualize your results</div>
-			</ContentBox>
+			<div class="shape bg-gray-100 py-4 dark:bg-gray-950">
+				<ContentBox
+					class="hidden h-full w-full bg-[#E7F4F7] py-8 text-center md:block dark:bg-[#00596D]"
+					noColor
+					noMarginBottom
+				>
+					<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Build your Model</div>
+				</ContentBox>
+			</div>
+			<div class="shape bg-gray-100 py-4 dark:bg-gray-950">
+				<ContentBox
+					class="hidden h-full w-full bg-[#CCE4EA] py-8 text-center md:block dark:bg-[#007894]"
+					noColor
+					noMarginBottom
+				>
+					<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">Optimize your System</div>
+				</ContentBox>
+			</div>
+			<div class="shape bg-gray-100 py-4 dark:bg-gray-950">
+				<ContentBox
+					class="hidden h-full w-full bg-[#99CAD5] py-8 text-center md:block dark:bg-[#3395AB]"
+					noColor
+					noMarginBottom
+				>
+					<div class="mb-4 text-2xl font-bold [writing-mode:sideways-rl]">
+						Visualize your Results
+					</div>
+				</ContentBox>
+			</div>
 		</div>
 	</div>
 </div>
@@ -826,7 +820,7 @@
 				<a
 					href="https://www.projectaccsess.eu/"
 					target="_blank"
-					class="flex justify-center opacity-60 transition hover:opacity-100"
+					class="col-start-2 flex justify-center opacity-60 transition hover:opacity-100"
 				>
 					<img src="/accsess.png" alt="Project Accsess" class="h-auto w-full object-contain" />
 				</a>
@@ -867,19 +861,19 @@
 				ZEN-garden is developed by the
 				<a
 					href="https://rre.ethz.ch"
-					class="font-bold text-[#B7352D] opacity-60 transition hover:opacity-100 dark:text-[#D48681]"
+					class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:text-tall-poppy-800 font-bold transition"
 					>Risk and Reliability Engineering Lab at ETH Zurich</a
 				>
 				and accessible to everyone as an open-source software via
 				<a
 					href="https://github.com/zen-garden"
-					class="font-bold text-[#B7352D] opacity-60 transition hover:opacity-100 dark:text-[#D48681]"
+					class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:text-tall-poppy-800 font-bold transition"
 					>GitHub</a
 				>
 				and
 				<a
 					href="https://pypi.org/project/zen-garden/"
-					class="font-bold text-[#B7352D] opacity-60 transition hover:opacity-100 dark:text-[#D48681]"
+					class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:text-tall-poppy-800 font-bold transition"
 					>PyPI</a
 				>. We are happy to receive feedback, suggestions, and contributions to ZEN-garden. Please do
 				not hesitate to contact us through email or our Google Group.
@@ -887,7 +881,7 @@
 
 			<div class="flex flex-col gap-4 md:flex-row md:flex-wrap">
 				<a
-					class="inline-block w-full rounded bg-[#B7352D] px-8 py-4 text-center text-2xl font-bold text-white opacity-60 transition hover:opacity-100 sm:w-auto dark:bg-[#D48681] dark:text-black"
+					class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition sm:w-auto"
 					href="mailto:zen-garden@ethz.ch"
 					target="_blank"
 				>
@@ -895,7 +889,7 @@
 					<i class="bi bi-arrow-up-right"></i>
 				</a>
 				<a
-					class="inline-block w-full rounded bg-[#B7352D] px-8 py-4 text-center text-2xl font-bold text-white opacity-60 transition hover:opacity-100 sm:w-auto dark:bg-[#D48681] dark:text-black"
+					class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition sm:w-auto"
 					href="https://groups.google.com/g/zen_garden"
 					target="_blank"
 					rel="external noopener"
@@ -916,3 +910,15 @@
 		</div>
 	</footer>
 </div>
+
+<style>
+	.appear {
+		animation: appear 0s linear forwards;
+	}
+
+	@keyframes appear {
+		to {
+			opacity: 1;
+		}
+	}
+</style>
