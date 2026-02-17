@@ -112,9 +112,7 @@
 
 			<h1 class="text-5xl font-bold lg:text-6xl">
 				Welcome to our ZEN&#8209;garden
-			</h1>
-			
-			
+			</h1>			
 		</div>
 
 		<div>
@@ -126,21 +124,24 @@
 				flexible, and robust input datasets. 
 			</p>
 			
-			<a
-				class="opacity-60 transition hover:opacity-100 bg-[#B7352D] dark:bg-[#D48681] inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white sm:w-auto dark:text-black"
-				href="https://zen-garden.readthedocs.io/en/latest/files/quick_start/installation.html"
-				target="_blank"
-			>
-				Get started with ZEN-garden
-				<i class="bi bi-arrow-up-right"></i>
+			<h1 class="flex justify-center text-5xl font-bold lg:text-3xl">
+				Explore sector-coupled energy transition pathways!
+			</h1>
+			<!-- add /?solution=technology_optimism_pessimism.Crystal_Ball&tech=conversion&car=electricity to the URL -->
+			<a href={resolve('/explorer/map')} target="_blank" class="flex justify-center mt-8"> 
+				<img src="/evolution_map_final.gif" alt="Example transition pathway" class="mx-auto w-full leading-relaxed py-12 sm:w-auto">
 			</a>
-			
-			<img
-				src="/map_plot_H2_adap.svg"
-				alt="Example transition pathway"
-				class="mx-auto w-full leading-relaxed py-12 sm:w-auto"
-			/>
-			
+
+			<div class="flex justify-center">
+				<a
+					class="opacity-60 transition hover:opacity-100 bg-[#B7352D] dark:bg-[#D48681] inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white sm:w-auto dark:text-black"
+					href="https://zen-garden.readthedocs.io/en/latest/files/quick_start/installation.html"
+					target="_blank"
+				>
+					Get started with ZEN-garden
+					<i class="bi bi-arrow-up-right"></i>
+				</a>
+			</div>
 		</div>
 	</ContentBox>
 </div>
