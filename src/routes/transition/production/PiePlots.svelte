@@ -6,7 +6,7 @@
 		getPlotOptions,
 		hasMultipleSolutions as hasMultipleSolutionsFn
 	} from '@/lib/piePlots';
-	import type { ChartDataset } from 'chart.js';
+	import type { ChartDataset, ChartOptions } from 'chart.js';
 
 	interface Props {
 		datasets: ChartDataset<'bar'>[];
@@ -77,9 +77,9 @@
 			</h3>
 			<Chart
 				type="pie"
-				datasets={productionDatasets}
+				getDatasets={() => productionDatasets}
 				labels={productionLabels}
-				options={productionOptions}
+				options={productionOptions as ChartOptions}
 				boxed={false}
 			></Chart>
 		</ContentBox>
@@ -90,9 +90,9 @@
 			</h3>
 			<Chart
 				type="pie"
-				datasets={consumptionDatasets}
+				getDatasets={() => consumptionDatasets}
 				labels={consumptionLabels}
-				options={consumptionOptions}
+				options={consumptionOptions as ChartOptions}
 				boxed={false}
 			></Chart>
 		</ContentBox>
