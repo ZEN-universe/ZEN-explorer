@@ -1,5 +1,5 @@
 import { env } from '$env/dynamic/public';
-import Papa from 'papaparse';
+import Papa, { type ParseResult } from 'papaparse';
 import type {
 	Solution,
 	ComponentTotal,
@@ -81,13 +81,13 @@ export async function fetchUnit(solution_name: string, component_name: string) {
  * @param year_index Year to fetch
  * @returns Promise of the ComponentTotal as returned by the temple.
  */
-export async function fetchTotal(
+export async function fetchTotal<T extends string>(
 	solution_name: string,
-	components: string[],
+	components: T[],
 	scenario_name: string,
 	carrier: string = '',
 	unit_component: string = ''
-): Promise<ComponentTotal> {
+): Promise<ComponentTotal<T>> {
 	const urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/total');
 	urlObj.searchParams.set('solution_name', solution_name);
 	urlObj.searchParams.set('components', components.join(','));
@@ -125,15 +125,15 @@ export async function fetchTotal(
  * @param year Year
  * @returns Promise of the TimeSeries as returned by the API
  */
-export async function fetchFullTs(
+export async function fetchFullTs<T extends string>(
 	solution_name: string,
-	components: string[],
+	components: T[],
 	scenario_name: string,
 	unit_component: string = '',
 	year_index: number = 0,
 	window_size: number = 1,
 	carrier: string = ''
-): Promise<ComponentTimeSeries> {
+): Promise<ComponentTimeSeries<T>> {
 	const urlObj = new URL(env.PUBLIC_TEMPLE_URL + 'solutions/full_ts');
 	urlObj.searchParams.set('solution_name', solution_name);
 	urlObj.searchParams.set('components', components.join(','));
@@ -146,30 +146,24 @@ export async function fetchFullTs(
 	}
 	const url = urlObj.toString();
 
-	const component_data_request = await fetch(url, { cache: 'no-store' });
+	const componentDataRequest = await fetch(url, { cache: 'no-store' });
 
-	if (!component_data_request.ok) {
+	if (!componentDataRequest.ok) {
 		alert('Error when fetching ' + url);
 		throw new Error('Error when fetching ' + url);
 	}
 
-	const component_data = await component_data_request.json();
+	const { unit = '', ...componentsData } = await componentDataRequest.json();
 
-	const parsed_components: { [key: string]: Entries } = Object.fromEntries(
-		Object.entries(component_data)
-			.map(([key, values]) => {
-				if (key == 'unit' || values === undefined) {
-					return null;
-				}
-
-				return [key, parseTimeseriesData(values as TimeSeriesResponseEntry[])] as [string, Entries];
-			})
-			.filter((entry) => entry !== null)
-	);
+	const parsedComponents = Object.fromEntries(
+		Object.entries(componentsData as Record<string, TimeSeriesResponseEntry[] | null>).map(
+			([key, values]) => [key, values !== null ? parseTimeseriesData(values) : Entries.empty]
+		)
+	) as Record<T, Entries>;
 
 	return {
-		unit: parseUnitData(component_data.unit || ''),
-		components: parsed_components
+		unit: parseUnitData(unit as string),
+		components: parsedComponents
 	};
 }
 
@@ -199,16 +193,16 @@ export async function fetchEnergyBalance(
 	urlobj.searchParams.set('rolling_average_window_size', window_size.toString());
 	const url = urlobj.toString();
 
-	const energy_balance_data_request = await fetch(url, { cache: 'no-store' });
+	const response = await fetch(url, { cache: 'no-store' });
 
-	if (!energy_balance_data_request.ok) {
+	if (!response.ok) {
 		alert('Could not fetch ' + url);
 		throw new Error('Could not fetch ' + url);
 	}
 
-	const energy_balance_data = await energy_balance_data_request.json();
+	const data = await response.json();
 
-	const series_names = [
+	const components = [
 		'shed_demand',
 		'demand',
 		'flow_conversion_input',
@@ -221,14 +215,13 @@ export async function fetchEnergyBalance(
 		'cost_shed_demand',
 		'flow_conversion_output',
 		'constraint_nodal_energy_balance'
-	];
+	] as (keyof EnergyBalanceDataframes)[];
 
 	const ans: Partial<EnergyBalanceDataframes> = {};
-
-	for (const series_name of series_names) {
-		if (energy_balance_data[series_name] !== undefined) {
-			ans[series_name as keyof EnergyBalanceDataframes] = parseTimeseriesData(
-				energy_balance_data[series_name]
+	for (const component of components) {
+		if (data[component] !== undefined) {
+			ans[component] = parseTimeseriesData(
+				data[component]
 			);
 		}
 	}
@@ -279,7 +272,7 @@ function parseCSV(data_csv: string) {
 	}
 
 	// Parse CSV
-	const data: Papa.ParseResult<Row> = Papa.parse(data_csv, {
+	const data: ParseResult<Row> = Papa.parse(data_csv, {
 		delimiter: ',',
 		header: true,
 		newline: '\n'
@@ -307,7 +300,7 @@ function parseTimeseriesData(entries: TimeSeriesResponseEntry[]): Entries {
 	);
 }
 
-function parseUnitData(unit_csv: string): Papa.ParseResult<Row> {
+function parseUnitData(unit_csv: string): ParseResult<Row> {
 	if (unit_csv.slice(-1) == '\n') {
 		unit_csv = unit_csv.slice(0, unit_csv.length - 1);
 	}
@@ -315,7 +308,7 @@ function parseUnitData(unit_csv: string): Papa.ParseResult<Row> {
 	return Papa.parse(unit_csv, { delimiter: ',', header: true, newline: '\n' });
 }
 
-function filterOutZeroRows(data: Papa.ParseResult<Row>): Papa.ParseResult<Row> {
+function filterOutZeroRows(data: ParseResult<Row>): ParseResult<Row> {
 	// Filter out rows that only contain zeros
 	data.data = data.data.filter((row: Row) => {
 		return Object.keys(row).some((key: string) => {

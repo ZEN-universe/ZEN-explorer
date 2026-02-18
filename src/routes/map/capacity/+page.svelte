@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
-	import type { ParseResult } from 'papaparse';
 
 	import Radio from '$components/forms/Radio.svelte';
 	import Dropdown from '$components/forms/Dropdown.svelte';
@@ -8,7 +7,7 @@
 	import MapPlot from '$components/MapPlot.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import type { MapPlotData } from '$components/MapPlot.svelte';
-	import type { ActivatedSolution, Row, System } from '$lib/types';
+	import type { ActivatedSolution, System } from '$lib/types';
 
 	import { fetchTotal } from '$lib/temple';
 	import { availableMaps } from '$lib/constants';
@@ -19,40 +18,39 @@
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import { removeDuplicates } from '$lib/utils';
 	import WarningMessage from '$components/WarningMessage.svelte';
+	import Entries, { type FilterCriteria } from '@/lib/entries';
 
-	interface AggregatedData {
-		[location: string]: { technology: string; years: number[] }[];
-	}
+	type AggregatedData = Record<string, { technology: string; years: number[] }[]>;
 
 	let plot = $state<MapPlot>();
 
-	let fetchedData: ParseResult<Row> | null = $state(null);
+	let fetchedData: Entries | null = $state(null);
 
 	let years: number[] = $state([]);
-	let technology_types: string[] = ['conversion', 'storage'];
-	const storage_type_options = ['energy', 'power'];
+	let technologyTypes: string[] = ['conversion', 'storage'];
+	const storageTypeOptions = ['energy', 'power'];
 	const maps: { label: string; value: string }[] = availableMaps;
 
-	let selected_solution: ActivatedSolution | null = $state(null);
-	let selected_technology_type: string = $state('conversion');
-	let selected_storage_type = $state('energy');
-	let selected_carrier: string | null = $state(null);
-	let selected_year: string | null = $state(null);
-	let selected_map: string | null = $state('world-3');
+	let selectedSolution: ActivatedSolution | null = $state(null);
+	let selectedTechnologyType: string = $state('conversion');
+	let selectedStorageType = $state('energy');
+	let selectedCarrier: string | null = $state(null);
+	let selectedYear: string | null = $state(null);
+	let selectedMap: string | null = $state('world-3');
 
-	let solution_loading: boolean = $state(false);
+	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 	let units: { [key: string]: string } = $state({});
 	let unit: string = $derived.by(() => {
-		const capacity_type = selected_technology_type == 'storage' ? selected_storage_type : 'power';
-		return units[technologies[0] + '_' + capacity_type] || '';
+		const capacityType = selectedTechnologyType == 'storage' ? selectedStorageType : 'power';
+		return units[technologies[0] + '_' + capacityType] || '';
 	});
 
 	let coords: { [key: string]: [number, number] } = $derived.by(() => {
-		if (selected_solution == null) {
+		if (selectedSolution == null) {
 			return {};
 		}
-		return Object.entries(selected_solution.detail.system.coords).reduce(
+		return Object.entries(selectedSolution.detail.system.coords).reduce(
 			(acc, [node, { lat, lon }]) => ({ ...acc, [node]: [lon, lat] }),
 			{}
 		);
@@ -63,42 +61,42 @@
 	$effect(() => {
 		years;
 		untrack(() => {
-			if (years.length > 0 && (selected_year == null || !years.includes(parseInt(selected_year)))) {
-				selected_year = years[0].toString();
+			if (years.length > 0 && (selectedYear == null || !years.includes(parseInt(selectedYear)))) {
+				selectedYear = years[0].toString();
 			}
 		});
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		if (!selected_solution) {
+		if (!selectedSolution) {
 			return [];
 		}
 
-		return removeDuplicates(Object.values(selected_solution.detail.reference_carrier)).sort();
+		return removeDuplicates(Object.values(selectedSolution.detail.reference_carrier)).sort();
 	});
 
 	$effect(() => {
 		carriers;
 		untrack(() => {
-			if (selected_solution === null) return;
-			if (selected_carrier !== null && !carriers.includes(selected_carrier)) {
-				selected_carrier = null;
+			if (selectedSolution === null) return;
+			if (selectedCarrier !== null && !carriers.includes(selectedCarrier)) {
+				selectedCarrier = null;
 			}
 		});
 	});
 
 	let technologies: string[] = $derived.by(() => {
-		if (!selected_solution || !selected_technology_type) {
+		if (!selectedSolution || !selectedTechnologyType) {
 			return [];
 		}
 
-		return all_technologies.filter(
-			(technology) => selected_solution!.detail.reference_carrier[technology] == selected_carrier
+		return allTechnologies.filter(
+			(technology) => selectedSolution!.detail.reference_carrier[technology] == selectedCarrier
 		);
 	});
 
-	let all_technologies: string[] = $derived.by(() => {
-		if (!selected_solution || !selected_technology_type) {
+	let allTechnologies: string[] = $derived.by(() => {
+		if (!selectedSolution || !selectedTechnologyType) {
 			return [];
 		}
 
@@ -106,11 +104,11 @@
 			conversion: 'set_conversion_technologies',
 			storage: 'set_storage_technologies',
 			transport: 'set_transport_technologies'
-		}[selected_technology_type] as keyof System;
+		}[selectedTechnologyType] as keyof System;
 
 		if (!key) return [];
 
-		return (selected_solution.detail.system[key] || []) as string[];
+		return (selectedSolution.detail.system[key] || []) as string[];
 	});
 
 	//#endregion
@@ -119,22 +117,22 @@
 
 	// Set URL parameters
 	onMount(() => {
-		selected_technology_type = getURLParam('tech') || selected_technology_type;
-		selected_storage_type = getURLParam('stor') || selected_storage_type;
-		selected_carrier = getURLParam('car') || selected_carrier;
+		selectedTechnologyType = getURLParam('tech') || selectedTechnologyType;
+		selectedStorageType = getURLParam('stor') || selectedStorageType;
+		selectedCarrier = getURLParam('car') || selectedCarrier;
 	});
 
 	$effect(() => {
 		// Triggers
-		selected_technology_type;
-		selected_storage_type;
-		selected_carrier;
+		selectedTechnologyType;
+		selectedStorageType;
+		selectedCarrier;
 
 		tick().then(() => {
 			updateURLParams({
-				tech: selected_technology_type,
-				stor: selected_technology_type === 'storage' ? selected_storage_type : null,
-				car: selected_carrier
+				tech: selectedTechnologyType,
+				stor: selectedTechnologyType === 'storage' ? selectedStorageType : null,
+				car: selectedCarrier
 			});
 		});
 	});
@@ -144,43 +142,42 @@
 	//#region Data fetching and processing
 
 	async function solutionUpdated() {
-		if (!selected_solution) {
+		if (!selectedSolution) {
 			return;
 		}
 		carrierUpdated();
 	}
 
-	let previous_carrier = '';
+	let previousCarrier = '';
 	$effect(() => {
-		selected_carrier;
+		selectedCarrier;
 		untrack(() => {
-			if (selected_carrier === previous_carrier) return;
+			if (selectedCarrier === previousCarrier) return;
 			carrierUpdated();
 		});
 	});
 
 	async function carrierUpdated() {
-		previous_carrier = selected_carrier || '';
-		await fetch_data();
+		previousCarrier = selectedCarrier || '';
+		await fetchData();
 		plot?.resetZoom();
 	}
 
-	async function fetch_data() {
-		if (!selected_solution || !selected_carrier) {
+	async function fetchData() {
+		if (!selectedSolution || !selectedCarrier) {
 			return;
 		}
 
 		fetching = true;
-		fetchedData = null;
 
 		const response = await fetchTotal(
-			selected_solution.solution_name,
+			selectedSolution.solution_name,
 			['capacity'],
-			selected_solution.scenario_name,
-			selected_carrier
+			selectedSolution.scenario_name,
+			selectedCarrier
 		);
 
-		fetchedData = response.capacity;
+		fetchedData = Entries.fromRows(response.capacity?.data || []);
 
 		if (response.unit?.data) {
 			units = Object.fromEntries(
@@ -193,67 +190,55 @@
 
 	function aggregateDataByNode(
 		technologies: string[],
-		filter_capacity_type: string | null = null
+		filterCapacityType: string | null = null
 	): AggregatedData | null {
-		if (!fetchedData || !selected_solution || !selected_technology_type || !selected_carrier) {
+		if (!fetchedData || !selectedSolution || !selectedTechnologyType || !selectedCarrier) {
 			return null;
 		}
 
-		return fetchedData.data.reduce(
-			(acc: Record<string, { technology: string; years: number[] }[]>, row) => {
-				const { technology, capacity_type, location } = row;
+		let criteria: FilterCriteria = { technology: technologies };
+		if (filterCapacityType) {
+			criteria['capacity_type'] = [filterCapacityType];
+		}
 
-				if (
-					!technologies.includes(technology) ||
-					(filter_capacity_type && filter_capacity_type !== capacity_type)
-				) {
-					return acc;
-				}
-
-				const years = Object.entries(row)
-					.filter(([key]) => !isNaN(parseInt(key)))
-					.map(([, value]) => parseFloat(value));
-
-				if (years.length === 0) {
-					return acc;
-				}
-
+		return fetchedData.filterByCriteria(criteria).reduce(
+			(acc, { data, index: { location, technology } }) => {
 				acc[location] = acc[location] || [];
-				acc[location].push({ technology, years: years });
+				acc[location].push({ technology, years: data });
 				return acc;
 			},
-			{}
+			{} as Record<string, { technology: string; years: number[] }[]>
 		);
 	}
 
 	let data: AggregatedData | null = $derived.by(() => {
-		if (!fetchedData || !selected_technology_type) {
+		if (!fetchedData || !selectedTechnologyType) {
 			return null;
 		}
 
 		return aggregateDataByNode(
 			technologies,
-			selected_technology_type == 'storage' ? selected_storage_type : null
+			selectedTechnologyType == 'storage' ? selectedStorageType : null
 		);
 	});
 
 	let transportData: AggregatedData | null = $derived.by(() => {
-		if (!selected_solution) {
+		if (!selectedSolution) {
 			return null;
 		}
 
-		const transportTechnologies = selected_solution.detail.system.set_transport_technologies.filter(
-			(technology) => selected_solution!.detail.reference_carrier[technology] == selected_carrier
+		const transportTechnologies = selectedSolution.detail.system.set_transport_technologies.filter(
+			(technology) => selectedSolution!.detail.reference_carrier[technology] == selectedCarrier
 		);
 		return aggregateDataByNode(transportTechnologies);
 	});
 
 	let pieData: MapPlotData | null = $derived.by(() => {
-		if (!data || selected_year == null) {
+		if (!data || selectedYear == null) {
 			return null;
 		}
 
-		const index = years.findIndex((year) => year.toString() === selected_year);
+		const index = years.findIndex((year) => year.toString() === selectedYear);
 		const entries = Object.entries(data)
 			.map(([location, data]) => {
 				const mappedData = data
@@ -266,13 +251,13 @@
 	});
 
 	let lineData: MapPlotData | null = $derived.by(() => {
-		if (!transportData || selected_year == null) {
+		if (!transportData || selectedYear == null) {
 			return null;
 		}
 
-		const index = years.findIndex((year) => year.toString() === selected_year);
+		const index = years.findIndex((year) => year.toString() === selectedYear);
 		const entries = Object.entries(transportData).map(([location, data]) => {
-			return [location, data.map((d) => ({ technology: d.technology, value: d.years[index] }))];
+			return [location, data.map(({technology, years}) => ({ technology, value: years[index] }))];
 		});
 		return Object.fromEntries(entries);
 	});
@@ -283,6 +268,7 @@
 		}
 		return Object.values(data).reduce(
 			([accMin, accMax], values) => {
+				// Sum values for each year across all technologies for each node
 				const years = values.reduce((acc: number[] | null, { years }) => {
 					if (!acc) return [...years];
 					return acc.map((value, i) => value + (years[i] || 0));
@@ -306,6 +292,7 @@
 
 		return Object.values(transportData).reduce(
 			([accMin, accMax], values) => {
+				// Find max edge value for each year across all technologies
 				const years = values.reduce((acc: number[] | null, { years }) => {
 					if (!acc) return [...years];
 					return acc.map((value, i) => Math.max(value, years[i] || 0));
@@ -325,51 +312,55 @@
 	//#endregion
 </script>
 
-<DiagramPage pageTitle="The Map" subtitle="Map of conversion, storage, and transport capacities">
+<DiagramPage
+	parentTitle="The Map"
+	pageTitle="Capacity"
+	subtitle="Map of conversion, storage, and transport capacities"
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
 				bind:years
-				bind:selected_solution
-				bind:loading={solution_loading}
+				bind:selected_solution={selectedSolution}
+				bind:loading={solutionLoading}
 				solutionSelected={solutionUpdated}
-				disabled={fetching || solution_loading}
+				disabled={fetching || solutionLoading}
 			/>
 		</FilterSection>
-		{#if !solution_loading && selected_solution}
+		{#if !solutionLoading && selectedSolution}
 			<FilterSection title="Variable Selection">
 				<Dropdown
 					options={carriers}
-					bind:value={selected_carrier}
+					bind:value={selectedCarrier}
 					label="Carrier"
 					onUpdate={carrierUpdated}
-					disabled={fetching || solution_loading}
+					disabled={fetching || solutionLoading}
 				></Dropdown>
-				{#if selected_carrier !== null}
+				{#if selectedCarrier !== null}
 					<Dropdown
-						options={technology_types}
-						bind:value={selected_technology_type}
+						options={technologyTypes}
+						bind:value={selectedTechnologyType}
 						label="Technology Type"
-						disabled={fetching || solution_loading}
+						disabled={fetching || solutionLoading}
 					></Dropdown>
-					{#if selected_technology_type == 'storage'}
+					{#if selectedTechnologyType == 'storage'}
 						<Radio
-							options={storage_type_options}
-							bind:value={selected_storage_type}
+							options={storageTypeOptions}
+							bind:value={selectedStorageType}
 							label="Storage Type"
-							disabled={fetching || solution_loading}
+							disabled={fetching || solutionLoading}
 						></Radio>
 					{/if}
 				{/if}
 			</FilterSection>
-			{#if selected_solution !== null && selected_carrier !== null}
+			{#if selectedSolution !== null && selectedCarrier !== null}
 				<FilterSection title="Data Selection">
 					<Dropdown
-						bind:value={selected_year}
+						bind:value={selectedYear}
 						options={years.map((year) => year.toString())}
 						label="Year"
 					></Dropdown>
-					<Dropdown bind:value={selected_map} options={maps} label="Map"></Dropdown>
+					<Dropdown bind:value={selectedMap} options={maps} label="Map"></Dropdown>
 				</FilterSection>
 			{/if}
 		{/if}
@@ -391,11 +382,11 @@
 	{/snippet}
 
 	{#snippet mainContent()}
-		{#if solution_loading || fetching}
+		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if !selected_solution}
+		{:else if !selectedSolution}
 			<WarningMessage message="Please select a solution"></WarningMessage>
-		{:else if !selected_carrier}
+		{:else if !selectedCarrier}
 			<WarningMessage message="Please select a carrier"></WarningMessage>
 		{:else if !pieData || !lineData || (Object.keys(pieData).length === 0 && Object.keys(lineData).length === 0)}
 			<ErrorMessage message="No data to display for the selected options"></ErrorMessage>
@@ -410,7 +401,7 @@
 				{maxEdge}
 				nodeCoords={coords}
 				{unit}
-				map={selected_map}
+				map={selectedMap}
 			/>
 		{/if}
 	{/snippet}

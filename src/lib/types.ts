@@ -1,3 +1,4 @@
+import type { ParseResult } from 'papaparse';
 import type Entries from './entries';
 
 export interface Solution {
@@ -125,14 +126,15 @@ export interface YearValue {
 	[key: string]: number;
 }
 
-export interface ComponentTotal {
-	unit: Papa.ParseResult<Row> | null;
-	[key: string]: Papa.ParseResult<Row> | null;
+export interface UnitData {
+	unit: ParseResult<Row> | null;
 }
 
-export interface ComponentTimeSeries {
-	unit: Papa.ParseResult<Row> | null;
-	components: { [key: string]: Entries };
+export type ComponentTotal<T extends string = string> = Record<T, ParseResult<Row> | null> & UnitData;
+
+export interface ComponentTimeSeries<T extends string = string> {
+	unit: ParseResult<Row> | null;
+	components: Record<T, Entries>;
 }
 
 export interface DatasetContainer {

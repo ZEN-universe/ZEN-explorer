@@ -43,8 +43,8 @@ export default class Entries {
 		);
 	}
 
-	static empty(): Entries {
-		return new Entries([]);
+	static get empty(): Entries {
+		return new Entries([]);	
 	}
 
 	/**
