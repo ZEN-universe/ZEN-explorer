@@ -8,6 +8,7 @@
 		type TooltipItem
 	} from 'chart.js';
 	import { draw as drawPattern } from 'patternomaly';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
 	import MultiSelect from '$components/forms/MultiSelect.svelte';
@@ -20,14 +21,16 @@
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 	import FilterLabel from '$components/FilterLabel.svelte';
 	import Spinner from '$components/Spinner.svelte';
+	import PiePlots from './PiePlots.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 
-	import { fetchTotal } from '$lib/temple';
+	import { fetchUnit } from '$lib/temple';
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
-	import { getTransportEdges } from '$lib/utils';
 	import {
 		getURLParam,
 		getURLParamAsBoolean,
@@ -37,110 +40,40 @@
 	} from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
-	import PiePlots from './PiePlots.svelte';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import Entries, { type FilterCriteria } from '$lib/entries';
-	import WarningMessage from '$components/WarningMessage.svelte';
-	import ErrorMessage from '$components/ErrorMessage.svelte';
-	import { SvelteSet } from 'svelte/reactivity';
+	import {
+		computeTransportData,
+		fetchProductionData,
+		variables,
+		type Component,
+		type VariableId
+	} from '$lib/productionData';
+	import { typedEntries, typedKeys } from '@/lib/utils';
 
 	// Data
-	let data: Row[][][] = $state([]);
+	let data: Record<Component, Entries>[] = $state([]);
 	let years: number[] = $state([]);
 	let nodes: string[] = $state([]);
-
-	// Variables
-	interface Variable {
-		id: string;
-		short_id: string;
-		title: string;
-		show: boolean;
-		subdivision: boolean;
-		show_subdivision: boolean;
-		filter_by_technologies: boolean;
-		positive: string;
-		positive_label: string;
-		positive_suffix?: string;
-		negative: string;
-		negative_label: string;
-		negative_suffix?: string;
-	}
-	let variables: Variable[] = $state([
-		{
-			id: 'conversion',
-			short_id: 'conv',
-			title: 'Conversion',
-			show: true,
-			subdivision: true,
-			show_subdivision: true,
-			filter_by_technologies: true,
-			positive: 'flow_conversion_output',
-			positive_label: 'Conversion output',
-			negative: 'flow_conversion_input',
-			negative_label: 'Conversion input'
-		},
-		{
-			id: 'storage',
-			short_id: 'stor',
-			title: 'Storage',
-			show: true,
-			subdivision: true,
-			show_subdivision: true,
-			filter_by_technologies: true,
-			positive: 'flow_storage_discharge',
-			positive_label: 'Storage discharge',
-			positive_suffix: ' (discharge)',
-			negative: 'flow_storage_charge',
-			negative_label: 'Storage charge',
-			negative_suffix: ' (charge)'
-		},
-		{
-			id: 'transport',
-			short_id: 'tran',
-			title: 'Transport',
-			show: true,
-			subdivision: true,
-			show_subdivision: true,
-			filter_by_technologies: true,
-			positive: 'flow_transport',
-			positive_label: 'Transport in',
-			positive_suffix: ' (transport in)',
-			negative: 'flow_transport_loss',
-			negative_label: 'Transport out',
-			negative_suffix: ' (transport out)'
-		},
-		{
-			id: 'import_export',
-			short_id: 'imp_exp',
-			title: 'Import/Export',
-			show: true,
-			subdivision: false,
-			show_subdivision: false,
-			filter_by_technologies: false,
-			positive: 'flow_import',
-			positive_label: 'Import',
-			negative: 'flow_export',
-			negative_label: 'Export'
-		},
-		{
-			id: 'demand_shed_demand',
-			short_id: 'dem_shed',
-			title: 'Demand/Shed Demand',
-			show: true,
-			subdivision: false,
-			show_subdivision: false,
-			filter_by_technologies: false,
-			positive: 'shed_demand',
-			positive_label: 'Shed Demand',
-			negative: 'demand',
-			negative_label: 'Demand'
-		}
-	]);
 
 	// Selected values
 	let selectedSolutions: (ActivatedSolution | null)[] = $state([null]);
 	let selectedCarrier: string | null = $state(null);
+	let selectedShowVariable: Record<VariableId, boolean> = $state({
+		conversion: true,
+		storage: true,
+		transport: true,
+		importExport: true,
+		demandShedDemand: true
+	});
+	let selectedSubdivision: Record<VariableId, boolean> = $state({
+		conversion: true,
+		storage: true,
+		transport: true,
+		importExport: false,
+		demandShedDemand: false
+	});
 	let selectedConversionTechnologies: string[] = $state([]);
 	let selectedStorageTechnologies: string[] = $state([]);
 	let selectedTransportTechnologies: string[] = $state([]);
@@ -344,26 +277,26 @@
 		return Array.from(setTransportTechnologies).sort();
 	});
 
-	function hasDataForVariable(variable: Variable): boolean {
-		switch (variable.id) {
+	function hasDataForVariable(id: VariableId): boolean {
+		switch (id) {
 			case 'conversion':
 				return conversionTechnologies.length > 0;
 			case 'storage':
 				return storageTechnologies.length > 0;
 			case 'transport':
 				return transportTechnologies.length > 0;
-			case 'import_export':
+			case 'importExport':
 				return data.some((solutionData) => {
 					return (
-						solutionData[6].some((item) => item.carrier === selectedCarrier) ||
-						solutionData[7].some((item) => item.carrier === selectedCarrier)
+						solutionData.flow_transport.some(({ index }) => index.carrier === selectedCarrier) ||
+						solutionData.flow_transport_loss.some(({ index }) => index.carrier === selectedCarrier)
 					);
 				});
-			case 'demand_shed_demand':
+			case 'demandShedDemand':
 				return data.some((solutionData) => {
 					return (
-						solutionData[8].some((item) => item.carrier === selectedCarrier) ||
-						solutionData[9].some((item) => item.carrier === selectedCarrier)
+						solutionData.shed_demand.some(({ index }) => index.carrier === selectedCarrier) ||
+						solutionData.demand.some(({ index }) => index.carrier === selectedCarrier)
 					);
 				});
 		}
@@ -435,9 +368,9 @@
 	// Store parts of the selected variables in the URL
 	onMount(() => {
 		selectedCarrier = getURLParam('car') || null;
-		variables.forEach((variable) => {
-			variable.show = getURLParamAsBoolean(variable.short_id, variable.show);
-			variable.subdivision = getURLParamAsBoolean(variable.short_id + '_sub', variable.subdivision);
+		typedKeys(variables).forEach((id) => {
+			selectedShowVariable[id] = getURLParamAsBoolean(id, selectedShowVariable[id]);
+			selectedSubdivision[id] = getURLParamAsBoolean(id + '_sub', selectedSubdivision[id]);
 		});
 		urlConversionTechnologies = getURLParamAsIntArray('conv_tech');
 		urlStorageTechnologies = getURLParamAsIntArray('stor_tech');
@@ -447,12 +380,13 @@
 	$effect(() => {
 		// Triggers
 		selectedCarrier;
-		variables.forEach((variable) => {
-			variable.show;
-			variable.subdivision;
+		typedKeys(variables).forEach((id) => {
+			selectedShowVariable[id];
+			selectedSubdivision[id];
 		});
 		selectedConversionTechnologies;
 		selectedStorageTechnologies;
+		selectedTransportTechnologies;
 
 		// Wait for router to be initialized
 		tick().then(() => {
@@ -466,9 +400,9 @@
 					.map((t) => transportTechnologies.indexOf(t))
 					.join('~')
 			};
-			variables.forEach((variable) => {
-				params[variable.short_id] = variable.show ? '1' : '0';
-				params[variable.short_id + '_sub'] = variable.subdivision ? '1' : '0';
+			typedKeys(variables).forEach((id) => {
+				params[variables[id].shortId] = selectedShowVariable[id] ? '1' : '0';
+				params[variables[id].shortId + '_sub'] = selectedSubdivision[id] ? '1' : '0';
 			});
 			updateURLParams(params);
 		});
@@ -512,65 +446,40 @@
 		}
 
 		fetching = true;
-		data = [];
 
 		const solutions = selectedSolutions as ActivatedSolution[];
-		const responses = await Promise.all(
-			solutions.map((solution) => {
-				return fetchTotal(
-					solution.solution_name,
-					[
-						'flow_conversion_output',
-						'flow_conversion_input',
-						'flow_storage_discharge',
-						'flow_storage_charge',
-						'flow_import',
-						'flow_export',
-						'flow_transport',
-						'flow_transport_loss',
-						'shed_demand',
-						'demand'
-					],
-					solution.scenario_name,
-					selectedCarrier!,
-					'demand'
-				);
-			})
-		);
+		let unitResponse;
 
-		data = responses.map((response) => {
-			return variables.flatMap((variable) => {
-				return [response[variable.positive]?.data || [], response[variable.negative]?.data || []];
-			});
-		});
-
-		if (responses.length > 0 && responses[0].unit?.data) {
-			units = responses[0].unit.data;
-		}
+		[unitResponse, ...data] = await Promise.all([
+			fetchUnit(solutions[0].solution_name, 'demand'),
+			...solutions.map((solution) => fetchProductionData(solution, selectedCarrier!))
+		]);
+		units = unitResponse.data;
 
 		fetching = false;
 	}
 
 	// Process plot data
-	function process_data(
+	function processData(
 		initialEntries: Entries,
-		variable: Variable,
+		showSubdivision: boolean,
+		filterByTechnologies: boolean,
 		label: string,
 		suffix: string | undefined,
 		map_fn?: (d: number) => number
 	): Entries {
 		if (!selectedCarrier) {
-			return Entries.empty();
+			return Entries.empty;
 		}
 
 		const filterCriteria: FilterCriteria = {
 			carrier: [selectedCarrier],
 			node: selectedNodes
 		};
-		if (variable.filter_by_technologies) {
+		if (filterByTechnologies) {
 			filterCriteria['technology'] = selectedTechnologies;
 		}
-		const groupByColumns = variable.subdivision ? ['technology'] : [];
+		const groupByColumns = showSubdivision ? ['technology'] : [];
 
 		let entries = initialEntries
 			.filterByCriteria(filterCriteria)
@@ -578,7 +487,7 @@
 			.groupBy(groupByColumns)
 			.mapIndex((index) => ({
 				...index,
-				label: variable.subdivision ? index.technology + (suffix || '') : label
+				label: showSubdivision ? index.technology + (suffix || '') : label
 			}));
 
 		if (map_fn !== undefined) {
@@ -598,70 +507,56 @@
 		const patterns: ColorBoxItem[] = [];
 		let datasets: ChartDataset<'bar'>[] = selectedSolutions.flatMap((solution, i) => {
 			const rows = data[i];
-			if (!solution || !rows.length) {
+			if (!solution || !Object.keys(rows).length) {
 				return [];
 			}
 
-			let entriesList: Entries[] = variables.flatMap((variable, j) => {
-				if (!variable.show) {
+			// Process data for each variable and concatenate the resulting entries.
+			let entriesList: Entries[] = typedEntries(variables).flatMap(([id, variable]) => {
+				if (!selectedShowVariable[id]) {
 					return [];
 				}
 
-				let positiveData = Entries.fromRows(rows[2 * j]);
-				let negativeData = Entries.fromRows(rows[2 * j + 1]);
-				if (variable.id === 'transport') {
-					const transport = positiveData;
-					const transportLoss = negativeData;
+				let positiveData = rows[variable.positive];
+				let negativeData = rows[variable.negative];
 
-					const transportInLoss = transportLoss.filterByCriteria({
-						technology: selectedTransportTechnologies,
-						edge: getTransportEdges(solution.detail.edges, selectedNodes, true)
-					});
-					// transport in
-					positiveData = transport
-						.filterByCriteria({
-							technology: selectedTransportTechnologies,
-							edge: getTransportEdges(solution.detail.edges, selectedNodes, true)
-						})
-						.mapEntries((index, data) => {
-							const lossData = transportInLoss.find(
-								(entry) =>
-									entry.index.technology === index.technology && entry.index.edge === index.edge
-							)?.data;
-							if (!lossData || lossData.length !== data.length) return { index, data };
-							const newData = data.map((n, i) => n - lossData[i]);
-							return { data: newData, index };
-						});
-					// transport out
-					negativeData = transport.filterByCriteria({
-						technology: selectedTransportTechnologies,
-						edge: getTransportEdges(solution.detail.edges, selectedNodes, false)
-					});
+				// Handle transport data
+				if (id === 'transport') {
+					[positiveData, negativeData] = computeTransportData(
+						positiveData,
+						negativeData,
+						solution.detail.edges,
+						selectedTransportTechnologies,
+						selectedNodes
+					);
 				}
 
-				let filteredPos: Entries = process_data(
+				let filteredPos: Entries = processData(
 					positiveData,
-					variable,
-					variable.positive_label,
-					variable.positive_suffix
+					selectedSubdivision[id],
+					variable.filterByTechnologies,
+					variable.positiveLabel,
+					variable.positiveSuffix
 				);
-				let filteredNeg: Entries = process_data(
+				let filteredNeg: Entries = processData(
 					negativeData,
-					variable,
-					variable.negative_label,
-					variable.negative_suffix,
+					selectedSubdivision[id],
+					variable.filterByTechnologies,
+					variable.negativeLabel,
+					variable.negativeSuffix,
 					(d) => -d
 				);
 
 				return [filteredPos, filteredNeg];
 			});
-
 			let entries = Entries.concatenate(entriesList);
 
+			// Normalize if selected
 			if (selectedNormalization) {
 				entries = entries.normalize();
 			}
 
+			// Convert to dataset format
 			let suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
 			let pattern = i > 0 ? nextPattern() : undefined;
 			patterns.push(createColorBoxItem(suffix, pattern));
@@ -715,8 +610,8 @@
 			</FilterSection>
 			{#if selectedCarrier !== null}
 				<FilterSection title="Production Component Selection">
-					{#each variables as variable (variable.id)}
-						{#if !hasDataForVariable(variable)}
+					{#each typedEntries(variables) as [id, variable] (id)}
+						{#if !hasDataForVariable(id)}
 							<FilterLabel label={variable.title}></FilterLabel>
 							<div class="mb-2 text-sm text-gray-500 italic">
 								No data available for {variable.title}.
@@ -725,17 +620,17 @@
 							<div class="grid grid-cols-2">
 								<div>
 									<ToggleButton
-										bind:value={variable.show}
+										bind:value={selectedShowVariable[id]}
 										label={variable.title}
 										disabled={solutionLoading || fetching}
 									></ToggleButton>
 								</div>
-								{#if variable.show && variable.show_subdivision}
+								{#if variable.showSubdivision}
 									<div>
 										<ToggleButton
-											bind:value={variable.subdivision}
+											bind:value={selectedSubdivision[id]}
 											label="with Subdivision"
-											disabled={solutionLoading || fetching}
+											disabled={!selectedShowVariable[id] || solutionLoading || fetching}
 										/>
 									</div>
 								{/if}
@@ -747,21 +642,21 @@
 					<MultiSelect
 						bind:value={selectedConversionTechnologies}
 						options={conversionTechnologies}
-						label="Conversion"
+						label="Conversion Technologies"
 						emptyText="No conversion technologies available."
 						disabled={solutionLoading || fetching}
 					></MultiSelect>
 					<MultiSelect
 						bind:value={selectedStorageTechnologies}
 						options={storageTechnologies}
-						label="Storage"
+						label="Storage Technologies"
 						emptyText="No storage technologies available."
 						disabled={solutionLoading || fetching}
 					></MultiSelect>
 					<MultiSelect
 						bind:value={selectedTransportTechnologies}
 						options={transportTechnologies}
-						label="Transport"
+						label="Transport Technologies"
 						emptyText="No transport technologies available."
 						disabled={solutionLoading || fetching}
 					></MultiSelect>

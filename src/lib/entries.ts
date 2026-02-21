@@ -44,7 +44,7 @@ export default class Entries {
 	}
 
 	static get empty(): Entries {
-		return new Entries([]);	
+		return new Entries([]);
 	}
 
 	/**
@@ -282,6 +282,24 @@ export default class Entries {
 	 */
 	filter(callback: (entry: Entry, index: number, array: Entry[]) => boolean): Entries {
 		return new Entries(this.entries.filter(callback));
+	}
+
+	/**
+	 * Checks if at least one entry satisfies the provided testing function.
+	 * @param callback Function to test each entry.
+	 * @returns True if at least one entry satisfies the testing function, otherwise false.
+	 */
+	some(callback: (entry: Entry) => boolean): boolean {
+		return this.entries.some(callback);
+	}
+
+	/**
+	 * Checks if all entries satisfy the provided testing function.
+	 * @param callback Function to test each entry.
+	 * @returns True if all entries satisfy the testing function, otherwise false.
+	 */
+	every(callback: (entry: Entry) => boolean): boolean {
+		return this.entries.every((entry) => callback(entry));
 	}
 
 	/**
