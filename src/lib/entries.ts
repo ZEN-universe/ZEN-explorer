@@ -95,9 +95,23 @@ export default class Entries {
 	 * @param fieldNames Array of index field names to group by.
 	 * @returns New Entries instance with grouped and aggregated entries.
 	 */
-	groupBy(fieldNames: string[]): Entries {
+	groupBy(fieldNames: string[], aggregationTechnique: 'sum' | 'max' = 'sum'): Entries {
 		const aggregatedMap: Record<string, number[]> = {};
 		const labelMap: Record<string, Index> = {};
+
+		let aggregateFn: (label: string, value: number, idx: number) => void;
+		switch (aggregationTechnique) {
+			case 'sum':
+				aggregateFn = (label, value, idx) => {
+					aggregatedMap[label][idx] += value;
+				};
+				break;
+			case 'max':
+				aggregateFn = (label, value, idx) => {
+					aggregatedMap[label][idx] = Math.max(aggregatedMap[label][idx], value);
+				};
+				break;
+		}
 
 		this.entries.forEach((entry) => {
 			// Compute label of aggregated entry, initialize it, and compute total for each column
@@ -109,9 +123,7 @@ export default class Entries {
 			if (!aggregatedMap[label]) {
 				aggregatedMap[label] = entry.data.slice();
 			} else {
-				entry.data.forEach((value, i) => {
-					aggregatedMap[label][i] += Number(value);
-				});
+				entry.data.forEach((value, i) => aggregateFn(label, value, i));
 			}
 		});
 

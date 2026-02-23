@@ -3,17 +3,23 @@
 	import { resolve } from '$app/paths';
 	import { addCurrentSolutionToURL } from '$lib/queryParams.svelte';
 	import { getTheme, toggleTheme } from '@/lib/theme.svelte';
+	import type { ResolvedPathname } from '$app/types';
 
-	const transition_urls = {
+	const transition_urls: Record<string, ResolvedPathname> = {
 		Capacity: resolve('/transition/capacity'),
 		Production: resolve('/transition/production'),
 		Emissions: resolve('/transition/emissions'),
 		Costs: resolve('/transition/costs')
 	};
 
-	const energy_balance_urls = {
+	const energy_balance_urls: Record<string, ResolvedPathname> = {
 		Nodal: resolve('/energy_balance/nodal'),
 		Storage: resolve('/energy_balance/storage')
+	};
+
+	const map_urls: Record<string, ResolvedPathname> = {
+		Capacity: resolve('/map/capacity'),
+		Production: resolve('/map/production')
 	};
 
 	let currentPage = $derived(page.url.pathname.slice(0, -1));
@@ -85,13 +91,20 @@
 				>
 			</li>
 			<li>
-				<a
-					class={[
-						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
-						currentPage == '/map' && 'border-b-2 pb-1'
-					]}
-					href={addCurrentSolutionToURL('/map', false)}>The Map</a
-				>
+				<div class="text-sm tracking-wide text-gray-400 uppercase">The Map</div>
+				<ul class="flex gap-4 text-lg font-semibold">
+					{#each Object.entries(map_urls) as [title, url] (title)}
+						<li>
+							<a
+								class={[
+									'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
+									currentPage == url && 'border-b-2 pb-1'
+								]}
+								href={addCurrentSolutionToURL(url, false)}>{title}</a
+							>
+						</li>
+					{/each}
+				</ul>
 			</li>
 		</ul>
 		<div class="flex items-center justify-end gap-2">

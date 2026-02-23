@@ -406,6 +406,13 @@
 		return `M${x1},${y1} L${x2},${y2}`;
 	}
 
+	function formatNumber(d: number) {
+		return d.toLocaleString(undefined, {
+			minimumFractionDigits: 3,
+			maximumFractionDigits: 3
+		});
+	}
+
 	//#region Handle resizing
 	function handleSize() {
 		if (!svg?.parentElement) return;
@@ -533,7 +540,7 @@
 								<span>{d.technology}:</span>
 							</div>
 							<div>
-								{d.value.toFixed(3)}
+								{formatNumber(d.value)}
 								{unit}
 							</div>
 						</div>
@@ -541,7 +548,7 @@
 					{#if activePie.data.length > 1}
 						<div class="mt-1 flex items-center justify-between gap-1 px-2 text-xs font-bold">
 							<div>Total:</div>
-							<div>{activePie.total.toFixed(3)} {unit}</div>
+							<div>{formatNumber(activePie.total)} {unit}</div>
 						</div>
 					{/if}
 				{:else if activeLines.length > 0}
@@ -550,7 +557,7 @@
 							<h5 class="mb-0 text-sm font-bold">{line.label}</h5>
 							{#each line.values as d (d.technology)}
 								<div>
-									{d.technology}: {d.value.toFixed(3)}
+									{d.technology}: {formatNumber(d.value)}
 									{unit}
 								</div>
 							{/each}

@@ -3,7 +3,7 @@ import { page } from '$app/state';
 
 export type URLParams = Record<string, string | null>;
 
-let urlParams: Record<string, string | null> = $state({});
+let urlParams: URLParams = $state({});
 
 function getRawURLParam(key: string): string | null {
 	const state = page.state as Record<string, string>;
@@ -73,6 +73,16 @@ export function addCurrentSolutionToURL(
 	}
 
 	return buildURL(params, url).href;
+}
+
+export function updateURLParam(key: string, value: string | null): void {
+	if (value === null) {
+		delete urlParams[key];
+	} else {
+		urlParams[key] = value;
+	}
+	// eslint-disable-next-line svelte/no-navigation-without-resolve
+	replaceState(buildURL(urlParams), $state.snapshot(urlParams));
 }
 
 export function updateURLParams(params: URLParams): void {

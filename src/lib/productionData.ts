@@ -1,7 +1,6 @@
 import Entries from './entries';
 import { fetchTotal } from './temple';
-import type { ActivatedSolution } from './types';
-import { getTransportEdges } from './utils';
+import type { ActivatedSolution, UnitData } from './types';
 
 export const components = [
 	'flow_conversion_output',
@@ -16,17 +15,17 @@ export const components = [
 	'demand'
 ] as const;
 
-export type Component = (typeof components)[number];
+export type ProductionComponent = (typeof components)[number];
 
 export interface Variable {
 	shortId: string;
 	title: string;
 	showSubdivision: boolean;
 	filterByTechnologies: boolean;
-	positive: Component;
+	positive: ProductionComponent;
 	positiveLabel: string;
 	positiveSuffix?: string;
-	negative: Component;
+	negative: ProductionComponent;
 	negativeLabel: string;
 	negativeSuffix?: string;
 }
@@ -97,58 +96,25 @@ export const variables: Record<VariableId, Variable> = {
 
 export async function fetchProductionData(
 	solution: ActivatedSolution,
-	carrier: string
-): Promise<Record<Component, Entries>> {
+	carrier: string,
+	unitComponent: string
+): Promise<Record<ProductionComponent, Entries> & UnitData> {
 	const response = await fetchTotal(
 		solution.solution_name,
 		[...components],
 		solution.scenario_name,
 		carrier,
-		'demand'
+		unitComponent
 	);
 
-	return Object.values(variables).reduce((acc, variable) => {
-		acc[variable.positive] = Entries.fromRows(response[variable.positive]?.data || []);
-		acc[variable.negative] = Entries.fromRows(response[variable.negative]?.data || []);
-		return acc;
-	}, {} as Record<Component, Entries>);
-}
-
-export function computeTransportData(
-	positiveData: Entries,
-	negativeData: Entries,
-	edges: Record<string, string>,
-	transportTechnologies: string[],
-	nodes: string[]
-): [Entries, Entries] {
-	const outgoingEdges = getTransportEdges(edges, nodes, false);
-	const incomingEdges = getTransportEdges(edges, nodes, true);
-
-	// transport_out are all outgoing flows
-	negativeData = positiveData.filterByCriteria({
-		technology: transportTechnologies,
-		edge: outgoingEdges
-	});
-
-	// transport_in are all incoming flows, calculated as transport gain - transport loss
-	const transportGains = positiveData.filterByCriteria({
-		technology: transportTechnologies,
-		edge: incomingEdges
-	});
-	const transportInLoss = negativeData.filterByCriteria({
-		technology: transportTechnologies,
-		edge: incomingEdges
-	});
-	positiveData = transportGains.mapEntries((index, data) => {
-		// Find loss entry with the same technology and edge
-		const lossData = transportInLoss.find(
-			(entry) => entry.index.technology === index.technology && entry.index.edge === index.edge
-		)?.data;
-		// If no corresponding loss data is found, return the original gain data
-		if (!lossData || lossData.length !== data.length) return { index, data };
-		// Subtract loss data from gain data
-		return { data: data.map((n, i) => n - lossData[i]), index };
-	});
-
-	return [positiveData, negativeData];
+	const ans = Object.values(variables).reduce(
+		(acc, variable) => {
+			acc[variable.positive] = Entries.fromRows(response[variable.positive]?.data || []);
+			acc[variable.negative] = Entries.fromRows(response[variable.negative]?.data || []);
+			return acc;
+		},
+		{} as Record<ProductionComponent, Entries> & UnitData
+	);
+	ans['unit'] = response.unit;
+	return ans;
 }

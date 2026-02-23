@@ -25,7 +25,6 @@
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 
-	import { fetchUnit } from '$lib/temple';
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
@@ -44,16 +43,15 @@
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import Entries, { type FilterCriteria } from '$lib/entries';
 	import {
-		computeTransportData,
 		fetchProductionData,
 		variables,
-		type Component,
+		type ProductionComponent,
 		type VariableId
 	} from '$lib/productionData';
-	import { typedEntries, typedKeys } from '@/lib/utils';
+	import { getTransportEdges, typedEntries, typedKeys } from '@/lib/utils';
 
 	// Data
-	let data: Record<Component, Entries>[] = $state([]);
+	let data: Record<ProductionComponent, Entries>[] = $state([]);
 	let years: number[] = $state([]);
 	let nodes: string[] = $state([]);
 
@@ -447,14 +445,15 @@
 
 		fetching = true;
 
-		const solutions = selectedSolutions as ActivatedSolution[];
-		let unitResponse;
-
-		[unitResponse, ...data] = await Promise.all([
-			fetchUnit(solutions[0].solution_name, 'demand'),
-			...solutions.map((solution) => fetchProductionData(solution, selectedCarrier!))
-		]);
-		units = unitResponse.data;
+		const response = await Promise.all(
+			selectedSolutions.map((solution) =>
+				fetchProductionData(solution!, selectedCarrier!, 'demand')
+			)
+		);
+		// Remove UnitData from the response
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		data = response.map(({ unit, ...res }) => res as Record<ProductionComponent, Entries>);
+		units = response[0].unit?.data || [];
 
 		fetching = false;
 	}
@@ -465,8 +464,8 @@
 		showSubdivision: boolean,
 		filterByTechnologies: boolean,
 		label: string,
-		suffix: string | undefined,
-		map_fn?: (d: number) => number
+		suffix: string = '',
+		map_fn: (d: number) => number = (d) => d
 	): Entries {
 		if (!selectedCarrier) {
 			return Entries.empty;
@@ -487,7 +486,7 @@
 			.groupBy(groupByColumns)
 			.mapIndex((index) => ({
 				...index,
-				label: showSubdivision ? index.technology + (suffix || '') : label
+				label: showSubdivision ? index.technology + suffix : label
 			}));
 
 		if (map_fn !== undefined) {
@@ -495,6 +494,43 @@
 		}
 
 		return entries;
+	}
+
+	function computeTransportData(
+		positiveData: Entries,
+		negativeData: Entries,
+		edges: Record<string, string>
+	): [Entries, Entries] {
+		const outgoingEdges = getTransportEdges(edges, selectedNodes, false);
+		const incomingEdges = getTransportEdges(edges, selectedNodes, true);
+		const transportGains = positiveData.filterByCriteria({
+			technology: selectedTransportTechnologies,
+			edge: incomingEdges
+		});
+		const transportLosses = negativeData.filterByCriteria({
+			technology: selectedTransportTechnologies,
+			edge: incomingEdges
+		});
+
+		// transport_out are all outgoing flows
+		negativeData = positiveData.filterByCriteria({
+			technology: selectedTransportTechnologies,
+			edge: outgoingEdges
+		});
+
+		// transport_in are all incoming flows, calculated as transport gain - transport loss
+		positiveData = transportGains.mapEntries((index, data) => {
+			// Find loss entry with the same technology and edge
+			const lossData = transportLosses.find(
+				(entry) => entry.index.technology === index.technology && entry.index.edge === index.edge
+			)?.data;
+			// If no corresponding loss data is found, return the original gain data
+			if (!lossData || lossData.length !== data.length) return { index, data };
+			// Subtract loss data from gain data
+			return { data: data.map((n, i) => n - lossData[i]), index };
+		});
+
+		return [positiveData, negativeData];
 	}
 
 	let [datasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() => {
@@ -525,9 +561,7 @@
 					[positiveData, negativeData] = computeTransportData(
 						positiveData,
 						negativeData,
-						solution.detail.edges,
-						selectedTransportTechnologies,
-						selectedNodes
+						solution.detail.edges
 					);
 				}
 
