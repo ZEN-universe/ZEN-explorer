@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
-	import type { Snippet } from 'svelte';
+	import { getURLParam, updateURLParam } from '@/lib/queryParams.svelte';
+	import { onMount, tick, type Snippet } from 'svelte';
 
 	interface Props {
 		options: ({ value: string; label: string } | string)[];
@@ -8,6 +9,7 @@
 		label: string;
 		helpText?: Snippet;
 		disabled?: boolean;
+		urlParam?: string;
 		onUpdate?: (newValue: string) => void;
 	}
 
@@ -17,6 +19,7 @@
 		label,
 		helpText,
 		disabled = false,
+		urlParam,
 		onUpdate = () => {}
 	}: Props = $props();
 
@@ -33,6 +36,19 @@
 	function updateSelection() {
 		onUpdate(value);
 	}
+
+	// Initialize value from URL param on mount
+	onMount(() => {
+		if (urlParam === undefined) return;
+		value = getURLParam(urlParam) ?? value;
+	});
+
+	// Update URL param when value changes
+	$effect(() => {
+		if (urlParam === undefined) return;
+		value;
+		tick().then(() => updateURLParam(urlParam, value));
+	});
 </script>
 
 <FilterLabel {label} {helpText}></FilterLabel>

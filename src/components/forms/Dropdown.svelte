@@ -53,14 +53,14 @@
 	onMount(() => {
 		if (urlParam === undefined) return;
 		value = getURLParam(urlParam) ?? value;
-	})
+	});
 
 	// Update URL param when value changes
 	$effect(() => {
 		if (urlParam === undefined) return;
 		value;
-		tick().then(() => updateURLParam(urlParam, value))
-	})
+		tick().then(() => updateURLParam(urlParam, value));
+	});
 </script>
 
 <FilterLabel {label} {formId} {helpText}></FilterLabel>

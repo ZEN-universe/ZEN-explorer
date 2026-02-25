@@ -3,7 +3,7 @@
 	import { scaleOrdinal } from 'd3-scale';
 	import { pointer, select } from 'd3-selection';
 	import { pie as d3pie, arc as d3arc } from 'd3-shape';
-	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3-zoom';
+	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior } from 'd3-zoom';
 	import { onDestroy } from 'svelte';
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
@@ -39,7 +39,7 @@
 		id?: string;
 		pieData: MapPlotData;
 		lineData?: MapPlotData;
-		nodeCoords?: { [node: string]: [number, number] };
+		systemCoords?: Record<string, { lon: number; lat: number }>;
 		unit: string;
 		map: string | null;
 		minTotal: number;
@@ -51,7 +51,7 @@
 		id = 'map',
 		pieData,
 		lineData = {},
-		nodeCoords = {},
+		systemCoords = {},
 		unit,
 		map,
 		minTotal,
@@ -75,6 +75,13 @@
 	let zoomScale = $state(1);
 	let zoomX = $state(0);
 	let zoomY = $state(0);
+
+	let nodeCoords: Record<string, [number, number]> = $derived(
+		Object.entries(systemCoords).reduce(
+			(acc, [node, { lat, lon }]) => ({ ...acc, [node]: [lon, lat] }),
+			{}
+		)
+	);
 
 	let initialProjection = $derived.by(() => {
 		const usedNodes = new Set(
@@ -139,6 +146,7 @@
 	const computeColor = scaleOrdinal(allColors());
 	const computePie = d3pie()
 		.sort(null)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		.value((d: any) => d);
 
 	let land: string | null = $derived.by(() => {
@@ -169,13 +177,14 @@
 	});
 
 	// Zoom
-	let zoom = d3zoom().filter(shouldHandleZoom).on('zoom', onZoom);
+	let zoom = d3zoom().filter(shouldHandleZoom).on('zoom', onZoom) as unknown as ZoomBehavior<
+		SVGSVGElement,
+		unknown
+	>;
 
 	function initZoom() {
 		if (!svg) return;
-		select(svg)
-			.call(zoom as any)
-			.call(zoom.transform as any, zoomIdentity);
+		select(svg).call(zoom).call(zoom.transform, zoomIdentity);
 	}
 
 	function shouldHandleZoom(event: MouseEvent | WheelEvent) {
@@ -236,7 +245,7 @@
 		const translateY = (zoomY - y) * scale + height / 2;
 
 		// Apply the zoom transformation
-		const selection = select(svg as Element);
+		const selection = select(svg as SVGSVGElement);
 		zoom.transform(
 			selection,
 			zoomIdentity.translate(translateX, translateY).scale(zoomScale * scale)
@@ -252,7 +261,7 @@
 		zoomScale = 1;
 		zoomX = 0;
 		zoomY = 0;
-		select(svg).call(zoom.transform as any, zoomIdentity);
+		select(svg).call(zoom.transform, zoomIdentity);
 	}
 
 	// Data dependent values
@@ -288,6 +297,7 @@
 				y: y,
 				label: node,
 				total: total,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				data: computePie(values.map((d) => d.value)).map((p: any, i: number) => {
 					return {
 						color: computeColor(values[i].technology),

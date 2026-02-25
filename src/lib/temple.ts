@@ -220,9 +220,7 @@ export async function fetchEnergyBalance(
 	const ans: Partial<EnergyBalanceDataframes> = {};
 	for (const component of components) {
 		if (data[component] !== undefined) {
-			ans[component] = parseTimeseriesData(
-				data[component]
-			);
+			ans[component] = parseTimeseriesData(data[component]);
 		}
 	}
 

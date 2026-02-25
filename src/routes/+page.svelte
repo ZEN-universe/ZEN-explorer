@@ -199,21 +199,39 @@
 			</div>
 
 			<!-- Map -->
-			<div
-				role="region"
-				class="group relative grid min-h-60 place-content-center overflow-hidden border border-gray-400 bg-[#ae995e] p-4 md:rounded-br-lg dark:border-gray-800"
+			<section
+				aria-label="The Map"
+				class="grid min-h-60 overflow-hidden border border-gray-400 bg-[#ae995e] md:rounded-br-lg lg:grid-cols-4 dark:border-gray-800"
 				onmouseenter={() => showPopup('map')}
 				onmouseleave={hidePopup}
 				onfocusin={() => showPopup('map')}
 				onfocusout={hidePopup}
 			>
-				<h2 class="text-3xl font-extrabold text-white" bind:this={mapSection}>The Map</h2>
-				<a
-					class="absolute inset-0 focus:ring-4 focus:ring-white/80 focus:ring-offset-2 focus:outline-none dark:focus:ring-gray-700/80"
-					href={resolve('/map')}
-					aria-label="The Map"
-				></a>
-			</div>
+				<h2
+					class="my-auto text-center text-3xl font-extrabold tracking-tight text-white lg:col-span-2 lg:col-start-2"
+					bind:this={mapSection}
+				>
+					The Map
+				</h2>
+				<nav
+					aria-label="Map links"
+					class="grid grid-cols-2 bg-white/60 text-xl lg:h-full lg:grid-cols-1 lg:grid-rows-2 dark:bg-gray-800/40"
+				>
+					<div
+						class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50"
+					>
+						<span class="font-medium">Capacity</span>
+						<a class="absolute inset-0" href={resolve('/map/capacity/')} aria-label="Capacity"></a>
+					</div>
+					<div
+						class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50"
+					>
+						<span class="font-medium">Production</span>
+						<a class="absolute inset-0" href={resolve('/map/production/')} aria-label="Production"
+						></a>
+					</div>
+				</nav>
+			</section>
 
 			<!-- decorative centered logo for large screens -->
 			<div class="pointer-events-none absolute inset-0 hidden place-content-center lg:grid">

@@ -130,7 +130,8 @@ export interface UnitData {
 	unit: ParseResult<Row> | null;
 }
 
-export type ComponentTotal<T extends string = string> = Record<T, ParseResult<Row> | null> & UnitData;
+export type ComponentTotal<T extends string = string> = Record<T, ParseResult<Row> | null> &
+	UnitData;
 
 export interface ComponentTimeSeries<T extends string = string> {
 	unit: ParseResult<Row> | null;

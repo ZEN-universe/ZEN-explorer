@@ -21,8 +21,8 @@
 		updateSankeyLayout
 	} from '$lib/sankeyDiagram';
 	import { pointer, select } from 'd3-selection';
-	import { zoom as d3zoom, zoomIdentity } from 'd3-zoom';
-	import { drag as d3drag } from 'd3-drag';
+	import { zoom as d3zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
+	import { drag as d3drag, type DragBehavior } from 'd3-drag';
 	import Tooltip from './Tooltip.svelte';
 	import { debounce } from '$lib/debounce';
 	import { sum } from 'd3';
@@ -325,7 +325,7 @@
 		})
 		.on('end', () => {
 			updateActiveNodeRect();
-		});
+		}) as unknown as ZoomBehavior<SVGSVGElement, unknown>;
 
 	/**
 	 * Update the zoom behavior's translate extent when the diagram content changes.
@@ -342,7 +342,7 @@
 	 */
 	onMount(() => {
 		if (!svg) return;
-		select(svg).call(zoomBehavior as any);
+		select(svg).call(zoomBehavior);
 	});
 
 	/**
@@ -350,7 +350,7 @@
 	 */
 	export function resetZoom() {
 		if (!svg) return;
-		select(svg).call(zoomBehavior.transform as any, zoomIdentity);
+		select(svg).call(zoomBehavior.transform, zoomIdentity);
 	}
 
 	/**
@@ -369,7 +369,7 @@
 		const translateY = -(targetNode.y + targetNode.dy / 2) * scale + maxHeight / 2;
 
 		// Apply the zoom transformation
-		const selection = select(svg as Element);
+		const selection = select(svg as SVGSVGElement);
 		zoomBehavior.transform(selection, zoomIdentity.translate(translateX, translateY).scale(scale));
 	}
 
@@ -390,7 +390,7 @@
 			if (isNaN(idx)) return;
 			onDragNode(event, idx);
 			updatePointerPosition(event);
-		});
+		}) as unknown as DragBehavior<SVGRectElement, unknown, unknown>;
 
 	/**
 	 * Apply the drag behavior to the nodes after they are rendered.
@@ -398,9 +398,7 @@
 	$effect(() => {
 		nodes;
 		if (!svg) return;
-		select(svg)
-			.selectAll<SVGRectElement, unknown>('.node')
-			.call(dragBehavior as any);
+		select(svg).selectAll<SVGRectElement, unknown>('.node').call(dragBehavior);
 	});
 
 	/**
@@ -408,6 +406,7 @@
 	 * @param event
 	 * @param idx
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function onDragNode(event: any, idx: number) {
 		if (event.clientY === 0 || idx < 0 || idx >= nodes.length) return;
 		const new_y = nodes[idx].y + event.dy;

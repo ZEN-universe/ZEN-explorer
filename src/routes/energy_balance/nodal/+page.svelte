@@ -205,7 +205,7 @@
 		untrack(() => {
 			if (selectedSolution === null || selectedNode === null) return;
 			else if (!nodes.includes(selectedNode)) {
-				selectedNode = null
+				selectedNode = null;
 			}
 		});
 	});
