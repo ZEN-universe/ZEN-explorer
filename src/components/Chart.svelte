@@ -17,9 +17,8 @@
 		id?: string;
 		type: Type;
 		labels?: string[];
-		// datasets: ChartDataset<Type>[];
 		getDatasets: () => ChartDataset<Type>[];
-		options?: ChartOptions<Type>;
+		getOptions?: () => ChartOptions<Type>;
 		plugins?: Plugin<ChartType>[];
 		pluginOptions?: ChartOptions<ChartType>['plugins'];
 		zoom?: boolean;
@@ -29,6 +28,7 @@
 		patterns?: ColorBoxItem[];
 		boxed?: boolean;
 		generateLabels?: (chart: BaseChart) => LegendItem[];
+		resetLegendState?: (chart: BaseChart) => void;
 		onClickLegend?: (item: LegendItem, chart: BaseChart, activateOnlyOneItem: boolean) => void;
 		onClickBar?: (label: string, datasetIndex: number) => void;
 	}
@@ -37,9 +37,8 @@
 		id = 'chart',
 		type,
 		labels,
-		// datasets,
 		getDatasets,
-		options,
+		getOptions,
 		pluginOptions = {},
 		plugins = [],
 		zoom = false,
@@ -49,6 +48,7 @@
 		patterns = [],
 		boxed = true,
 		generateLabels,
+		resetLegendState,
 		onClickLegend,
 		onClickBar
 	}: Props = $props();
@@ -64,28 +64,24 @@
 				labels: labels,
 				datasets: getDatasets() as ChartDataset[]
 			},
-			options: getOptions(),
+			options: getBaseChartOptions(),
 			plugins: [htmlLegend, ...plugins]
 		});
 
 		$effect(() => {
-			if (chart == undefined || chart.canvas == null) {
-				return;
-			}
-			chart.data = {
-				labels: labels,
-				datasets: getDatasets() as ChartDataset[]
-			};
-			Object.assign(chart.options, getOptions());
+			if (!chart) return;
+			chart.data.labels = labels;
+			chart.data.datasets = getDatasets() as ChartDataset[];
+			Object.assign(chart.options, getBaseChartOptions());
+			resetLegendState?.(chart);
 			chart.update();
 		});
 	};
 
 	export function updateChart() {
-		if (chart == undefined || chart.canvas == null) {
-			return;
-		}
+		if (!chart || !chart.canvas) return;
 		chart.data.datasets = getDatasets() as ChartDataset[];
+		resetLegendState?.(chart);
 		chart.update();
 		updateZoomLevel();
 	}
@@ -94,9 +90,10 @@
 		chart?.destroy();
 	});
 
-	function getOptions(): ChartOptions {
+	function getBaseChartOptions(): ChartOptions {
+		const options = getOptions ? getOptions() : ({} as ChartOptions);
 		const optionsSnapshot = {
-			...$state.snapshot(options as ChartOptions),
+			...options,
 			plugins: {
 				...(options?.plugins ?? {}),
 				...pluginOptions

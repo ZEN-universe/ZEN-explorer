@@ -69,6 +69,24 @@ export function onClickLegendForSolutionComparison(
 	updateDatasetsVisibility(chart);
 }
 
+export function resetLegendStateForSolutionComparison(chart: Chart): void {
+	// Filter hidden datasets to only include those that are still present in the chart
+	for (const datasetLabel of hiddenDatasets) {
+		if (!chart.data.datasets.some((dataset) => dataset.label === datasetLabel)) {
+			hiddenDatasets.delete(datasetLabel);
+		}
+	}
+
+	// Filter hidden patterns to only include those that are still present in the chart
+	for (const patternLabel of hiddenPatterns) {
+		if (!chart.data.datasets.some((dataset) => dataset.stack === patternLabel)) {
+			hiddenPatterns.delete(patternLabel);
+		}
+	}
+
+	updateDatasetsVisibility(chart);
+}
+
 /**
  * Handles the click event on a pattern item for solution comparison charts.
  * @param pattern The pattern item that was clicked.

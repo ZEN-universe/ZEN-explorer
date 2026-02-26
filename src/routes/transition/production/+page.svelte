@@ -28,7 +28,8 @@
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
-		onClickLegendForSolutionComparison
+		onClickLegendForSolutionComparison,
+		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
 	import {
 		getURLParam,
@@ -130,7 +131,7 @@
 
 	let labels: string[] = $derived(selectedYears);
 	let tooltipSuffix = $derived(selectedNormalization ? '' : ` ${unit}`);
-	let plot_options: ChartOptions<'bar'> = $derived.by(() => {
+	function getPlotOptions(): ChartOptions<'bar'> {
 		return {
 			datasets: {
 				bar: {
@@ -178,7 +179,7 @@
 				axis: 'x'
 			}
 		};
-	});
+	}
 
 	const plotPluginOptions: ChartOptions['plugins'] = {
 		tooltip: {
@@ -736,13 +737,14 @@
 		{:else}
 			<Chart
 				type="bar"
-				getDatasets={() => datasets}
 				{labels}
-				options={plot_options}
+				getDatasets={() => datasets}
+				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
 				{patterns}
 				{generateLabels}
+				resetLegendState={resetLegendStateForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
 				{onClickBar}
 				bind:this={chart}

@@ -41,7 +41,7 @@
 		return dataForActiveYear.map((d) => d.label || '');
 	});
 
-	let costsPlotOptions = $derived(getPlotOptions(tooltipSuffix));
+	let getCostsPlotOptions = () => getPlotOptions(tooltipSuffix);
 </script>
 
 {#if year == null || solution == null}
@@ -57,9 +57,9 @@
 		<div class="grid grid-cols-2 items-start gap-4">
 			<Chart
 				type="pie"
-				datasets={costsDatasets}
 				labels={costsLabels}
-				options={costsPlotOptions}
+				getDatasets={() => costsDatasets}
+				getOptions={getCostsPlotOptions}
 				boxed={false}
 			></Chart>
 		</div>

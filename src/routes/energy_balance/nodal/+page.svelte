@@ -99,12 +99,11 @@
 		});
 	});
 
-	let plotOptions: ChartOptions = $derived.by(() => getPlotOptions(`Energy [${unit}]`));
-	let dualsPlotOptions: ChartOptions = $derived.by(() =>
-		getPlotOptions(`Shadow Price [${dualUnit}]`, 5, false)
-	);
+	let getPlotOptions: () => ChartOptions = () => constructPlotOptions(`Energy [${unit}]`);
+	let getDualsPlotOptions: () => ChartOptions = () =>
+		constructPlotOptions(`Shadow Price [${dualUnit}]`, 5, false);
 
-	function getPlotOptions(
+	function constructPlotOptions(
 		yAxisLabel: string,
 		aspectRatio: number = 2,
 		yAxisBeginAtZero: boolean = true
@@ -525,7 +524,7 @@
 				type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
 				{labels}
 				getDatasets={() => datasets}
-				options={plotOptions}
+				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
 				zoom={true}
@@ -546,7 +545,7 @@
 						type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
 						{labels}
 						getDatasets={() => dualsDatasets}
-						options={dualsPlotOptions}
+						getOptions={getDualsPlotOptions}
 						pluginOptions={dualsPlotPluginOptions}
 						plotName={dualsPlotName}
 						zoom={true}

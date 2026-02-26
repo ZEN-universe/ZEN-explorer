@@ -27,7 +27,8 @@
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
-		onClickLegendForSolutionComparison
+		onClickLegendForSolutionComparison,
+		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
@@ -163,48 +164,51 @@
 		}
 		return '';
 	});
-	let plotOptions: ChartOptions = $derived({
-		datasets: {
-			bar: {
-				borderColor: getTheme() === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
-				borderWidth: (e) => {
-					if (
-						!activeYear ||
-						!activeSolution ||
-						e.chart.data.labels?.[e.dataIndex] !== activeYear ||
-						e.chart.data.datasets[e.datasetIndex].stack !== activeSolution
-					) {
-						return 0;
-					}
-					return 7;
-				},
-				borderRadius: 0,
-				borderSkipped: 'middle'
-			}
-		},
-		maintainAspectRatio: false,
-		scales: {
-			x: {
-				stacked: true,
-				title: {
-					display: true,
-					text: 'Year'
+	function getPlotOptions(): ChartOptions {
+		return {
+			datasets: {
+				bar: {
+					borderColor: getTheme() === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+					borderWidth: (e) => {
+						if (
+							!activeYear ||
+							!activeSolution ||
+							e.chart.data.labels?.[e.dataIndex] !== activeYear ||
+							e.chart.data.datasets[e.datasetIndex].stack !== activeSolution
+						) {
+							return 0;
+						}
+						return 7;
+					},
+					borderRadius: 0,
+					borderSkipped: 'middle'
 				}
 			},
-			y: {
-				stacked: true,
-				title: {
-					display: true,
-					text: `Costs [${unit}]`
+			maintainAspectRatio: false,
+			scales: {
+				x: {
+					stacked: true,
+					title: {
+						display: true,
+						text: 'Year'
+					}
+				},
+				y: {
+					stacked: true,
+					title: {
+						display: true,
+						text: `Costs [${unit}]`
+					}
 				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x'
 			}
-		},
-		interaction: {
-			intersect: false,
-			mode: 'nearest',
-			axis: 'x'
-		}
-	});
+		};
+	}
+
 	let plotPluginOptions: ChartOptions['plugins'] = {
 		tooltip: {
 			callbacks: {
@@ -777,11 +781,12 @@
 				type="bar"
 				{labels}
 				getDatasets={() => datasets}
-				options={plotOptions}
+				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
 				{patterns}
 				generateLabels={generateLabelsForSolutionComparison}
+				resetLegendState={resetLegendStateForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
 				{onClickBar}
 				bind:this={chart}

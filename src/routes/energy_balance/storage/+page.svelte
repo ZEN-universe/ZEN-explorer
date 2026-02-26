@@ -65,8 +65,8 @@
 		].join('_');
 	});
 	let plotNameFlows: string = $derived(plotName + '_flows');
-	let plotOptions: ChartOptions = $derived(getPlotOptions('Storage Level'));
-	let plotOptionsFlows: ChartOptions = $derived(getPlotOptions('Storage Flow'));
+	let getPlotOptions: () => ChartOptions = () => constructPlotOptions('Storage Level');
+	let getPlotOptionsFlows: () => ChartOptions = () => constructPlotOptions('Storage Flow');
 
 	// Zoom level for both plots
 	let zoomLevel: [number, number] | null = $state(null);
@@ -87,7 +87,7 @@
 		});
 	});
 
-	function getPlotOptions(label: string): ChartOptions {
+	function constructPlotOptions(label: string): ChartOptions {
 		return {
 			animation: false,
 			normalized: true,
@@ -557,7 +557,7 @@
 				type="line"
 				{labels}
 				getDatasets={() => levelDatasets}
-				options={plotOptions}
+				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
 				zoom={true}
@@ -569,7 +569,7 @@
 				type="line"
 				{labels}
 				getDatasets={() => flowDatasets}
-				options={plotOptionsFlows}
+				getOptions={getPlotOptionsFlows}
 				pluginOptions={plotPluginOptions}
 				plotName={plotNameFlows}
 				zoom={true}

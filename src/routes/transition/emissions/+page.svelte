@@ -22,7 +22,8 @@
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
-		onClickLegendForSolutionComparison
+		onClickLegendForSolutionComparison,
+		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
 	import Spinner from '$components/Spinner.svelte';
@@ -84,32 +85,34 @@
 			return Object.values(cumulationUnits)[0] || '';
 		}
 	});
-	let plotOptions: ChartOptions = $derived({
-		maintainAspectRatio: false,
-		scales: {
-			x: {
-				stacked: true,
-				title: {
-					display: true,
-					text: 'Year'
+	function getPlotOptions(): ChartOptions {
+		return {
+			maintainAspectRatio: false,
+			scales: {
+				x: {
+					stacked: true,
+					title: {
+						display: true,
+						text: 'Year'
+					}
+				},
+				y: {
+					stacked: true,
+					title: {
+						display: true,
+						text: `Emissions` + (isNormalized ? '' : ` [${unit}]`)
+					},
+					max: isNormalized ? 1 : undefined,
+					suggestedMin: isNormalized ? -1 : undefined
 				}
 			},
-			y: {
-				stacked: true,
-				title: {
-					display: true,
-					text: `Emissions` + (isNormalized ? '' : ` [${unit}]`)
-				},
-				max: isNormalized ? 1 : undefined,
-				suggestedMin: isNormalized ? -1 : undefined
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x'
 			}
-		},
-		interaction: {
-			intersect: false,
-			mode: 'nearest',
-			axis: 'x'
-		}
-	});
+		};
+	}
 
 	const plotPluginOptions: ChartOptions['plugins'] = {
 		tooltip: {
@@ -534,11 +537,12 @@
 				type="bar"
 				labels={selectedYears.map((year) => year.toString())}
 				getDatasets={() => datasets}
-				options={plotOptions}
+				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
 				{patterns}
 				generateLabels={generateLabelsForSolutionComparison}
+				resetLegendState={resetLegendStateForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
 				bind:this={chart}
 			></Chart>

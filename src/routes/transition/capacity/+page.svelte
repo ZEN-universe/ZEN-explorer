@@ -18,7 +18,8 @@
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
-		onClickLegendForSolutionComparison
+		onClickLegendForSolutionComparison,
+		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
@@ -38,25 +39,29 @@
 
 	let data: Row[][] = $state([]);
 
-	const variables: string[] = ['capacity', 'capacity_addition'];
-	const variable_labels: { [key: string]: string } = {
+	type Variable = 'capacity' | 'capacity_addition';
+	const variables: Variable[] = ['capacity', 'capacity_addition'];
+	const variable_labels: Record<Variable, string> = {
 		capacity: 'Capacity',
 		capacity_addition: 'Capacity Addition'
 	};
-	const technologyTypes: string[] = ['conversion', 'storage', 'transport'];
-	const storageTypeOptions = ['energy', 'power'];
-	const aggregationOptions = [
+	type TechnologyType = 'conversion' | 'storage' | 'transport';
+	const technologyTypes: TechnologyType[] = ['conversion', 'storage', 'transport'];
+	type StorageType = 'energy' | 'power';
+	const storageTypeOptions: StorageType[] = ['energy', 'power'];
+	type AggregationOption = 'node' | 'technology';
+	const aggregationOptions: { label: string; value: AggregationOption }[] = [
 		{ label: 'Node', value: 'node' },
 		{ label: 'Technology', value: 'technology' }
 	];
 	let years: number[] = $state([]);
 
 	let selectedSolutions: (ActivatedSolution | null)[] = $state([null]);
-	let selectedVariable: string | null = $state('capacity');
-	let selectedTechnologyType: string | null = $state('conversion');
-	let selectedStorageType = $state('energy');
+	let selectedVariable: Variable = $state('capacity');
+	let selectedTechnologyType: TechnologyType = $state('conversion');
+	let selectedStorageType: StorageType = $state('energy');
 	let selectedCarrier: string | null = $state(null);
-	let selectedAggregation = $state('technology');
+	let selectedAggregation: AggregationOption = $state('technology');
 	let selectedNormalization: boolean = $state(false);
 	let selectedLocations: string[] = $state([]);
 	let selectedTechnologies: string[] = $state([]);
@@ -81,32 +86,35 @@
 	//#region Plot config
 
 	let labels: string[] = $derived(selectedYears.map((year) => year.toString()));
-	let plotOptions: ChartOptions<'bar'> = $derived({
-		maintainAspectRatio: false,
-		scales: {
-			x: {
-				stacked: true,
-				title: {
-					display: true,
-					text: 'Year'
+	function getPlotOptions(): ChartOptions<'bar'> {
+		return {
+			maintainAspectRatio: false,
+			scales: {
+				x: {
+					stacked: true,
+					title: {
+						display: true,
+						text: 'Year'
+					}
+				},
+				y: {
+					stacked: true,
+					title: {
+						display: true,
+						text:
+							`${variable_labels[selectedVariable]}` + (selectedNormalization ? '' : ` [${unit}]`)
+					},
+					min: selectedNormalization ? 0 : undefined,
+					max: selectedNormalization ? 1 : undefined
 				}
 			},
-			y: {
-				stacked: true,
-				title: {
-					display: true,
-					text: `${variable_labels[selectedVariable]}` + (selectedNormalization ? '' : ` [${unit}]`)
-				},
-				min: selectedNormalization ? 0 : undefined,
-				max: selectedNormalization ? 1 : undefined
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x'
 			}
-		},
-		interaction: {
-			intersect: false,
-			mode: 'nearest',
-			axis: 'x'
-		}
-	});
+		};
+	}
 
 	const plotPluginOptions: ChartOptions['plugins'] = {
 		tooltip: {
@@ -236,9 +244,9 @@
 
 	// Store parts of the selected variables in the URL
 	onMount(() => {
-		selectedVariable = getURLParam('var') || selectedVariable;
-		selectedTechnologyType = getURLParam('tech') || selectedTechnologyType;
-		selectedStorageType = getURLParam('stor') || selectedStorageType;
+		selectedVariable = (getURLParam('var') as Variable) || selectedVariable;
+		selectedTechnologyType = (getURLParam('tech') as TechnologyType) || selectedTechnologyType;
+		selectedStorageType = (getURLParam('stor') as StorageType) || selectedStorageType;
 		selectedCarrier = getURLParam('car') || selectedCarrier;
 		fetchData();
 	});
@@ -555,13 +563,14 @@
 		{:else}
 			<Chart
 				type="bar"
-				getDatasets={() => datasets}
 				{labels}
-				options={plotOptions}
+				getDatasets={() => datasets}
+				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
 				{patterns}
 				generateLabels={generateLabelsForSolutionComparison}
+				resetLegendState={resetLegendStateForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
 				bind:this={chart}
 			></Chart>

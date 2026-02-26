@@ -6,7 +6,7 @@
 		getPlotOptions,
 		hasMultipleSolutions as hasMultipleSolutionsFn
 	} from '@/lib/piePlots';
-	import type { ChartDataset, ChartOptions } from 'chart.js';
+	import type { ChartDataset } from 'chart.js';
 
 	interface Props {
 		datasets: ChartDataset<'bar'>[];
@@ -53,13 +53,13 @@
 		filterDatasets((value) => value > 1.0e-6, 'Production')
 	) as unknown as ChartDataset<'pie'>[];
 	let productionLabels = $derived(filterLabels((value) => value > 1.0e-6));
-	let productionOptions = $derived(getPlotOptions(tooltipSuffix));
+	let getProductionOptions = () => getPlotOptions(tooltipSuffix);
 
 	let consumptionDatasets = $derived(
 		filterDatasets((value) => value < -1.0e-6, 'Consumption')
 	) as unknown as ChartDataset<'pie'>[];
 	let consumptionLabels = $derived(filterLabels((value) => value < -1.0e-6));
-	let consumptionOptions = $derived(getPlotOptions(tooltipSuffix));
+	let getConsumptionOptions = () => getPlotOptions(tooltipSuffix);
 </script>
 
 {#if year == null || solution == null}
@@ -78,8 +78,8 @@
 			<Chart
 				type="pie"
 				getDatasets={() => productionDatasets}
+				getOptions={getProductionOptions}
 				labels={productionLabels}
-				options={productionOptions as ChartOptions}
 				boxed={false}
 			></Chart>
 		</ContentBox>
@@ -91,8 +91,8 @@
 			<Chart
 				type="pie"
 				getDatasets={() => consumptionDatasets}
+				getOptions={getConsumptionOptions}
 				labels={consumptionLabels}
-				options={consumptionOptions as ChartOptions}
 				boxed={false}
 			></Chart>
 		</ContentBox>
