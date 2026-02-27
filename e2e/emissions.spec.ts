@@ -1,8 +1,10 @@
 import { test } from '@playwright/test';
 import { expectScreenshot, selectFromMultiSelect, selectSolution } from './helper';
 
+const PAGE_URL = '/transition/emissions';
+
 test('emissions: subdivision off annual', async ({ page }) => {
-	await page.goto('/transition/emissions');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await page.getByRole('switch', { name: 'Subdivision on' }).uncheck();
 	await page.getByRole('radio', { name: 'Annual' }).check();
@@ -10,7 +12,7 @@ test('emissions: subdivision off annual', async ({ page }) => {
 });
 
 test('emissions: subdivision off cumulative', async ({ page }) => {
-	await page.goto('/transition/emissions');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await page.getByRole('switch', { name: 'Subdivision on' }).uncheck();
 	await page.getByRole('radio', { name: 'Cumulative' }).check();
@@ -18,7 +20,7 @@ test('emissions: subdivision off cumulative', async ({ page }) => {
 });
 
 test('emissions: aggregation location', async ({ page }) => {
-	await page.goto('/transition/emissions');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await page.getByRole('radio', { name: 'Location' }).check();
 	await expectScreenshot(
@@ -29,7 +31,7 @@ test('emissions: aggregation location', async ({ page }) => {
 });
 
 test('emissions: aggregation technology and carrier', async ({ page }) => {
-	await page.goto('/transition/emissions');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await page.getByRole('radio', { name: 'Technology & Carrier' }).check();
 	await expectScreenshot(
@@ -40,21 +42,21 @@ test('emissions: aggregation technology and carrier', async ({ page }) => {
 });
 
 test('emissions: normalization', async ({ page }) => {
-	await page.goto('/transition/emissions');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await page.getByRole('switch', { name: 'Normalization off' }).check();
 	await expectScreenshot(page, '#chart-container', `eeht_pf/subdivision/normalization-on.png`);
 });
 
 test('emissions: location', async ({ page }) => {
-	await page.goto('/transition/emissions');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromMultiSelect(page, 'Locations', ['DE']);
 	await expectScreenshot(page, '#chart-container', `eeht_pf/subdivision/location-only-DE.png`);
 });
 
 test('emissions: year', async ({ page }) => {
-	await page.goto('/transition/emissions');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromMultiSelect(page, 'Years', ['2024']);
 	await expectScreenshot(page, '#chart-container', `eeht_pf/subdivision/year-only-2024.png`);

@@ -23,6 +23,10 @@ export async function selectFromMultiSelect(
 	await page.getByRole('combobox', { name: dropdownLabel }).locator('.handle').first().click();
 }
 
+export async function selectRadioOption(page: Page, groupLabel: string, optionName: string) {
+	await page.getByRole('radiogroup', { name: groupLabel }).getByRole('radio', { name: optionName, exact: true }).check();
+}
+
 export async function expectScreenshot(page: Page, locator: string, screenshotName: string) {
 	await page.locator('h1').first().hover();
 	await expect(page.locator(locator)).toHaveScreenshot(screenshotName);

@@ -26,6 +26,7 @@
 		unsetIfInvalid = false,
 		onUpdate = () => {}
 	}: Props = $props();
+	const labelId = $props.id();
 
 	let options = $derived.by(() => {
 		return initialOptions.map((option) => {
@@ -62,9 +63,9 @@
 	});
 </script>
 
-<FilterLabel {label} {helpText}></FilterLabel>
+<FilterLabel {labelId} {label} {helpText}></FilterLabel>
 
-<div class="mb-2 flex gap-2" role="radiogroup">
+<div class="mb-2 flex gap-2" role="radiogroup" aria-labelledby={labelId}>
 	{#each options as option (option.value)}
 		<div class="relative">
 			<input
