@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.3 (2026-02-27)
+
+- [Map] Add map production plot.
+- [Map] Refactor data processing logic using Entries component.
+- [TransitionProduction] Refactor data processing.
+- [Production] Fix empty PiePlots.
+- [Nodal, Storage] Let the user select the year and node before any data is loaded.
+- Use getter to pass dataset and options to Chart component.
+- Hold shift to activate a single legend item.
+- Install and apply prettier-plugin-tailwindcss.
+- Temporarily show and hide patterns from legend.
+
 ## 0.9.2 (2026-01-20)
 
 - Remove sketch plot for transition pathway.
