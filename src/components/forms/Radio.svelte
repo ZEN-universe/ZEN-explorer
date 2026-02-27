@@ -10,6 +10,8 @@
 		helpText?: Snippet;
 		disabled?: boolean;
 		urlParam?: string;
+		default?: string;
+		unsetIfInvalid?: boolean;
 		onUpdate?: (newValue: string) => void;
 	}
 
@@ -20,6 +22,8 @@
 		helpText,
 		disabled = false,
 		urlParam,
+		default: defaultValue,
+		unsetIfInvalid = false,
 		onUpdate = () => {}
 	}: Props = $props();
 
@@ -36,6 +40,13 @@
 	function updateSelection() {
 		onUpdate(value);
 	}
+
+	$effect(() => {
+		if (!unsetIfInvalid) return;
+		if (!options.some((option) => option.value === value)) {
+			value = defaultValue ?? (options[0]?.value || '');
+		}
+	});
 
 	// Initialize value from URL param on mount
 	onMount(() => {
