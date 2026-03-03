@@ -1,14 +1,6 @@
 <script lang="ts">
 	import { onMount, tick, untrack } from 'svelte';
 
-	import Entries from '$lib/entries';
-	import { fetchTotal } from '$lib/temple';
-	import type { ActivatedSolution, Row, Entry, SankeyNode, PartialSankeyLink } from '$lib/types';
-	import { getURLParam, getURLParamAsIntArray, updateURLParams } from '$lib/queryParams.svelte';
-	import { nextColor, resetColorState } from '$lib/colors';
-	import { getTransportEdges, toOptions } from '$lib/utils';
-	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
-
 	import MultiSelect from '$components/forms/MultiSelect.svelte';
 	import Dropdown from '$components/forms/Dropdown.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
@@ -19,6 +11,21 @@
 	import Spinner from '$components/Spinner.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+
+	import Entries from '$lib/entries';
+	import { fetchTotal } from '$lib/temple';
+	import type { ActivatedSolution, Row, Entry, SankeyNode, PartialSankeyLink } from '$lib/types';
+	import {
+		getURLParam,
+		getURLParamAsIntArray,
+		updateURLParams,
+		useURLParams
+	} from '$lib/queryParams.svelte';
+	import { nextColor, resetColorState } from '$lib/colors';
+	import { getTransportEdges, toOptions } from '$lib/utils';
+	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
+
+	useURLParams();
 
 	let years: number[] = $state([]);
 	let solutionLoading: boolean = $state(false);

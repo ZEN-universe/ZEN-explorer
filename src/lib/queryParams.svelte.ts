@@ -1,4 +1,4 @@
-import { replaceState } from '$app/navigation';
+import { replaceState, afterNavigate } from '$app/navigation';
 import { page } from '$app/state';
 
 export type URLParams = Record<string, string | null>;
@@ -7,8 +7,7 @@ let urlParams: URLParams = $state({});
 
 function getRawURLParam(key: string): string | null {
 	const state = page.state as Record<string, string>;
-	const urlParams = page.url.searchParams;
-	return state[key] ?? urlParams.get(key);
+	return state[key] ?? urlParams[key];
 }
 
 export function getURLParam(key: string): string | null {
@@ -76,17 +75,28 @@ export function addCurrentSolutionToURL(
 }
 
 export function updateURLParam(key: string, value: string | null): void {
-	if (value === null) {
-		delete urlParams[key];
-	} else {
-		urlParams[key] = value;
-	}
+	urlParams[key] = value;
 	// eslint-disable-next-line svelte/no-navigation-without-resolve
 	replaceState(buildURL(urlParams), $state.snapshot(urlParams));
 }
 
 export function updateURLParams(params: URLParams): void {
-	urlParams = { ...urlParams, ...params };
+	for (const key in params) {
+		urlParams[key] = params[key];
+	}
 	// eslint-disable-next-line svelte/no-navigation-without-resolve
-	replaceState(buildURL(params), $state.snapshot(urlParams));
+	replaceState(buildURL(urlParams), $state.snapshot(urlParams));
+}
+
+export function useURLParams() {
+	resetURLParams();
+	afterNavigate(() => {
+		// Update the urlParams store when the URL changes
+		console.log('afterNavigate: URL changed, updating urlParams store');
+		resetURLParams();
+	});
+}
+
+function resetURLParams() {
+	urlParams = Object.fromEntries(page.url.searchParams.entries()) as URLParams;
 }

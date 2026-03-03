@@ -11,7 +11,7 @@
 	import { getVariableName } from '$lib/variables';
 	import { nextColor, resetColorState } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes } from '$lib/types';
-	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
+	import { getURLParam, updateURLParams, useURLParams } from '$lib/queryParams.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
@@ -20,6 +20,8 @@
 	import type Entries from '$lib/entries';
 	import ContentBox from '$components/ContentBox.svelte';
 	import HelpTooltip from '$components/HelpTooltip.svelte';
+
+	useURLParams();
 
 	let energyBalanceData: EnergyBalanceDataframes | null = null;
 	let unitData: Record<string, string>[] | null = $state(null);

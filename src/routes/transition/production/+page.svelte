@@ -21,7 +21,6 @@
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 	import FilterLabel from '$components/FilterLabel.svelte';
 	import Spinner from '$components/Spinner.svelte';
-	import PiePlots from './PiePlots.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 
@@ -35,6 +34,7 @@
 		getURLParam,
 		getURLParamAsBoolean,
 		getURLParamAsIntArray,
+		useURLParams,
 		updateURLParams,
 		type URLParams
 	} from '$lib/queryParams.svelte';
@@ -50,6 +50,10 @@
 		type VariableId
 	} from '$lib/productionData';
 	import { getTransportEdges, typedEntries, typedKeys } from '@/lib/utils';
+
+	import PiePlots from './PiePlots.svelte';
+
+	useURLParams();
 
 	// Data
 	let data: Record<ProductionComponent, Entries>[] = $state([]);

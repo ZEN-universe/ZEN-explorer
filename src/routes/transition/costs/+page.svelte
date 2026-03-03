@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import { draw as drawPattern } from 'patternomaly';
 
@@ -9,12 +10,19 @@
 	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import Chart from '$components/Chart.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import ChartButtons from '$components/ChartButtons.svelte';
+	import Spinner from '$components/Spinner.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	import { fetchTotal } from '$lib/temple';
 	import {
 		getURLParamAsBoolean,
 		getURLParamAsIntArray,
 		updateURLParams,
+		useURLParams,
 		type URLParams
 	} from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
@@ -30,15 +38,11 @@
 		onClickLegendForSolutionComparison,
 		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
-	import type { ColorBoxItem } from '$components/ColorBox.svelte';
-	import DiagramPage from '$components/DiagramPage.svelte';
-	import ChartButtons from '$components/ChartButtons.svelte';
-	import Spinner from '$components/Spinner.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
-	import ErrorMessage from '$components/ErrorMessage.svelte';
-	import { SvelteSet } from 'svelte/reactivity';
-	import PiePlot from './PiePlot.svelte';
 	import { getTheme } from '@/lib/theme.svelte';
+
+	import PiePlot from './PiePlot.svelte';
+
+	useURLParams();
 
 	const technologyCarrierLabel = 'Technology / Carrier';
 	const capexSuffix = ' (Capex)';

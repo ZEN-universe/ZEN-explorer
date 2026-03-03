@@ -16,8 +16,11 @@
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
+	import { useURLParams } from '@/lib/queryParams.svelte';
 
 	import { computeLineData, computePieData, type EnergyType } from './processData';
+
+	useURLParams();
 
 	// ======================================
 	// State variables

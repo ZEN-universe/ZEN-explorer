@@ -2,6 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import { draw as drawPattern } from 'patternomaly';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	import MultiSelect from '$components/forms/MultiSelect.svelte';
 	import Radio from '$components/forms/Radio.svelte';
@@ -12,11 +13,19 @@
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
+	import Spinner from '$components/Spinner.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	import { fetchTotal, fetchUnit } from '$lib/temple';
 	import { getVariableName } from '$lib/variables';
 	import type { ActivatedSolution, Row } from '$lib/types';
-	import { getURLParam, getURLParamAsBoolean, updateURLParams } from '$lib/queryParams.svelte';
+	import {
+		getURLParam,
+		getURLParamAsBoolean,
+		updateURLParams,
+		useURLParams
+	} from '$lib/queryParams.svelte';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
 	import Entries, { type FilterCriteria } from '$lib/entries';
 	import {
@@ -26,10 +35,8 @@
 		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
-	import Spinner from '$components/Spinner.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
-	import ErrorMessage from '$components/ErrorMessage.svelte';
-	import { SvelteSet } from 'svelte/reactivity';
+
+	useURLParams();
 
 	let technologyData: Row[][] = $state([]);
 	let carrierData: Row[][] = $state([]);

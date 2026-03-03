@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import { onMount, tick, untrack } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
@@ -10,17 +11,18 @@
 	import FilterSection from '$components/FilterSection.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
-
-	import { fetchFullTs } from '$lib/temple';
-	import { removeDuplicates } from '$lib/utils';
-	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
-	import type { ActivatedSolution } from '$lib/types';
-	import { nextColor, resetColorState } from '$lib/colors';
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
+
+	import { fetchFullTs } from '$lib/temple';
+	import { removeDuplicates } from '$lib/utils';
+	import { getURLParam, updateURLParams, useURLParams } from '$lib/queryParams.svelte';
+	import type { ActivatedSolution } from '$lib/types';
+	import { nextColor, resetColorState } from '$lib/colors';
 	import Entries from '$lib/entries';
-	import { SvelteSet } from 'svelte/reactivity';
+
+	useURLParams();
 
 	// All but one data variable are non-reactive because of their size
 	let levelResponse: Entries | null = null;

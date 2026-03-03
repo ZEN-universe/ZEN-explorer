@@ -24,7 +24,10 @@ export async function selectFromMultiSelect(
 }
 
 export async function selectRadioOption(page: Page, groupLabel: string, optionName: string) {
-	await page.getByRole('radiogroup', { name: groupLabel }).getByRole('radio', { name: optionName, exact: true }).check();
+	await page
+		.getByRole('radiogroup', { name: groupLabel })
+		.getByRole('radio', { name: optionName, exact: true })
+		.check();
 }
 
 export async function expectScreenshot(page: Page, locator: string, screenshotName: string) {

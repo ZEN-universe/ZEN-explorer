@@ -25,9 +25,12 @@
 	import type { ActivatedSolution } from '$lib/types';
 	import { removeDuplicates } from '$lib/utils';
 	import Entries from '@/lib/entries';
+	import { useURLParams } from '@/lib/queryParams.svelte';
 
 	import type { Variable, TechnologyType, StorageType, AggregationOption } from './processData';
 	import { computeDatasets } from './processData';
+
+	useURLParams();
 
 	// ======================================
 	// State variables
@@ -315,7 +318,6 @@
 					disabled={fetching || solutionLoading}
 					urlParam="car"
 					unsetIfInvalid
-					default={carriers.length > 0 ? carriers[0] : null}
 				>
 					{#snippet helpText()}
 						Select the energy carrier for which to view results. Only capacities of technologies

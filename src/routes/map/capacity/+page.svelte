@@ -15,6 +15,8 @@
 	import { availableMaps } from '$lib/constants';
 	import { removeDuplicates } from '$lib/utils';
 	import Entries from '@/lib/entries';
+	import { onValueChange } from '@/lib/onValueChange.svelte';
+	import { useURLParams } from '@/lib/queryParams.svelte';
 
 	import {
 		computePieData,
@@ -22,7 +24,8 @@
 		type TechnologyType,
 		type StorageType
 	} from './processData';
-	import { onValueChange } from '@/lib/onValueChange.svelte';
+
+	useURLParams();
 
 	// ======================================
 	// State variables
