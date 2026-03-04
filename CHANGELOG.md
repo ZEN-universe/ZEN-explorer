@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.4 (2026-03-04)
+
+- Fix keeping old selected solution in URL after navigation.
+
 ## 0.9.3 (2026-02-27)
 
 - [Map] Add map production plot.
