@@ -6,7 +6,9 @@ export async function selectSolution(page: Page, solution: string, subsolution: 
 }
 
 export async function selectFromDropdown(page: Page, dropdownLabel: string, optionName: string) {
-	await page.getByRole('combobox', { name: dropdownLabel }).click();
+	const combobox = page.getByRole('combobox', { name: dropdownLabel, disabled: false });
+	await combobox.click();
+	await expect(combobox).toHaveAttribute('aria-expanded', 'true');
 	await page.getByRole('option', { name: optionName, exact: true }).click();
 }
 

@@ -7,7 +7,7 @@ let urlParams: URLParams = $state({});
 
 function getRawURLParam(key: string): string | null {
 	const state = page.state as Record<string, string>;
-	return state[key] ?? urlParams[key];
+	return state[key] ?? urlParams[key] ?? null;
 }
 
 export function getURLParam(key: string): string | null {
@@ -92,7 +92,6 @@ export function useURLParams() {
 	resetURLParams();
 	afterNavigate(() => {
 		// Update the urlParams store when the URL changes
-		console.log('afterNavigate: URL changed, updating urlParams store');
 		resetURLParams();
 	});
 }
