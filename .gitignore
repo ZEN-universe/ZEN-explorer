@@ -31,3 +31,9 @@ vite.config.ts.timestamp-*
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Generated images
+static/evolution_map_final*
+!static/evolution_map_final.gif
+!static/evolution_map_final_dark.gif
+

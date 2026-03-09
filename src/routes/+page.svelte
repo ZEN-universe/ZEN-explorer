@@ -7,6 +7,7 @@
 	import ContentBox from '$components/ContentBox.svelte';
 	import RRELogo from '$components/RRELogo.svelte';
 	import { animate } from '@/lib/frontPageAnimation.svelte';
+	import { getTheme } from '@/lib/theme.svelte';
 
 	let nav: HTMLElement;
 
@@ -37,6 +38,8 @@
 			researchCollection: 'https://hdl.handle.net/20.500.11850/659862'
 		}
 	];
+
+	let isDarkTheme = $derived(getTheme() === 'dark');
 </script>
 
 {#snippet navButton(href: string, label: string, iconClass: string)}
@@ -120,27 +123,40 @@
 			</h1>
 			<!-- add /?solution=technology_optimism_pessimism.Crystal_Ball&tech=conversion&car=electricity to the URL -->
 			<div class="flex items-center justify-center">
-				<a
-					href={resolve('/explorer/map')}
-					target="_blank"
-					class="mt-8 block flex justify-center dark:hidden"
-				>
-					<img
-						src="/evolution_map_final.gif"
-						alt="Example transition pathway"
-						class="mx-auto w-full py-12 leading-relaxed sm:w-auto"
-					/>
-				</a>
-				<a
-					href={resolve('/explorer/map')}
-					target="_blank"
-					class="mt-8 flex hidden justify-center dark:block"
-				>
-					<img
-						src="/evolution_map_final_dark.gif"
-						alt="Example transition pathway"
-						class="mx-auto w-full py-12 leading-relaxed sm:w-auto"
-					/>
+				<a href={resolve('/explorer/map')} target="_blank" class="mt-8 flex justify-center py-12">
+					{#if !isDarkTheme}
+						<picture>
+							<source
+								type="image/webp"
+								srcset="/evolution_map_final_1344.webp 1344w, /evolution_map_final_1088.webp 1088w, /evolution_map_final_864.webp 864w, /evolution_map_final_672.webp 672w, /evolution_map_final_576.webp 576w"
+								sizes="(min-width: 1536px) 1344px, (min-width: 1280px) 1088px, (min-width: 1024px) 864px, (min-width: 768px) 672px, 576px"
+							/>
+							<img
+								src="/evolution_map_final_1344.gif"
+								srcset="/evolution_map_final_576.gif 576w, /evolution_map_final_672.gif 672w, /evolution_map_final_864.gif 864w, /evolution_map_final_1088.gif 1088w, /evolution_map_final_1344.gif 1344w"
+								sizes="(min-width: 1536px) 1344px, (min-width: 1280px) 1088px, (min-width: 1024px) 864px, (min-width: 768px) 672px, 576px"
+								width="1344"
+								height="644"
+								alt="Example transition pathway"
+							/>
+						</picture>
+					{:else}
+						<picture>
+							<source
+								type="image/webp"
+								srcset="/evolution_map_final_dark_1344.webp 1344w, /evolution_map_final_dark_1088.webp 1088w, /evolution_map_final_dark_864.webp 864w, /evolution_map_final_dark_672.webp 672w, /evolution_map_final_dark_576.webp 576w"
+								sizes="(min-width: 1536px) 1344px, (min-width: 1280px) 1088px, (min-width: 1024px) 864px, (min-width: 768px) 672px, 576px"
+							/>
+							<img
+								src="/evolution_map_final_dark.gif"
+								srcset="/evolution_map_final_dark_576.gif 576w, /evolution_map_final_dark_672.gif 672w, /evolution_map_final_dark_864.gif 864w, /evolution_map_final_dark_1088.gif 1088w, /evolution_map_final_dark_1344.gif 1344w"
+								sizes="(min-width: 1536px) 1344px, (min-width: 1280px) 1088px, (min-width: 1024px) 864px, (min-width: 768px) 672px, 576px"
+								width="1344"
+								height="644"
+								alt="Example transition pathway"
+							/>
+						</picture>
+					{/if}
 				</a>
 			</div>
 
