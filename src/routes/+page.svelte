@@ -224,6 +224,12 @@
 				></a>
 			</ContentBox>
 		</div>
+		<div
+			class="bottom-0 hidden flex-col items-center pt-30 text-2xl text-gray-600 lg:flex dark:text-gray-400"
+		>
+			<div class="font-bold">Scroll Down</div>
+			<i class="bi bi-chevron-down animate-bounce py-4"></i>
+		</div>
 	</div>
 
 	<!-- Build your model -->
@@ -403,7 +409,7 @@
 			noPadding
 		>
 			<div
-				class="flex flex-col items-center gap-8 border-b border-gray-100 px-4 py-8 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
+				class="flex flex-col items-center gap-8 px-4 py-8 md:flex-row md:px-8 lg:gap-16 lg:px-12"
 			>
 				<div class="text-[80px] leading-none sm:text-[130px] lg:text-[200px]">
 					<i class="bi bi-diagram-3-fill"></i>
@@ -417,51 +423,37 @@
 					</p>
 				</div>
 			</div>
-			<div class="w-full px-4 md:px-8 lg:px-12">
-				<div
-					class="my-8 w-full overflow-hidden rounded-xl bg-slate-900 shadow-xl ring-1 ring-slate-800"
-				>
-					<div class="p-6 font-mono text-sm leading-relaxed text-slate-300 md:text-base">
-						<div class="appear flex opacity-0" style="animation-delay: 0.5s;">
-							<span class="mr-3 text-pink-500 select-none">$</span>
-							<span>pip install <span class="text-yellow-300">zen-garden</span></span>
-						</div>
+			<div
+				class="terminal mb-8 rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:text-base mx-4 md:mx-8 lg:mx-12"
+			>
+				<!-- Install zen-garden -->
+				<div class="flex" data-animate-chars>
+					<span class="mr-3 text-pink-500 select-none">$</span>
+					<span>pip install <span class="text-yellow-300">zen-garden</span></span>
+				</div>
+				<div class="text-slate-500">Collecting zen-garden</div>
+				<div class="text-slate-500">...</div>
+				<div class="text-slate-500">Successfully installed zen-garden-2.9.7</div>
 
-						<div class="appear flex opacity-0" style="animation-delay: 1.5s;">
-							<span class="mr-3 text-pink-500 select-none">$</span>
-							<span>zen-garden --dataset=<span class="text-cyan-300">my_model</span></span>
-						</div>
+				<!-- Run zen-garden -->
+				<div class="flex" data-animate-chars>
+					<span class="mr-3 text-pink-500 select-none">$</span>
+					<span>zen-garden --dataset=<span class="text-cyan-300">my_model</span></span>
+				</div>
+				<div class="text-slate-500">Create ConversionTechnology photovoltaics</div>
+				<div class="text-slate-500">Create ConversionTechnology heat_pump</div>
+				<div class="text-slate-500">Create Carrier electricity</div>
+				<div class="text-slate-500">Create Carrier heat</div>
+				<div class="text-slate-500">...</div>
+				<div class="text-slate-500">--- Optimization finished ---</div>
 
-						<div class="appear text-slate-500 opacity-0" style="animation-delay: 2s;">
-							Create ConversionTechnology photovoltaics<br />
-						</div>
-
-						<div class="appear text-slate-500 opacity-0" style="animation-delay: 2.25s;">
-							Create ConversionTechnology heat_pump<br />
-						</div>
-
-						<div class="appear text-slate-500 opacity-0" style="animation-delay: 2.5s;">
-							Create Carrier electricity<br />
-						</div>
-
-						<div class="appear text-slate-500 opacity-0" style="animation-delay: 2.75s;">
-							Create Carrier heat<br />
-						</div>
-
-						<div class="appear text-slate-500 opacity-0" style="animation-delay: 3s;">
-							...<br />
-						</div>
-
-						<div class="appear text-slate-500 opacity-0" style="animation-delay: 4s;">
-							--- Optimization finished --- <br />
-						</div>
-
-						<div class="appear flex opacity-0" style="animation-delay: 4.5s;">
-							<span class="mr-3 text-pink-500 select-none">$</span>
-							<span>zen-visualization</span>
-							<span class="animate-pulse">|</span>
-						</div>
-					</div>
+				<!-- Run visualization -->
+				<div class="flex" data-animate-chars>
+					<span class="mr-3 text-pink-500 select-none">$</span>
+					<span>zen-visualization</span>
+				</div>
+				<div class="text-slate-500">
+					INFO: Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 				</div>
 			</div>
 			<div class="grid gap-4 px-4 py-8 sm:grid-cols-3 md:px-8 lg:px-12">
@@ -661,16 +653,15 @@
 						available online for published results and locally for user results.
 					</p>
 					<div
-						class="my-8 w-full overflow-hidden rounded-xl bg-slate-900 shadow-xl ring-1 ring-slate-800"
+						class="terminal mb-8 rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:text-base"
 					>
-						<div class="p-6 font-mono text-sm leading-relaxed text-slate-300 md:text-base">
-							<div
-								class="flex opacity-0"
-								style="animation: appear 0s linear forwards; animation-delay: 0.5s;"
-							>
-								<span class="mr-3 text-pink-500 select-none">$</span>
-								<span>zen-visualization</span>
-							</div>
+						<!-- Run visualization -->
+						<div class="flex" data-animate-chars>
+							<span class="mr-3 text-pink-500 select-none">$</span>
+							<span>zen-visualization</span>
+						</div>
+						<div class="text-slate-500">
+							INFO: Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 						</div>
 					</div>
 					<p class="mb-12 text-lg">

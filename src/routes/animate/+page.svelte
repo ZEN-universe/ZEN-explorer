@@ -52,6 +52,7 @@
 			noMarginBottom
 		>
 			<h2 class="top-0 mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Case Studies</h2>
+
 			{#each Array(15) as _}
 				<p>
 					Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
@@ -102,6 +103,41 @@
 			noMarginBottom
 		>
 			<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Framework</h2>
+			<div
+				class="terminal rounded-xl bg-slate-900 ring-1 ring-slate-800 mb-8 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl md:text-base"
+			>
+				<!-- Install zen-garden -->
+				<div class="flex" data-animate-chars>
+					<span class="mr-3 text-pink-500 select-none">$</span>
+					<span>pip install <span class="text-yellow-300">zen-garden</span></span>
+				</div>
+				<div class="text-slate-500">Collecting zen-garden</div>
+				<div class="text-slate-500">...</div>
+				<div class="text-slate-500">Successfully installed zen-garden-2.9.7</div>
+
+				<!-- Run zen-garden -->
+				<div class="flex" data-animate-chars>
+					<span class="mr-3 text-pink-500 select-none">$</span>
+					<span>zen-garden --dataset=<span class="text-cyan-300">my_model</span></span>
+				</div>
+				<div class="text-slate-500">
+					Create ConversionTechnology photovoltaics
+				</div>
+				<div class="text-slate-500">Create ConversionTechnology heat_pump</div>
+				<div class="text-slate-500">Create Carrier electricity</div>
+				<div class="text-slate-500">Create Carrier heat</div>
+				<div class="text-slate-500">...</div>
+				<div class="text-slate-500">--- Optimization finished ---</div>
+
+				<!-- Run visualization -->
+				<div class="flex" data-animate-chars>
+					<span class="mr-3 text-pink-500 select-none">$</span>
+					<span>zen-visualization</span>
+				</div>
+				<div class="text-slate-500">
+					INFO: Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
+				</div>
+			</div>
 			{#each Array(11) as _}
 				<p>
 					Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
@@ -153,6 +189,41 @@
 			noMarginBottom
 		>
 			<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Visualization</h2>
+			<div
+				class="terminal rounded-xl bg-slate-900 ring-1 ring-slate-800 mb-8 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl md:text-base"
+			>
+				<!-- Install zen-garden -->
+				<div class="flex" data-animate-chars>
+					<span class="mr-3 text-pink-500 select-none">$</span>
+					<span>pip install <span class="text-yellow-300">zen-garden</span></span>
+				</div>
+				<div class="text-slate-500">Collecting zen-garden</div>
+				<div class="text-slate-500">...</div>
+				<div class="text-slate-500">Successfully installed zen-garden-2.9.7</div>
+
+				<!-- Run zen-garden -->
+				<div class="flex" data-animate-chars>
+					<span class="mr-3 text-pink-500 select-none">$</span>
+					<span>zen-garden --dataset=<span class="text-cyan-300">my_model</span></span>
+				</div>
+				<div class="text-slate-500">
+					Create ConversionTechnology photovoltaics
+				</div>
+				<div class="text-slate-500">Create ConversionTechnology heat_pump</div>
+				<div class="text-slate-500">Create Carrier electricity</div>
+				<div class="text-slate-500">Create Carrier heat</div>
+				<div class="text-slate-500">...</div>
+				<div class="text-slate-500">--- Optimization finished ---</div>
+
+				<!-- Run visualization -->
+				<div class="flex" data-animate-chars>
+					<span class="mr-3 text-pink-500 select-none">$</span>
+					<span>zen-visualization</span>
+				</div>
+				<div class="text-slate-500">
+					INFO: Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
+				</div>
+			</div>
 			{#each Array(9) as _}
 				<p>
 					Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae
