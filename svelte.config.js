@@ -20,7 +20,9 @@ const config = {
 			precompress: false,
 			strict: true
 		}),
-		version: process.env.npm_package_version,
+		version: {
+			name: process.env.npm_package_version
+		},
 		paths: {
 			base: '',
 			relative: false
