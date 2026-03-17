@@ -132,3 +132,17 @@ export function allColors(): string[] {
 	}
 	return flatColors;
 }
+
+/**
+ * Calculates the brightness of a color given in the format "rgb(r, g, b)" or "rgba(r, g, b, a)".
+ * Formula from: https://alienryderflex.com/hsp.html
+ * @param color color string in the format "rgb(r, g, b)" or "rgba(r, g, b, a)"
+ * @returns brightness value between 0 and 255, where 0 is black and 255 is white
+ */
+export function getBrightness(color: string): number {
+	const [r, g, b] = color
+		.replace(/rgba?\((\d+),\s*(\d+),\s*(\d+)/, '$1,$2,$3')
+		.split(',')
+		.map(Number);
+	return Math.sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b);
+}

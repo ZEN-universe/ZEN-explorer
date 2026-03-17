@@ -22,6 +22,7 @@
 		"@tailwindcss/vite": "^4.1.16",
 		"bootstrap-icons": "^1.11.3",
 		"chart.js": "^4.4.8",
+		"chartjs-plugin-datalabels": "^2.2.0",
 		"chartjs-plugin-zoom": "^2.2.0",
 		"d3": "^7.9.0",
 		"papaparse": "^5.5.2",

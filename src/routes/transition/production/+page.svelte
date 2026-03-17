@@ -134,7 +134,7 @@
 	//#region Plot config
 
 	let labels: string[] = $derived(selectedYears);
-	let tooltipSuffix = $derived(selectedNormalization ? '' : ` ${unit}`);
+	let labelSuffix = $derived(selectedNormalization ? '' : ` ${unit}`);
 	function getPlotOptions(): ChartOptions<'bar'> {
 		return {
 			datasets: {
@@ -189,7 +189,7 @@
 		tooltip: {
 			callbacks: {
 				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
-					`${item.dataset.label}: ${item.formattedValue}${tooltipSuffix}`,
+					`${item.dataset.label}: ${item.formattedValue}${labelSuffix}`,
 				title: (items: TooltipItem<keyof ChartTypeRegistry>[]) => {
 					if (items.length > 0) {
 						return `${items[0].label} - ${items[0].dataset.stack}`;
@@ -754,7 +754,7 @@
 				bind:this={chart}
 			></Chart>
 
-			<PiePlots {datasets} {labels} year={activeYear} solution={activeSolution} {tooltipSuffix}
+			<PiePlots {datasets} {labels} year={activeYear} solution={activeSolution} {labelSuffix}
 			></PiePlots>
 		{/if}
 	{/snippet}

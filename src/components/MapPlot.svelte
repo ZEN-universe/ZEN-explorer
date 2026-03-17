@@ -8,11 +8,13 @@
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
-	import { allColors } from '$lib/colors';
+	
 	import Tooltip from './Tooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
-	import { exportAsSVG } from '$lib/export';
 	import Spinner from './Spinner.svelte';
+	
+	import { allColors } from '$lib/colors';
+	import { exportAsSVG } from '$lib/export';
 
 	let topology: Topology | null = $state(null);
 	$effect(() => {

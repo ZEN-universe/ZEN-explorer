@@ -4,6 +4,7 @@
 	import type { Action } from 'svelte/action';
 	import { onDestroy, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
+	import ChartDataLabelsPlugin from 'chartjs-plugin-datalabels';
 
 	import ColorBox, { type ColorBoxItem } from '$components/ColorBox.svelte';
 	import HelpTooltip from './HelpTooltip.svelte';
@@ -22,6 +23,7 @@
 		plugins?: Plugin<ChartType>[];
 		pluginOptions?: ChartOptions<ChartType>['plugins'];
 		zoom?: boolean;
+		dataLabels?: boolean;
 		plotName?: string;
 		initialHeight?: number;
 		zoomLevel?: [number, number] | null;
@@ -42,6 +44,7 @@
 		pluginOptions = {},
 		plugins = [],
 		zoom = false,
+		dataLabels = false,
 		plotName = 'plot_data',
 		initialHeight = 600,
 		zoomLevel = $bindable(null),
@@ -65,7 +68,7 @@
 				datasets: getDatasets() as ChartDataset[]
 			},
 			options: getBaseChartOptions(),
-			plugins: [htmlLegend, ...plugins]
+			plugins: [htmlLegend, ...(dataLabels ? [ChartDataLabelsPlugin] : []), ...plugins]
 		});
 
 		$effect(() => {

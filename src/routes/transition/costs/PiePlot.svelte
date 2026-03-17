@@ -57,6 +57,7 @@
 		<div class="grid grid-cols-2 items-start gap-4">
 			<Chart
 				type="pie"
+				dataLabels
 				labels={costsLabels}
 				getDatasets={() => costsDatasets}
 				getOptions={getCostsPlotOptions}
