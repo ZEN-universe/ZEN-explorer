@@ -8,11 +8,11 @@
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
-	
+
 	import Tooltip from './Tooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
 	import Spinner from './Spinner.svelte';
-	
+
 	import { allColors } from '$lib/colors';
 	import { exportAsSVG } from '$lib/export';
 
@@ -335,29 +335,80 @@
 
 	// Tooltip
 	let cursorPos: [number, number] = $state([0, 0]);
-	let activePie: Pie | undefined = $derived.by(() => {
+	let hoveredPie: Pie | undefined = $derived.by(() => {
 		return findPie(cursorPos);
 	});
-	let activeLines: Line[] = $derived.by(() => {
-		if (activePie) return [];
+	let hoveredLines: Line[] = $derived.by(() => {
+		if (hoveredPie) return [];
 		return filterLines(cursorPos);
 	});
+	let focusedElements: {
+		isPie: boolean;
+		label: string;
+		x: number;
+		y: number;
+		yOffset: number;
+		isOnTop: boolean;
+	}[] = $state([]);
 
 	let tooltipX = $derived.by(() => {
-		if (activePie) return activePie.x;
-		else if (activeLines.length > 0) return 0.5 * (activeLines[0].start[0] + activeLines[0].end[0]);
+		if (hoveredPie) return hoveredPie.x;
+		else if (hoveredLines.length > 0)
+			return 0.5 * (hoveredLines[0].start[0] + hoveredLines[0].end[0]);
 		return 0;
 	});
 	let tooltipY = $derived.by(() => {
-		if (activePie) return activePie.y;
-		else if (activeLines.length > 0) return 0.5 * (activeLines[0].start[1] + activeLines[0].end[1]);
+		if (hoveredPie) return hoveredPie.y;
+		else if (hoveredLines.length > 0)
+			return 0.5 * (hoveredLines[0].start[1] + hoveredLines[0].end[1]);
 		return 0;
 	});
-	let tooltipYOffset = $derived.by(() => (activePie ? computeRadius(activePie.total) : 0));
-	let tooltipOnTop = $derived.by(() => tooltipY - tooltipYOffset > 180);
+	let tooltipYOffset = $derived.by(() => (hoveredPie ? computeRadius(hoveredPie.total) : 0));
+	let tooltipOnTop = $derived.by(() => fitsOnTop(tooltipY, tooltipYOffset));
 
 	function updateActiveElements(event: MouseEvent) {
 		cursorPos = pointer(event);
+	}
+
+	function toggleFocusOnElement(event: MouseEvent) {
+		const pos = pointer(event);
+		const pie = findPie(pos);
+		if (pie) {
+			if (focusedElements.find((el) => el.isPie && el.label === pie.label)) {
+				focusedElements = focusedElements.filter((el) => !el.isPie || el.label !== pie.label);
+			} else {
+				const yOffset = computeRadius(pie.total);
+				focusedElements.push({
+					label: pie.label,
+					isPie: true,
+					x: pie.x,
+					y: pie.y,
+					yOffset,
+					isOnTop: fitsOnTop(pie.y, yOffset)
+				});
+			}
+		} else {
+			const lines = filterLines(pos);
+			if (lines.length === 0) return;
+			const label = lines.map((line) => line.label).join(', ');
+			if (focusedElements.find((el) => !el.isPie && label === el.label)) {
+				focusedElements = focusedElements.filter((el) => el.isPie || el.label !== label);
+			} else {
+				const yCoord = 0.5 * (lines[0].start[1] + lines[0].end[1]);
+				focusedElements.push({
+					label,
+					isPie: false,
+					x: 0.5 * (lines[0].start[0] + lines[0].end[0]),
+					y: yCoord,
+					yOffset: 0,
+					isOnTop: fitsOnTop(yCoord, 0)
+				});
+			}
+		}
+	}
+
+	function fitsOnTop(y: number, offset: number) {
+		return y - offset > 180;
 	}
 
 	function findPie(pos: [number, number]) {
@@ -461,6 +512,54 @@
 
 <svelte:window on:resize={handleSize} />
 
+{#snippet tooltip(
+	x: number,
+	y: number,
+	yOffset: number,
+	isOnTop: boolean,
+	pie: Pie | undefined,
+	lines: Line[],
+	moveable: boolean
+)}
+	<Tooltip {x} {y} {yOffset} {isOnTop} {moveable}>
+		{#if pie}
+			<h5 class="mb-0 px-2 text-sm font-bold">{pie.label}</h5>
+			{#each pie.data as d (d.technology)}
+				<div class="flex items-center justify-between gap-2 px-2 text-xs">
+					<div class="flex items-center">
+						<svg class="me-1" width="12" height="12">
+							<rect width="12" height="12" fill={d.color} />
+						</svg>
+						<span>{d.technology}:</span>
+					</div>
+					<div>
+						{formatNumber(d.value)}
+						{unit}
+					</div>
+				</div>
+			{/each}
+			{#if pie.data.length > 1}
+				<div class="mt-1 flex items-center justify-between gap-1 px-2 text-xs font-bold">
+					<div>Total:</div>
+					<div>{formatNumber(pie.total)} {unit}</div>
+				</div>
+			{/if}
+		{:else if lines.length > 0}
+			{#each lines as line, i (i)}
+				<div class={['px-2 text-xs', i > 0 && 'mt-2 border-t border-gray-500 pt-2']}>
+					<h5 class="mb-0 text-sm font-bold">{line.label}</h5>
+					{#each line.values as d (d.technology)}
+						<div>
+							{d.technology}: {formatNumber(d.value)}
+							{unit}
+						</div>
+					{/each}
+				</div>
+			{/each}
+		{/if}
+	</Tooltip>
+{/snippet}
+
 {#if !topology}
 	<Spinner></Spinner>
 {:else}
@@ -482,6 +581,7 @@
 
 	<ContentBox class="relative resize-y overflow-hidden overflow-y-auto" noPadding>
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<svg
 			{width}
 			{height}
@@ -497,6 +597,7 @@
 				cancelZoomRectangle();
 				cursorPos = [0, 0];
 			}}
+			onclick={toggleFocusOnElement}
 			{id}
 			class="bg-white dark:bg-gray-800"
 		>
@@ -539,44 +640,27 @@
 			{/if}
 		</svg>
 		<!-- Tooltip -->
-		{#if activePie || activeLines.length > 0}
-			<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
-				{#if activePie}
-					<h5 class="mb-0 px-2 text-sm font-bold">{activePie.label}</h5>
-					{#each activePie.data as d (d.technology)}
-						<div class="flex items-center justify-between gap-2 px-2 text-xs">
-							<div class="flex items-center">
-								<svg class="me-1" width="12" height="12">
-									<rect width="12" height="12" fill={d.color} />
-								</svg>
-								<span>{d.technology}:</span>
-							</div>
-							<div>
-								{formatNumber(d.value)}
-								{unit}
-							</div>
-						</div>
-					{/each}
-					{#if activePie.data.length > 1}
-						<div class="mt-1 flex items-center justify-between gap-1 px-2 text-xs font-bold">
-							<div>Total:</div>
-							<div>{formatNumber(activePie.total)} {unit}</div>
-						</div>
-					{/if}
-				{:else if activeLines.length > 0}
-					{#each activeLines as line, i (i)}
-						<div class={['px-2 text-xs', i > 0 && 'mt-2 border-t border-gray-500 pt-2']}>
-							<h5 class="mb-0 text-sm font-bold">{line.label}</h5>
-							{#each line.values as d (d.technology)}
-								<div>
-									{d.technology}: {formatNumber(d.value)}
-									{unit}
-								</div>
-							{/each}
-						</div>
-					{/each}
-				{/if}
-			</Tooltip>
+		{#if hoveredPie || hoveredLines.length > 0}
+			{@render tooltip(
+				tooltipX,
+				tooltipY,
+				tooltipYOffset,
+				tooltipOnTop,
+				hoveredPie,
+				hoveredLines,
+				false
+			)}
 		{/if}
+		{#each focusedElements as el (el.label)}
+			{@render tooltip(
+				el.x,
+				el.y,
+				el.yOffset,
+				el.isOnTop,
+				el.isPie ? pies.find((pie) => pie.label === el.label) : undefined,
+				!el.isPie ? lines.filter((line) => el.label.includes(line.label)) : [],
+				true
+			)}
+		{/each}
 	</ContentBox>
 {/if}
