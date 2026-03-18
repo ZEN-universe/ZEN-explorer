@@ -44,6 +44,21 @@ export function getTransportEdges(
 }
 
 /**
+ * Get edges that are in between the selected nodes, meaning both nodes of the edge are in the selectedNodes list.
+ * @param edges A list of all edges in the system, where each edge is represented as a string in the format "node1,node2".
+ * @param selectedNodes A list of nodes that should be considered for filtering the edges.
+ * @returns An array of edge identifiers that match the specified criteria based on the selected nodes.
+ */
+export function getInboundEdges(edges: Record<string, string>, selectedNodes: string[]): string[] {
+	return Object.entries(edges)
+		.filter(([, csvNodes]) => {
+			const nodes = csvNodes.split(',');
+			return selectedNodes.includes(nodes[0]) && selectedNodes.includes(nodes[1]);
+		})
+		.map(([edgeId]) => edgeId);
+}
+
+/**
  * Iterate over the keys of an object with a type assertion for the keys, allowing for better type inference in the callback function.
  * @param obj The object whose keys are to be iterated over.
  * @returns An array of keys from the object, typed as T.

@@ -49,7 +49,7 @@
 		type ProductionComponent,
 		type VariableId
 	} from '$lib/productionData';
-	import { getTransportEdges, typedEntries, typedKeys } from '@/lib/utils';
+	import { getInboundEdges, getTransportEdges, typedEntries, typedKeys } from '@/lib/utils';
 
 	import PiePlots from './PiePlots.svelte';
 
@@ -502,29 +502,24 @@
 	}
 
 	function computeTransportData(
-		positiveData: Entries,
-		negativeData: Entries,
+		flowTransport: Entries,
+		flowTransportLoss: Entries,
 		edges: Record<string, string>
 	): [Entries, Entries] {
 		const outgoingEdges = getTransportEdges(edges, selectedNodes, false);
 		const incomingEdges = getTransportEdges(edges, selectedNodes, true);
-		const transportGains = positiveData.filterByCriteria({
-			technology: selectedTransportTechnologies,
-			edge: incomingEdges
-		});
-		const transportLosses = negativeData.filterByCriteria({
-			technology: selectedTransportTechnologies,
-			edge: incomingEdges
-		});
-
-		// transport_out are all outgoing flows
-		negativeData = positiveData.filterByCriteria({
-			technology: selectedTransportTechnologies,
-			edge: outgoingEdges
-		});
+		const inboundEdges = getInboundEdges(edges, selectedNodes);
 
 		// transport_in are all incoming flows, calculated as transport gain - transport loss
-		positiveData = transportGains.mapEntries((index, data) => {
+		const transportGains = flowTransport.filterByCriteria({
+			technology: selectedTransportTechnologies,
+			edge: incomingEdges
+		});
+		const transportLosses = flowTransportLoss.filterByCriteria({
+			technology: selectedTransportTechnologies,
+			edge: incomingEdges
+		});
+		const positiveData = transportGains.mapEntries((index, data) => {
 			// Find loss entry with the same technology and edge
 			const lossData = transportLosses.find(
 				(entry) => entry.index.technology === index.technology && entry.index.edge === index.edge
@@ -535,7 +530,19 @@
 			return { data: data.map((n, i) => n - lossData[i]), index };
 		});
 
-		return [positiveData, negativeData];
+		// transport_out are all outgoing flows
+		const negativeData = flowTransport.filterByCriteria({
+			technology: selectedTransportTechnologies,
+			edge: outgoingEdges
+		});
+
+		// compute transport loss within the selected nodes
+		const internalTransportLoss = flowTransportLoss.filterByCriteria({
+			technology: selectedTransportTechnologies,
+			edge: inboundEdges
+		});
+
+		return [positiveData, Entries.concatenate([negativeData, internalTransportLoss])];
 	}
 
 	let [datasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() => {

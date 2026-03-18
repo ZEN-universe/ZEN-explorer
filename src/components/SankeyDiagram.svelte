@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { onDestroy, onMount, untrack } from 'svelte';
+	import { pointer, select } from 'd3-selection';
+	import { zoom as d3zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
+	import { drag as d3drag, type DragBehavior } from 'd3-drag';
+	import { sum } from 'd3';
+
 	import type {
 		SankeyNode,
 		SankeyLink,
@@ -7,7 +12,6 @@
 		RawSankeyNode,
 		RawSankeyLink
 	} from '$lib/types';
-
 	import {
 		CYCLE_CONTROL_POINT_DIST,
 		CYCLE_DIST_FROM_NODE,
@@ -20,15 +24,13 @@
 		updateNodePosition,
 		updateSankeyLayout
 	} from '$lib/sankeyDiagram';
-	import { pointer, select } from 'd3-selection';
-	import { zoom as d3zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
-	import { drag as d3drag, type DragBehavior } from 'd3-drag';
-	import Tooltip from './Tooltip.svelte';
+	import { exportAsSVG } from '$lib/export';
 	import { debounce } from '$lib/debounce';
-	import { sum } from 'd3';
+	import { EPS } from '@/lib/constants';
+
+	import Tooltip from './Tooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
 	import HelpTooltip from './HelpTooltip.svelte';
-	import { exportAsSVG } from '$lib/export';
 
 	let width = $state(936);
 	let height = $state(800);
@@ -96,7 +98,7 @@
 			dy: 0
 		}));
 		fullLinks = partialLinks.flatMap((link) => {
-			if (!showStructureOnly && link.value < 1e-6) {
+			if (!showStructureOnly && link.value < EPS) {
 				return [];
 			}
 			let source = fullNodes.find((n) => n.id === link.source.id && n.label === link.source.label);

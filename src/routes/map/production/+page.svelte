@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ActivatedSolution } from '$lib/types';
-	import { availableMaps } from '$lib/constants';
+	import { AVAILABLE_MAPS } from '$lib/constants';
 	import { removeDuplicates } from '$lib/utils';
 	import { fetchProductionData, type ProductionComponent } from '@/lib/productionData';
 	import Entries from '@/lib/entries';
@@ -158,7 +158,7 @@
 						unsetIfInvalid
 						default={years.length > 0 ? years[0].toString() : null}
 					></Dropdown>
-					<Dropdown bind:value={selectedMap} options={availableMaps} label="Map"></Dropdown>
+					<Dropdown bind:value={selectedMap} options={AVAILABLE_MAPS} label="Map"></Dropdown>
 				</FilterSection>
 			{/if}
 		{/if}

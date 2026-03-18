@@ -12,7 +12,7 @@
 
 	import type { ActivatedSolution, System } from '$lib/types';
 	import { fetchTotal } from '$lib/temple';
-	import { availableMaps } from '$lib/constants';
+	import { AVAILABLE_MAPS } from '$lib/constants';
 	import { removeDuplicates } from '$lib/utils';
 	import Entries from '@/lib/entries';
 	import { onValueChange } from '@/lib/onValueChange.svelte';
@@ -38,7 +38,7 @@
 	let years: number[] = $state([]);
 	const technologyTypes: TechnologyType[] = ['conversion', 'storage'];
 	const storageTypeOptions: StorageType[] = ['energy', 'power'];
-	const maps: { label: string; value: string }[] = availableMaps;
+	const maps: { label: string; value: string }[] = AVAILABLE_MAPS;
 
 	let selectedSolution: ActivatedSolution | null = $state(null);
 	let selectedTechnologyType: TechnologyType = $state('conversion');

@@ -1,3 +1,4 @@
+import { EPS } from './constants.js';
 import type { RawSankeyLink, RawSankeyNode, SankeyLink, SankeyNode } from './types.js';
 
 // Source: https://gist.github.com/cfergus/3956043 and https://gist.github.com/soxofaan/bb6f91d57dc4b6afe91d
@@ -243,7 +244,7 @@ function computeNodeDepths() {
 		// It is determined by the node with the largest value and the max node height
 		const maxHeight = showStructureOnly ? NODE_MAX_HEIGHT_STRUCTURE_ONLY : NODE_MAX_HEIGHT;
 		const ky = Math.min(
-			...nodes.map((node) => (node.value > 1e-6 ? maxHeight / node.value : Infinity))
+			...nodes.map((node) => (node.value > EPS ? maxHeight / node.value : Infinity))
 		);
 
 		let sum = 0;
@@ -281,7 +282,7 @@ function computeNodeDepths() {
 		if (showStructureOnly) {
 			return 1;
 		} else {
-			return Math.max(link.value, 1e-6);
+			return Math.max(link.value, EPS);
 		}
 	}
 

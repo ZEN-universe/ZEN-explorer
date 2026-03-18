@@ -1,4 +1,5 @@
 import type { MapPlotData } from '$components/MapPlot.svelte';
+import { EPS } from '@/lib/constants';
 import Entries from '@/lib/entries';
 import type { FilterCriteria } from '@/lib/entries';
 import { variables, type ProductionComponent } from '@/lib/productionData';
@@ -53,7 +54,7 @@ export function computePieData(
 	const index = years.findIndex((year) => year.toString() === selectedYear);
 	const mapPlotData = data
 		.filterDataByIndex([index])
-		.filter(({ data: [d] }) => d > 1e-6)
+		.filter(({ data: [d] }) => d > EPS)
 		.reduce((acc: MapPlotData, { index: { node, technology }, data: [value] }) => {
 			acc[node] = acc[node] || [];
 			acc[node].push({ technology, value });
