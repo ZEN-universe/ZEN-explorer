@@ -113,7 +113,7 @@
 			<p class="mb-12 text-xl leading-relaxed">
 				ZEN-garden is an open-source optimization software to model multi-year energy system
 				transition pathways. To support research focused on the transition of sector-coupled energy
-				systems toward net-zero emissions, ZEN-garden is built upon two principles: Optimizing
+				systems toward net-zero emissions, ZEN-garden is built upon two principles: optimizing
 				highly complex sector-coupled energy transition pathways and supporting user-friendly data
 				handling through small, flexible, and robust input datasets.
 			</p>
