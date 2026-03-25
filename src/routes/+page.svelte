@@ -6,8 +6,10 @@
 	import ToggleThemeButton from '$components/ToggleThemeButton.svelte';
 	import ContentBox from '$components/ContentBox.svelte';
 	import RRELogo from '$components/RRELogo.svelte';
-	import { animate } from '@/lib/frontPageAnimation.svelte';
+	import { animate, refreshAll as refreshAnimation } from '@/lib/frontPageAnimation.svelte';
 	import { getTheme } from '@/lib/theme.svelte';
+	import { tick } from 'svelte';
+	import { fade } from 'svelte/transition';
 
 	let nav: HTMLElement;
 
@@ -36,8 +38,90 @@
 			journal: 'Renewable and Sustainable Energy Reviews, vol. 194, pp. 114314, Pergamon, 2024.',
 			doi: '10.1016/j.rser.2024.114314',
 			researchCollection: 'https://hdl.handle.net/20.500.11850/659862'
+		},
+		{
+			title: 'ZEN-garden: Optimizing energy transition pathways with user-oriented data handling',
+			authors:
+				'Jacob Mannhardt, Alissa Ganter, Johannes Burger, Francesco De Marco, Lukas Kunz, Lukas Schmidt-Engelbertz, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'SoftwareX, vol. 29, pp. 102059, Elsevier, 2025.',
+			doi: '10.1016/j.softx.2025.102059',
+			researchCollection: 'https://hdl.handle.net/20.500.11850/711439'
+		},
+		{
+			title:
+				'Understanding the vicious cycle of myopic foresight and constrained technology deployment in transforming the European energy system',
+			authors: 'Jacob Mannhardt, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'iScience, vol. 27: no. 12, pp. 111369, Cell Press, 2024.',
+			doi: '10.1016/j.isci.2024.111369',
+			researchCollection: 'https://hdl.handle.net/20.500.11850/710173'
+		},
+		{
+			title:
+				'Near-term infrastructure rollout and investment strategies for net-zero hydrogen supply chains',
+			authors: 'Alissa Ganter, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'Renewable and Sustainable Energy Reviews, vol. 194, pp. 114314, Pergamon, 2024.',
+			doi: '10.1016/j.rser.2024.114314',
+			researchCollection: 'https://hdl.handle.net/20.500.11850/659862'
+		},
+		{
+			title: 'ZEN-garden: Optimizing energy transition pathways with user-oriented data handling',
+			authors:
+				'Jacob Mannhardt, Alissa Ganter, Johannes Burger, Francesco De Marco, Lukas Kunz, Lukas Schmidt-Engelbertz, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'SoftwareX, vol. 29, pp. 102059, Elsevier, 2025.',
+			doi: '10.1016/j.softx.2025.102059',
+			researchCollection: 'https://hdl.handle.net/20.500.11850/711439'
+		},
+		{
+			title:
+				'Understanding the vicious cycle of myopic foresight and constrained technology deployment in transforming the European energy system',
+			authors: 'Jacob Mannhardt, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'iScience, vol. 27: no. 12, pp. 111369, Cell Press, 2024.',
+			doi: '10.1016/j.isci.2024.111369',
+			researchCollection: 'https://hdl.handle.net/20.500.11850/710173'
+		},
+		{
+			title:
+				'Near-term infrastructure rollout and investment strategies for net-zero hydrogen supply chains',
+			authors: 'Alissa Ganter, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'Renewable and Sustainable Energy Reviews, vol. 194, pp. 114314, Pergamon, 2024.',
+			doi: '10.1016/j.rser.2024.114314',
+			researchCollection: 'https://hdl.handle.net/20.500.11850/659862'
+		},
+		{
+			title: 'ZEN-garden: Optimizing energy transition pathways with user-oriented data handling',
+			authors:
+				'Jacob Mannhardt, Alissa Ganter, Johannes Burger, Francesco De Marco, Lukas Kunz, Lukas Schmidt-Engelbertz, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'SoftwareX, vol. 29, pp. 102059, Elsevier, 2025.',
+			doi: '10.1016/j.softx.2025.102059',
+			researchCollection: 'https://hdl.handle.net/20.500.11850/711439'
+		},
+		{
+			title:
+				'Understanding the vicious cycle of myopic foresight and constrained technology deployment in transforming the European energy system',
+			authors: 'Jacob Mannhardt, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'iScience, vol. 27: no. 12, pp. 111369, Cell Press, 2024.',
+			doi: '10.1016/j.isci.2024.111369',
+			researchCollection: 'https://hdl.handle.net/20.500.11850/710173'
+		},
+		{
+			title:
+				'Near-term infrastructure rollout and investment strategies for net-zero hydrogen supply chains',
+			authors: 'Alissa Ganter, Paolo Gabrielli and Giovanni Sansavini',
+			journal: 'Renewable and Sustainable Energy Reviews, vol. 194, pp. 114314, Pergamon, 2024.',
+			doi: '10.1016/j.rser.2024.114314',
+			researchCollection: 'https://hdl.handle.net/20.500.11850/659862'
 		}
 	];
+
+	let numShownPublications = $state(3);
+	let hasMorePublications = $derived(numShownPublications < publications.length);
+
+	function showMorePublications() {
+		numShownPublications += 6;
+		tick().then(() => {
+			refreshAnimation();
+		});
+	}
 
 	let isDarkTheme = $derived(getTheme() === 'dark');
 </script>
@@ -162,7 +246,7 @@
 
 			<div class="flex justify-center">
 				<a
-					class="inline-block w-full rounded bg-[#B7352D] px-8 py-4 text-center text-2xl font-bold text-white opacity-60 transition hover:opacity-100 sm:w-auto dark:bg-[#D48681] dark:text-black"
+					class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition-colors sm:w-auto dark:bg-[#D48681]"
 					href="https://zen-garden.readthedocs.io/en/latest/files/quick_start/installation.html"
 					target="_blank"
 				>
@@ -317,8 +401,11 @@
 
 				<!-- Note: Publications are located at the top of the file -->
 				<ul>
-					{#each publications as publication, index (index)}
-						<li class={['border-gray-200 dark:border-gray-600', index > 0 && 'mt-4 border-t pt-4']}>
+					{#each publications.slice(0, numShownPublications) as publication, index (index)}
+						<li
+							class={['border-gray-300 dark:border-gray-500', index > 0 && 'mt-4 border-t pt-4']}
+							transition:fade
+						>
 							<h4 class="mb-2 text-lg font-bold">
 								{publication.title}
 							</h4>
@@ -350,6 +437,16 @@
 						</li>
 					{/each}
 				</ul>
+				{#if hasMorePublications}
+					<div class="mt-4 border-t border-gray-300 pt-4 dark:border-gray-500">
+						<button
+							class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 rounded px-4 py-2 text-white"
+							onclick={showMorePublications}
+						>
+							Show more publications
+						</button>
+					</div>
+				{/if}
 			</div>
 		</ContentBox>
 		<ContentBox
@@ -424,7 +521,7 @@
 				</div>
 			</div>
 			<div
-				class="terminal mb-8 rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:text-base mx-4 md:mx-8 lg:mx-12"
+				class="terminal mx-4 mb-8 rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:mx-8 md:text-base lg:mx-12"
 			>
 				<!-- Install zen-garden -->
 				<div class="flex" data-animate-chars>
@@ -668,22 +765,22 @@
 						Annual capacity, production, emission, and cost results can be investigated under
 						<a
 							href={resolve('/explorer/transition/capacity')}
-							class="font-bold text-[#B7352D] opacity-60 transition hover:opacity-100 dark:text-[#D48681]"
+							class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
 							>The Transition Pathway</a
 						>. Energy and storage balances in a specific year can be analyzed under
 						<a
 							href={resolve('/explorer/energy_balance/nodal')}
-							class="font-bold text-[#B7352D] opacity-60 transition hover:opacity-100 dark:text-[#D48681]"
+							class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
 							>The Energy Balance</a
 						>. The flows of energy carriers between technologies can be investigated under
 						<a
 							href={resolve('/explorer/energy_system')}
-							class="font-bold text-[#B7352D] opacity-60 transition hover:opacity-100 dark:text-[#D48681]"
+							class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
 							>The Energy System</a
 						>. Finally, the spatial distribution of capacities can be analyzed under
 						<a
 							href={resolve('/explorer/map')}
-							class="font-bold text-[#B7352D] opacity-60 transition hover:opacity-100 dark:text-[#D48681]"
+							class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
 							>The Map</a
 						>.
 					</p>

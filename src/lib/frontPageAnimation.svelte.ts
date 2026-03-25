@@ -32,29 +32,31 @@ export const animate: Action<HTMLElement, { topOffset?: number } | undefined> = 
 				finalBlockAnimation(sections, shapes, topOffset, vh);
 			});
 		}, wrapper); // scope selector to wrapper
-		
+
 		onImageLoaded().then(() => refreshAll()); // refresh ScrollTrigger after all images have loaded to ensure correct positions
 		const debouncedRefresh = debounce(refreshAll, 100);
 		window.addEventListener('resize', debouncedRefresh); // refresh ScrollTrigger on resize to recalculate positions
-		
+
 		return () => {
 			ctx.revert(); // cleanup on destroy or parameter change
 			window.removeEventListener('resize', debouncedRefresh);
-		}
+		};
 	});
 };
 
 function onImageLoaded(): Promise<void[]> {
-	return Promise.all(Array.from(document.images).map(img => {
-		if (img.complete) return Promise.resolve();
-		return new Promise<void>((resolve) => {
-			img.addEventListener('load', () => resolve());
-			img.addEventListener('error', () => resolve());
-		});
-	}))
+	return Promise.all(
+		Array.from(document.images).map((img) => {
+			if (img.complete) return Promise.resolve();
+			return new Promise<void>((resolve) => {
+				img.addEventListener('load', () => resolve());
+				img.addEventListener('error', () => resolve());
+			});
+		})
+	);
 }
 
-function refreshAll() {
+export function refreshAll() {
 	ScrollTrigger.getAll().forEach((trigger) => trigger.refresh());
 }
 
@@ -147,16 +149,16 @@ function transitionAnimation(
 					duration: { min: 0, max: 1.0 },
 					delay: 0.2,
 					ease: 'power1.inOut'
-				},
+				}
 			}
 		});
 
 		// move current section up and next section's box into view (1 timestep)
-		tl.to(sections[i], { y: () => vh(-0.2), ease: 'none', duration: 1 }, 0);
-		tl.set(sections[i + 1], { autoAlpha: 0 }, '<');
+		tl.set(sections[i + 1], { autoAlpha: 0 }, 0);
+		tl.to(sections[i], { y: () => vh(-0.4), ease: 'none', duration: 2 }, 0);
 
 		// hide content of current section and show shape boxes (1 timestep)
-		tl.fromTo(shapes[i], { autoAlpha: 0 }, { autoAlpha: 1, duration: 1, ease: 'none' }, '<1');
+		tl.to(shapes[i], { autoAlpha: 1, duration: 1, ease: 'none' }, 1);
 
 		// animate the shapes to the next section's box sizes and positions (3 timesteps)
 		tl.set(section, { autoAlpha: 0 }, '<1');
@@ -182,14 +184,17 @@ async function terminalAnimation(sections: HTMLElement[], topOffset: number) {
 				trigger: section,
 				start: `top ${topOffset + 16.1}`,
 				end: `bottom bottom`,
-				toggleActions: 'play complete none restart',
+				toggleActions: 'play complete none restart'
 			}
 		});
 
 		let longDelay = false;
 		(terminal.childNodes ?? []).forEach((child) => {
 			if (!(child instanceof HTMLElement)) return;
-			const animateChars = Object.prototype.hasOwnProperty.call((child as HTMLElement).dataset, 'animateChars');
+			const animateChars = Object.prototype.hasOwnProperty.call(
+				(child as HTMLElement).dataset,
+				'animateChars'
+			);
 			let trigger: HTMLElement | Element[] = child;
 			if (animateChars) {
 				trigger = new SplitText(child, { type: 'chars' }).chars;

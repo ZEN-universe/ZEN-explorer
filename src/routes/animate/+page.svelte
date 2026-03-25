@@ -104,7 +104,7 @@
 		>
 			<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Framework</h2>
 			<div
-				class="terminal rounded-xl bg-slate-900 ring-1 ring-slate-800 mb-8 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl md:text-base"
+				class="terminal mb-8 rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:text-base"
 			>
 				<!-- Install zen-garden -->
 				<div class="flex" data-animate-chars>
@@ -120,9 +120,7 @@
 					<span class="mr-3 text-pink-500 select-none">$</span>
 					<span>zen-garden --dataset=<span class="text-cyan-300">my_model</span></span>
 				</div>
-				<div class="text-slate-500">
-					Create ConversionTechnology photovoltaics
-				</div>
+				<div class="text-slate-500">Create ConversionTechnology photovoltaics</div>
 				<div class="text-slate-500">Create ConversionTechnology heat_pump</div>
 				<div class="text-slate-500">Create Carrier electricity</div>
 				<div class="text-slate-500">Create Carrier heat</div>
@@ -190,7 +188,7 @@
 		>
 			<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Visualization</h2>
 			<div
-				class="terminal rounded-xl bg-slate-900 ring-1 ring-slate-800 mb-8 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl md:text-base"
+				class="terminal mb-8 rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:text-base"
 			>
 				<!-- Install zen-garden -->
 				<div class="flex" data-animate-chars>
@@ -206,9 +204,7 @@
 					<span class="mr-3 text-pink-500 select-none">$</span>
 					<span>zen-garden --dataset=<span class="text-cyan-300">my_model</span></span>
 				</div>
-				<div class="text-slate-500">
-					Create ConversionTechnology photovoltaics
-				</div>
+				<div class="text-slate-500">Create ConversionTechnology photovoltaics</div>
 				<div class="text-slate-500">Create ConversionTechnology heat_pump</div>
 				<div class="text-slate-500">Create Carrier electricity</div>
 				<div class="text-slate-500">Create Carrier heat</div>

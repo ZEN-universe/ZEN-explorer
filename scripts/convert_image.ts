@@ -58,9 +58,25 @@ for (const w of widths) {
 
 	const optimizedGif = `${inputBaseName}_${w}.gif`;
 	console.log(`Converting to ${optimizedGif}`);
-	runOrExit(convertCommand, [inputImage, '-coalesce', '-resize', `${w}x`, '-layers', 'optimize', optimizedGif]);
+	runOrExit(convertCommand, [
+		inputImage,
+		'-coalesce',
+		'-resize',
+		`${w}x`,
+		'-layers',
+		'optimize',
+		optimizedGif
+	]);
 
 	const optimizedWebp = `${inputBaseName}_${w}.webp`;
 	console.log(`Converting to ${optimizedWebp}`);
-	runOrExit(convertCommand, [optimizedGif, '-coalesce', '-quality', '80', '-loop', '0', optimizedWebp]);
+	runOrExit(convertCommand, [
+		optimizedGif,
+		'-coalesce',
+		'-quality',
+		'80',
+		'-loop',
+		'0',
+		optimizedWebp
+	]);
 }
