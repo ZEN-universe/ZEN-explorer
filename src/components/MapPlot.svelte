@@ -15,6 +15,7 @@
 
 	import { allColors } from '$lib/colors';
 	import { exportAsSVG } from '$lib/export';
+	import HelpTooltip from './HelpTooltip.svelte';
 
 	let topology: Topology | null = $state(null);
 	$effect(() => {
@@ -639,6 +640,12 @@
 				/>
 			{/if}
 		</svg>
+		<div class="absolute top-0 left-0 p-2 text-xl">
+			<HelpTooltip>
+				Click on a pie or line to keep a tooltip visible.<br />
+				Use the mouse to move the tooltip while it's visible.
+			</HelpTooltip>
+		</div>
 		<!-- Tooltip -->
 		{#if hoveredPie || hoveredLines.length > 0}
 			{@render tooltip(
