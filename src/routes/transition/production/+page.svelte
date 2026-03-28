@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick, untrack } from 'svelte';
+	import { untrack } from 'svelte';
 	import {
 		type Chart as BaseChart,
 		type ChartDataset,
@@ -30,14 +30,7 @@
 		onClickLegendForSolutionComparison,
 		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
-	import {
-		getURLParam,
-		getURLParamAsBoolean,
-		getURLParamAsIntArray,
-		useURLParams,
-		updateURLParams,
-		type URLParams
-	} from '$lib/queryParams.svelte';
+	import { useURLParams, QUERY_PARAM_KEYS } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
@@ -49,7 +42,7 @@
 		type ProductionComponent,
 		type VariableId
 	} from '$lib/productionData';
-	import { getInboundEdges, getTransportEdges, typedEntries, typedKeys } from '@/lib/utils';
+	import { getInboundEdges, getTransportEdges, typedEntries } from '@/lib/utils';
 
 	import PiePlots from './PiePlots.svelte';
 
@@ -93,12 +86,6 @@
 	let activeSolution: string | null = $state(null);
 
 	// Temporary objects to store previous values and URL values
-	let urlConversionTechnologies: number[] | null = null;
-	let urlStorageTechnologies: number[] | null = null;
-	let urlTransportTechnologies: number[] | null = null;
-	let previousConversionTechnologies: string = '';
-	let previousStorageTechnologies: string = '';
-	let previousTransportTechnologies: string = '';
 	let previousNodes: string = '';
 	let previousYears: string = '';
 
@@ -323,33 +310,6 @@
 	//#region Update selection based on URL and previous selections
 
 	updateSelectionOnStateChanges(
-		() => conversionTechnologies,
-		() => !!selectedSolutions,
-		() => previousConversionTechnologies,
-		() => urlConversionTechnologies,
-		(value) => (selectedConversionTechnologies = value),
-		(value) => (previousConversionTechnologies = value),
-		(value) => (urlConversionTechnologies = value)
-	);
-	updateSelectionOnStateChanges(
-		() => storageTechnologies,
-		() => !!selectedSolutions,
-		() => previousStorageTechnologies,
-		() => urlStorageTechnologies,
-		(value) => (selectedStorageTechnologies = value),
-		(value) => (previousStorageTechnologies = value),
-		(value) => (urlStorageTechnologies = value)
-	);
-	updateSelectionOnStateChanges(
-		() => transportTechnologies,
-		() => !!selectedSolutions,
-		() => previousTransportTechnologies,
-		() => urlTransportTechnologies,
-		(value) => (selectedTransportTechnologies = value),
-		(value) => (previousTransportTechnologies = value),
-		(value) => (urlTransportTechnologies = value)
-	);
-	updateSelectionOnStateChanges(
 		() => nodes,
 		() => !!selectedSolutions,
 		() => previousNodes,
@@ -368,61 +328,7 @@
 		() => {}
 	);
 
-	// Store parts of the selected variables in the URL
-	onMount(() => {
-		selectedCarrier = getURLParam('car') || null;
-		typedKeys(variables).forEach((id) => {
-			selectedShowVariable[id] = getURLParamAsBoolean(id, selectedShowVariable[id]);
-			selectedSubdivision[id] = getURLParamAsBoolean(id + '_sub', selectedSubdivision[id]);
-		});
-		urlConversionTechnologies = getURLParamAsIntArray('conv_tech');
-		urlStorageTechnologies = getURLParamAsIntArray('stor_tech');
-		urlTransportTechnologies = getURLParamAsIntArray('tran_tech');
-	});
-
-	$effect(() => {
-		// Triggers
-		selectedCarrier;
-		typedKeys(variables).forEach((id) => {
-			selectedShowVariable[id];
-			selectedSubdivision[id];
-		});
-		selectedConversionTechnologies;
-		selectedStorageTechnologies;
-		selectedTransportTechnologies;
-
-		// Wait for router to be initialized
-		tick().then(() => {
-			let params: URLParams = {
-				car: selectedCarrier,
-				conv_tech: selectedConversionTechnologies
-					.map((t) => conversionTechnologies.indexOf(t))
-					.join('~'),
-				stor_tech: selectedStorageTechnologies.map((t) => storageTechnologies.indexOf(t)).join('~'),
-				tran_tech: selectedTransportTechnologies
-					.map((t) => transportTechnologies.indexOf(t))
-					.join('~')
-			};
-			typedKeys(variables).forEach((id) => {
-				params[variables[id].shortId] = selectedShowVariable[id] ? '1' : '0';
-				params[variables[id].shortId + '_sub'] = selectedSubdivision[id] ? '1' : '0';
-			});
-			updateURLParams(params);
-		});
-	});
-
 	//#endregion
-
-	// Update functions
-	function onSolutionChanged() {
-		activeYear = null;
-		activeSolution = null;
-		fetchData();
-	}
-
-	function onCarrierChanged() {
-		fetchData();
-	}
 
 	function onClickBar(year: string, datasetIndex: number) {
 		if (!year) {
@@ -440,9 +346,15 @@
 
 	//#region Fetch and process data
 
-	/**
-	 * Fetch data from the API server for the current selection.
-	 */
+	$effect(() => {
+		selectedSolutions;
+		selectedCarrier;
+		untrack(() => {
+			fetchData();
+		});
+	});
+
+	// Fetch data from the API server for the current selection.
 	async function fetchData() {
 		if (hasSomeUnsetSolutions || selectedCarrier === null) {
 			return;
@@ -640,7 +552,6 @@
 				bind:years
 				bind:nodes
 				bind:loading={solutionLoading}
-				onSelected={onSolutionChanged}
 				disabled={fetching || solutionLoading}
 			/>
 		</FilterSection>
@@ -651,7 +562,8 @@
 					options={carriers}
 					bind:value={selectedCarrier}
 					disabled={solutionLoading || fetching}
-					onUpdate={onCarrierChanged}
+					urlParam={QUERY_PARAM_KEYS.carrier}
+					unsetIfInvalid
 				></Dropdown>
 			</FilterSection>
 			{#if selectedCarrier !== null}
@@ -669,6 +581,7 @@
 										bind:value={selectedShowVariable[id]}
 										label={variable.title}
 										disabled={solutionLoading || fetching}
+										urlParam={variable.shortId}
 									></ToggleButton>
 								</div>
 								{#if variable.showSubdivision}
@@ -677,6 +590,7 @@
 											bind:value={selectedSubdivision[id]}
 											label="with Subdivision"
 											disabled={!selectedShowVariable[id] || solutionLoading || fetching}
+											urlParam={`${variable.shortId}_sub`}
 										/>
 									</div>
 								{/if}
@@ -691,6 +605,8 @@
 						label="Conversion Technologies"
 						emptyText="No conversion technologies available."
 						disabled={solutionLoading || fetching}
+						urlParam={QUERY_PARAM_KEYS.conversionTechnologies}
+						resetIfInvalid
 					></MultiSelect>
 					<MultiSelect
 						bind:value={selectedStorageTechnologies}
@@ -698,6 +614,8 @@
 						label="Storage Technologies"
 						emptyText="No storage technologies available."
 						disabled={solutionLoading || fetching}
+						urlParam={QUERY_PARAM_KEYS.storageTechnologies}
+						resetIfInvalid
 					></MultiSelect>
 					<MultiSelect
 						bind:value={selectedTransportTechnologies}
@@ -705,6 +623,8 @@
 						label="Transport Technologies"
 						emptyText="No transport technologies available."
 						disabled={solutionLoading || fetching}
+						urlParam={QUERY_PARAM_KEYS.transportTechnologies}
+						resetIfInvalid
 					></MultiSelect>
 				</FilterSection>
 				{#if selectedCarrier !== null}

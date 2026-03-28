@@ -3,6 +3,7 @@ import {
 	expectScreenshot,
 	selectFromDropdown,
 	selectFromMultiSelect,
+	selectRadioOption,
 	selectSolution
 } from './helper';
 
@@ -40,7 +41,7 @@ test('storage: smoothing window size', async ({ page }) => {
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
 	await selectFromDropdown(page, 'Year', '2022');
-	await selectFromDropdown(page, 'Smoothing Window Size', 'Monthly');
+	await selectRadioOption(page, 'Smoothing Window Size', 'Monthly');
 	await expectScreenshot(
 		page,
 		'#level_chart-container',

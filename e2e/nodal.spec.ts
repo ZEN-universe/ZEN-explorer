@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { expectScreenshot, selectFromDropdown, selectSolution } from './helper';
+import { expectScreenshot, selectFromDropdown, selectRadioOption, selectSolution } from './helper';
 
 const PAGE_URL = '/energy_balance/nodal';
 
@@ -45,7 +45,7 @@ test('nodal: smoothing window size', async ({ page }) => {
 	await selectFromDropdown(page, 'Carrier', 'heat'); // previous default was heat
 	await selectFromDropdown(page, 'Year', '2022'); // previous default was 2022
 	await selectFromDropdown(page, 'Node', 'DE');
-	await selectFromDropdown(page, 'Smoothing Window Size', 'Monthly');
+	await selectRadioOption(page, 'Smoothing Window Size', 'Monthly');
 	await expectScreenshot(page, '#chart-container', `eeht_pf/smoothing-window-size-monthly.png`);
 });
 

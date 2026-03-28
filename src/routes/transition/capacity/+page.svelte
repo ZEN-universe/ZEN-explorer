@@ -25,7 +25,7 @@
 	import type { ActivatedSolution } from '$lib/types';
 	import { removeDuplicates } from '$lib/utils';
 	import Entries from '@/lib/entries';
-	import { useURLParams } from '@/lib/queryParams.svelte';
+	import { QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
 
 	import type { Variable, TechnologyType, StorageType, AggregationOption } from './processData';
 	import { computeDatasets } from './processData';
@@ -316,7 +316,7 @@
 					options={carriers}
 					bind:value={selectedCarrier}
 					disabled={fetching || solutionLoading}
-					urlParam="car"
+					urlParam={QUERY_PARAM_KEYS.carrier}
 					unsetIfInvalid
 				>
 					{#snippet helpText()}
@@ -332,7 +332,7 @@
 						options={variables}
 						bind:value={selectedVariable}
 						disabled={fetching || solutionLoading}
-						urlParam="var"
+						urlParam={QUERY_PARAM_KEYS.capacityVariable}
 						unsetIfInvalid
 					>
 						{#snippet helpText()}
@@ -357,7 +357,7 @@
 						options={technologyTypes}
 						bind:value={selectedTechnologyType}
 						disabled={fetching || solutionLoading}
-						urlParam="tech"
+						urlParam={QUERY_PARAM_KEYS.technologyType}
 						unsetIfInvalid
 					>
 						{#snippet helpText()}
@@ -370,7 +370,7 @@
 							options={storageTypeOptions}
 							bind:value={selectedStorageType}
 							disabled={fetching || solutionLoading}
-							urlParam="stor"
+							urlParam={QUERY_PARAM_KEYS.storageType}
 							unsetIfInvalid
 						></Radio>
 					{/if}

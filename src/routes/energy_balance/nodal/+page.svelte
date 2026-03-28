@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick, untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
@@ -11,7 +11,7 @@
 	import { getVariableName } from '$lib/variables';
 	import { nextColor, resetColorState } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes } from '$lib/types';
-	import { getURLParam, updateURLParams, useURLParams } from '$lib/queryParams.svelte';
+	import { QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
@@ -20,6 +20,7 @@
 	import type Entries from '$lib/entries';
 	import ContentBox from '$components/ContentBox.svelte';
 	import HelpTooltip from '$components/HelpTooltip.svelte';
+	import Radio from '$components/forms/Radio.svelte';
 
 	useURLParams();
 
@@ -227,31 +228,6 @@
 		selectedCarrier;
 		selectedWindowSize;
 		untrack(fetchData);
-	});
-
-	// Set URL parameters
-	onMount(() => {
-		selectedYear = getURLParam('year') || selectedYear;
-		selectedNode = getURLParam('node') || selectedNode;
-		selectedCarrier = getURLParam('car') || selectedCarrier;
-		selectedWindowSize = getURLParam('window') || selectedWindowSize;
-	});
-
-	$effect(() => {
-		// Triggers
-		selectedYear;
-		selectedNode;
-		selectedCarrier;
-		selectedWindowSize;
-
-		tick().then(() => {
-			updateURLParams({
-				year: selectedYear,
-				node: selectedNode,
-				car: selectedCarrier,
-				window: selectedWindowSize
-			});
-		});
 	});
 
 	//#endregion
@@ -471,6 +447,8 @@
 					bind:value={selectedCarrier}
 					label="Carrier"
 					disabled={fetching || solutionLoading}
+					urlParam={QUERY_PARAM_KEYS.carrier}
+					unsetIfInvalid
 				></Dropdown>
 				{#if selectedCarrier !== null}
 					<Dropdown
@@ -478,6 +456,8 @@
 						bind:value={selectedYear}
 						label="Year"
 						disabled={fetching || solutionLoading}
+						urlParam={QUERY_PARAM_KEYS.year}
+						unsetIfInvalid
 					></Dropdown>
 				{/if}
 				{#if selectedCarrier !== null && selectedYear !== null}
@@ -486,19 +466,24 @@
 						bind:value={selectedNode}
 						label="Node"
 						disabled={fetching || solutionLoading}
+						urlParam={QUERY_PARAM_KEYS.node}
+						unsetIfInvalid
 					></Dropdown>
 				{/if}
 				{#if selectedCarrier !== null && selectedYear !== null && selectedNode !== null}
-					<Dropdown
+					<Radio
 						options={windowSizes}
 						bind:value={selectedWindowSize}
 						label="Smoothing Window Size"
 						disabled={fetching || solutionLoading}
+						urlParam={QUERY_PARAM_KEYS.smoothing_window_size}
+						default="Hourly"
+						unsetIfInvalid
 					>
 						{#snippet helpText()}
 							Visualize the rolling average of hourly values over a longer time period
 						{/snippet}
-					</Dropdown>
+					</Radio>
 				{/if}
 			</FilterSection>
 		{/if}

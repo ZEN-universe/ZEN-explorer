@@ -5,6 +5,7 @@
 	import { pie as d3pie, arc as d3arc } from 'd3-shape';
 	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior } from 'd3-zoom';
 	import { onDestroy } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
@@ -38,6 +39,11 @@
 		[node: string]: DataRow[];
 	}
 
+	export interface ContextMenuItem {
+		label: string;
+		href: string;
+	}
+
 	interface Props {
 		id?: string;
 		pieData: MapPlotData;
@@ -49,6 +55,7 @@
 		maxTotal: number;
 		minEdge: number;
 		maxEdge: number;
+		getContextMenuItems: (pie: Pie | undefined) => ContextMenuItem[];
 	}
 	let {
 		id = 'map',
@@ -60,7 +67,8 @@
 		minTotal,
 		maxTotal,
 		minEdge,
-		maxEdge
+		maxEdge,
+		getContextMenuItems
 	}: Props = $props();
 
 	// SVG element
@@ -268,7 +276,7 @@
 	}
 
 	// Data dependent values
-	interface Pie {
+	export interface Pie {
 		x: number;
 		y: number;
 		label: string;
@@ -372,6 +380,7 @@
 	}
 
 	function toggleFocusOnElement(event: MouseEvent) {
+		closeContextMenu();
 		const pos = pointer(event);
 		const pie = findPie(pos);
 		if (pie) {
@@ -509,8 +518,29 @@
 		initResizeObserver();
 		handleSize();
 	}
+
+	let contextMenuOpen = $state(false);
+	let contextMenuX = $state(0);
+	let contextMenuY = $state(0);
+	let contextMenuPie: Pie | undefined = $state(undefined);
+	let contextMenuItems: ContextMenuItem[] = $derived(getContextMenuItems(contextMenuPie));
+
+	function openContextMenu(event: MouseEvent) {
+		event.preventDefault();
+		event.stopPropagation();
+		const pos = pointer(event);
+		contextMenuX = pos[0];
+		contextMenuY = pos[1];
+		contextMenuOpen = true;
+		contextMenuPie = hoveredPie;
+	}
+
+	function closeContextMenu() {
+		contextMenuOpen = false;
+	}
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -->
 <svelte:window on:resize={handleSize} />
 
 {#snippet tooltip(
@@ -599,6 +629,7 @@
 				cursorPos = [0, 0];
 			}}
 			onclick={toggleFocusOnElement}
+			oncontextmenu={openContextMenu}
 			{id}
 			class="bg-white dark:bg-gray-800"
 		>
@@ -643,7 +674,8 @@
 		<div class="absolute top-0 left-0 p-2 text-xl">
 			<HelpTooltip>
 				Click on a pie or line to keep a tooltip visible.<br />
-				Use the mouse to move the tooltip while it's visible.
+				Use the mouse to move the tooltip while it's visible.<br />
+				Right-click on a pie to open the context menu.
 			</HelpTooltip>
 		</div>
 		<!-- Tooltip -->
@@ -669,5 +701,28 @@
 				true
 			)}
 		{/each}
+		<!-- Context Menu -->
+		{#if contextMenuOpen && contextMenuItems}
+			<div
+				class="absolute z-6 flex flex-col rounded border border-gray-800 bg-white shadow-xl/20 dark:border-gray-900 dark:bg-gray-800"
+				style:top={`${contextMenuY + 2}px`}
+				style:left={`${contextMenuX + 2}px`}
+				transition:fade={{ duration: 100 }}
+			>
+				{#each contextMenuItems as item, i (i)}
+					<a
+						href={item.href}
+						class={[
+							'p-2 hover:bg-gray-200 dark:hover:bg-gray-600',
+							i > 0 && 'border-t border-gray-600 dark:border-gray-500',
+							i === 0 && 'rounded-t',
+							i === contextMenuItems.length - 1 && 'rounded-b'
+						]}
+					>
+						{item.label}
+					</a>
+				{/each}
+			</div>
+		{/if}
 	</ContentBox>
 {/if}

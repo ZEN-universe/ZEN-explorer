@@ -2,7 +2,7 @@
 	import Radio from '$components/forms/Radio.svelte';
 	import Dropdown from '$components/forms/Dropdown.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
-	import MapPlot from '$components/MapPlot.svelte';
+	import MapPlot, { type ContextMenuItem, type Pie } from '$components/MapPlot.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import Button from '$components/Button.svelte';
@@ -16,7 +16,7 @@
 	import { removeDuplicates } from '$lib/utils';
 	import Entries from '@/lib/entries';
 	import { onValueChange } from '@/lib/onValueChange.svelte';
-	import { useURLParams } from '@/lib/queryParams.svelte';
+	import { appendParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
 
 	import {
 		computePieData,
@@ -83,6 +83,52 @@
 	async function refreshData() {
 		await fetchData();
 		plot?.resetZoom();
+	}
+
+	// ======================================
+	// Context Menu
+	// ======================================
+
+	function getContextMenuItems(pie: Pie | undefined): ContextMenuItem[] {
+		if (!selectedSolution || !selectedCarrier || !selectedTechnologyType || !selectedYear)
+			return [];
+
+		const items: ContextMenuItem[] = [
+			{
+				label: 'Go to The Transition Pathway - Capacity',
+				href: appendParametersToPath('/transition/capacity', {
+					[QUERY_PARAM_KEYS.solutions]: selectedSolution.solution_name,
+					[QUERY_PARAM_KEYS.scenarios]: selectedSolution.scenario_name,
+					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+					[QUERY_PARAM_KEYS.technologyType]: selectedTechnologyType,
+					[QUERY_PARAM_KEYS.storageType]:
+						selectedTechnologyType === 'storage' ? selectedStorageType : null
+				})
+			},
+			{
+				label: 'Go to The Transition Pathway - Production',
+				href: appendParametersToPath('/transition/production', {
+					[QUERY_PARAM_KEYS.solutions]: selectedSolution.solution_name,
+					[QUERY_PARAM_KEYS.scenarios]: selectedSolution.scenario_name,
+					[QUERY_PARAM_KEYS.carrier]: selectedCarrier
+				})
+			}
+		];
+
+		if (pie) {
+			items.push({
+				label: `Go to The Energy Balance - Nodal for ${pie.label}`,
+				href: appendParametersToPath(`/energy_balance/nodal`, {
+					[QUERY_PARAM_KEYS.solution]: selectedSolution.solution_name,
+					[QUERY_PARAM_KEYS.scenario]: selectedSolution.scenario_name,
+					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+					[QUERY_PARAM_KEYS.year]: selectedYear,
+					[QUERY_PARAM_KEYS.node]: pie.label
+				})
+			});
+		}
+
+		return items;
 	}
 
 	// ======================================
@@ -154,16 +200,16 @@
 					onUpdate={refreshData}
 					disabled={fetching || solutionLoading}
 					unsetIfInvalid
-					urlParam="carrier"
+					urlParam={QUERY_PARAM_KEYS.carrier}
 				></Dropdown>
 				{#if selectedCarrier !== null}
-					<Dropdown
+					<Radio
 						options={technologyTypes}
 						bind:value={selectedTechnologyType}
 						label="Technology Type"
 						disabled={fetching || solutionLoading}
-						urlParam="tech"
-					></Dropdown>
+						urlParam={QUERY_PARAM_KEYS.technologyType}
+					></Radio>
 				{/if}
 				{#if selectedCarrier !== null && selectedTechnologyType === 'storage'}
 					<Radio
@@ -171,7 +217,7 @@
 						bind:value={selectedStorageType}
 						label="Storage Type"
 						disabled={fetching || solutionLoading}
-						urlParam="stor"
+						urlParam={QUERY_PARAM_KEYS.storageType}
 					></Radio>
 				{/if}
 			</FilterSection>
@@ -226,6 +272,7 @@
 				systemCoords={selectedSolution.detail.system.coords}
 				{unit}
 				map={selectedMap}
+				{getContextMenuItems}
 			/>
 		{/if}
 	{/snippet}

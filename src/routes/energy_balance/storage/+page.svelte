@@ -21,6 +21,7 @@
 	import type { ActivatedSolution } from '$lib/types';
 	import { nextColor, resetColorState } from '$lib/colors';
 	import Entries from '$lib/entries';
+	import Radio from '$components/forms/Radio.svelte';
 
 	useURLParams();
 
@@ -491,7 +492,7 @@
 					></Dropdown>
 				{/if}
 				{#if selectedCarrier !== null && selectedYear !== null}
-					<Dropdown
+					<Radio
 						options={windowSizes}
 						bind:value={selectedWindowSize}
 						label="Smoothing Window Size"
@@ -500,7 +501,7 @@
 						{#snippet helpText()}
 							Visualize the rolling average of hourly values over a longer time period.
 						{/snippet}
-					</Dropdown>
+					</Radio>
 				{/if}
 			</FilterSection>
 			{#if selectedSolution !== null && selectedCarrier !== null && selectedYear !== null}

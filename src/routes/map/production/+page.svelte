@@ -10,15 +10,16 @@
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
 	import MapPlot from '$components/MapPlot.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
-	import type { MapPlotData } from '$components/MapPlot.svelte';
+	import type { ContextMenuItem, MapPlotData, Pie } from '$components/MapPlot.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import Button from '$components/Button.svelte';
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
-	import { useURLParams } from '@/lib/queryParams.svelte';
+	import { appendParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
 
 	import { computeLineData, computePieData, type EnergyType } from './processData';
+	import Radio from '$components/forms/Radio.svelte';
 
 	useURLParams();
 
@@ -66,6 +67,40 @@
 	async function refreshData() {
 		await fetchData();
 		plot?.resetZoom();
+	}
+
+	// ======================================
+	// Context Menu
+	// ======================================
+
+	function getContextMenuItems(pie: Pie | undefined): ContextMenuItem[] {
+		if (!selectedSolution || !selectedCarrier || !selectedYear) return [];
+
+		const items: ContextMenuItem[] = [
+			{
+				label: 'Go to The Transition Pathway - Production',
+				href: appendParametersToPath('/transition/production', {
+					[QUERY_PARAM_KEYS.solutions]: selectedSolution.solution_name,
+					[QUERY_PARAM_KEYS.scenarios]: selectedSolution.scenario_name,
+					[QUERY_PARAM_KEYS.carrier]: selectedCarrier
+				})
+			}
+		];
+
+		if (pie) {
+			items.push({
+				label: `Go to The Energy Balance - Nodal for ${pie.label}`,
+				href: appendParametersToPath(`/energy_balance/nodal`, {
+					[QUERY_PARAM_KEYS.solution]: selectedSolution.solution_name,
+					[QUERY_PARAM_KEYS.scenario]: selectedSolution.scenario_name,
+					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+					[QUERY_PARAM_KEYS.year]: selectedYear,
+					[QUERY_PARAM_KEYS.node]: pie.label
+				})
+			});
+		}
+		console.log('Generate context menu items', pie?.label);
+		return items;
 	}
 
 	// ======================================
@@ -136,17 +171,17 @@
 					label="Carrier"
 					onUpdate={refreshData}
 					disabled={fetching || solutionLoading}
-					urlParam="carrier"
+					urlParam={QUERY_PARAM_KEYS.carrier}
 					unsetIfInvalid
 				></Dropdown>
 				{#if selectedCarrier !== null}
-					<Dropdown
+					<Radio
 						options={energyTypes}
 						bind:value={selectedEnergyType}
 						label="Energy Type"
 						disabled={fetching || solutionLoading}
-						urlParam="energyType"
-					></Dropdown>
+						urlParam={QUERY_PARAM_KEYS.energyType}
+					></Radio>
 				{/if}
 			</FilterSection>
 			{#if selectedSolution !== null && selectedCarrier !== null}
@@ -200,6 +235,7 @@
 				systemCoords={selectedSolution.detail.system.coords}
 				{unit}
 				map={selectedMap}
+				{getContextMenuItems}
 			/>
 		{/if}
 	{/snippet}

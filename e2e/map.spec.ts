@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { expectScreenshot, selectFromDropdown, selectSolution } from './helper';
+import { expectScreenshot, selectFromDropdown, selectRadioOption, selectSolution } from './helper';
 
 const PAGE_URL = '/map/capacity';
 
@@ -14,7 +14,7 @@ test('map: technology type', async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
-	await selectFromDropdown(page, 'Technology Type', 'storage');
+	await selectRadioOption(page, 'Technology Type', 'storage');
 	await expectScreenshot(page, '#map', `eeht_pf/storage-energy/electricity/2022/countries.png`);
 });
 
@@ -22,8 +22,8 @@ test('map: storage type', async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
-	await selectFromDropdown(page, 'Technology Type', 'storage');
-	await page.getByRole('radio', { name: 'power' }).check();
+	await selectRadioOption(page, 'Technology Type', 'storage');
+	await selectRadioOption(page, 'Storage Type', 'power');
 	await expectScreenshot(page, '#map', `eeht_pf/storage-power/electricity/2022/countries.png`);
 });
 

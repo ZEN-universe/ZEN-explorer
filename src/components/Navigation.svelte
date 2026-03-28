@@ -3,23 +3,23 @@
 	import { resolve } from '$app/paths';
 	import { addCurrentSolutionToURL } from '$lib/queryParams.svelte';
 	import { getTheme, toggleTheme } from '@/lib/theme.svelte';
-	import type { ResolvedPathname } from '$app/types';
+	import type { Pathname } from '$app/types';
 
-	const transition_urls: Record<string, ResolvedPathname> = {
-		Capacity: resolve('/transition/capacity'),
-		Production: resolve('/transition/production'),
-		Emissions: resolve('/transition/emissions'),
-		Costs: resolve('/transition/costs')
+	const transition_urls: Record<string, Pathname> = {
+		Capacity: '/transition/capacity',
+		Production: '/transition/production',
+		Emissions: '/transition/emissions',
+		Costs: '/transition/costs'
 	};
 
-	const energy_balance_urls: Record<string, ResolvedPathname> = {
-		Nodal: resolve('/energy_balance/nodal'),
-		Storage: resolve('/energy_balance/storage')
+	const energy_balance_urls: Record<string, Pathname> = {
+		Nodal: '/energy_balance/nodal',
+		Storage: '/energy_balance/storage'
 	};
 
-	const map_urls: Record<string, ResolvedPathname> = {
-		Capacity: resolve('/map/capacity'),
-		Production: resolve('/map/production')
+	const map_urls: Record<string, Pathname> = {
+		Capacity: '/map/capacity',
+		Production: '/map/production'
 	};
 
 	let currentPage = $derived(page.url.pathname.slice(0, -1));
@@ -207,10 +207,15 @@
 			class="mb-4 block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
 			>The Energy System</a
 		>
-		<a
-			href={addCurrentSolutionToURL('/map', false)}
-			class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
-			>The Map</a
-		>
+		<h2 class="mb-0 px-3 text-sm tracking-wide text-gray-500 uppercase">The Map</h2>
+		<div class="mb-4">
+			{#each Object.entries(map_urls) as [title, url] (title)}
+				<a
+					href={addCurrentSolutionToURL(url, false)}
+					class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
+					>{title}</a
+				>
+			{/each}
+		</div>
 	</div>
 </aside>
