@@ -65,7 +65,7 @@
 
 <FilterLabel {labelId} {label} {helpText}></FilterLabel>
 
-<div class="mb-2 flex gap-2" role="radiogroup" aria-labelledby={labelId}>
+<div class="mb-2 flex flex-wrap gap-2" role="radiogroup" aria-labelledby={labelId}>
 	{#each options as option (option.value)}
 		<div class="relative">
 			<input
