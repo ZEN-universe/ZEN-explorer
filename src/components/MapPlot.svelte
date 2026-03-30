@@ -4,8 +4,7 @@
 	import { pointer, select } from 'd3-selection';
 	import { pie as d3pie, arc as d3arc } from 'd3-shape';
 	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior } from 'd3-zoom';
-	import { onDestroy } from 'svelte';
-	import { fade } from 'svelte/transition';
+	import { onDestroy, onMount } from 'svelte';
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
@@ -17,6 +16,7 @@
 	import { allColors } from '$lib/colors';
 	import { exportAsSVG } from '$lib/export';
 	import HelpTooltip from './HelpTooltip.svelte';
+	import ContextMenu, { type ContextMenuItem } from './ContextMenu.svelte';
 
 	let topology: Topology | null = $state(null);
 	$effect(() => {
@@ -37,11 +37,6 @@
 	}
 	export interface MapPlotData {
 		[node: string]: DataRow[];
-	}
-
-	export interface ContextMenuItem {
-		label: string;
-		href: string;
 	}
 
 	interface Props {
@@ -380,7 +375,6 @@
 	}
 
 	function toggleFocusOnElement(event: MouseEvent) {
-		closeContextMenu();
 		const pos = pointer(event);
 		const pie = findPie(pos);
 		if (pie) {
@@ -519,6 +513,8 @@
 		handleSize();
 	}
 
+	//#region Context Menu
+
 	let contextMenuOpen = $state(false);
 	let contextMenuX = $state(0);
 	let contextMenuY = $state(0);
@@ -528,16 +524,26 @@
 	function openContextMenu(event: MouseEvent) {
 		event.preventDefault();
 		event.stopPropagation();
-		const pos = pointer(event);
-		contextMenuX = pos[0];
-		contextMenuY = pos[1];
+		contextMenuX = event.clientX;
+		contextMenuY = event.clientY;
 		contextMenuOpen = true;
+		// fix the context menu to the currently hovered pie, so it doesn't change when moving the mouse
 		contextMenuPie = hoveredPie;
 	}
 
 	function closeContextMenu() {
 		contextMenuOpen = false;
 	}
+
+	onMount(() => {
+		document.addEventListener('click', closeContextMenu);
+	});
+
+	onDestroy(() => {
+		document.removeEventListener('click', closeContextMenu);
+	});
+
+	//#endregion
 </script>
 
 <!-- eslint-disable svelte/no-navigation-without-resolve -->
@@ -703,26 +709,7 @@
 		{/each}
 		<!-- Context Menu -->
 		{#if contextMenuOpen && contextMenuItems}
-			<div
-				class="absolute z-6 flex flex-col rounded border border-gray-800 bg-white shadow-xl/20 dark:border-gray-900 dark:bg-gray-800"
-				style:top={`${contextMenuY + 2}px`}
-				style:left={`${contextMenuX + 2}px`}
-				transition:fade={{ duration: 100 }}
-			>
-				{#each contextMenuItems as item, i (i)}
-					<a
-						href={item.href}
-						class={[
-							'p-2 hover:bg-gray-200 dark:hover:bg-gray-600',
-							i > 0 && 'border-t border-gray-600 dark:border-gray-500',
-							i === 0 && 'rounded-t',
-							i === contextMenuItems.length - 1 && 'rounded-b'
-						]}
-					>
-						{item.label}
-					</a>
-				{/each}
-			</div>
+			<ContextMenu x={contextMenuX} y={contextMenuY} items={contextMenuItems} />
 		{/if}
 	</ContentBox>
 {/if}

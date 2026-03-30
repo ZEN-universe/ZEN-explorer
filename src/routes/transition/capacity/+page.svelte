@@ -15,17 +15,20 @@
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
+	import type { ContextMenuItem } from '$components/ContextMenu.svelte';
 
 	import { fetchTotal } from '$lib/temple';
 	import {
+		findSolutionBySuffix,
 		generateLabelsForSolutionComparison,
+		generateSolutionSuffix,
 		onClickLegendForSolutionComparison,
 		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
 	import type { ActivatedSolution } from '$lib/types';
 	import { removeDuplicates } from '$lib/utils';
 	import Entries from '@/lib/entries';
-	import { QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
+	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
 
 	import type { Variable, TechnologyType, StorageType, AggregationOption } from './processData';
 	import { computeDatasets } from './processData';
@@ -235,6 +238,48 @@
 			fetchData();
 		});
 	});
+
+	// ======================================
+	// Context menu
+	// ======================================
+
+	function getContextMenuItems(year: string, datasetIndex: number): ContextMenuItem[] {
+		const solution = findSolutionBySuffix(selectedSolutions, datasets[datasetIndex].stack);
+		if (!solution || !selectedCarrier) return [];
+
+		return [
+			{
+				label: `Go to The Transition Pathway - Production`,
+				href: addParametersToPath('/transition/production', {
+					[QUERY_PARAM_KEYS.solutions]:
+						selectedSolutions.map((s) => s?.solution_name).join('~') || null,
+					[QUERY_PARAM_KEYS.scenarios]:
+						selectedSolutions.map((s) => s?.scenario_name).join('~') || null,
+					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+					[QUERY_PARAM_KEYS.activeYear]: year,
+					[QUERY_PARAM_KEYS.activeSolution]: generateSolutionSuffix(solution)
+				})
+			},
+			{
+				label: `Go to The Map - Capacity`,
+				href: addParametersToPath(`/map/capacity`, {
+					[QUERY_PARAM_KEYS.solution]: solution.solution_name ?? null,
+					[QUERY_PARAM_KEYS.scenario]: solution.scenario_name ?? null,
+					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+					[QUERY_PARAM_KEYS.year]: year
+				})
+			},
+			{
+				label: `Go to The Map - Production`,
+				href: addParametersToPath(`/map/production`, {
+					[QUERY_PARAM_KEYS.solution]: solution.solution_name ?? null,
+					[QUERY_PARAM_KEYS.scenario]: solution.scenario_name ?? null,
+					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+					[QUERY_PARAM_KEYS.year]: year
+				})
+			}
+		];
+	}
 
 	// ======================================
 	// Data fetching
@@ -449,6 +494,7 @@
 				generateLabels={generateLabelsForSolutionComparison}
 				resetLegendState={resetLegendStateForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
+				{getContextMenuItems}
 				bind:this={chart}
 			></Chart>
 		{/if}

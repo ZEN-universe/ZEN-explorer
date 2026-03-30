@@ -619,7 +619,7 @@
 
 			// Get plot data, as a base we take the grouped data adapted to the cost selection.
 			const pattern = solutionIndex > 0 ? nextPattern() : undefined;
-			const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+			const suffix = generateSolutionSuffix(solution);
 			patterns.push(createColorBoxItem(suffix, pattern));
 			const datasets: ChartDataset<'bar'>[] = entries.toArray().map((entry) => {
 				const label =

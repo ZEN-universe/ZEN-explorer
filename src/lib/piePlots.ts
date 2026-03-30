@@ -60,7 +60,7 @@ export function getPlotOptions(labelSuffix: string): ChartOptions<'pie'> {
 			},
 			color: (context) => {
 				const bgColor = (context.dataset.backgroundColor as string[])[context.dataIndex];
-				if (!bgColor.startsWith('rgb')) {
+				if (!bgColor.startsWith || !bgColor.startsWith('rgb')) {
 					return '#000'; // Default to black if color is not defined in rgb format
 				}
 				return getBrightness(bgColor) > 125 ? '#000' : '#fff'; // Use black for light backgrounds and white for dark backgrounds

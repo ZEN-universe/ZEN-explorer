@@ -1,6 +1,8 @@
-import { replaceState, afterNavigate } from '$app/navigation';
+import { replaceState as svelteReplaceState, afterNavigate } from '$app/navigation';
 import { page } from '$app/state';
 import type { Pathname } from '$app/types';
+
+/* eslint-disable svelte/prefer-svelte-reactivity */
 
 export type URLParams = Record<string, string | null>;
 
@@ -10,6 +12,7 @@ export const QUERY_PARAM_KEYS = {
 	scenario: 'scenario',
 	scenarios: 'scenarios',
 	carrier: 'carrier',
+	carriers: 'carriers',
 	capacityVariable: 'variable',
 	technologyType: 'technologyType',
 	storageType: 'storageType',
@@ -19,7 +22,10 @@ export const QUERY_PARAM_KEYS = {
 	transportTechnologies: 'transp_tech',
 	year: 'year',
 	node: 'node',
-	smoothing_window_size: 'window'
+	nodes: 'nodes',
+	smoothing_window_size: 'window',
+	activeYear: 'active_year',
+	activeSolution: 'active_solution'
 };
 
 let urlParams: URLParams = $state({});
@@ -146,34 +152,23 @@ export function addCurrentSolutionToURL(
 	return buildURL(params, url).href;
 }
 
-export function appendParametersToPath(
+export function addParametersToPath(
 	path: Pathname,
 	filterParams: Record<string, string | null>
 ): string {
-	// // eslint-disable-next-line svelte/prefer-svelte-reactivity
-	// const params = new URLSearchParams();
-	// for (const [key, value] of Object.entries(filterParams)) {
-	// 	if (value !== null) {
-	// 		params.set(key, value);
-	// 	}
-	// }
-
-	// return `${path}?${params.toString()}`;
 	return buildURL(filterParams, path).href;
 }
 
 export function updateURLParam(key: string, value: string | null): void {
 	urlParams[key] = value;
-	// eslint-disable-next-line svelte/no-navigation-without-resolve
-	replaceState(buildURL(urlParams), $state.snapshot(urlParams));
+	replaceState(buildURL(urlParams));
 }
 
 export function updateURLParams(params: URLParams): void {
 	for (const key in params) {
 		urlParams[key] = params[key];
 	}
-	// eslint-disable-next-line svelte/no-navigation-without-resolve
-	replaceState(buildURL(urlParams), $state.snapshot(urlParams));
+	replaceState(buildURL(urlParams));
 }
 
 export function useURLParams() {
@@ -184,6 +179,29 @@ export function useURLParams() {
 	});
 }
 
+export function getURLHash(): string | null {
+	const hash = window.location.hash;
+	return hash ? decodeURIComponent(hash.substring(1)) : null;
+}
+
+export function updateURLHash(hash: string): void {
+	const url = new URL(window.location.href);
+	url.hash = `#${encodeURIComponent(hash)}`;
+	replaceState(url);
+}
+
+export function removeURLHash(): void {
+	const url = new URL(window.location.href);
+	url.hash = '';
+	replaceState(url);
+}
+
+function replaceState(url: URL): void {
+	// eslint-disable-next-line svelte/no-navigation-without-resolve
+	svelteReplaceState(url, $state.snapshot(urlParams));
+}
+
 function resetURLParams() {
-	urlParams = Object.fromEntries(page.url.searchParams.entries()) as URLParams;
+	const searchParams = new URLSearchParams(window.location.search);
+	urlParams = Object.fromEntries(searchParams.entries()) as URLParams;
 }

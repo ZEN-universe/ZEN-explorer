@@ -59,7 +59,9 @@
 	$effect(() => {
 		if (urlParam === undefined) return;
 		value;
-		tick().then(() => updateURLParam(urlParam, value));
+		tick().then(() => {
+			updateURLParam(urlParam, value);
+		});
 	});
 </script>
 

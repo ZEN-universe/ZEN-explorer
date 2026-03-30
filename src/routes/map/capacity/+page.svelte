@@ -2,13 +2,14 @@
 	import Radio from '$components/forms/Radio.svelte';
 	import Dropdown from '$components/forms/Dropdown.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
-	import MapPlot, { type ContextMenuItem, type Pie } from '$components/MapPlot.svelte';
+	import MapPlot, { type Pie } from '$components/MapPlot.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import Button from '$components/Button.svelte';
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
+	import type { ContextMenuItem } from '$components/ContextMenu.svelte';
 
 	import type { ActivatedSolution, System } from '$lib/types';
 	import { fetchTotal } from '$lib/temple';
@@ -16,7 +17,7 @@
 	import { removeDuplicates } from '$lib/utils';
 	import Entries from '@/lib/entries';
 	import { onValueChange } from '@/lib/onValueChange.svelte';
-	import { appendParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
+	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
 
 	import {
 		computePieData,
@@ -96,7 +97,7 @@
 		const items: ContextMenuItem[] = [
 			{
 				label: 'Go to The Transition Pathway - Capacity',
-				href: appendParametersToPath('/transition/capacity', {
+				href: addParametersToPath('/transition/capacity', {
 					[QUERY_PARAM_KEYS.solutions]: selectedSolution.solution_name,
 					[QUERY_PARAM_KEYS.scenarios]: selectedSolution.scenario_name,
 					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
@@ -107,7 +108,7 @@
 			},
 			{
 				label: 'Go to The Transition Pathway - Production',
-				href: appendParametersToPath('/transition/production', {
+				href: addParametersToPath('/transition/production', {
 					[QUERY_PARAM_KEYS.solutions]: selectedSolution.solution_name,
 					[QUERY_PARAM_KEYS.scenarios]: selectedSolution.scenario_name,
 					[QUERY_PARAM_KEYS.carrier]: selectedCarrier
@@ -117,8 +118,8 @@
 
 		if (pie) {
 			items.push({
-				label: `Go to The Energy Balance - Nodal for ${pie.label}`,
-				href: appendParametersToPath(`/energy_balance/nodal`, {
+				label: `Go to The Energy Balance - Nodal (Node: ${pie.label})`,
+				href: addParametersToPath(`/energy_balance/nodal`, {
 					[QUERY_PARAM_KEYS.solution]: selectedSolution.solution_name,
 					[QUERY_PARAM_KEYS.scenario]: selectedSolution.scenario_name,
 					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
@@ -227,6 +228,7 @@
 						bind:value={selectedYear}
 						options={years.map((year) => year.toString())}
 						label="Year"
+						urlParam={QUERY_PARAM_KEYS.year}
 						unsetIfInvalid
 						default={years.length > 0 ? years[0].toString() : null}
 					></Dropdown>

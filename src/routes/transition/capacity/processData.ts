@@ -105,7 +105,7 @@ export function computeDatasets(
 	const datasets: ChartDataset<'bar'>[] = selectedSolutions.flatMap((solution, index) => {
 		if (solution === null || !fetchedEntries[index]?.length) return [];
 
-		const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+		const suffix = generateSolutionSuffix(solution);
 		const pattern = index > 0 ? nextPattern() : undefined;
 		patterns.push(createColorBoxItem(suffix, pattern));
 		return generateDatasetsForSolution(

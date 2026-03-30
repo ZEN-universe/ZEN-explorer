@@ -6,7 +6,9 @@
 		getPlotOptions,
 		hasMultipleSolutions as hasMultipleSolutionsFn
 	} from '@/lib/piePlots';
+	import { getURLParam, QUERY_PARAM_KEYS, updateURLParam } from '@/lib/queryParams.svelte';
 	import type { ChartDataset } from 'chart.js';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		datasets: ChartDataset<'bar'>[];
@@ -15,11 +17,27 @@
 		solution: string | null;
 		labelSuffix: string;
 	}
-	let { datasets, labels, year, solution, labelSuffix }: Props = $props();
+	let {
+		datasets,
+		labels,
+		year = $bindable(),
+		solution = $bindable(),
+		labelSuffix
+	}: Props = $props();
 
 	let dataForActiveYear = $derived(getDataForActiveYear(datasets, year, solution, labels));
 
 	let hasMultipleSolutions = $derived(hasMultipleSolutionsFn(datasets));
+
+	onMount(() => {
+		year = getURLParam(QUERY_PARAM_KEYS.activeYear);
+		solution = getURLParam(QUERY_PARAM_KEYS.activeSolution);
+	});
+
+	$effect(() => {
+		updateURLParam(QUERY_PARAM_KEYS.activeYear, year);
+		updateURLParam(QUERY_PARAM_KEYS.activeSolution, solution);
+	});
 
 	function filterDatasets(
 		criteria: (value: number) => boolean,

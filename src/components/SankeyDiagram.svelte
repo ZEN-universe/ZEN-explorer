@@ -27,10 +27,13 @@
 	import { exportAsSVG } from '$lib/export';
 	import { debounce } from '$lib/debounce';
 	import { EPS } from '@/lib/constants';
+	import { getURLHash, removeURLHash, updateURLHash } from '@/lib/queryParams.svelte';
 
 	import Tooltip from './Tooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
 	import HelpTooltip from './HelpTooltip.svelte';
+	import type { ContextMenuItem } from './ContextMenu.svelte';
+	import ContextMenu from './ContextMenu.svelte';
 
 	let width = $state(936);
 	let height = $state(800);
@@ -47,9 +50,16 @@
 		nodes: Partial<SankeyNode>[];
 		links: PartialSankeyLink[];
 		legendItems?: LegendItem[];
+		getContextMenuItems: (node: RawSankeyNode) => ContextMenuItem[];
 	}
 
-	let { id = 'diagram', nodes: initialNodes, links: initialLinks, legendItems }: Props = $props();
+	let {
+		id = 'diagram',
+		nodes: initialNodes,
+		links: initialLinks,
+		legendItems,
+		getContextMenuItems
+	}: Props = $props();
 
 	let debounceLayoutDiagram = debounce(layoutDiagram, 100);
 
@@ -324,6 +334,7 @@
 		.on('zoom', (event) => {
 			transform = event.transform.toString();
 			updateActiveNodeRect();
+			removeURLHash();
 		})
 		.on('end', () => {
 			updateActiveNodeRect();
@@ -373,6 +384,9 @@
 		// Apply the zoom transformation
 		const selection = select(svg as SVGSVGElement);
 		zoomBehavior.transform(selection, zoomIdentity.translate(translateX, translateY).scale(scale));
+
+		// Update URL hash with the focused carrier
+		updateURLHash(carrier);
 	}
 
 	// ==================
@@ -386,6 +400,7 @@
 		.on('start', function () {
 			if (!this.parentNode) return;
 			this.parentNode.appendChild(this);
+			removeURLHash();
 		})
 		.on('drag', function (event) {
 			const idx = Number((this as SVGGElement).dataset.idx);
@@ -401,6 +416,10 @@
 		nodes;
 		if (!svg) return;
 		select(svg).selectAll<SVGRectElement, unknown>('.node').call(dragBehavior);
+
+		// Focus on the node specified in the URL hash, if any
+		const hash = getURLHash();
+		if (hash) focusCarrier(hash);
 	});
 
 	/**
@@ -527,6 +546,36 @@
 		if (!svg) return;
 		exportAsSVG(svg, 'sankey_diagram.svg');
 	}
+
+	// ===================
+	// Context Menu
+	// ===================
+
+	let contextMenuX = $state(0);
+	let contextMenuY = $state(0);
+	let contextMenuOpen = $state(false);
+	let contextMenuItems: ContextMenuItem[] = $state([]);
+
+	function openContextMenu(event: MouseEvent, node: RawSankeyNode) {
+		event.preventDefault();
+		event.stopPropagation();
+		contextMenuX = event.clientX;
+		contextMenuY = event.clientY;
+		contextMenuItems = getContextMenuItems(node);
+		contextMenuOpen = contextMenuItems.length > 0;
+	}
+
+	function closeContextMenu() {
+		contextMenuOpen = false;
+	}
+
+	onMount(() => {
+		window.addEventListener('click', closeContextMenu);
+	});
+
+	onDestroy(() => {
+		window.removeEventListener('click', closeContextMenu);
+	});
 </script>
 
 <svelte:window onresize={handleSize} onscroll={updateSvgRect} />
@@ -596,7 +645,7 @@
 				</g>
 				<g class="nodes">
 					{#each nodes as node, idx (idx)}
-						<g class="node" data-idx={idx}>
+						<g class="node" data-idx={idx} oncontextmenu={(event) => openContextMenu(event, node)}>
 							<rect
 								x={node.x}
 								y={node.y + 0.5}
@@ -696,6 +745,9 @@
 					{/if}
 				{/if}
 			</Tooltip>
+		{/if}
+		{#if contextMenuOpen}
+			<ContextMenu x={contextMenuX} y={contextMenuY} items={contextMenuItems} />
 		{/if}
 	</div>
 </ContentBox>

@@ -352,7 +352,7 @@
 				entries = entries.normalize();
 			}
 
-			const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+			const suffix = generateSolutionSuffix(solution);
 			const pattern = solutionIndex > 0 ? nextPattern() : undefined;
 			patterns.push(createColorBoxItem(suffix, pattern));
 
@@ -414,7 +414,7 @@
 				entry = selectedYears.map(() => value);
 			}
 
-			const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+			const suffix = generateSolutionSuffix(solution);
 			const label =
 				(selectedSubdivision || selectedCumulation == 'Annual'
 					? 'Annual Emissions Limit'

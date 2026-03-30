@@ -16,7 +16,6 @@
 		emptyText?: string;
 		disabled?: boolean;
 		urlParam?: string;
-		resetIfInvalid?: boolean;
 		default?: string[] | null;
 		onUpdate?: (value: string[]) => void;
 	}
@@ -28,7 +27,6 @@
 		emptyText = 'No options available.',
 		disabled = false,
 		urlParam,
-		resetIfInvalid = false,
 		onUpdate = () => {}
 	}: Props = $props();
 	const formId = $props.id();
@@ -89,7 +87,7 @@
 	$effect(() => {
 		options;
 		untrack(() => {
-			if (!resetIfInvalid) return;
+			if (!urlParam) return;
 
 			if (urlParams !== null) {
 				// First check if we've already used our URL params.
@@ -98,7 +96,6 @@
 				urlParams = null; // only use URL param on first load
 			} else if (previousOptions !== serializeOptions()) {
 				// Then check if options have changed to prevent resetting the value on every render.
-				console.log(`Resetting ${label} MultiSelect because options changed`);
 				value = options.map((o) => o.value);
 				onUpdate(value);
 			}

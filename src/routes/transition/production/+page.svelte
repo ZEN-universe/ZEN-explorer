@@ -23,14 +23,16 @@
 	import Spinner from '$components/Spinner.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import type { ContextMenuItem } from '$components/ContextMenu.svelte';
 
 	import {
+		findSolutionBySuffix,
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
 		onClickLegendForSolutionComparison,
 		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
-	import { useURLParams, QUERY_PARAM_KEYS } from '$lib/queryParams.svelte';
+	import { useURLParams, QUERY_PARAM_KEYS, addParametersToPath } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
@@ -344,6 +346,31 @@
 		}
 	}
 
+	function getContextMenuItems(year: string, datasetIndex: number): ContextMenuItem[] {
+		const solution = findSolutionBySuffix(selectedSolutions, datasets[datasetIndex].stack);
+		if (!selectedCarrier || !solution) return [];
+		return [
+			{
+				label: `Go to The Energy Balance - Nodal`,
+				href: addParametersToPath('/energy_balance/nodal', {
+					[QUERY_PARAM_KEYS.solution]: solution.solution_name || '',
+					[QUERY_PARAM_KEYS.scenario]: solution.scenario_name || '',
+					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+					[QUERY_PARAM_KEYS.year]: year
+				})
+			},
+			{
+				label: `Go to The Energy System`,
+				href:
+					addParametersToPath('/energy_system', {
+						[QUERY_PARAM_KEYS.solution]: solution.solution_name || '',
+						[QUERY_PARAM_KEYS.scenario]: solution.scenario_name || '',
+						[QUERY_PARAM_KEYS.year]: year
+					}) + `#${selectedCarrier}`
+			}
+		];
+	}
+
 	//#region Fetch and process data
 
 	$effect(() => {
@@ -367,7 +394,7 @@
 				fetchProductionData(solution!, selectedCarrier!, 'demand')
 			)
 		);
-		// Remove UnitData from the response
+		// Remove UnitData from the responses
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		data = response.map(({ unit, ...res }) => res as Record<ProductionComponent, Entries>);
 		units = response[0].unit?.data || [];
@@ -515,7 +542,7 @@
 			}
 
 			// Convert to dataset format
-			let suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+			let suffix = generateSolutionSuffix(solution);
 			let pattern = i > 0 ? nextPattern() : undefined;
 			patterns.push(createColorBoxItem(suffix, pattern));
 			return entries.toArray().map((entry) => {
@@ -606,7 +633,6 @@
 						emptyText="No conversion technologies available."
 						disabled={solutionLoading || fetching}
 						urlParam={QUERY_PARAM_KEYS.conversionTechnologies}
-						resetIfInvalid
 					></MultiSelect>
 					<MultiSelect
 						bind:value={selectedStorageTechnologies}
@@ -615,7 +641,6 @@
 						emptyText="No storage technologies available."
 						disabled={solutionLoading || fetching}
 						urlParam={QUERY_PARAM_KEYS.storageTechnologies}
-						resetIfInvalid
 					></MultiSelect>
 					<MultiSelect
 						bind:value={selectedTransportTechnologies}
@@ -624,7 +649,6 @@
 						emptyText="No transport technologies available."
 						disabled={solutionLoading || fetching}
 						urlParam={QUERY_PARAM_KEYS.transportTechnologies}
-						resetIfInvalid
 					></MultiSelect>
 				</FilterSection>
 				{#if selectedCarrier !== null}
@@ -678,10 +702,16 @@
 				resetLegendState={resetLegendStateForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
 				{onClickBar}
+				{getContextMenuItems}
 				bind:this={chart}
 			></Chart>
 
-			<PiePlots {datasets} {labels} year={activeYear} solution={activeSolution} {labelSuffix}
+			<PiePlots
+				{datasets}
+				{labels}
+				bind:year={activeYear}
+				bind:solution={activeSolution}
+				{labelSuffix}
 			></PiePlots>
 		{/if}
 	{/snippet}

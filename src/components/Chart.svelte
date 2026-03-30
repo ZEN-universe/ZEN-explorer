@@ -2,7 +2,7 @@
 	import BaseChart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
-	import { onDestroy, tick } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
 	import ChartDataLabelsPlugin from 'chartjs-plugin-datalabels';
 
@@ -11,6 +11,7 @@
 	import ContentBox from './ContentBox.svelte';
 	import { getTheme } from '@/lib/theme.svelte';
 	import { getHiddenPatterns, onClickPattern } from '@/lib/compareSolutions.svelte';
+	import ContextMenu, { type ContextMenuItem } from './ContextMenu.svelte';
 
 	BaseChart.register(zoomPlugin);
 
@@ -33,6 +34,7 @@
 		resetLegendState?: (chart: BaseChart) => void;
 		onClickLegend?: (item: LegendItem, chart: BaseChart, activateOnlyOneItem: boolean) => void;
 		onClickBar?: (label: string, datasetIndex: number) => void;
+		getContextMenuItems?: (year: string, datasetIndex: number) => ContextMenuItem[];
 	}
 
 	let {
@@ -53,7 +55,8 @@
 		generateLabels,
 		resetLegendState,
 		onClickLegend,
-		onClickBar
+		onClickBar,
+		getContextMenuItems
 	}: Props = $props();
 
 	let captureScreenshot: boolean = $state(false);
@@ -353,6 +356,41 @@
 		}
 		onClickBar(labels[res[0].index], res[0].datasetIndex);
 	}
+
+	//#region Context Menu
+
+	let contextMenuX: number = $state(0);
+	let contextMenuY: number = $state(0);
+	let contextMenuVisible: boolean = $state(true);
+	let contextMenuItems: ContextMenuItem[] = $state([]);
+	let contextMenuComponent = $state<ContextMenu>();
+
+	async function openContextMenu(event: MouseEvent) {
+		if (!chart || !getContextMenuItems || !labels) return;
+		const res = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+		if (res.length === 0) {
+			return;
+		}
+		event.preventDefault();
+		contextMenuX = event.clientX;
+		contextMenuY = event.clientY;
+		contextMenuItems = getContextMenuItems(labels[res[0].index], res[0].datasetIndex);
+		contextMenuVisible = contextMenuItems.length > 0;
+	}
+
+	function closeContextMenu() {
+		contextMenuVisible = false;
+	}
+
+	onMount(() => {
+		document.addEventListener('click', closeContextMenu);
+	});
+
+	onDestroy(() => {
+		document.removeEventListener('click', closeContextMenu);
+	});
+
+	//#endregion
 </script>
 
 {#snippet legend()}
@@ -398,8 +436,24 @@
 
 {#snippet chartSnippet()}
 	{#if showChart}
-		<div id={`${id}-container`} class="position-relative h-full max-w-full">
-			<canvas {id} height={initialHeight} use:handleChart onclick={emitClickBarEvent}></canvas>
+		<div class="relative">
+			<div id={`${id}-container`} class="h-full max-w-full">
+				<canvas
+					{id}
+					height={initialHeight}
+					use:handleChart
+					onclick={emitClickBarEvent}
+					oncontextmenu={openContextMenu}
+				></canvas>
+			</div>
+			{#if contextMenuVisible}
+				<ContextMenu
+					x={contextMenuX}
+					y={contextMenuY}
+					items={contextMenuItems}
+					bind:this={contextMenuComponent}
+				/>
+			{/if}
 		</div>
 	{/if}
 {/snippet}
