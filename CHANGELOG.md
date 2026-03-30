@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.5 (2026-03-30)
+
+- [Production] Bugfix: Subtract losses from transport flows within the selected nodes.
+- [Map] Add click toggable tooltip.
+- Add context menus to link other pages within a plot.
+- [Production, Costs] Add labels to pie plots.
+
 ## 0.9.4 (2026-03-04)
 
 - Fix keeping old selected solution in URL after navigation.
