@@ -14,7 +14,7 @@ export function computePieData(
 	selectedSolution: ActivatedSolution | null,
 	selectedCarrier: string | null,
 	selectedEnergyType: EnergyType,
-	selectedYear: string | null
+	selectedYear: number
 ): [MapPlotData | null, number, number] {
 	if (!selectedSolution || !selectedCarrier || !productionData || !selectedEnergyType) {
 		return [null, 0, 0];
@@ -41,17 +41,21 @@ export function computePieData(
 		}
 
 		return curData.filterByCriteria(filterCriteria).mapIndex((index) => {
-			if (index.technology === undefined) {
-				index.technology = label;
+			let technology = index.technology;
+			if (technology === undefined) {
+				technology = label;
 			} else if (suffix) {
-				index.technology = index.technology + suffix;
+				technology = technology + suffix;
 			}
-			return index;
+			return {
+				...index,
+				technology
+			};
 		});
 	});
 	const data = Entries.concatenate(entriesList);
 
-	const index = years.findIndex((year) => year.toString() === selectedYear);
+	const index = years.indexOf(selectedYear);
 	const mapPlotData = data
 		.filterDataByIndex([index])
 		.filter(({ data: [d] }) => d > EPS)
@@ -121,13 +125,13 @@ export function computeLineData(
 	productionData: Record<ProductionComponent, Entries> | null,
 	years: number[],
 	selectedSolution: ActivatedSolution | null,
-	selectedYear: string | null
+	selectedYear: number
 ): [MapPlotData | null, number, number] {
 	if (!selectedSolution || !productionData) {
 		return [null, 0, 0];
 	}
 
-	const yearIndex = years.findIndex((year) => year.toString() === selectedYear);
+	const yearIndex = years.indexOf(selectedYear);
 	const entries = productionData.flow_transport.reduce((acc, { index, data }) => {
 		acc[index.edge] = acc[index.edge] || [];
 		acc[index.edge].push({ technology: index.technology, value: data[yearIndex] });

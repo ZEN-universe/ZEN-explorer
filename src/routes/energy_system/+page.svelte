@@ -2,7 +2,6 @@
 	import { untrack } from 'svelte';
 
 	import MultiSelect from '$components/forms/MultiSelect.svelte';
-	import Dropdown from '$components/forms/Dropdown.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import SankeyDiagram, { type LegendItem } from '$components/SankeyDiagram.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
@@ -11,6 +10,7 @@
 	import Spinner from '$components/Spinner.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import Slider from '$components/forms/Slider.svelte';
 
 	import Entries from '$lib/entries';
 	import { fetchTotal } from '$lib/temple';
@@ -24,7 +24,7 @@
 	} from '$lib/types';
 	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
 	import { nextColor, resetColorState } from '$lib/colors';
-	import { getTransportEdges, toOptions } from '$lib/utils';
+	import { getTransportEdges } from '$lib/utils';
 	import { generateSolutionSuffix } from '@/lib/compareSolutions.svelte';
 
 	useURLParams();
@@ -37,7 +37,7 @@
 	let selectedSolution: ActivatedSolution | null = $state(null);
 	let selectedCarriers: string[] = $state([]);
 	let selectedNodes: string[] = $state([]);
-	let selectedYear: string | null = $state(null);
+	let selectedYear: number = $state(0);
 
 	let dataConversionInput: Entries | null = $state.raw(null);
 	let dataConversionOutput: Entries | null = $state(null);
@@ -82,7 +82,7 @@
 					[QUERY_PARAM_KEYS.scenarios]: selectedSolution.scenario_name,
 					[QUERY_PARAM_KEYS.carrier]: node.label,
 					[QUERY_PARAM_KEYS.activeSolution]: generateSolutionSuffix(selectedSolution),
-					[QUERY_PARAM_KEYS.activeYear]: selectedYear
+					[QUERY_PARAM_KEYS.activeYear]: selectedYear.toString()
 				})
 			}
 		];
@@ -289,7 +289,7 @@
 			node: selectedNodes,
 			technology: getTechnologiesRelatedToCarriers(selectedCarriers)
 		};
-		const indexOfYear = years.indexOf(Number(selectedYear));
+		const indexOfYear = years.indexOf(selectedYear);
 		if (indexOfYear === -1) return;
 		const links: PartialSankeyLink[] = [];
 
@@ -476,15 +476,14 @@
 				></MultiSelect>
 			</FilterSection>
 			<FilterSection title="Data Selection">
-				<Dropdown
+				<Slider
 					bind:value={selectedYear}
-					options={toOptions(years.map((year) => year.toString()))}
+					min={years[0]}
+					max={years[years.length - 1]}
+					step={selectedSolution.detail.system.interval_between_years}
 					label="Year"
-					disabled={fetching || solutionLoading}
 					urlParam={QUERY_PARAM_KEYS.year}
-					default={years.length > 0 ? years[0].toString() : null}
-					unsetIfInvalid
-				></Dropdown>
+				></Slider>
 				<MultiSelect
 					bind:value={selectedNodes}
 					options={nodes}

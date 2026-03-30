@@ -1,5 +1,11 @@
 import { test } from '@playwright/test';
-import { expectScreenshot, selectFromDropdown, selectRadioOption, selectSolution } from './helper';
+import {
+	expectScreenshot,
+	selectFromDropdown,
+	selectFromRangeSlider,
+	selectRadioOption,
+	selectSolution
+} from './helper';
 
 const PAGE_URL = '/map/capacity';
 
@@ -38,7 +44,8 @@ test('map: year', async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'heat');
-	await selectFromDropdown(page, 'Year', '2050');
+	await selectFromRangeSlider(page, 'Year', 2050);
+	await page.getByRole('slider').fill('2050');
 	await expectScreenshot(page, '#map', `eeht_pf/conversion/heat/2050/countries.png`);
 });
 

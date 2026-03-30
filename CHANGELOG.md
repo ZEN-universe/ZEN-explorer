@@ -6,6 +6,7 @@
 - [Map] Add click toggable tooltip.
 - Add context menus to link other pages within a plot.
 - [Production, Costs] Add labels to pie plots.
+- [Map, Energy System] Make year selection using a slider.
 
 ## 0.9.4 (2026-03-04)
 

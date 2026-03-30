@@ -18,9 +18,10 @@
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import type { ContextMenuItem } from '$components/ContextMenu.svelte';
+	import Radio from '$components/forms/Radio.svelte';
+	import Slider from '$components/forms/Slider.svelte';
 
 	import { computeLineData, computePieData, type EnergyType } from './processData';
-	import Radio from '$components/forms/Radio.svelte';
 
 	useURLParams();
 
@@ -38,7 +39,7 @@
 	let selectedSolution: ActivatedSolution | null = $state(null);
 	let selectedCarrier: string | null = $state(null);
 	let selectedEnergyType: EnergyType = $state('production');
-	let selectedYear: string | null = $state(null);
+	let selectedYear: number = $state(0);
 	let selectedMap: string | null = $state('world-3');
 
 	let solutionLoading: boolean = $state(false);
@@ -75,7 +76,7 @@
 	// ======================================
 
 	function getContextMenuItems(pie: Pie | undefined): ContextMenuItem[] {
-		if (!selectedSolution || !selectedCarrier || !selectedYear) return [];
+		if (!selectedSolution || !selectedCarrier) return [];
 
 		const items: ContextMenuItem[] = [
 			{
@@ -95,7 +96,7 @@
 					[QUERY_PARAM_KEYS.solution]: selectedSolution.solution_name,
 					[QUERY_PARAM_KEYS.scenario]: selectedSolution.scenario_name,
 					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
-					[QUERY_PARAM_KEYS.year]: selectedYear,
+					[QUERY_PARAM_KEYS.year]: selectedYear.toString(),
 					[QUERY_PARAM_KEYS.node]: pie.label
 				})
 			});
@@ -187,14 +188,14 @@
 			</FilterSection>
 			{#if selectedSolution !== null && selectedCarrier !== null}
 				<FilterSection title="Data Selection">
-					<Dropdown
+					<Slider
 						bind:value={selectedYear}
-						options={years.map((year) => year.toString())}
+						min={years[0]}
+						max={years[years.length - 1]}
+						step={selectedSolution.detail.system.interval_between_years}
 						label="Year"
 						urlParam={QUERY_PARAM_KEYS.year}
-						unsetIfInvalid
-						default={years.length > 0 ? years[0].toString() : null}
-					></Dropdown>
+					></Slider>
 					<Dropdown bind:value={selectedMap} options={AVAILABLE_MAPS} label="Map"></Dropdown>
 				</FilterSection>
 			{/if}

@@ -3,6 +3,7 @@ import {
 	expectScreenshot,
 	selectFromDropdown,
 	selectFromMultiSelect,
+	selectFromRangeSlider,
 	selectSolution
 } from './helper';
 
@@ -24,7 +25,7 @@ test('energy system: carriers', async ({ page }) => {
 test('energy system: year', async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
-	await selectFromDropdown(page, 'Year', '2050');
+	await selectFromRangeSlider(page, 'Year', 2050);
 	await expectScreenshot(page, '#diagram', `eeht_pf/all_carriers/2050/all_nodes.png`);
 });
 

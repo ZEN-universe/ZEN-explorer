@@ -32,6 +32,11 @@ export async function selectRadioOption(page: Page, groupLabel: string, optionNa
 		.check();
 }
 
+export async function selectFromRangeSlider(page: Page, sliderLabel: string, value: number) {
+	const slider = page.getByRole('slider', { name: sliderLabel });
+	await slider.fill(value.toString());
+}
+
 export async function expectScreenshot(page: Page, locator: string, screenshotName: string) {
 	await page.locator('h1').first().hover();
 	await expect(page.locator(locator)).toHaveScreenshot(screenshotName);

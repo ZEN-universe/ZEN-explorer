@@ -10,11 +10,11 @@ export function computePieData(
 	fetchedData: Entries | null,
 	years: number[],
 	selectedTechnologies: string[],
-	selectedYear: string | null,
+	selectedYear: number,
 	selectedStorageType: StorageType,
 	selectedTechnologyType: TechnologyType
 ): [MapPlotData | null, number, number] {
-	if (!fetchedData || !selectedTechnologyType || !selectedYear) {
+	if (!fetchedData || !selectedTechnologyType) {
 		return [null, 0, 0];
 	}
 
@@ -26,7 +26,7 @@ export function computePieData(
 	const data = fetchedData.filterByCriteria(criteria);
 
 	// Compute map plot data
-	const index = years.findIndex((year) => year.toString() === selectedYear);
+	const index = years.indexOf(selectedYear);
 	const mapPlotData = data
 		.filterDataByIndex([index])
 		.filter(({ data: [d] }) => d > EPS)
@@ -53,9 +53,9 @@ export function computeLineData(
 	years: number[],
 	selectedSolution: ActivatedSolution | null,
 	selectedCarrier: string | null,
-	selectedYear: string | null
+	selectedYear: number
 ): [MapPlotData | null, number, number] {
-	if (!fetchedData || !selectedSolution || !selectedYear) {
+	if (!fetchedData || !selectedSolution) {
 		return [null, 0, 0];
 	}
 
@@ -67,7 +67,7 @@ export function computeLineData(
 	const data = fetchedData.filterByCriteria(criteria);
 
 	// Compute map plot data
-	const index = years.findIndex((year) => year.toString() === selectedYear);
+	const index = years.indexOf(selectedYear);
 	const mapPlotData = data
 		.filterDataByIndex([index])
 		.filter(({ data: [d] }) => d > EPS)
