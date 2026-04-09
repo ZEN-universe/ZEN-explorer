@@ -450,7 +450,10 @@
 							options={technologies}
 						></MultiSelect>
 					{:else}
-						<MultiSelect label="Nodes" bind:value={selectedLocations} options={locations}
+						<MultiSelect
+							label={selectedTechnologyType !== 'transport' ? 'Nodes' : 'Edges'}
+							bind:value={selectedLocations}
+							options={locations}
 						></MultiSelect>
 					{/if}
 					<MultiSelect
