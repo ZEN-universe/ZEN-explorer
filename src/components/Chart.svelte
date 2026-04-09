@@ -241,37 +241,56 @@
 		}
 	};
 
-	function toggleLegendItem(event: Event, item: LegendItem) {
+	function toggleLegendItem(event: Event, clickedItem: LegendItem) {
 		if (chart == undefined) {
 			return;
 		}
 		const activateOnlyOneItem = (event as MouseEvent).shiftKey;
 		if (onClickLegend) {
-			onClickLegend(item, chart, activateOnlyOneItem);
+			onClickLegend(clickedItem, chart, activateOnlyOneItem);
 			return;
 		}
 		if (type === 'pie' || type === 'doughnut') {
-			if (item.index == null) {
+			if (clickedItem.index == null) {
 				return;
 			}
 			// Pie and doughnut charts only have a single dataset and visibility per item
-			chart.toggleDataVisibility(item.index);
+			if (activateOnlyOneItem) {
+				const clickedItemWasActive = chart.getDataVisibility(clickedItem.index);
+				const activeItems = (chart.data.datasets[0].data as unknown[]).filter((_, idx) =>
+					chart!.getDataVisibility(idx)
+				);
+				chart.data.datasets[0].data.forEach((_, idx) => {
+					// Show item if the clicked item was not the only one active, otherwise only show the clicked item.
+					if (
+						chart!.getDataVisibility(idx) !==
+						((clickedItemWasActive && activeItems.length === 1) || idx === clickedItem.index)
+					) {
+						chart!.toggleDataVisibility(idx);
+					}
+				});
+			} else {
+				chart.toggleDataVisibility(clickedItem.index);
+			}
 		} else {
-			if (item.datasetIndex == null) {
+			if (clickedItem.datasetIndex == null) {
 				return;
 			}
 			if (activateOnlyOneItem) {
-				const itemWasActive = chart.isDatasetVisible(item.datasetIndex);
+				const itemWasActive = chart.isDatasetVisible(clickedItem.datasetIndex);
 				const activeDatasets = chart.data.datasets.filter((_, idx) => chart!.isDatasetVisible(idx));
 				chart.data.datasets.forEach((_, idx) => {
 					// Activate if the clicked item was the only one active, otherwise toggle the item's visibility.
 					chart!.setDatasetVisibility(
 						idx,
-						(itemWasActive && activeDatasets.length === 1) || idx === item.datasetIndex
+						(itemWasActive && activeDatasets.length === 1) || idx === clickedItem.datasetIndex
 					);
 				});
 			} else {
-				chart.setDatasetVisibility(item.datasetIndex, !chart.isDatasetVisible(item.datasetIndex));
+				chart.setDatasetVisibility(
+					clickedItem.datasetIndex,
+					!chart.isDatasetVisible(clickedItem.datasetIndex)
+				);
 			}
 		}
 
