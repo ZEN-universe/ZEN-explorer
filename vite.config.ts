@@ -4,8 +4,25 @@ import tailwindcss from '@tailwindcss/vite';
 import { existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 
-const widths = [1344, 1088, 864, 672, 576];
-const images = ['static/evolution_map_final.gif', 'static/evolution_map_final_dark.gif'];
+// const widths = [1344, 1088, 864, 672, 576];
+// const images = ['static/evolution_map_final.gif', 'static/evolution_map_final_dark.gif'];
+const images: Record<string, { widths: number[] }> = {
+	'static/evolution_map_final.gif': {
+		widths: [1344, 1088, 864, 672, 576]
+	},
+	'static/evolution_map_final_dark.gif': {
+		widths: [1344, 1088, 864, 672, 576]
+	}
+};
+
+const videos: Record<string, { widths: number[] }> = {
+	'static/build_your_model.mp4': {
+		widths: [1184, 928, 672, 512, 576]
+	},
+	'static/build_your_model_dark.mp4': {
+		widths: [1184, 928, 672, 512, 576]
+	}
+};
 
 function convertImage(inputImage: string, width: number): void {
 	// Generate optimized GIF
@@ -38,11 +55,64 @@ function convertImage(inputImage: string, width: number): void {
 	}
 }
 
+function convertVideo(inputVideo: string, width: number): void {
+	// Generate optimized MP4
+	const mp4Path = `${inputVideo.replace(/\.[^.]+$/, '')}_${width}.mp4`;
+
+	if (existsSync(mp4Path)) {
+		return;
+	}
+
+	// Run command: ffmpeg -i inputVideo.mp4 -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -preset medium -crf 23 -pix_fmt yuv420p -movflags +faststart -colorspace bt709 -color_primaries bt709 -color_trc bt709 -color_range tv -c:a aac -b:a 128k outputVideo.mp4
+	const ffmpegResult = spawnSync(
+		'ffmpeg',
+		[
+			'-i',
+			inputVideo,
+			'-vf',
+			'scale=trunc(iw/2)*2:trunc(ih/2)*2',
+			'-c:v',
+			'libx264',
+			'-preset',
+			'medium',
+			'-crf',
+			'23',
+			'-pix_fmt',
+			'yuv420p',
+			'-movflags',
+			'+faststart',
+			'-colorspace',
+			'bt709',
+			'-color_primaries',
+			'bt709',
+			'-color_trc',
+			'bt709',
+			'-color_range',
+			'tv',
+			'-c:a',
+			'aac',
+			'-b:a',
+			'128k',
+			mp4Path
+		],
+		{ stdio: 'inherit' }
+	);
+
+	if (ffmpegResult.status !== 0) {
+		throw new Error(`Failed to convert ${inputVideo} to MP4 at width ${width}px`);
+	}
+}
+
 function responsiveImagePlugin() {
 	return {
 		name: 'responsive-image-plugin',
 		configResolved() {
-			images.forEach((image) => widths.forEach((w) => convertImage(image, w)));
+			Object.entries(images).forEach(([image, { widths }]) =>
+				widths.forEach((w) => convertImage(image, w))
+			);
+			Object.entries(videos).forEach(([video, { widths }]) =>
+				widths.forEach((w) => convertVideo(video, w))
+			);
 		}
 	};
 }

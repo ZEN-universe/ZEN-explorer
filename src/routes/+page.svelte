@@ -38,78 +38,6 @@
 			journal: 'Renewable and Sustainable Energy Reviews, vol. 194, pp. 114314, Pergamon, 2024.',
 			doi: '10.1016/j.rser.2024.114314',
 			researchCollection: 'https://hdl.handle.net/20.500.11850/659862'
-		},
-		{
-			title: 'ZEN-garden: Optimizing energy transition pathways with user-oriented data handling',
-			authors:
-				'Jacob Mannhardt, Alissa Ganter, Johannes Burger, Francesco De Marco, Lukas Kunz, Lukas Schmidt-Engelbertz, Paolo Gabrielli and Giovanni Sansavini',
-			journal: 'SoftwareX, vol. 29, pp. 102059, Elsevier, 2025.',
-			doi: '10.1016/j.softx.2025.102059',
-			researchCollection: 'https://hdl.handle.net/20.500.11850/711439'
-		},
-		{
-			title:
-				'Understanding the vicious cycle of myopic foresight and constrained technology deployment in transforming the European energy system',
-			authors: 'Jacob Mannhardt, Paolo Gabrielli and Giovanni Sansavini',
-			journal: 'iScience, vol. 27: no. 12, pp. 111369, Cell Press, 2024.',
-			doi: '10.1016/j.isci.2024.111369',
-			researchCollection: 'https://hdl.handle.net/20.500.11850/710173'
-		},
-		{
-			title:
-				'Near-term infrastructure rollout and investment strategies for net-zero hydrogen supply chains',
-			authors: 'Alissa Ganter, Paolo Gabrielli and Giovanni Sansavini',
-			journal: 'Renewable and Sustainable Energy Reviews, vol. 194, pp. 114314, Pergamon, 2024.',
-			doi: '10.1016/j.rser.2024.114314',
-			researchCollection: 'https://hdl.handle.net/20.500.11850/659862'
-		},
-		{
-			title: 'ZEN-garden: Optimizing energy transition pathways with user-oriented data handling',
-			authors:
-				'Jacob Mannhardt, Alissa Ganter, Johannes Burger, Francesco De Marco, Lukas Kunz, Lukas Schmidt-Engelbertz, Paolo Gabrielli and Giovanni Sansavini',
-			journal: 'SoftwareX, vol. 29, pp. 102059, Elsevier, 2025.',
-			doi: '10.1016/j.softx.2025.102059',
-			researchCollection: 'https://hdl.handle.net/20.500.11850/711439'
-		},
-		{
-			title:
-				'Understanding the vicious cycle of myopic foresight and constrained technology deployment in transforming the European energy system',
-			authors: 'Jacob Mannhardt, Paolo Gabrielli and Giovanni Sansavini',
-			journal: 'iScience, vol. 27: no. 12, pp. 111369, Cell Press, 2024.',
-			doi: '10.1016/j.isci.2024.111369',
-			researchCollection: 'https://hdl.handle.net/20.500.11850/710173'
-		},
-		{
-			title:
-				'Near-term infrastructure rollout and investment strategies for net-zero hydrogen supply chains',
-			authors: 'Alissa Ganter, Paolo Gabrielli and Giovanni Sansavini',
-			journal: 'Renewable and Sustainable Energy Reviews, vol. 194, pp. 114314, Pergamon, 2024.',
-			doi: '10.1016/j.rser.2024.114314',
-			researchCollection: 'https://hdl.handle.net/20.500.11850/659862'
-		},
-		{
-			title: 'ZEN-garden: Optimizing energy transition pathways with user-oriented data handling',
-			authors:
-				'Jacob Mannhardt, Alissa Ganter, Johannes Burger, Francesco De Marco, Lukas Kunz, Lukas Schmidt-Engelbertz, Paolo Gabrielli and Giovanni Sansavini',
-			journal: 'SoftwareX, vol. 29, pp. 102059, Elsevier, 2025.',
-			doi: '10.1016/j.softx.2025.102059',
-			researchCollection: 'https://hdl.handle.net/20.500.11850/711439'
-		},
-		{
-			title:
-				'Understanding the vicious cycle of myopic foresight and constrained technology deployment in transforming the European energy system',
-			authors: 'Jacob Mannhardt, Paolo Gabrielli and Giovanni Sansavini',
-			journal: 'iScience, vol. 27: no. 12, pp. 111369, Cell Press, 2024.',
-			doi: '10.1016/j.isci.2024.111369',
-			researchCollection: 'https://hdl.handle.net/20.500.11850/710173'
-		},
-		{
-			title:
-				'Near-term infrastructure rollout and investment strategies for net-zero hydrogen supply chains',
-			authors: 'Alissa Ganter, Paolo Gabrielli and Giovanni Sansavini',
-			journal: 'Renewable and Sustainable Energy Reviews, vol. 194, pp. 114314, Pergamon, 2024.',
-			doi: '10.1016/j.rser.2024.114314',
-			researchCollection: 'https://hdl.handle.net/20.500.11850/659862'
 		}
 	];
 
@@ -263,11 +191,11 @@
 	<div id="head-section" class="container mx-auto mb-12 px-4 md:mb-0">
 		<div class="grid gap-4 sm:grid-cols-3 lg:gap-12">
 			<ContentBox
-				class="box relative bg-[#E7F4F7] py-6 text-center lg:py-12 dark:bg-[#00596D]"
+				class="box relative flex flex-col bg-[#E7F4F7] py-6 text-center lg:py-12 dark:bg-[#00596D]"
 				noMarginBottom
 				noColor
 			>
-				<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Build your model</h2>
+				<h2 class="mb-4 grow text-2xl font-bold lg:text-4xl">Build your Model</h2>
 				<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
 					<i class="bi bi-signpost-2-fill"></i>
 				</div>
@@ -278,33 +206,33 @@
 				></a>
 			</ContentBox>
 			<ContentBox
-				class="box relative bg-[#CCE4EA] py-6 text-center lg:py-12 dark:bg-[#007894]"
+				class="box relative flex flex-col bg-[#CCE4EA] py-6 text-center lg:py-12 dark:bg-[#007894]"
 				noMarginBottom
 				noColor
 			>
-				<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Optimize your system</h2>
+				<h2 class="mb-4 grow text-2xl font-bold lg:text-4xl">Optimize your System</h2>
 				<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
 					<i class="bi bi-diagram-3-fill"></i>
 				</div>
 				<a
 					href="#optimize-system"
 					class="pointer-event-none absolute inset-0"
-					aria-label="Optimize your system"
+					aria-label="Optimize your System"
 				></a>
 			</ContentBox>
 			<ContentBox
-				class="box relative bg-[#99CAD5] py-6 text-center lg:py-12 dark:bg-[#3395AB]"
+				class="box relative flex flex-col bg-[#99CAD5] py-6 text-center lg:py-12 dark:bg-[#3395AB]"
 				noMarginBottom
 				noColor
 			>
-				<h2 class="mb-4 mb-6 text-2xl font-bold lg:text-4xl">Visualize your results</h2>
+				<h2 class="mb-4 grow text-2xl font-bold lg:text-4xl">Visualize your Results</h2>
 				<div class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[200px]">
 					<i class="bi bi-eye-fill"></i>
 				</div>
 				<a
 					href="#visualize-results"
 					class="pointer-event-none absolute inset-0"
-					aria-label="Visualize your results"
+					aria-label="Visualize your Results"
 				></a>
 			</ContentBox>
 		</div>
@@ -325,7 +253,7 @@
 			noMarginBottom
 		>
 			<div
-				class="flex flex-col items-center gap-8 border-b border-gray-100 px-4 py-8 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
+				class="flex flex-col items-center gap-8 border-b border-gray-200 px-4 pt-8 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
 			>
 				<div class="text-[80px] leading-none sm:text-[130px] sm:leading-normal lg:text-[200px]">
 					<i class="bi bi-signpost-2-fill"></i>
@@ -333,59 +261,105 @@
 				<div>
 					<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Build your model</h2>
 					<p class="text-lg">
-						Far far away, behind the word mountains, far from the countries Vokalia and Consonantia,
-						there live the blind texts. Separated they live in Bookmarksgrove right at the coast of
-						the Semantics, a large language ocean. Far far away, behind the word mountains, far from
-						the countries Vokalia and Consonantia, there live the blind texts. Separated they live
-						in Bookmarksgrove right at the coast of the Semantics, a large language ocean.
+						With ZEN-garden, you can flexibly define the temporal resolution (single/multi year,
+						number of time steps per year), the spatial resolution (nodes and edges), and the energy
+						sector scope (conversion, storage, transport technologies, and carriers).
 					</p>
 				</div>
 			</div>
 
-			<div class="border-b border-gray-100 px-4 py-8 md:px-8 lg:px-12 dark:border-gray-900">
-				<h3 class="mb-4 text-3xl font-bold">ZEN-models</h3>
+			<div class="border-b border-gray-200 px-8 py-8 md:px-16 lg:px-24 dark:border-gray-900">
+				<video autoplay loop muted playsinline class="w-full dark:hidden">
+					<source src="/build_your_model_1184.mp4" media="(min-width: 1536px)" type="video/mp4" />
+					<source src="/build_your_model_928.mp4" media="(min-width: 1280px)" type="video/mp4" />
+					<source src="/build_your_model_672.mp4" media="(min-width: 1024px)" type="video/mp4" />
+					<source src="/build_your_model_512.mp4" media="(min-width: 768px)" type="video/mp4" />
+					<source src="/build_your_model_576.mp4" type="video/mp4" />
+					Your browser does not support the video tag
+				</video>
+				<video autoplay loop muted playsinline class="hidden w-full dark:block">
+					<source
+						src="/build_your_model_dark_1184.mp4"
+						media="(min-width: 1536px)"
+						type="video/mp4"
+					/>
+					<source
+						src="/build_your_model_dark_928.mp4"
+						media="(min-width: 1280px)"
+						type="video/mp4"
+					/>
+					<source
+						src="/build_your_model_dark_672.mp4"
+						media="(min-width: 1024px)"
+						type="video/mp4"
+					/>
+					<source
+						src="/build_your_model_dark_512.mp4"
+						media="(min-width: 768px)"
+						type="video/mp4"
+					/>
+					<source src="/build_your_model_dark_576.mp4" type="video/mp4" />
+					Your browser does not support the video tag
+				</video>
+			</div>
 
-				<p class="mb-8 text-lg">
-					Far far away, behind the word mountains, far from the countries Vokalia and Consonantia,
-					there live the blind texts. Separated they live in Bookmarksgrove right at the coast of
-					the Semantics, a large language ocean. Far far away, behind the word mountains, far from
-					the countries Vokalia and Consonantia, there live the blind texts. Separated they live in
-					Bookmarksgrove right at the coast of the Semantics, a large language ocean.
-				</p>
+			<div
+				class="grid gap-8 border-b border-gray-200 px-4 py-8 md:px-8 lg:gap-12 lg:px-12 xl:grid-cols-2 dark:border-gray-900"
+			>
+				<div>
+					<h3 class="mb-4 text-3xl font-bold">ZEN-creator</h3>
 
-				<div class="grid gap-4 sm:grid-cols-3">
-					<div class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
-						<h3 class="mb-4 text-xl font-bold">Hydrogen</h3>
-						<a class="mb-2 block" href="#">
-							<i class="bi bi-arrow-right"></i>
-							Description
-						</a>
-						<a class="mb-2 block" href="#">
-							<i class="bi bi-arrow-right"></i>
-							Publications
-						</a>
-					</div>
-					<div class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
-						<h3 class="mb-4 text-xl font-bold">Electricity</h3>
-						<a class="mb-2 block" href="#">
-							<i class="bi bi-arrow-right"></i>
-							Description
-						</a>
-						<a class="mb-2 block" href="#">
-							<i class="bi bi-arrow-right"></i>
-							Publications
-						</a>
-					</div>
-					<div class="rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
-						<h3 class="mb-4 text-xl font-bold">Sector-coupled</h3>
-						<a class="mb-2 block" href="#">
-							<i class="bi bi-arrow-right"></i>
-							Description
-						</a>
-						<a class="mb-2 block" href="#">
-							<i class="bi bi-arrow-right"></i>
-							Publications
-						</a>
+					<p class="mb-8 text-lg">
+						A support tool to build your case study of the European sector-coupled transition
+						pathway.
+					</p>
+
+					<a
+						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 mb-2 block font-bold"
+						href="https://github.com/ZEN-universe/ZEN-creator"
+					>
+						<i class="bi bi-arrow-right"></i>
+						Go to ZEN-creator
+					</a>
+				</div>
+				<div>
+					<h3 class="mb-4 text-3xl font-bold">ZEN-models</h3>
+
+					<p class="mb-8 text-lg">Explore our existing models:</p>
+
+					<div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+						<div class="flex flex-col rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
+							<h3 class="mb-4 grow text-xl font-bold">Carbon capture and storage</h3>
+							<a
+								class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 mb-2 block"
+								href="#"
+							>
+								<i class="bi bi-arrow-right"></i>
+								Go to Model
+							</a>
+						</div>
+						<div class="flex flex-col rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
+							<h3 class="mb-4 grow text-xl font-bold">
+								Electricity, heating, industry, and transport
+							</h3>
+							<a
+								class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 mb-2 block"
+								href="#"
+							>
+								<i class="bi bi-arrow-right"></i>
+								Go to Model
+							</a>
+						</div>
+						<div class="flex flex-col rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
+							<h3 class="mb-4 grow text-xl font-bold">Supply-chain of batteries</h3>
+							<a
+								class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 mb-2 block"
+								href="#"
+							>
+								<i class="bi bi-arrow-right"></i>
+								Go to Model
+							</a>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -456,12 +430,12 @@
 			noMarginBottom
 		>
 			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">
-				Optimize your system
+				Optimize your System
 			</h2>
 			<a
 				href="#optimize-system"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Optimize your system"
+				aria-label="Optimize your System"
 			></a>
 		</ContentBox>
 		<ContentBox
@@ -471,17 +445,17 @@
 			noMarginBottom
 		>
 			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">
-				Visualize your results
+				Visualize your Results
 			</h2>
 			<a
 				href="#visualize-results"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Visualize your results"
+				aria-label="Visualize your Results"
 			></a>
 		</ContentBox>
 	</div>
 
-	<!-- Optimize your system -->
+	<!-- Optimize your System -->
 	<div
 		id="optimize-system"
 		class="section container mx-auto flex gap-4 px-4 pb-12 lg:gap-12 lg:pb-4"
@@ -506,13 +480,13 @@
 			noPadding
 		>
 			<div
-				class="flex flex-col items-center gap-8 px-4 py-8 md:flex-row md:px-8 lg:gap-16 lg:px-12"
+				class="flex flex-col items-center gap-8 border-b border-gray-200 px-4 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
 			>
-				<div class="text-[80px] leading-none sm:text-[130px] lg:text-[200px]">
+				<div class="text-[80px] leading-none sm:text-[130px] sm:leading-normal lg:text-[200px]">
 					<i class="bi bi-diagram-3-fill"></i>
 				</div>
 				<div>
-					<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Optimize your system</h2>
+					<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Optimize your System</h2>
 					<p class="mb-8 text-lg">
 						ZEN-garden optimizes the transition pathways of spatially resolved and sector-coupled
 						energy systems. All functionalities can be enabled through input data and
@@ -520,37 +494,39 @@
 					</p>
 				</div>
 			</div>
-			<div
-				class="terminal mx-4 mb-8 rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:mx-8 md:text-base lg:mx-12"
-			>
-				<!-- Install zen-garden -->
-				<div class="flex" data-animate-chars>
-					<span class="mr-3 text-pink-500 select-none">$</span>
-					<span>pip install <span class="text-yellow-300">zen-garden</span></span>
-				</div>
-				<div class="text-slate-500">Collecting zen-garden</div>
-				<div class="text-slate-500">...</div>
-				<div class="text-slate-500">Successfully installed zen-garden-2.9.7</div>
+			<div class="border-b border-gray-200 px-8 py-8 md:px-16 lg:px-24 dark:border-gray-900">
+				<div
+					class="terminal rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:text-base"
+				>
+					<!-- Install zen-garden -->
+					<div class="flex" data-animate-chars>
+						<span class="mr-3 text-pink-500 select-none">$</span>
+						<span>pip install <span class="text-yellow-300">zen-garden</span></span>
+					</div>
+					<div class="text-slate-500">Collecting zen-garden</div>
+					<div class="text-slate-500">...</div>
+					<div class="text-slate-500">Successfully installed zen-garden-2.9.7</div>
 
-				<!-- Run zen-garden -->
-				<div class="flex" data-animate-chars>
-					<span class="mr-3 text-pink-500 select-none">$</span>
-					<span>zen-garden --dataset=<span class="text-cyan-300">my_model</span></span>
-				</div>
-				<div class="text-slate-500">Create ConversionTechnology photovoltaics</div>
-				<div class="text-slate-500">Create ConversionTechnology heat_pump</div>
-				<div class="text-slate-500">Create Carrier electricity</div>
-				<div class="text-slate-500">Create Carrier heat</div>
-				<div class="text-slate-500">...</div>
-				<div class="text-slate-500">--- Optimization finished ---</div>
+					<!-- Run zen-garden -->
+					<div class="flex" data-animate-chars>
+						<span class="mr-3 text-pink-500 select-none">$</span>
+						<span>zen-garden --dataset=<span class="text-cyan-300">my_model</span></span>
+					</div>
+					<div class="text-slate-500">Create ConversionTechnology photovoltaics</div>
+					<div class="text-slate-500">Create ConversionTechnology heat_pump</div>
+					<div class="text-slate-500">Create Carrier electricity</div>
+					<div class="text-slate-500">Create Carrier heat</div>
+					<div class="text-slate-500">...</div>
+					<div class="text-slate-500">--- Optimization finished ---</div>
 
-				<!-- Run visualization -->
-				<div class="flex" data-animate-chars>
-					<span class="mr-3 text-pink-500 select-none">$</span>
-					<span>zen-visualization</span>
-				</div>
-				<div class="text-slate-500">
-					INFO: Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
+					<!-- Run visualization -->
+					<div class="flex" data-animate-chars>
+						<span class="mr-3 text-pink-500 select-none">$</span>
+						<span>zen-visualization</span>
+					</div>
+					<div class="text-slate-500">
+						INFO: Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
+					</div>
 				</div>
 			</div>
 			<div class="grid gap-4 px-4 py-8 sm:grid-cols-3 md:px-8 lg:px-12">
@@ -687,17 +663,17 @@
 			noMarginBottom
 		>
 			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">
-				Visualize your results
+				Visualize your Results
 			</h2>
 			<a
 				href="#visualize-results"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Visualize your results"
+				aria-label="Visualize your Results"
 			></a>
 		</ContentBox>
 	</div>
 
-	<!-- Visualize your results -->
+	<!-- Visualize your Results -->
 	<div
 		id="visualize-results"
 		class="section container mx-auto flex gap-4 px-4 pb-12 lg:gap-12 lg:pb-4"
@@ -722,12 +698,12 @@
 			noMarginBottom
 		>
 			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">
-				Optimize your system
+				Optimize your System
 			</h2>
 			<a
 				href="#optimize-system"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Optimize your system"
+				aria-label="Optimize your System"
 			></a>
 		</ContentBox>
 		<ContentBox
@@ -737,54 +713,56 @@
 			noPadding
 		>
 			<div
-				class="flex flex-col items-center gap-8 border-b border-gray-100 px-4 py-8 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
+				class="flex flex-col items-center gap-8 border-b border-gray-100 px-4 pb-8 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
 			>
 				<div class="text-[80px] leading-none sm:text-[130px] sm:leading-normal lg:text-[200px]">
 					<i class="bi bi-eye-fill"></i>
 				</div>
 				<div>
-					<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Visualize your results</h2>
-					<p class="mb-12 text-lg">
+					<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Visualize your Results</h2>
+					<p class="text-lg">
 						ZEN-garden provides a wide range of visualization options to analyze the optimized
 						transition pathways and the underlying optimization results. The visualization is
 						available online for published results and locally for user results.
 					</p>
-					<div
-						class="terminal mb-8 rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:text-base"
-					>
-						<!-- Run visualization -->
-						<div class="flex" data-animate-chars>
-							<span class="mr-3 text-pink-500 select-none">$</span>
-							<span>zen-visualization</span>
-						</div>
-						<div class="text-slate-500">
-							INFO: Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
-						</div>
-					</div>
-					<p class="mb-12 text-lg">
-						Annual capacity, production, emission, and cost results can be investigated under
-						<a
-							href={resolve('/explorer/transition/capacity')}
-							class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
-							>The Transition Pathway</a
-						>. Energy and storage balances in a specific year can be analyzed under
-						<a
-							href={resolve('/explorer/energy_balance/nodal')}
-							class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
-							>The Energy Balance</a
-						>. The flows of energy carriers between technologies can be investigated under
-						<a
-							href={resolve('/explorer/energy_system')}
-							class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
-							>The Energy System</a
-						>. Finally, the spatial distribution of capacities can be analyzed under
-						<a
-							href={resolve('/explorer/map')}
-							class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
-							>The Map</a
-						>.
-					</p>
 				</div>
+			</div>
+			<div class="px-4 py-8 md:px-8 lg:px-12">
+				<div
+					class="terminal mx-4 mb-8 rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:mx-8 md:text-base lg:mx-12"
+				>
+					<!-- Run visualization -->
+					<div class="flex" data-animate-chars>
+						<span class="mr-3 text-pink-500 select-none">$</span>
+						<span>zen-visualization</span>
+					</div>
+					<div class="text-slate-500">
+						INFO: Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
+					</div>
+				</div>
+				<p class="mb-12 text-lg">
+					Annual capacity, production, emission, and cost results can be investigated under
+					<a
+						href={resolve('/explorer/transition/capacity')}
+						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
+						>The Transition Pathway</a
+					>. Energy and storage balances in a specific year can be analyzed under
+					<a
+						href={resolve('/explorer/energy_balance/nodal')}
+						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
+						>The Energy Balance</a
+					>. The flows of energy carriers between technologies can be investigated under
+					<a
+						href={resolve('/explorer/energy_system')}
+						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
+						>The Energy System</a
+					>. Finally, the spatial distribution of capacities can be analyzed under
+					<a
+						href={resolve('/explorer/map')}
+						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
+						>The Map</a
+					>.
+				</p>
 			</div>
 
 			<div

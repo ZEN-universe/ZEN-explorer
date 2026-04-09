@@ -5,7 +5,19 @@ import { constants } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import * as path from 'node:path';
 
-const widths = [1344, 1088, 864, 672, 576];
+// const widths = [1344, 1088, 864, 672, 576];
+// const images = ['evoluation_map_final.gif', 'evolution_map_final_dark.gif'];
+const config = {
+	'evoluation_map_final.gif': {
+		widths: [1344, 1088, 864, 672, 576]
+	},
+	'evolution_map_final_dark.gif': {
+		widths: [1344, 1088, 864, 672, 576]
+	},
+	'build_your_model.gif': {
+		widths: [1344, 1088, 864, 672, 576]
+	}
+};
 
 function printUsage(scriptName: string): void {
 	console.error(`Usage: ${scriptName} input_image`);
