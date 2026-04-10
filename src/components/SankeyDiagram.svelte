@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { onDestroy, onMount, untrack } from 'svelte';
+	import { pointer, select } from 'd3-selection';
+	import { zoom as d3zoom, zoomIdentity, type ZoomBehavior } from 'd3-zoom';
+	import { drag as d3drag, type DragBehavior } from 'd3-drag';
+	import { sum } from 'd3';
+
 	import type {
 		SankeyNode,
 		SankeyLink,
@@ -7,7 +12,6 @@
 		RawSankeyNode,
 		RawSankeyLink
 	} from '$lib/types';
-
 	import {
 		CYCLE_CONTROL_POINT_DIST,
 		CYCLE_DIST_FROM_NODE,
@@ -20,15 +24,16 @@
 		updateNodePosition,
 		updateSankeyLayout
 	} from '$lib/sankeyDiagram';
-	import { pointer, select } from 'd3-selection';
-	import { zoom as d3zoom, zoomIdentity } from 'd3-zoom';
-	import { drag as d3drag } from 'd3-drag';
-	import Tooltip from './Tooltip.svelte';
+	import { exportAsSVG } from '$lib/export';
 	import { debounce } from '$lib/debounce';
-	import { sum } from 'd3';
+	import { EPS } from '@/lib/constants';
+	import { getURLHash, removeURLHash, updateURLHash } from '@/lib/queryParams.svelte';
+
+	import Tooltip from './Tooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
 	import HelpTooltip from './HelpTooltip.svelte';
-	import { exportAsSVG } from '$lib/export';
+	import type { ContextMenuItem } from './ContextMenu.svelte';
+	import ContextMenu from './ContextMenu.svelte';
 
 	let width = $state(936);
 	let height = $state(800);
@@ -45,9 +50,16 @@
 		nodes: Partial<SankeyNode>[];
 		links: PartialSankeyLink[];
 		legendItems?: LegendItem[];
+		getContextMenuItems: (node: RawSankeyNode) => ContextMenuItem[];
 	}
 
-	let { id = 'diagram', nodes: initialNodes, links: initialLinks, legendItems }: Props = $props();
+	let {
+		id = 'diagram',
+		nodes: initialNodes,
+		links: initialLinks,
+		legendItems,
+		getContextMenuItems
+	}: Props = $props();
 
 	let debounceLayoutDiagram = debounce(layoutDiagram, 100);
 
@@ -96,7 +108,7 @@
 			dy: 0
 		}));
 		fullLinks = partialLinks.flatMap((link) => {
-			if (!showStructureOnly && link.value < 1e-6) {
+			if (!showStructureOnly && link.value < EPS) {
 				return [];
 			}
 			let source = fullNodes.find((n) => n.id === link.source.id && n.label === link.source.label);
@@ -322,10 +334,11 @@
 		.on('zoom', (event) => {
 			transform = event.transform.toString();
 			updateActiveNodeRect();
+			removeURLHash();
 		})
 		.on('end', () => {
 			updateActiveNodeRect();
-		});
+		}) as unknown as ZoomBehavior<SVGSVGElement, unknown>;
 
 	/**
 	 * Update the zoom behavior's translate extent when the diagram content changes.
@@ -342,7 +355,7 @@
 	 */
 	onMount(() => {
 		if (!svg) return;
-		select(svg).call(zoomBehavior as any);
+		select(svg).call(zoomBehavior);
 	});
 
 	/**
@@ -350,7 +363,7 @@
 	 */
 	export function resetZoom() {
 		if (!svg) return;
-		select(svg).call(zoomBehavior.transform as any, zoomIdentity);
+		select(svg).call(zoomBehavior.transform, zoomIdentity);
 	}
 
 	/**
@@ -369,8 +382,11 @@
 		const translateY = -(targetNode.y + targetNode.dy / 2) * scale + maxHeight / 2;
 
 		// Apply the zoom transformation
-		const selection = select(svg as Element);
+		const selection = select(svg as SVGSVGElement);
 		zoomBehavior.transform(selection, zoomIdentity.translate(translateX, translateY).scale(scale));
+
+		// Update URL hash with the focused carrier
+		updateURLHash(carrier);
 	}
 
 	// ==================
@@ -384,13 +400,14 @@
 		.on('start', function () {
 			if (!this.parentNode) return;
 			this.parentNode.appendChild(this);
+			removeURLHash();
 		})
 		.on('drag', function (event) {
 			const idx = Number((this as SVGGElement).dataset.idx);
 			if (isNaN(idx)) return;
 			onDragNode(event, idx);
 			updatePointerPosition(event);
-		});
+		}) as unknown as DragBehavior<SVGRectElement, unknown, unknown>;
 
 	/**
 	 * Apply the drag behavior to the nodes after they are rendered.
@@ -398,9 +415,11 @@
 	$effect(() => {
 		nodes;
 		if (!svg) return;
-		select(svg)
-			.selectAll<SVGRectElement, unknown>('.node')
-			.call(dragBehavior as any);
+		select(svg).selectAll<SVGRectElement, unknown>('.node').call(dragBehavior);
+
+		// Focus on the node specified in the URL hash, if any
+		const hash = getURLHash();
+		if (hash) focusCarrier(hash);
 	});
 
 	/**
@@ -408,6 +427,7 @@
 	 * @param event
 	 * @param idx
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	function onDragNode(event: any, idx: number) {
 		if (event.clientY === 0 || idx < 0 || idx >= nodes.length) return;
 		const new_y = nodes[idx].y + event.dy;
@@ -526,6 +546,36 @@
 		if (!svg) return;
 		exportAsSVG(svg, 'sankey_diagram.svg');
 	}
+
+	// ===================
+	// Context Menu
+	// ===================
+
+	let contextMenuX = $state(0);
+	let contextMenuY = $state(0);
+	let contextMenuOpen = $state(false);
+	let contextMenuItems: ContextMenuItem[] = $state([]);
+
+	function openContextMenu(event: MouseEvent, node: RawSankeyNode) {
+		event.preventDefault();
+		event.stopPropagation();
+		contextMenuX = event.clientX;
+		contextMenuY = event.clientY;
+		contextMenuItems = getContextMenuItems(node);
+		contextMenuOpen = contextMenuItems.length > 0;
+	}
+
+	function closeContextMenu() {
+		contextMenuOpen = false;
+	}
+
+	onMount(() => {
+		window.addEventListener('click', closeContextMenu);
+	});
+
+	onDestroy(() => {
+		window.removeEventListener('click', closeContextMenu);
+	});
 </script>
 
 <svelte:window onresize={handleSize} onscroll={updateSvgRect} />
@@ -595,7 +645,7 @@
 				</g>
 				<g class="nodes">
 					{#each nodes as node, idx (idx)}
-						<g class="node" data-idx={idx}>
+						<g class="node" data-idx={idx} oncontextmenu={(event) => openContextMenu(event, node)}>
 							<rect
 								x={node.x}
 								y={node.y + 0.5}
@@ -695,6 +745,9 @@
 					{/if}
 				{/if}
 			</Tooltip>
+		{/if}
+		{#if contextMenuOpen}
+			<ContextMenu x={contextMenuX} y={contextMenuY} items={contextMenuItems} />
 		{/if}
 	</div>
 </ContentBox>

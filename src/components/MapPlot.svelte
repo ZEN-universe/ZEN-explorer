@@ -3,16 +3,20 @@
 	import { scaleOrdinal } from 'd3-scale';
 	import { pointer, select } from 'd3-selection';
 	import { pie as d3pie, arc as d3arc } from 'd3-shape';
-	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent } from 'd3-zoom';
-	import { onDestroy } from 'svelte';
+	import { zoom as d3zoom, zoomIdentity, type D3ZoomEvent, type ZoomBehavior } from 'd3-zoom';
+	import { onDestroy, onMount } from 'svelte';
 	import { feature, mesh } from 'topojson-client';
 	import type { ExtendedFeatureCollection } from 'd3-geo';
 	import type { GeometryCollection, GeometryObject, Topology } from 'topojson-specification';
-	import { allColors } from '$lib/colors';
+
 	import Tooltip from './Tooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
-	import { exportAsSVG } from '$lib/export';
 	import Spinner from './Spinner.svelte';
+
+	import { allColors } from '$lib/colors';
+	import { exportAsSVG } from '$lib/export';
+	import HelpTooltip from './HelpTooltip.svelte';
+	import ContextMenu, { type ContextMenuItem } from './ContextMenu.svelte';
 
 	let topology: Topology | null = $state(null);
 	$effect(() => {
@@ -39,25 +43,27 @@
 		id?: string;
 		pieData: MapPlotData;
 		lineData?: MapPlotData;
-		nodeCoords?: { [node: string]: [number, number] };
+		systemCoords?: Record<string, { lon: number; lat: number }>;
 		unit: string;
 		map: string | null;
 		minTotal: number;
 		maxTotal: number;
 		minEdge: number;
 		maxEdge: number;
+		getContextMenuItems: (pie: Pie | undefined) => ContextMenuItem[];
 	}
 	let {
 		id = 'map',
 		pieData,
 		lineData = {},
-		nodeCoords = {},
+		systemCoords = {},
 		unit,
 		map,
 		minTotal,
 		maxTotal,
 		minEdge,
-		maxEdge
+		maxEdge,
+		getContextMenuItems
 	}: Props = $props();
 
 	// SVG element
@@ -75,6 +81,13 @@
 	let zoomScale = $state(1);
 	let zoomX = $state(0);
 	let zoomY = $state(0);
+
+	let nodeCoords: Record<string, [number, number]> = $derived(
+		Object.entries(systemCoords).reduce(
+			(acc, [node, { lat, lon }]) => ({ ...acc, [node]: [lon, lat] }),
+			{}
+		)
+	);
 
 	let initialProjection = $derived.by(() => {
 		const usedNodes = new Set(
@@ -139,6 +152,7 @@
 	const computeColor = scaleOrdinal(allColors());
 	const computePie = d3pie()
 		.sort(null)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		.value((d: any) => d);
 
 	let land: string | null = $derived.by(() => {
@@ -169,13 +183,14 @@
 	});
 
 	// Zoom
-	let zoom = d3zoom().filter(shouldHandleZoom).on('zoom', onZoom);
+	let zoom = d3zoom().filter(shouldHandleZoom).on('zoom', onZoom) as unknown as ZoomBehavior<
+		SVGSVGElement,
+		unknown
+	>;
 
 	function initZoom() {
 		if (!svg) return;
-		select(svg)
-			.call(zoom as any)
-			.call(zoom.transform as any, zoomIdentity);
+		select(svg).call(zoom).call(zoom.transform, zoomIdentity);
 	}
 
 	function shouldHandleZoom(event: MouseEvent | WheelEvent) {
@@ -236,7 +251,7 @@
 		const translateY = (zoomY - y) * scale + height / 2;
 
 		// Apply the zoom transformation
-		const selection = select(svg as Element);
+		const selection = select(svg as SVGSVGElement);
 		zoom.transform(
 			selection,
 			zoomIdentity.translate(translateX, translateY).scale(zoomScale * scale)
@@ -252,11 +267,11 @@
 		zoomScale = 1;
 		zoomX = 0;
 		zoomY = 0;
-		select(svg).call(zoom.transform as any, zoomIdentity);
+		select(svg).call(zoom.transform, zoomIdentity);
 	}
 
 	// Data dependent values
-	interface Pie {
+	export interface Pie {
 		x: number;
 		y: number;
 		label: string;
@@ -288,6 +303,7 @@
 				y: y,
 				label: node,
 				total: total,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				data: computePie(values.map((d) => d.value)).map((p: any, i: number) => {
 					return {
 						color: computeColor(values[i].technology),
@@ -323,29 +339,80 @@
 
 	// Tooltip
 	let cursorPos: [number, number] = $state([0, 0]);
-	let activePie: Pie | undefined = $derived.by(() => {
+	let hoveredPie: Pie | undefined = $derived.by(() => {
 		return findPie(cursorPos);
 	});
-	let activeLines: Line[] = $derived.by(() => {
-		if (activePie) return [];
+	let hoveredLines: Line[] = $derived.by(() => {
+		if (hoveredPie) return [];
 		return filterLines(cursorPos);
 	});
+	let focusedElements: {
+		isPie: boolean;
+		label: string;
+		x: number;
+		y: number;
+		yOffset: number;
+		isOnTop: boolean;
+	}[] = $state([]);
 
 	let tooltipX = $derived.by(() => {
-		if (activePie) return activePie.x;
-		else if (activeLines.length > 0) return 0.5 * (activeLines[0].start[0] + activeLines[0].end[0]);
+		if (hoveredPie) return hoveredPie.x;
+		else if (hoveredLines.length > 0)
+			return 0.5 * (hoveredLines[0].start[0] + hoveredLines[0].end[0]);
 		return 0;
 	});
 	let tooltipY = $derived.by(() => {
-		if (activePie) return activePie.y;
-		else if (activeLines.length > 0) return 0.5 * (activeLines[0].start[1] + activeLines[0].end[1]);
+		if (hoveredPie) return hoveredPie.y;
+		else if (hoveredLines.length > 0)
+			return 0.5 * (hoveredLines[0].start[1] + hoveredLines[0].end[1]);
 		return 0;
 	});
-	let tooltipYOffset = $derived.by(() => (activePie ? computeRadius(activePie.total) : 0));
-	let tooltipOnTop = $derived.by(() => tooltipY - tooltipYOffset > 180);
+	let tooltipYOffset = $derived.by(() => (hoveredPie ? computeRadius(hoveredPie.total) : 0));
+	let tooltipOnTop = $derived.by(() => fitsOnTop(tooltipY, tooltipYOffset));
 
 	function updateActiveElements(event: MouseEvent) {
 		cursorPos = pointer(event);
+	}
+
+	function toggleFocusOnElement(event: MouseEvent) {
+		const pos = pointer(event);
+		const pie = findPie(pos);
+		if (pie) {
+			if (focusedElements.find((el) => el.isPie && el.label === pie.label)) {
+				focusedElements = focusedElements.filter((el) => !el.isPie || el.label !== pie.label);
+			} else {
+				const yOffset = computeRadius(pie.total);
+				focusedElements.push({
+					label: pie.label,
+					isPie: true,
+					x: pie.x,
+					y: pie.y,
+					yOffset,
+					isOnTop: fitsOnTop(pie.y, yOffset)
+				});
+			}
+		} else {
+			const lines = filterLines(pos);
+			if (lines.length === 0) return;
+			const label = lines.map((line) => line.label).join(', ');
+			if (focusedElements.find((el) => !el.isPie && label === el.label)) {
+				focusedElements = focusedElements.filter((el) => el.isPie || el.label !== label);
+			} else {
+				const yCoord = 0.5 * (lines[0].start[1] + lines[0].end[1]);
+				focusedElements.push({
+					label,
+					isPie: false,
+					x: 0.5 * (lines[0].start[0] + lines[0].end[0]),
+					y: yCoord,
+					yOffset: 0,
+					isOnTop: fitsOnTop(yCoord, 0)
+				});
+			}
+		}
+	}
+
+	function fitsOnTop(y: number, offset: number) {
+		return y - offset > 180;
 	}
 
 	function findPie(pos: [number, number]) {
@@ -406,6 +473,13 @@
 		return `M${x1},${y1} L${x2},${y2}`;
 	}
 
+	function formatNumber(d: number) {
+		return d.toLocaleString(undefined, {
+			minimumFractionDigits: 3,
+			maximumFractionDigits: 3
+		});
+	}
+
 	//#region Handle resizing
 	function handleSize() {
 		if (!svg?.parentElement) return;
@@ -438,9 +512,90 @@
 		initResizeObserver();
 		handleSize();
 	}
+
+	//#region Context Menu
+
+	let contextMenuOpen = $state(false);
+	let contextMenuX = $state(0);
+	let contextMenuY = $state(0);
+	let contextMenuPie: Pie | undefined = $state(undefined);
+	let contextMenuItems: ContextMenuItem[] = $derived(getContextMenuItems(contextMenuPie));
+
+	function openContextMenu(event: MouseEvent) {
+		event.preventDefault();
+		event.stopPropagation();
+		contextMenuX = event.clientX;
+		contextMenuY = event.clientY;
+		contextMenuOpen = true;
+		// fix the context menu to the currently hovered pie, so it doesn't change when moving the mouse
+		contextMenuPie = hoveredPie;
+	}
+
+	function closeContextMenu() {
+		contextMenuOpen = false;
+	}
+
+	onMount(() => {
+		document.addEventListener('click', closeContextMenu);
+	});
+
+	onDestroy(() => {
+		document.removeEventListener('click', closeContextMenu);
+	});
+
+	//#endregion
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -->
 <svelte:window on:resize={handleSize} />
+
+{#snippet tooltip(
+	x: number,
+	y: number,
+	yOffset: number,
+	isOnTop: boolean,
+	pie: Pie | undefined,
+	lines: Line[],
+	moveable: boolean
+)}
+	<Tooltip {x} {y} {yOffset} {isOnTop} {moveable}>
+		{#if pie}
+			<h5 class="mb-0 px-2 text-sm font-bold">{pie.label}</h5>
+			{#each pie.data as d (d.technology)}
+				<div class="flex items-center justify-between gap-2 px-2 text-xs">
+					<div class="flex items-center">
+						<svg class="me-1" width="12" height="12">
+							<rect width="12" height="12" fill={d.color} />
+						</svg>
+						<span>{d.technology}:</span>
+					</div>
+					<div>
+						{formatNumber(d.value)}
+						{unit}
+					</div>
+				</div>
+			{/each}
+			{#if pie.data.length > 1}
+				<div class="mt-1 flex items-center justify-between gap-1 px-2 text-xs font-bold">
+					<div>Total:</div>
+					<div>{formatNumber(pie.total)} {unit}</div>
+				</div>
+			{/if}
+		{:else if lines.length > 0}
+			{#each lines as line, i (i)}
+				<div class={['px-2 text-xs', i > 0 && 'mt-2 border-t border-gray-500 pt-2']}>
+					<h5 class="mb-0 text-sm font-bold">{line.label}</h5>
+					{#each line.values as d (d.technology)}
+						<div>
+							{d.technology}: {formatNumber(d.value)}
+							{unit}
+						</div>
+					{/each}
+				</div>
+			{/each}
+		{/if}
+	</Tooltip>
+{/snippet}
 
 {#if !topology}
 	<Spinner></Spinner>
@@ -463,6 +618,7 @@
 
 	<ContentBox class="relative resize-y overflow-hidden overflow-y-auto" noPadding>
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<svg
 			{width}
 			{height}
@@ -478,6 +634,8 @@
 				cancelZoomRectangle();
 				cursorPos = [0, 0];
 			}}
+			onclick={toggleFocusOnElement}
+			oncontextmenu={openContextMenu}
 			{id}
 			class="bg-white dark:bg-gray-800"
 		>
@@ -519,45 +677,39 @@
 				/>
 			{/if}
 		</svg>
+		<div class="absolute top-0 left-0 p-2 text-xl">
+			<HelpTooltip>
+				Click on a pie or line to keep a tooltip visible.<br />
+				Use the mouse to move the tooltip while it's visible.<br />
+				Right-click on a pie to open the context menu.
+			</HelpTooltip>
+		</div>
 		<!-- Tooltip -->
-		{#if activePie || activeLines.length > 0}
-			<Tooltip x={tooltipX} y={tooltipY} yOffset={tooltipYOffset} isOnTop={tooltipOnTop}>
-				{#if activePie}
-					<h5 class="mb-0 px-2 text-sm font-bold">{activePie.label}</h5>
-					{#each activePie.data as d (d.technology)}
-						<div class="flex items-center justify-between gap-2 px-2 text-xs">
-							<div class="flex items-center">
-								<svg class="me-1" width="12" height="12">
-									<rect width="12" height="12" fill={d.color} />
-								</svg>
-								<span>{d.technology}:</span>
-							</div>
-							<div>
-								{d.value.toFixed(3)}
-								{unit}
-							</div>
-						</div>
-					{/each}
-					{#if activePie.data.length > 1}
-						<div class="mt-1 flex items-center justify-between gap-1 px-2 text-xs font-bold">
-							<div>Total:</div>
-							<div>{activePie.total.toFixed(3)} {unit}</div>
-						</div>
-					{/if}
-				{:else if activeLines.length > 0}
-					{#each activeLines as line, i (i)}
-						<div class={['px-2 text-xs', i > 0 && 'mt-2 border-t border-gray-500 pt-2']}>
-							<h5 class="mb-0 text-sm font-bold">{line.label}</h5>
-							{#each line.values as d (d.technology)}
-								<div>
-									{d.technology}: {d.value.toFixed(3)}
-									{unit}
-								</div>
-							{/each}
-						</div>
-					{/each}
-				{/if}
-			</Tooltip>
+		{#if hoveredPie || hoveredLines.length > 0}
+			{@render tooltip(
+				tooltipX,
+				tooltipY,
+				tooltipYOffset,
+				tooltipOnTop,
+				hoveredPie,
+				hoveredLines,
+				false
+			)}
+		{/if}
+		{#each focusedElements as el (el.label)}
+			{@render tooltip(
+				el.x,
+				el.y,
+				el.yOffset,
+				el.isOnTop,
+				el.isPie ? pies.find((pie) => pie.label === el.label) : undefined,
+				!el.isPie ? lines.filter((line) => el.label.includes(line.label)) : [],
+				true
+			)}
+		{/each}
+		<!-- Context Menu -->
+		{#if contextMenuOpen && contextMenuItems}
+			<ContextMenu x={contextMenuX} y={contextMenuY} items={contextMenuItems} />
 		{/if}
 	</ContentBox>
 {/if}

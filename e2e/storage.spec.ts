@@ -3,19 +3,23 @@ import {
 	expectScreenshot,
 	selectFromDropdown,
 	selectFromMultiSelect,
+	selectRadioOption,
 	selectSolution
 } from './helper';
 
+const PAGE_URL = '/energy_balance/storage';
+
 test('storage: default', async ({ page }) => {
-	await page.goto('/energy_balance/storage');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
+	await selectFromDropdown(page, 'Year', '2022');
 	await expectScreenshot(page, '#level_chart-container', `eeht_pf/default/level.png`);
 	await expectScreenshot(page, '#flow_chart-container', `eeht_pf/default/flow.png`);
 });
 
 test('storage: year', async ({ page }) => {
-	await page.goto('/energy_balance/storage');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
 	await selectFromDropdown(page, 'Year', '2050');
@@ -24,18 +28,20 @@ test('storage: year', async ({ page }) => {
 });
 
 test('storage: carrier', async ({ page }) => {
-	await page.goto('/energy_balance/storage');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'natural_gas');
+	await selectFromDropdown(page, 'Year', '2022');
 	await expectScreenshot(page, '#level_chart-container', `eeht_pf/carrier-natural_gas/level.png`);
 	await expectScreenshot(page, '#flow_chart-container', `eeht_pf/carrier-natural_gas/flow.png`);
 });
 
 test('storage: smoothing window size', async ({ page }) => {
-	await page.goto('/energy_balance/storage');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
-	await selectFromDropdown(page, 'Smoothing Window Size', 'Monthly');
+	await selectFromDropdown(page, 'Year', '2022');
+	await selectRadioOption(page, 'Smoothing Window Size', 'Monthly');
 	await expectScreenshot(
 		page,
 		'#level_chart-container',
@@ -49,10 +55,10 @@ test('storage: smoothing window size', async ({ page }) => {
 });
 
 test('storage: technology subdivision', async ({ page }) => {
-	await page.goto('/energy_balance/storage');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
-	// await page.waitForSelector('#level_chart');
+	await selectFromDropdown(page, 'Year', '2022');
 	await page.getByRole('switch', { name: 'Technology Subdivision on' }).uncheck();
 	await expectScreenshot(
 		page,
@@ -63,7 +69,7 @@ test('storage: technology subdivision', async ({ page }) => {
 });
 
 test('storage: technologies', async ({ page }) => {
-	await page.goto('/energy_balance/storage');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
 	await selectFromDropdown(page, 'Year', '2050');
@@ -81,9 +87,10 @@ test('storage: technologies', async ({ page }) => {
 });
 
 test('storage: nodes', async ({ page }) => {
-	await page.goto('/energy_balance/storage');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
+	await selectFromDropdown(page, 'Year', '2022');
 	await selectFromMultiSelect(page, 'Nodes', ['DE']);
 	await expectScreenshot(page, '#level_chart-container', `eeht_pf/nodes-only-de/level.png`);
 	await expectScreenshot(page, '#flow_chart-container', `eeht_pf/nodes-only-de/flow.png`);

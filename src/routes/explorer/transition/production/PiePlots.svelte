@@ -6,20 +6,38 @@
 		getPlotOptions,
 		hasMultipleSolutions as hasMultipleSolutionsFn
 	} from '@/lib/piePlots';
+	import { getURLParam, QUERY_PARAM_KEYS, updateURLParam } from '@/lib/queryParams.svelte';
 	import type { ChartDataset } from 'chart.js';
+	import { onMount } from 'svelte';
 
 	interface Props {
 		datasets: ChartDataset<'bar'>[];
 		labels: string[];
 		year: string | null;
 		solution: string | null;
-		tooltipSuffix: string;
+		labelSuffix: string;
 	}
-	let { datasets, labels, year, solution, tooltipSuffix }: Props = $props();
+	let {
+		datasets,
+		labels,
+		year = $bindable(),
+		solution = $bindable(),
+		labelSuffix
+	}: Props = $props();
 
 	let dataForActiveYear = $derived(getDataForActiveYear(datasets, year, solution, labels));
 
 	let hasMultipleSolutions = $derived(hasMultipleSolutionsFn(datasets));
+
+	onMount(() => {
+		year = getURLParam(QUERY_PARAM_KEYS.activeYear);
+		solution = getURLParam(QUERY_PARAM_KEYS.activeSolution);
+	});
+
+	$effect(() => {
+		updateURLParam(QUERY_PARAM_KEYS.activeYear, year);
+		updateURLParam(QUERY_PARAM_KEYS.activeSolution, solution);
+	});
 
 	function filterDatasets(
 		criteria: (value: number) => boolean,
@@ -53,13 +71,13 @@
 		filterDatasets((value) => value > 1.0e-6, 'Production')
 	) as unknown as ChartDataset<'pie'>[];
 	let productionLabels = $derived(filterLabels((value) => value > 1.0e-6));
-	let productionOptions = $derived(getPlotOptions(tooltipSuffix));
+	let getProductionOptions = () => getPlotOptions(labelSuffix);
 
 	let consumptionDatasets = $derived(
 		filterDatasets((value) => value < -1.0e-6, 'Consumption')
 	) as unknown as ChartDataset<'pie'>[];
 	let consumptionLabels = $derived(filterLabels((value) => value < -1.0e-6));
-	let consumptionOptions = $derived(getPlotOptions(tooltipSuffix));
+	let getConsumptionOptions = () => getPlotOptions(labelSuffix);
 </script>
 
 {#if year == null || solution == null}
@@ -77,9 +95,10 @@
 			</h3>
 			<Chart
 				type="pie"
-				datasets={productionDatasets}
+				dataLabels
+				getDatasets={() => productionDatasets}
+				getOptions={getProductionOptions}
 				labels={productionLabels}
-				options={productionOptions}
 				boxed={false}
 			></Chart>
 		</ContentBox>
@@ -90,9 +109,10 @@
 			</h3>
 			<Chart
 				type="pie"
-				datasets={consumptionDatasets}
+				dataLabels
+				getDatasets={() => consumptionDatasets}
+				getOptions={getConsumptionOptions}
 				labels={consumptionLabels}
-				options={consumptionOptions}
 				boxed={false}
 			></Chart>
 		</ContentBox>

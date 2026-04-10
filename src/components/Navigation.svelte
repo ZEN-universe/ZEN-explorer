@@ -1,19 +1,25 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	import type { Pathname } from '$app/types';
 	import { addCurrentSolutionToURL } from '$lib/queryParams.svelte';
 	import ToggleThemeButton from './ToggleThemeButton.svelte';
 
-	const transition_urls = {
-		Capacity: resolve('/explorer/transition/capacity'),
-		Production: resolve('/explorer/transition/production'),
-		Emissions: resolve('/explorer/transition/emissions'),
-		Costs: resolve('/explorer/transition/costs')
+	const transition_urls: Record<string, Pathname> = {
+		Capacity: '/explorer/transition/capacity',
+		Production: '/explorer/transition/production',
+		Emissions: '/explorer/transition/emissions',
+		Costs: '/explorer/transition/costs'
 	};
 
-	const energy_balance_urls = {
-		Nodal: resolve('/explorer/energy_balance/nodal'),
-		Storage: resolve('/explorer/energy_balance/storage')
+	const energy_balance_urls: Record<string, Pathname> = {
+		Nodal: '/explorer/energy_balance/nodal',
+		Storage: '/explorer/energy_balance/storage'
+	};
+
+	const map_urls: Record<string, Pathname> = {
+		Capacity: '/explorer/map/capacity',
+		Production: '/explorer/map/production'
 	};
 
 	let currentPage = $derived(page.url.pathname.slice(0, -1));
@@ -79,13 +85,20 @@
 				>
 			</li>
 			<li>
-				<a
-					class={[
-						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
-						currentPage == '/explorer/map' && 'border-b-2 pb-1'
-					]}
-					href={addCurrentSolutionToURL('/explorer/map', false)}>The Map</a
-				>
+				<div class="text-sm tracking-wide text-gray-400 uppercase">The Map</div>
+				<ul class="flex gap-4 text-lg font-semibold">
+					{#each Object.entries(map_urls) as [title, url] (title)}
+						<li>
+							<a
+								class={[
+									'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
+									currentPage == url && 'border-b-2 pb-1'
+								]}
+								href={addCurrentSolutionToURL(url, false)}>{title}</a
+							>
+						</li>
+					{/each}
+				</ul>
 			</li>
 		</ul>
 		<div class="flex items-center justify-end gap-2">
@@ -176,10 +189,15 @@
 			class="mb-4 block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
 			>The Energy System</a
 		>
-		<a
-			href={addCurrentSolutionToURL('/explorer/map', false)}
-			class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
-			>The Map</a
-		>
+		<h2 class="mb-0 px-3 text-sm tracking-wide text-gray-500 uppercase">The Map</h2>
+		<div class="mb-4">
+			{#each Object.entries(map_urls) as [title, url] (title)}
+				<a
+					href={addCurrentSolutionToURL(url, false)}
+					class="block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
+					>{title}</a
+				>
+			{/each}
+		</div>
 	</div>
 </aside>

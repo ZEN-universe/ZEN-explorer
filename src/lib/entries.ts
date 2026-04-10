@@ -43,7 +43,7 @@ export default class Entries {
 		);
 	}
 
-	static empty(): Entries {
+	static get empty(): Entries {
 		return new Entries([]);
 	}
 
@@ -95,9 +95,23 @@ export default class Entries {
 	 * @param fieldNames Array of index field names to group by.
 	 * @returns New Entries instance with grouped and aggregated entries.
 	 */
-	groupBy(fieldNames: string[]): Entries {
+	groupBy(fieldNames: string[], aggregationTechnique: 'sum' | 'max' = 'sum'): Entries {
 		const aggregatedMap: Record<string, number[]> = {};
 		const labelMap: Record<string, Index> = {};
+
+		let aggregateFn: (label: string, value: number, idx: number) => void;
+		switch (aggregationTechnique) {
+			case 'sum':
+				aggregateFn = (label, value, idx) => {
+					aggregatedMap[label][idx] += value;
+				};
+				break;
+			case 'max':
+				aggregateFn = (label, value, idx) => {
+					aggregatedMap[label][idx] = Math.max(aggregatedMap[label][idx], value);
+				};
+				break;
+		}
 
 		this.entries.forEach((entry) => {
 			// Compute label of aggregated entry, initialize it, and compute total for each column
@@ -109,9 +123,7 @@ export default class Entries {
 			if (!aggregatedMap[label]) {
 				aggregatedMap[label] = entry.data.slice();
 			} else {
-				entry.data.forEach((value, i) => {
-					aggregatedMap[label][i] += Number(value);
-				});
+				entry.data.forEach((value, i) => aggregateFn(label, value, i));
 			}
 		});
 
@@ -282,6 +294,24 @@ export default class Entries {
 	 */
 	filter(callback: (entry: Entry, index: number, array: Entry[]) => boolean): Entries {
 		return new Entries(this.entries.filter(callback));
+	}
+
+	/**
+	 * Checks if at least one entry satisfies the provided testing function.
+	 * @param callback Function to test each entry.
+	 * @returns True if at least one entry satisfies the testing function, otherwise false.
+	 */
+	some(callback: (entry: Entry) => boolean): boolean {
+		return this.entries.some(callback);
+	}
+
+	/**
+	 * Checks if all entries satisfy the provided testing function.
+	 * @param callback Function to test each entry.
+	 * @returns True if all entries satisfy the testing function, otherwise false.
+	 */
+	every(callback: (entry: Entry) => boolean): boolean {
+		return this.entries.every((entry) => callback(entry));
 	}
 
 	/**

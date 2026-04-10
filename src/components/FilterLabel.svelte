@@ -4,14 +4,15 @@
 
 	interface Props {
 		formId?: string;
+		labelId?: string;
 		label: string;
 		helpText?: Snippet;
 		rightSide?: Snippet;
 	}
-	let { formId, label, helpText, rightSide }: Props = $props();
+	let { formId, labelId, label, helpText, rightSide }: Props = $props();
 </script>
 
-<div class="mb-1 flex items-center justify-between">
+<div class="mb-1 flex items-center justify-between" id={labelId}>
 	<div class="flex items-center gap-2">
 		<div class="text-sm tracking-wide text-gray-600 uppercase dark:text-gray-400">
 			{#if formId}

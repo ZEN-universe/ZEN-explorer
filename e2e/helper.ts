@@ -6,7 +6,9 @@ export async function selectSolution(page: Page, solution: string, subsolution: 
 }
 
 export async function selectFromDropdown(page: Page, dropdownLabel: string, optionName: string) {
-	await page.getByRole('combobox', { name: dropdownLabel }).click();
+	const combobox = page.getByRole('combobox', { name: dropdownLabel, disabled: false });
+	await combobox.click();
+	await expect(combobox).toHaveAttribute('aria-expanded', 'true');
 	await page.getByRole('option', { name: optionName, exact: true }).click();
 }
 
@@ -21,6 +23,18 @@ export async function selectFromMultiSelect(
 		await page.getByRole('option', { name: optionName, exact: true }).click();
 	}
 	await page.getByRole('combobox', { name: dropdownLabel }).locator('.handle').first().click();
+}
+
+export async function selectRadioOption(page: Page, groupLabel: string, optionName: string) {
+	await page
+		.getByRole('radiogroup', { name: groupLabel })
+		.getByRole('radio', { name: optionName, exact: true })
+		.check();
+}
+
+export async function selectFromRangeSlider(page: Page, sliderLabel: string, value: number) {
+	const slider = page.getByRole('slider', { name: sliderLabel });
+	await slider.fill(value.toString());
 }
 
 export async function expectScreenshot(page: Page, locator: string, screenshotName: string) {

@@ -1,16 +1,7 @@
 <script lang="ts">
-	import { onMount, tick, untrack } from 'svelte';
-
-	import Entries from '$lib/entries';
-	import { fetchTotal } from '$lib/temple';
-	import type { ActivatedSolution, Row, Entry, SankeyNode, PartialSankeyLink } from '$lib/types';
-	import { getURLParam, getURLParamAsIntArray, updateURLParams } from '$lib/queryParams.svelte';
-	import { nextColor, resetColorState } from '$lib/colors';
-	import { getTransportEdges, toOptions } from '$lib/utils';
-	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
+	import { untrack } from 'svelte';
 
 	import MultiSelect from '$components/forms/MultiSelect.svelte';
-	import Dropdown from '$components/forms/Dropdown.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
 	import SankeyDiagram, { type LegendItem } from '$components/SankeyDiagram.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
@@ -19,6 +10,24 @@
 	import Spinner from '$components/Spinner.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import Slider from '$components/forms/Slider.svelte';
+
+	import Entries from '$lib/entries';
+	import { fetchTotal } from '$lib/temple';
+	import type {
+		ActivatedSolution,
+		Row,
+		Entry,
+		SankeyNode,
+		PartialSankeyLink,
+		RawSankeyNode
+	} from '$lib/types';
+	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
+	import { nextColor, resetColorState } from '$lib/colors';
+	import { getTransportEdges } from '$lib/utils';
+	import { generateSolutionSuffix } from '@/lib/compareSolutions.svelte';
+
+	useURLParams();
 
 	let years: number[] = $state([]);
 	let solutionLoading: boolean = $state(false);
@@ -28,14 +37,7 @@
 	let selectedSolution: ActivatedSolution | null = $state(null);
 	let selectedCarriers: string[] = $state([]);
 	let selectedNodes: string[] = $state([]);
-	let selectedYear: string | null = $state(null);
-
-	// Temporary objects to store URL parameters and previous selection.
-	let urlCarriers: number[] | null | null = null;
-	let urlNodes: number[] | null = null;
-	let previousCarriers: string = '';
-	let previousNodes: string = '';
-	let previousYear: string = '';
+	let selectedYear: number = $state(0);
 
 	let dataConversionInput: Entries | null = $state.raw(null);
 	let dataConversionOutput: Entries | null = $state(null);
@@ -61,44 +63,6 @@
 
 	let diagram = $state<SankeyDiagram>();
 
-	//#region Effects and functions
-
-	$effect(() => {
-		if (!years.length) {
-			selectedYear = null;
-			return;
-		}
-		if (previousYear && years.includes(Number(previousYear))) {
-			selectedYear = previousYear;
-		} else {
-			selectedYear = years[0].toString();
-		}
-	});
-
-	$effect(() => {
-		if (!selectedYear) return;
-		previousYear = selectedYear;
-	});
-
-	updateSelectionOnStateChanges(
-		() => carriers,
-		() => !!selectedSolution,
-		() => previousCarriers,
-		() => urlCarriers,
-		(value) => (selectedCarriers = value),
-		(value) => (previousCarriers = value),
-		(value) => (urlCarriers = value)
-	);
-	updateSelectionOnStateChanges(
-		() => nodes,
-		() => !!selectedSolution,
-		() => previousNodes,
-		() => urlNodes,
-		(value) => (selectedNodes = value),
-		(value) => (previousNodes = value),
-		(value) => (urlNodes = value)
-	);
-
 	$effect(() => {
 		selectedCarriers;
 		selectedNodes;
@@ -108,29 +72,21 @@
 		});
 	});
 
-	$effect(() => {
-		selectedYear;
-		selectedCarriers;
-		selectedNodes;
-
-		tick().then(() => {
-			untrack(() => {
-				updateURLParams({
-					year: selectedYear,
-					car: selectedCarriers.map((c) => carriers.indexOf(c)).join('~') || null,
-					nodes: selectedNodes.map((n) => nodes.indexOf(n)).join('~') || null
-				});
-			});
-		});
-	});
-
-	onMount(() => {
-		selectedYear = getURLParam('year');
-		urlCarriers = getURLParamAsIntArray('car');
-		urlNodes = getURLParamAsIntArray('nodes');
-	});
-
-	//#endregion
+	function getContextMenuItems(node: RawSankeyNode) {
+		if (!selectedSolution || !selectedYear || !carriers.includes(node.label)) return [];
+		return [
+			{
+				label: `Go to The Transition Pathway - Production (year: ${selectedYear}, carrier: ${node.label})`,
+				href: addParametersToPath('/transition/production', {
+					[QUERY_PARAM_KEYS.solutions]: selectedSolution.solution_name,
+					[QUERY_PARAM_KEYS.scenarios]: selectedSolution.scenario_name,
+					[QUERY_PARAM_KEYS.carrier]: node.label,
+					[QUERY_PARAM_KEYS.activeSolution]: generateSolutionSuffix(selectedSolution),
+					[QUERY_PARAM_KEYS.activeYear]: selectedYear.toString()
+				})
+			}
+		];
+	}
 
 	function solutionChanged() {
 		fetchData();
@@ -259,11 +215,14 @@
 		resetColorState();
 		const colors: LegendItem[] = [];
 
-		const carrierNodes = carriers.map((carrier) => {
-			const color = nextColor(carrier);
-			colors.push({ color, carrier });
-			return newNode(carrier, carrier, color, getUnit(carrier), true, null, true, true);
-		});
+		const carrierNodes = carriers
+			.map((carrier) => {
+				if (!selectedCarriers.includes(carrier)) return null;
+				const color = nextColor(carrier);
+				colors.push({ color, carrier });
+				return newNode(carrier, carrier, color, getUnit(carrier), true, null, true, true);
+			})
+			.filter((node) => node !== null);
 		const conversionTechNodes = conversionTechs.map((tech) =>
 			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)), false, null, false)
 		);
@@ -330,7 +289,7 @@
 			node: selectedNodes,
 			technology: getTechnologiesRelatedToCarriers(selectedCarriers)
 		};
-		const indexOfYear = years.indexOf(Number(selectedYear));
+		const indexOfYear = years.indexOf(selectedYear);
 		if (indexOfYear === -1) return;
 		const links: PartialSankeyLink[] = [];
 
@@ -509,17 +468,28 @@
 		</FilterSection>
 		{#if selectedSolution != null}
 			<FilterSection title="Carrier Selection">
-				<MultiSelect bind:value={selectedCarriers} options={carriers} label="Carriers"
+				<MultiSelect
+					bind:value={selectedCarriers}
+					options={carriers}
+					label="Carriers"
+					urlParam={QUERY_PARAM_KEYS.carriers}
 				></MultiSelect>
 			</FilterSection>
 			<FilterSection title="Data Selection">
-				<Dropdown
+				<Slider
 					bind:value={selectedYear}
-					options={toOptions(years.map((year) => year.toString()))}
+					min={years[0]}
+					max={years[years.length - 1]}
+					step={selectedSolution.detail.system.interval_between_years}
 					label="Year"
-					disabled={fetching || solutionLoading}
-				></Dropdown>
-				<MultiSelect bind:value={selectedNodes} options={nodes} label="Nodes"></MultiSelect>
+					urlParam={QUERY_PARAM_KEYS.year}
+				></Slider>
+				<MultiSelect
+					bind:value={selectedNodes}
+					options={nodes}
+					label="Nodes"
+					urlParam={QUERY_PARAM_KEYS.nodes}
+				></MultiSelect>
 			</FilterSection>
 		{/if}
 	{/snippet}
@@ -555,7 +525,13 @@
 		{:else if sankeyNodes.length === 0}
 			<ErrorMessage message="No data available for the selected filters"></ErrorMessage>
 		{:else}
-			<SankeyDiagram nodes={sankeyNodes} links={sankeyLinks} {legendItems} bind:this={diagram} />
+			<SankeyDiagram
+				nodes={sankeyNodes}
+				links={sankeyLinks}
+				{legendItems}
+				{getContextMenuItems}
+				bind:this={diagram}
+			/>
 		{/if}
 	{/snippet}
 </DiagramPage>

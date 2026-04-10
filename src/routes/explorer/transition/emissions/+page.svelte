@@ -2,6 +2,7 @@
 	import { onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import { draw as drawPattern } from 'patternomaly';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	import MultiSelect from '$components/forms/MultiSelect.svelte';
 	import Radio from '$components/forms/Radio.svelte';
@@ -12,23 +13,30 @@
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
+	import Spinner from '$components/Spinner.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	import { fetchTotal, fetchUnit } from '$lib/temple';
 	import { getVariableName } from '$lib/variables';
 	import type { ActivatedSolution, Row } from '$lib/types';
-	import { getURLParam, getURLParamAsBoolean, updateURLParams } from '$lib/queryParams.svelte';
+	import {
+		getURLParam,
+		getURLParamAsBoolean,
+		updateURLParams,
+		useURLParams
+	} from '$lib/queryParams.svelte';
 	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
 	import Entries, { type FilterCriteria } from '$lib/entries';
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
-		onClickLegendForSolutionComparison
+		onClickLegendForSolutionComparison,
+		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
 	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
-	import Spinner from '$components/Spinner.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
-	import ErrorMessage from '$components/ErrorMessage.svelte';
-	import { SvelteSet } from 'svelte/reactivity';
+
+	useURLParams();
 
 	let technologyData: Row[][] = $state([]);
 	let carrierData: Row[][] = $state([]);
@@ -84,32 +92,34 @@
 			return Object.values(cumulationUnits)[0] || '';
 		}
 	});
-	let plotOptions: ChartOptions = $derived({
-		maintainAspectRatio: false,
-		scales: {
-			x: {
-				stacked: true,
-				title: {
-					display: true,
-					text: 'Year'
+	function getPlotOptions(): ChartOptions {
+		return {
+			maintainAspectRatio: false,
+			scales: {
+				x: {
+					stacked: true,
+					title: {
+						display: true,
+						text: 'Year'
+					}
+				},
+				y: {
+					stacked: true,
+					title: {
+						display: true,
+						text: `Emissions` + (isNormalized ? '' : ` [${unit}]`)
+					},
+					max: isNormalized ? 1 : undefined,
+					suggestedMin: isNormalized ? -1 : undefined
 				}
 			},
-			y: {
-				stacked: true,
-				title: {
-					display: true,
-					text: `Emissions` + (isNormalized ? '' : ` [${unit}]`)
-				},
-				max: isNormalized ? 1 : undefined,
-				suggestedMin: isNormalized ? -1 : undefined
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x'
 			}
-		},
-		interaction: {
-			intersect: false,
-			mode: 'nearest',
-			axis: 'x'
-		}
-	});
+		};
+	}
 
 	const plotPluginOptions: ChartOptions['plugins'] = {
 		tooltip: {
@@ -342,7 +352,7 @@
 				entries = entries.normalize();
 			}
 
-			const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+			const suffix = generateSolutionSuffix(solution);
 			const pattern = solutionIndex > 0 ? nextPattern() : undefined;
 			patterns.push(createColorBoxItem(suffix, pattern));
 
@@ -404,7 +414,7 @@
 				entry = selectedYears.map(() => value);
 			}
 
-			const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+			const suffix = generateSolutionSuffix(solution);
 			const label =
 				(selectedSubdivision || selectedCumulation == 'Annual'
 					? 'Annual Emissions Limit'
@@ -533,12 +543,13 @@
 			<Chart
 				type="bar"
 				labels={selectedYears.map((year) => year.toString())}
-				{datasets}
-				options={plotOptions}
+				getDatasets={() => datasets}
+				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
 				{patterns}
 				generateLabels={generateLabelsForSolutionComparison}
+				resetLegendState={resetLegendStateForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
 				bind:this={chart}
 			></Chart>

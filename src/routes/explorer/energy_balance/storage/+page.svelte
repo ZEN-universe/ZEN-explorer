@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import { onMount, tick, untrack } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 
 	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
@@ -10,17 +11,19 @@
 	import FilterSection from '$components/FilterSection.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
-
-	import { fetchFullTs } from '$lib/temple';
-	import { removeDuplicates } from '$lib/utils';
-	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
-	import type { ActivatedSolution } from '$lib/types';
-	import { nextColor, resetColorState } from '$lib/colors';
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
+
+	import { fetchFullTs } from '$lib/temple';
+	import { removeDuplicates } from '$lib/utils';
+	import { getURLParam, updateURLParams, useURLParams } from '$lib/queryParams.svelte';
+	import type { ActivatedSolution } from '$lib/types';
+	import { nextColor, resetColorState } from '$lib/colors';
 	import Entries from '$lib/entries';
-	import { SvelteSet } from 'svelte/reactivity';
+	import Radio from '$components/forms/Radio.svelte';
+
+	useURLParams();
 
 	// All but one data variable are non-reactive because of their size
 	let levelResponse: Entries | null = null;
@@ -36,7 +39,7 @@
 
 	let selectedSolution: ActivatedSolution | null = $state(null);
 	let selectedCarrier: string | null = $state(null);
-	let selectedYear: string = $state('');
+	let selectedYear: string | null = $state(null);
 	let selectedWindowSize: string = $state('Hourly');
 	let selectedSubdivision: boolean = $state(true);
 	let selectedTechnologies: string[] = $state([]);
@@ -65,8 +68,8 @@
 		].join('_');
 	});
 	let plotNameFlows: string = $derived(plotName + '_flows');
-	let plotOptions: ChartOptions = $derived(getPlotOptions('Storage Level'));
-	let plotOptionsFlows: ChartOptions = $derived(getPlotOptions('Storage Flow'));
+	let getPlotOptions: () => ChartOptions = () => constructPlotOptions('Storage Level');
+	let getPlotOptionsFlows: () => ChartOptions = () => constructPlotOptions('Storage Flow');
 
 	// Zoom level for both plots
 	let zoomLevel: [number, number] | null = $state(null);
@@ -87,7 +90,7 @@
 		});
 	});
 
-	function getPlotOptions(label: string): ChartOptions {
+	function constructPlotOptions(label: string): ChartOptions {
 		return {
 			animation: false,
 			normalized: true,
@@ -215,8 +218,8 @@
 	$effect(() => {
 		carriers;
 		untrack(() => {
-			if (selectedSolution === null) return;
-			if (selectedCarrier !== null && !carriers.includes(selectedCarrier)) {
+			if (selectedSolution === null || selectedCarrier === null) return;
+			else if (!carriers.includes(selectedCarrier)) {
 				selectedCarrier = null;
 			}
 		});
@@ -225,9 +228,9 @@
 	$effect(() => {
 		years;
 		untrack(() => {
-			if (years.length > 0 && (!selectedYear || !years.includes(Number(selectedYear)))) {
-				selectedYear = years[0].toString();
-				updateDatasets();
+			if (selectedSolution === null || selectedYear === null) return;
+			else if (!years.includes(Number(selectedYear))) {
+				selectedYear = null;
 			}
 		});
 	});
@@ -276,7 +279,7 @@
 	//#region Data fetching and processing
 
 	async function fetchData() {
-		if (selectedSolution === null || !selectedYear || selectedCarrier === null) {
+		if (selectedSolution === null || selectedYear === null || selectedCarrier === null) {
 			return;
 		}
 
@@ -448,10 +451,10 @@
 		await tick();
 
 		if (levelPlot) {
-			levelPlot.updateChart(levelDatasets);
+			levelPlot.updateChart();
 		}
 		if (flowPlot) {
-			flowPlot.updateChart(flowDatasets);
+			flowPlot.updateChart();
 		}
 	}
 
@@ -487,7 +490,9 @@
 						label="Year"
 						disabled={fetching || solutionLoading}
 					></Dropdown>
-					<Dropdown
+				{/if}
+				{#if selectedCarrier !== null && selectedYear !== null}
+					<Radio
 						options={windowSizes}
 						bind:value={selectedWindowSize}
 						label="Smoothing Window Size"
@@ -496,10 +501,10 @@
 						{#snippet helpText()}
 							Visualize the rolling average of hourly values over a longer time period.
 						{/snippet}
-					</Dropdown>
+					</Radio>
 				{/if}
 			</FilterSection>
-			{#if selectedSolution !== null && selectedCarrier !== null}
+			{#if selectedSolution !== null && selectedCarrier !== null && selectedYear !== null}
 				<FilterSection title="Data Selection">
 					<ToggleButton
 						bind:value={selectedSubdivision}
@@ -541,6 +546,8 @@
 			<ErrorMessage message="No carriers with this selection"></ErrorMessage>
 		{:else if selectedCarrier == null}
 			<WarningMessage message="Please select a carrier"></WarningMessage>
+		{:else if selectedYear == null}
+			<WarningMessage message="Please select a year"></WarningMessage>
 		{:else if technologies.length == 0}
 			<ErrorMessage message="No technologies with this selection"></ErrorMessage>
 		{:else if locations.length == 0}
@@ -552,8 +559,8 @@
 				id="level_chart"
 				type="line"
 				{labels}
-				datasets={[]}
-				options={plotOptions}
+				getDatasets={() => levelDatasets}
+				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
 				zoom={true}
@@ -564,8 +571,8 @@
 				id="flow_chart"
 				type="line"
 				{labels}
-				datasets={[]}
-				options={plotOptionsFlows}
+				getDatasets={() => flowDatasets}
+				getOptions={getPlotOptionsFlows}
 				pluginOptions={plotPluginOptions}
 				plotName={plotNameFlows}
 				zoom={true}

@@ -104,16 +104,14 @@
 		if (previousOptions !== null && previousOptions === optionsTag()) return;
 		previousOptions = optionsTag();
 
-		// if value is not in options, reset it and print warning
-		if (multiple && (value as string[]).some((val) => !options.find((opt) => opt.value === val))) {
-			const validValues = (value as string[]).filter((val) =>
-				options.find((opt) => opt.value === val)
-			);
+		// if some value is not in options, reset it and print warning
+		if (multiple && (value as string[]).some((val) => options.every((opt) => opt.value !== val))) {
+			const allValues = options.map((opt) => opt.value);
 			console.warn(
-				`[Select] ${label}: Some selected values are not in options. Resetting value to valid selections:`,
-				validValues
+				`[Select] ${label}: Some selected values are not in options. Selecting all options:`,
+				allValues
 			);
-			value = validValues as T;
+			value = allValues as T;
 		} else if (!multiple && value && !options.find((opt) => opt.value === value)) {
 			console.warn(
 				`[Select] ${label}: Selected value "${value}" is not in options. Resetting value to \`null\`.`

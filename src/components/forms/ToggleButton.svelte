@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
-	import type { Snippet } from 'svelte';
+	import { getURLParamAsBoolean, updateURLParam } from '@/lib/queryParams.svelte';
+	import { onMount, tick, type Snippet } from 'svelte';
 
 	interface Props {
 		value: boolean;
@@ -8,6 +9,7 @@
 		label: string;
 		helpText?: Snippet;
 		disabled?: boolean;
+		urlParam?: string;
 		onUpdate?: () => void;
 	}
 
@@ -17,13 +19,21 @@
 		label,
 		helpText,
 		disabled = false,
+		urlParam,
 		onUpdate
 	}: Props = $props();
 	const formId = $props.id();
 
-	function dispatchEvent() {
-		onUpdate?.();
-	}
+	onMount(() => {
+		if (urlParam === undefined) return;
+		value = getURLParamAsBoolean(urlParam, value);
+	});
+
+	$effect(() => {
+		if (urlParam === undefined) return;
+		value;
+		tick().then(() => updateURLParam(urlParam!, value ? '1' : '0'));
+	});
 </script>
 
 <FilterLabel {label} {formId} {helpText}></FilterLabel>
@@ -36,7 +46,7 @@
 		id={formId}
 		bind:checked={value}
 		{disabled}
-		onchange={dispatchEvent}
+		onchange={() => onUpdate?.()}
 	/>
 	<label class={['inline-flex', disabled && 'cursor-not-allowed opacity-50']} for={formId}>
 		<div

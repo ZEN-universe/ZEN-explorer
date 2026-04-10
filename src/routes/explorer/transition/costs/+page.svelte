@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, tick } from 'svelte';
+	import { SvelteSet } from 'svelte/reactivity';
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 	import { draw as drawPattern } from 'patternomaly';
 
@@ -9,12 +10,19 @@
 	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import Chart from '$components/Chart.svelte';
 	import FilterSection from '$components/FilterSection.svelte';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
+	import DiagramPage from '$components/DiagramPage.svelte';
+	import ChartButtons from '$components/ChartButtons.svelte';
+	import Spinner from '$components/Spinner.svelte';
+	import WarningMessage from '$components/WarningMessage.svelte';
+	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	import { fetchTotal } from '$lib/temple';
 	import {
 		getURLParamAsBoolean,
 		getURLParamAsIntArray,
 		updateURLParams,
+		useURLParams,
 		type URLParams
 	} from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Row } from '$lib/types';
@@ -27,17 +35,14 @@
 	import {
 		generateLabelsForSolutionComparison,
 		generateSolutionSuffix,
-		onClickLegendForSolutionComparison
+		onClickLegendForSolutionComparison,
+		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
-	import type { ColorBoxItem } from '$components/ColorBox.svelte';
-	import DiagramPage from '$components/DiagramPage.svelte';
-	import ChartButtons from '$components/ChartButtons.svelte';
-	import Spinner from '$components/Spinner.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
-	import ErrorMessage from '$components/ErrorMessage.svelte';
-	import { SvelteSet } from 'svelte/reactivity';
-	import PiePlot from './PiePlot.svelte';
 	import { getTheme } from '@/lib/theme.svelte';
+
+	import PiePlot from './PiePlot.svelte';
+
+	useURLParams();
 
 	const technologyCarrierLabel = 'Technology / Carrier';
 	const capexSuffix = ' (Capex)';
@@ -163,48 +168,51 @@
 		}
 		return '';
 	});
-	let plotOptions: ChartOptions = $derived({
-		datasets: {
-			bar: {
-				borderColor: getTheme() === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
-				borderWidth: (e) => {
-					if (
-						!activeYear ||
-						!activeSolution ||
-						e.chart.data.labels?.[e.dataIndex] !== activeYear ||
-						e.chart.data.datasets[e.datasetIndex].stack !== activeSolution
-					) {
-						return 0;
-					}
-					return 7;
-				},
-				borderRadius: 0,
-				borderSkipped: 'middle'
-			}
-		},
-		maintainAspectRatio: false,
-		scales: {
-			x: {
-				stacked: true,
-				title: {
-					display: true,
-					text: 'Year'
+	function getPlotOptions(): ChartOptions {
+		return {
+			datasets: {
+				bar: {
+					borderColor: getTheme() === 'dark' ? 'rgba(255, 255, 255, 1)' : 'rgba(0, 0, 0, 1)',
+					borderWidth: (e) => {
+						if (
+							!activeYear ||
+							!activeSolution ||
+							e.chart.data.labels?.[e.dataIndex] !== activeYear ||
+							e.chart.data.datasets[e.datasetIndex].stack !== activeSolution
+						) {
+							return 0;
+						}
+						return 7;
+					},
+					borderRadius: 0,
+					borderSkipped: 'middle'
 				}
 			},
-			y: {
-				stacked: true,
-				title: {
-					display: true,
-					text: `Costs [${unit}]`
+			maintainAspectRatio: false,
+			scales: {
+				x: {
+					stacked: true,
+					title: {
+						display: true,
+						text: 'Year'
+					}
+				},
+				y: {
+					stacked: true,
+					title: {
+						display: true,
+						text: `Costs [${unit}]`
+					}
 				}
+			},
+			interaction: {
+				intersect: false,
+				mode: 'nearest',
+				axis: 'x'
 			}
-		},
-		interaction: {
-			intersect: false,
-			mode: 'nearest',
-			axis: 'x'
-		}
-	});
+		};
+	}
+
 	let plotPluginOptions: ChartOptions['plugins'] = {
 		tooltip: {
 			callbacks: {
@@ -611,7 +619,7 @@
 
 			// Get plot data, as a base we take the grouped data adapted to the cost selection.
 			const pattern = solutionIndex > 0 ? nextPattern() : undefined;
-			const suffix = generateSolutionSuffix(solution.solution_name, solution.scenario_name);
+			const suffix = generateSolutionSuffix(solution);
 			patterns.push(createColorBoxItem(suffix, pattern));
 			const datasets: ChartDataset<'bar'>[] = entries.toArray().map((entry) => {
 				const label =
@@ -776,12 +784,13 @@
 			<Chart
 				type="bar"
 				{labels}
-				{datasets}
-				options={plotOptions}
+				getDatasets={() => datasets}
+				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
 				{patterns}
 				generateLabels={generateLabelsForSolutionComparison}
+				resetLegendState={resetLegendStateForSolutionComparison}
 				onClickLegend={onClickLegendForSolutionComparison}
 				{onClickBar}
 				bind:this={chart}

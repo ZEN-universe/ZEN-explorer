@@ -6,8 +6,10 @@ import {
 	selectSolution
 } from './helper';
 
+const PAGE_URL = '/transition/production';
+
 test(`production: carrier subdivision off`, async ({ page }) => {
-	await page.goto('/transition/production/');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'carbon');
 	await page.getByText('with Subdivision on').first().getByRole('switch').click();
@@ -16,14 +18,14 @@ test(`production: carrier subdivision off`, async ({ page }) => {
 });
 
 test('production: conversion subdivision on', async ({ page }) => {
-	await page.goto('/transition/production/');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'biomass');
 	await expectScreenshot(page, '#chart-container', `eeht_pf/biomass/conversion-subdivision.png`);
 });
 
 test('production: conversion technology', async ({ page }) => {
-	await page.goto('/transition/production/');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'biomass');
 	await page.getByText('with Subdivision on').first().getByRole('switch').click();
@@ -36,7 +38,7 @@ test('production: conversion technology', async ({ page }) => {
 });
 
 test('production: normalization', async ({ page }) => {
-	await page.goto('/transition/production/');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
 	await page.getByText('with Subdivision on').first().getByRole('switch').click();
@@ -47,7 +49,7 @@ test('production: normalization', async ({ page }) => {
 });
 
 test('production: normalization only negative', async ({ page }) => {
-	await page.goto('/transition/production/');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
 	await page.getByText('Conversion on').getByRole('switch').click();
@@ -61,7 +63,7 @@ test('production: normalization only negative', async ({ page }) => {
 });
 
 test('production: nodes', async ({ page }) => {
-	await page.goto('/transition/production/');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'biomass');
 	await page.getByText('with Subdivision on').first().getByRole('switch').click();
@@ -70,7 +72,7 @@ test('production: nodes', async ({ page }) => {
 });
 
 test('production: years', async ({ page }) => {
-	await page.goto('/transition/production/');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'biomass');
 	await page.getByText('with Subdivision on').first().getByRole('switch').click();

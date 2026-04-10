@@ -1,6 +1,7 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
-	import type { Snippet } from 'svelte';
+	import { getURLParam, updateURLParam } from '@/lib/queryParams.svelte';
+	import { onMount, tick, type Snippet } from 'svelte';
 
 	interface Props {
 		options: ({ value: string; label: string } | string)[];
@@ -8,6 +9,9 @@
 		label: string;
 		helpText?: Snippet;
 		disabled?: boolean;
+		urlParam?: string;
+		default?: string;
+		unsetIfInvalid?: boolean;
 		onUpdate?: (newValue: string) => void;
 	}
 
@@ -17,8 +21,12 @@
 		label,
 		helpText,
 		disabled = false,
+		urlParam,
+		default: defaultValue,
+		unsetIfInvalid = false,
 		onUpdate = () => {}
 	}: Props = $props();
+	const labelId = $props.id();
 
 	let options = $derived.by(() => {
 		return initialOptions.map((option) => {
@@ -33,11 +41,31 @@
 	function updateSelection() {
 		onUpdate(value);
 	}
+
+	$effect(() => {
+		if (!unsetIfInvalid) return;
+		if (!options.some((option) => option.value === value)) {
+			value = defaultValue ?? (options[0]?.value || '');
+		}
+	});
+
+	// Initialize value from URL param on mount
+	onMount(() => {
+		if (urlParam === undefined) return;
+		value = getURLParam(urlParam) ?? value;
+	});
+
+	// Update URL param when value changes
+	$effect(() => {
+		if (urlParam === undefined) return;
+		value;
+		tick().then(() => updateURLParam(urlParam, value));
+	});
 </script>
 
-<FilterLabel {label} {helpText}></FilterLabel>
+<FilterLabel {labelId} {label} {helpText}></FilterLabel>
 
-<div class="mb-2 flex gap-2" role="radiogroup">
+<div class="mb-2 flex flex-wrap gap-2" role="radiogroup" aria-labelledby={labelId}>
 	{#each options as option (option.value)}
 		<div class="relative">
 			<input

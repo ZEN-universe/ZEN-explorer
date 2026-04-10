@@ -1,8 +1,10 @@
 import { test } from '@playwright/test';
 import { expectScreenshot, selectFromMultiSelect, selectSolution } from './helper';
 
+const PAGE_URL = '/transition/costs';
+
 test('costs: capex subdivison', async ({ page }) => {
-	await page.goto('/transition/costs');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await page.getByRole('switch', { name: 'Opex on' }).uncheck();
 	await page.getByRole('switch', { name: 'Carrier on' }).uncheck();
@@ -13,7 +15,7 @@ test('costs: capex subdivison', async ({ page }) => {
 });
 
 test('costs: technologies', async ({ page }) => {
-	await page.goto('/transition/costs');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromMultiSelect(page, 'Transport', ['carbon_pipeline']);
 	await selectFromMultiSelect(page, 'Storage', ['battery']);
@@ -27,7 +29,7 @@ test('costs: technologies', async ({ page }) => {
 });
 
 test('costs: aggregation by technology & carrier', async ({ page }) => {
-	await page.goto('/transition/costs');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	// await page.waitForTimeout(1000);
 	await page.getByRole('radio', { name: 'Technology / Carrier' }).click();
@@ -40,7 +42,7 @@ test('costs: aggregation by technology & carrier', async ({ page }) => {
 });
 
 test('costs: years', async ({ page }) => {
-	await page.goto('/transition/costs');
+	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await page.getByRole('radio', { name: 'Technology / Carrier' }).click();
 	await selectFromMultiSelect(page, 'Years', ['2024']);

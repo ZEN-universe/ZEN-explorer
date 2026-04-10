@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, tick, untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
 
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';
@@ -11,7 +11,7 @@
 	import { getVariableName } from '$lib/variables';
 	import { nextColor, resetColorState } from '$lib/colors';
 	import type { ActivatedSolution, EnergyBalanceDataframes } from '$lib/types';
-	import { getURLParam, updateURLParams } from '$lib/queryParams.svelte';
+	import { QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
@@ -20,6 +20,9 @@
 	import type Entries from '$lib/entries';
 	import ContentBox from '$components/ContentBox.svelte';
 	import HelpTooltip from '$components/HelpTooltip.svelte';
+	import Radio from '$components/forms/Radio.svelte';
+
+	useURLParams();
 
 	let energyBalanceData: EnergyBalanceDataframes | null = null;
 	let unitData: Record<string, string>[] | null = $state(null);
@@ -99,12 +102,11 @@
 		});
 	});
 
-	let plotOptions: ChartOptions = $derived.by(() => getPlotOptions(`Energy [${unit}]`));
-	let dualsPlotOptions: ChartOptions = $derived.by(() =>
-		getPlotOptions(`Shadow Price [${dualUnit}]`, 5, false)
-	);
+	let getPlotOptions: () => ChartOptions = () => constructPlotOptions(`Energy [${unit}]`);
+	let getDualsPlotOptions: () => ChartOptions = () =>
+		constructPlotOptions(`Shadow Price [${dualUnit}]`, 5, false);
 
-	function getPlotOptions(
+	function constructPlotOptions(
 		yAxisLabel: string,
 		aspectRatio: number = 2,
 		yAxisBeginAtZero: boolean = true
@@ -194,24 +196,26 @@
 	$effect(() => {
 		years;
 		untrack(() => {
-			if (years.length > 0 && (selectedYear == null || !years.includes(Number(selectedYear)))) {
-				selectedYear = years[0].toString();
+			if (selectedSolution === null || selectedYear === null) return;
+			else if (!years.includes(Number(selectedYear))) {
+				selectedYear = null;
 			}
 		});
 	});
 	$effect(() => {
 		nodes;
 		untrack(() => {
-			if (nodes.length > 0 && (selectedNode == null || !nodes.includes(selectedNode))) {
-				selectedNode = nodes[0];
+			if (selectedSolution === null || selectedNode === null) return;
+			else if (!nodes.includes(selectedNode)) {
+				selectedNode = null;
 			}
 		});
 	});
 	$effect(() => {
 		carriers;
 		untrack(() => {
-			if (selectedSolution === null) return;
-			if (selectedCarrier !== null && !carriers.includes(selectedCarrier)) {
+			if (selectedSolution === null || selectedCarrier === null) return;
+			else if (!carriers.includes(selectedCarrier)) {
 				selectedCarrier = null;
 			}
 		});
@@ -224,31 +228,6 @@
 		selectedCarrier;
 		selectedWindowSize;
 		untrack(fetchData);
-	});
-
-	// Set URL parameters
-	onMount(() => {
-		selectedYear = getURLParam('year') || selectedYear;
-		selectedNode = getURLParam('node') || selectedNode;
-		selectedCarrier = getURLParam('car') || selectedCarrier;
-		selectedWindowSize = getURLParam('window') || selectedWindowSize;
-	});
-
-	$effect(() => {
-		// Triggers
-		selectedYear;
-		selectedNode;
-		selectedCarrier;
-		selectedWindowSize;
-
-		tick().then(() => {
-			updateURLParams({
-				year: selectedYear,
-				node: selectedNode,
-				car: selectedCarrier,
-				window: selectedWindowSize
-			});
-		});
 	});
 
 	//#endregion
@@ -435,10 +414,10 @@
 		await tick();
 
 		if (plot) {
-			plot.updateChart(datasets);
+			plot.updateChart();
 		}
 		if (dualsPlot) {
-			dualsPlot.updateChart(dualsDatasets);
+			dualsPlot.updateChart();
 		}
 	}
 
@@ -468,6 +447,8 @@
 					bind:value={selectedCarrier}
 					label="Carrier"
 					disabled={fetching || solutionLoading}
+					urlParam={QUERY_PARAM_KEYS.carrier}
+					unsetIfInvalid
 				></Dropdown>
 				{#if selectedCarrier !== null}
 					<Dropdown
@@ -475,23 +456,34 @@
 						bind:value={selectedYear}
 						label="Year"
 						disabled={fetching || solutionLoading}
+						urlParam={QUERY_PARAM_KEYS.year}
+						unsetIfInvalid
 					></Dropdown>
+				{/if}
+				{#if selectedCarrier !== null && selectedYear !== null}
 					<Dropdown
 						options={nodes}
 						bind:value={selectedNode}
 						label="Node"
 						disabled={fetching || solutionLoading}
+						urlParam={QUERY_PARAM_KEYS.node}
+						unsetIfInvalid
 					></Dropdown>
-					<Dropdown
+				{/if}
+				{#if selectedCarrier !== null && selectedYear !== null && selectedNode !== null}
+					<Radio
 						options={windowSizes}
 						bind:value={selectedWindowSize}
 						label="Smoothing Window Size"
 						disabled={fetching || solutionLoading}
+						urlParam={QUERY_PARAM_KEYS.smoothing_window_size}
+						default="Hourly"
+						unsetIfInvalid
 					>
 						{#snippet helpText()}
 							Visualize the rolling average of hourly values over a longer time period
 						{/snippet}
-					</Dropdown>
+					</Radio>
 				{/if}
 			</FilterSection>
 		{/if}
@@ -508,14 +500,18 @@
 			<ErrorMessage message="No carriers available for the selected solution"></ErrorMessage>
 		{:else if selectedCarrier == null}
 			<WarningMessage message="Please select a carrier"></WarningMessage>
+		{:else if selectedYear == null}
+			<WarningMessage message="Please select a year"></WarningMessage>
+		{:else if selectedNode == null}
+			<WarningMessage message="Please select a node"></WarningMessage>
 		{:else if datasetsLength == 0 || selectedSolution == null}
 			<ErrorMessage message="No data with this selection"></ErrorMessage>
 		{:else}
 			<Chart
 				type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
 				{labels}
-				datasets={[]}
-				options={plotOptions}
+				getDatasets={() => datasets}
+				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
 				{plotName}
 				zoom={true}
@@ -535,8 +531,8 @@
 						id="chart-duals"
 						type={numberOfTimeSteps == 1 ? 'bar' : 'line'}
 						{labels}
-						datasets={[]}
-						options={dualsPlotOptions}
+						getDatasets={() => dualsDatasets}
+						getOptions={getDualsPlotOptions}
 						pluginOptions={dualsPlotPluginOptions}
 						plotName={dualsPlotName}
 						zoom={true}

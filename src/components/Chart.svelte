@@ -2,14 +2,16 @@
 	import BaseChart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
 	import type { Action } from 'svelte/action';
-	import { onDestroy, tick } from 'svelte';
+	import { onDestroy, onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
+	import ChartDataLabelsPlugin from 'chartjs-plugin-datalabels';
 
 	import ColorBox, { type ColorBoxItem } from '$components/ColorBox.svelte';
 	import HelpTooltip from './HelpTooltip.svelte';
 	import ContentBox from './ContentBox.svelte';
 	import { getTheme } from '@/lib/theme.svelte';
 	import { getHiddenPatterns, onClickPattern } from '@/lib/compareSolutions.svelte';
+	import ContextMenu, { type ContextMenuItem } from './ContextMenu.svelte';
 
 	BaseChart.register(zoomPlugin);
 
@@ -17,76 +19,75 @@
 		id?: string;
 		type: Type;
 		labels?: string[];
-		datasets: ChartDataset<Type>[];
-		options?: ChartOptions<Type>;
+		getDatasets: () => ChartDataset<Type>[];
+		getOptions?: () => ChartOptions<Type>;
 		plugins?: Plugin<ChartType>[];
 		pluginOptions?: ChartOptions<ChartType>['plugins'];
 		zoom?: boolean;
+		dataLabels?: boolean;
 		plotName?: string;
 		initialHeight?: number;
 		zoomLevel?: [number, number] | null;
 		patterns?: ColorBoxItem[];
 		boxed?: boolean;
 		generateLabels?: (chart: BaseChart) => LegendItem[];
-		onClickLegend?: (item: LegendItem, chart: BaseChart) => void;
+		resetLegendState?: (chart: BaseChart) => void;
+		onClickLegend?: (item: LegendItem, chart: BaseChart, activateOnlyOneItem: boolean) => void;
 		onClickBar?: (label: string, datasetIndex: number) => void;
+		getContextMenuItems?: (year: string, datasetIndex: number) => ContextMenuItem[];
 	}
 
 	let {
 		id = 'chart',
 		type,
 		labels,
-		datasets,
-		options,
+		getDatasets,
+		getOptions,
 		pluginOptions = {},
 		plugins = [],
 		zoom = false,
+		dataLabels = false,
 		plotName = 'plot_data',
 		initialHeight = 600,
 		zoomLevel = $bindable(null),
 		patterns = [],
 		boxed = true,
 		generateLabels,
+		resetLegendState,
 		onClickLegend,
-		onClickBar
+		onClickBar,
+		getContextMenuItems
 	}: Props = $props();
 
 	let captureScreenshot: boolean = $state(false);
 
 	let chart: BaseChart | undefined = undefined;
 
-	let manualChartDatasets: ChartDataset[] | undefined = undefined;
-
 	const handleChart: Action<HTMLCanvasElement> = (element) => {
 		chart = new BaseChart(element, {
 			type: type,
 			data: {
 				labels: labels,
-				datasets: manualChartDatasets ?? ($state.snapshot(datasets) as ChartDataset[])
+				datasets: getDatasets() as ChartDataset[]
 			},
-			options: getOptions(),
-			plugins: [htmlLegend, ...plugins]
+			options: getBaseChartOptions(),
+			plugins: [htmlLegend, ...(dataLabels ? [ChartDataLabelsPlugin] : []), ...plugins]
 		});
 
 		$effect(() => {
-			if (chart == undefined || chart.canvas == null) {
-				return;
-			}
-			chart.data = {
-				labels: labels,
-				datasets: manualChartDatasets ?? ($state.snapshot(datasets) as ChartDataset[])
-			};
-			Object.assign(chart.options, getOptions());
+			if (!chart) return;
+			chart.data.labels = labels;
+			chart.data.datasets = getDatasets() as ChartDataset[];
+			Object.assign(chart.options, getBaseChartOptions());
+			resetLegendState?.(chart);
 			chart.update();
 		});
 	};
 
-	export function updateChart(datasets: ChartDataset<Type>[]) {
-		if (chart == undefined || chart.canvas == null) {
-			return;
-		}
-		manualChartDatasets = $state.snapshot(datasets) as ChartDataset[];
-		chart.data.datasets = manualChartDatasets;
+	export function updateChart() {
+		if (!chart || !chart.canvas) return;
+		chart.data.datasets = getDatasets() as ChartDataset[];
+		resetLegendState?.(chart);
 		chart.update();
 		updateZoomLevel();
 	}
@@ -95,9 +96,10 @@
 		chart?.destroy();
 	});
 
-	function getOptions(): ChartOptions {
+	function getBaseChartOptions(): ChartOptions {
+		const options = getOptions ? getOptions() : ({} as ChartOptions);
 		const optionsSnapshot = {
-			...$state.snapshot(options as ChartOptions),
+			...options,
 			plugins: {
 				...(options?.plugins ?? {}),
 				...pluginOptions
@@ -239,25 +241,57 @@
 		}
 	};
 
-	function toggleLegendItem(item: LegendItem) {
+	function toggleLegendItem(event: Event, clickedItem: LegendItem) {
 		if (chart == undefined) {
 			return;
 		}
+		const activateOnlyOneItem = (event as MouseEvent).shiftKey;
 		if (onClickLegend) {
-			onClickLegend(item, chart);
+			onClickLegend(clickedItem, chart, activateOnlyOneItem);
 			return;
 		}
 		if (type === 'pie' || type === 'doughnut') {
-			if (item.index == null) {
+			if (clickedItem.index == null) {
 				return;
 			}
 			// Pie and doughnut charts only have a single dataset and visibility per item
-			chart.toggleDataVisibility(item.index);
+			if (activateOnlyOneItem) {
+				const clickedItemWasActive = chart.getDataVisibility(clickedItem.index);
+				const activeItems = (chart.data.datasets[0].data as unknown[]).filter((_, idx) =>
+					chart!.getDataVisibility(idx)
+				);
+				chart.data.datasets[0].data.forEach((_, idx) => {
+					// Show item if the clicked item was not the only one active, otherwise only show the clicked item.
+					if (
+						chart!.getDataVisibility(idx) !==
+						((clickedItemWasActive && activeItems.length === 1) || idx === clickedItem.index)
+					) {
+						chart!.toggleDataVisibility(idx);
+					}
+				});
+			} else {
+				chart.toggleDataVisibility(clickedItem.index);
+			}
 		} else {
-			if (item.datasetIndex == null) {
+			if (clickedItem.datasetIndex == null) {
 				return;
 			}
-			chart.setDatasetVisibility(item.datasetIndex, !chart.isDatasetVisible(item.datasetIndex));
+			if (activateOnlyOneItem) {
+				const itemWasActive = chart.isDatasetVisible(clickedItem.datasetIndex);
+				const activeDatasets = chart.data.datasets.filter((_, idx) => chart!.isDatasetVisible(idx));
+				chart.data.datasets.forEach((_, idx) => {
+					// Activate if the clicked item was the only one active, otherwise toggle the item's visibility.
+					chart!.setDatasetVisibility(
+						idx,
+						(itemWasActive && activeDatasets.length === 1) || idx === clickedItem.datasetIndex
+					);
+				});
+			} else {
+				chart.setDatasetVisibility(
+					clickedItem.datasetIndex,
+					!chart.isDatasetVisible(clickedItem.datasetIndex)
+				);
+			}
 		}
 
 		chart.update();
@@ -341,18 +375,56 @@
 		}
 		onClickBar(labels[res[0].index], res[0].datasetIndex);
 	}
+
+	//#region Context Menu
+
+	let contextMenuX: number = $state(0);
+	let contextMenuY: number = $state(0);
+	let contextMenuVisible: boolean = $state(true);
+	let contextMenuItems: ContextMenuItem[] = $state([]);
+	let contextMenuComponent = $state<ContextMenu>();
+
+	async function openContextMenu(event: MouseEvent) {
+		if (!chart || !getContextMenuItems || !labels) return;
+		const res = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+		if (res.length === 0) {
+			return;
+		}
+		event.preventDefault();
+		contextMenuX = event.clientX;
+		contextMenuY = event.clientY;
+		contextMenuItems = getContextMenuItems(labels[res[0].index], res[0].datasetIndex);
+		contextMenuVisible = contextMenuItems.length > 0;
+	}
+
+	function closeContextMenu() {
+		contextMenuVisible = false;
+	}
+
+	onMount(() => {
+		document.addEventListener('click', closeContextMenu);
+	});
+
+	onDestroy(() => {
+		document.removeEventListener('click', closeContextMenu);
+	});
+
+	//#endregion
 </script>
 
 {#snippet legend()}
 	<h2 class="me-4 flex items-start text-lg font-bold">
 		<span class="me-2">Legend</span>
-		<HelpTooltip>Click on legend items to temporarily show/hide them in the chart.</HelpTooltip>
+		<HelpTooltip>
+			Click on legend items to temporarily show/hide them in the chart.<br />
+			Hold "Shift <i class="bi bi-shift"></i>" while clicking to show only the clicked item.
+		</HelpTooltip>
 	</h2>
 	<div class="flex flex-wrap gap-2">
 		{#each legendItems as item, idx (idx)}
 			<button
 				class="flex items-center text-sm text-gray-600 dark:text-gray-400"
-				onclick={() => toggleLegendItem(item)}
+				onclick={(event) => toggleLegendItem(event, item)}
 			>
 				<ColorBox item={item as ColorBoxItem}></ColorBox>
 				<span class={[item.hidden && 'line-through']}>{item.text}</span>
@@ -383,8 +455,24 @@
 
 {#snippet chartSnippet()}
 	{#if showChart}
-		<div id={`${id}-container`} class="position-relative h-full max-w-full">
-			<canvas {id} height={initialHeight} use:handleChart onclick={emitClickBarEvent}></canvas>
+		<div class="relative">
+			<div id={`${id}-container`} class="h-full max-w-full">
+				<canvas
+					{id}
+					height={initialHeight}
+					use:handleChart
+					onclick={emitClickBarEvent}
+					oncontextmenu={openContextMenu}
+				></canvas>
+			</div>
+			{#if contextMenuVisible}
+				<ContextMenu
+					x={contextMenuX}
+					y={contextMenuY}
+					items={contextMenuItems}
+					bind:this={contextMenuComponent}
+				/>
+			{/if}
 		</div>
 	{/if}
 {/snippet}
