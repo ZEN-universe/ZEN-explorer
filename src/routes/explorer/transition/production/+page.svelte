@@ -352,7 +352,7 @@
 		return [
 			{
 				label: `Go to The Energy Balance - Nodal`,
-				href: addParametersToPath('/energy_balance/nodal', {
+				href: addParametersToPath('/explorer/energy_balance/nodal', {
 					[QUERY_PARAM_KEYS.solution]: solution.solution_name || '',
 					[QUERY_PARAM_KEYS.scenario]: solution.scenario_name || '',
 					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
@@ -362,7 +362,7 @@
 			{
 				label: `Go to The Energy System`,
 				href:
-					addParametersToPath('/energy_system', {
+					addParametersToPath('/explorer/energy_system', {
 						[QUERY_PARAM_KEYS.solution]: solution.solution_name || '',
 						[QUERY_PARAM_KEYS.scenario]: solution.scenario_name || '',
 						[QUERY_PARAM_KEYS.year]: year

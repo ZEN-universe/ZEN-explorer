@@ -327,27 +327,31 @@
 					</p>
 
 					<a
-						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 mb-2 block font-bold"
+						class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-6 py-2 text-center font-bold text-white transition-colors sm:w-auto dark:bg-[#D48681]"
 						href="https://github.com/ZEN-universe/ZEN-creator"
+						target="_blank"
+						rel="external noopener"
 					>
-						<i class="bi bi-arrow-right"></i>
 						Go to ZEN-creator
+						<i class="bi bi-arrow-up-right"></i>
 					</a>
 				</div>
 				<div>
 					<h3 class="mb-4 text-3xl font-bold">ZEN-models</h3>
 
-					<p class="mb-8 text-lg">Explore our existing models:</p>
+					<p class="mb-4 text-lg">Explore our existing models:</p>
 
 					<div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
 						<div class="flex flex-col rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
 							<h3 class="mb-4 grow text-xl font-bold">Carbon capture and storage</h3>
 							<a
 								class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 mb-2 block"
-								href="#"
+								href="https://github.com/ZEN-universe/ZEN-models"
+								target="_blank"
+								rel="external noopener"
 							>
-								<i class="bi bi-arrow-right"></i>
 								Go to Model
+								<i class="bi bi-arrow-up-right"></i>
 							</a>
 						</div>
 						<div class="flex flex-col rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
@@ -356,20 +360,24 @@
 							</h3>
 							<a
 								class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 mb-2 block"
-								href="#"
+								href="https://github.com/ZEN-universe/ZEN-models"
+								target="_blank"
+								rel="external noopener"
 							>
-								<i class="bi bi-arrow-right"></i>
 								Go to Model
+								<i class="bi bi-arrow-up-right"></i>
 							</a>
 						</div>
 						<div class="flex flex-col rounded bg-gray-300 px-4 py-4 dark:bg-gray-700">
 							<h3 class="mb-4 grow text-xl font-bold">Supply-chain of batteries</h3>
 							<a
 								class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 mb-2 block"
-								href="#"
+								href="https://github.com/ZEN-universe/ZEN-models"
+								target="_blank"
+								rel="external noopener"
 							>
-								<i class="bi bi-arrow-right"></i>
 								Go to Model
+								<i class="bi bi-arrow-up-right"></i>
 							</a>
 						</div>
 					</div>

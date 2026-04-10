@@ -12,6 +12,7 @@
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",
 		"lint": "eslint .",
+		"lint:fix": "eslint . --fix",
 		"test:e2e": "playwright test --project=chromium",
 		"test:staging": "NO_WEB_SERVER=1 playwright test --project=staging",
 		"test:production": "NO_WEB_SERVER=1 playwright test --project=production",

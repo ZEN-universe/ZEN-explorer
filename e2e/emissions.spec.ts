@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 import { expectScreenshot, selectFromMultiSelect, selectSolution } from './helper';
 
-const PAGE_URL = '/transition/emissions';
+const PAGE_URL = '/explorer/transition/emissions';
 
 test('emissions: subdivision off annual', async ({ page }) => {
 	await page.goto(PAGE_URL);

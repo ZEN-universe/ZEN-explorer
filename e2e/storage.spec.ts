@@ -7,7 +7,7 @@ import {
 	selectSolution
 } from './helper';
 
-const PAGE_URL = '/energy_balance/storage';
+const PAGE_URL = '/explorer/energy_balance/storage';
 
 test('storage: default', async ({ page }) => {
 	await page.goto(PAGE_URL);

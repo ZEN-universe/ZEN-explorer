@@ -1,13 +1,12 @@
 import { test } from '@playwright/test';
 import {
 	expectScreenshot,
-	selectFromDropdown,
 	selectFromMultiSelect,
 	selectFromRangeSlider,
 	selectSolution
 } from './helper';
 
-const PAGE_URL = '/energy_system';
+const PAGE_URL = '/explorer/energy_system';
 
 test(`energy system: default`, async ({ page }) => {
 	await page.goto(PAGE_URL);

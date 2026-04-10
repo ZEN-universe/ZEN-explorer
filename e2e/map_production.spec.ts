@@ -7,7 +7,7 @@ import {
 	selectSolution
 } from './helper';
 
-const PAGE_URL = '/map/production';
+const PAGE_URL = '/explorer/map/production';
 
 test('map: default', async ({ page }) => {
 	await page.goto(PAGE_URL);

@@ -77,7 +77,7 @@
 		return [
 			{
 				label: `Go to The Transition Pathway - Production (year: ${selectedYear}, carrier: ${node.label})`,
-				href: addParametersToPath('/transition/production', {
+				href: addParametersToPath('/explorer/transition/production', {
 					[QUERY_PARAM_KEYS.solutions]: selectedSolution.solution_name,
 					[QUERY_PARAM_KEYS.scenarios]: selectedSolution.scenario_name,
 					[QUERY_PARAM_KEYS.carrier]: node.label,

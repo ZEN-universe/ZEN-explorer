@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import type { ResolvedPathname } from '$app/types';
 	import type { Pathname } from '$app/types';
 
 	interface Blade {
@@ -69,6 +70,8 @@
 	const LG_SCALE_UP = 650 / 552;
 </script>
 
+<!-- eslint-disable svelte/no-navigation-without-resolve -->
+
 <div
 	class="relative min-h-[calc(100vh_-_57px)] text-gray-900 md:h-180 lg:h-210 lg:min-h-[calc(100vh_-_65px)]"
 >
@@ -98,7 +101,7 @@
 			{#each blades as blade, idx (idx)}
 				{#if blade.href}
 					<a
-						href={resolve(blade.href)}
+						href={blade.href}
 						class={[
 							'absolute z-1 h-[106px] w-56 lg:h-[125px] lg:w-[264px]',
 							'flex items-center justify-center',
@@ -146,7 +149,7 @@
 								'bottom-(--sm-bottom) left-(--sm-left) lg:bottom-(--lg-bottom) lg:left-(--lg-left)',
 								'bg-white hover:bg-(--hover-bg) focus:bg-(--hover-bg)'
 							]}
-							href={resolve('/explorer/transition/capacity')}
+							href={page.href}
 							style:--sm-bottom={`${page.bottom}px`}
 							style:--sm-left={`${page.left}px`}
 							style:--lg-bottom={`${page.bottom * LG_SCALE_UP}px`}
@@ -164,7 +167,7 @@
 			{#each blades as blade, idx (idx)}
 				{#if blade.href}
 					<a
-						href={resolve(blade.href)}
+						href={blade.href}
 						class={[
 							'flex items-center justify-center',
 							'text-center text-2xl font-bold shadow-lg/30',
@@ -197,7 +200,7 @@
 									'rounded-lg px-4 py-1.5 shadow-lg',
 									'mr-(--mr) ml-(--ml) bg-white hover:bg-(--hover-bg) focus:bg-(--hover-bg)'
 								]}
-								href={resolve('/explorer/transition/capacity')}
+								href={page.href}
 								style:--hover-bg={blade.hoverBg}
 								style:--ml={`${idx * 1.5}rem`}
 								style:--mr={`${(blade.subpages!.length - idx - 1) * 1.5}rem`}

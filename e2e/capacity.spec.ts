@@ -7,7 +7,7 @@ import {
 	selectSolution
 } from './helper';
 
-const PAGE_URL = '/transition/capacity';
+const PAGE_URL = '/explorer/transition/capacity';
 
 test(`capacity: variable`, async ({ page }) => {
 	await page.goto(PAGE_URL);

@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 import { expectScreenshot, selectFromMultiSelect, selectSolution } from './helper';
 
-const PAGE_URL = '/transition/costs';
+const PAGE_URL = '/explorer/transition/costs';
 
 test('costs: capex subdivison', async ({ page }) => {
 	await page.goto(PAGE_URL);

@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 import { expectScreenshot, selectFromDropdown, selectRadioOption, selectSolution } from './helper';
 
-const PAGE_URL = '/energy_balance/nodal';
+const PAGE_URL = '/explorer/energy_balance/nodal';
 
 test('nodal: default', async ({ page }) => {
 	await page.goto(PAGE_URL);

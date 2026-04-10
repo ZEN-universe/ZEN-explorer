@@ -81,7 +81,7 @@
 		const items: ContextMenuItem[] = [
 			{
 				label: 'Go to The Transition Pathway - Production',
-				href: addParametersToPath('/transition/production', {
+				href: addParametersToPath('/explorer/transition/production', {
 					[QUERY_PARAM_KEYS.solutions]: selectedSolution.solution_name,
 					[QUERY_PARAM_KEYS.scenarios]: selectedSolution.scenario_name,
 					[QUERY_PARAM_KEYS.carrier]: selectedCarrier
@@ -92,7 +92,7 @@
 		if (pie) {
 			items.push({
 				label: `Go to The Energy Balance - Nodal (Node: ${pie.label})`,
-				href: addParametersToPath(`/energy_balance/nodal`, {
+				href: addParametersToPath('/explorer/energy_balance/nodal', {
 					[QUERY_PARAM_KEYS.solution]: selectedSolution.solution_name,
 					[QUERY_PARAM_KEYS.scenario]: selectedSolution.scenario_name,
 					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,

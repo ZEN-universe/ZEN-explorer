@@ -6,7 +6,7 @@ import {
 	selectSolution
 } from './helper';
 
-const PAGE_URL = '/transition/production';
+const PAGE_URL = '/explorer/transition/production';
 
 test(`production: carrier subdivision off`, async ({ page }) => {
 	await page.goto(PAGE_URL);
