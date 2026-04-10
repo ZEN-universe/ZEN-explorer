@@ -140,12 +140,12 @@
 						<picture>
 							<source
 								type="image/webp"
-								srcset="/evolution_map_final_1344.webp 1344w, /evolution_map_final_1088.webp 1088w, /evolution_map_final_864.webp 864w, /evolution_map_final_672.webp 672w, /evolution_map_final_576.webp 576w"
+								srcset="/opt/evolution_map_final_1344.webp 1344w, /opt/evolution_map_final_1088.webp 1088w, /opt/evolution_map_final_864.webp 864w, /opt/evolution_map_final_672.webp 672w, /opt/evolution_map_final_576.webp 576w"
 								sizes="(min-width: 1536px) 1344px, (min-width: 1280px) 1088px, (min-width: 1024px) 864px, (min-width: 768px) 672px, 576px"
 							/>
 							<img
-								src="/evolution_map_final_1344.gif"
-								srcset="/evolution_map_final_576.gif 576w, /evolution_map_final_672.gif 672w, /evolution_map_final_864.gif 864w, /evolution_map_final_1088.gif 1088w, /evolution_map_final_1344.gif 1344w"
+								src="/opt/evolution_map_final_1344.gif"
+								srcset="/opt/evolution_map_final_576.gif 576w, /opt/evolution_map_final_672.gif 672w, /opt/evolution_map_final_864.gif 864w, /opt/evolution_map_final_1088.gif 1088w, /opt/evolution_map_final_1344.gif 1344w"
 								sizes="(min-width: 1536px) 1344px, (min-width: 1280px) 1088px, (min-width: 1024px) 864px, (min-width: 768px) 672px, 576px"
 								width="1344"
 								height="644"
@@ -156,12 +156,12 @@
 						<picture>
 							<source
 								type="image/webp"
-								srcset="/evolution_map_final_dark_1344.webp 1344w, /evolution_map_final_dark_1088.webp 1088w, /evolution_map_final_dark_864.webp 864w, /evolution_map_final_dark_672.webp 672w, /evolution_map_final_dark_576.webp 576w"
+								srcset="/opt/evolution_map_final_dark_1344.webp 1344w, /opt/evolution_map_final_dark_1088.webp 1088w, /opt/evolution_map_final_dark_864.webp 864w, /opt/evolution_map_final_dark_672.webp 672w, /opt/evolution_map_final_dark_576.webp 576w"
 								sizes="(min-width: 1536px) 1344px, (min-width: 1280px) 1088px, (min-width: 1024px) 864px, (min-width: 768px) 672px, 576px"
 							/>
 							<img
-								src="/evolution_map_final_dark.gif"
-								srcset="/evolution_map_final_dark_576.gif 576w, /evolution_map_final_dark_672.gif 672w, /evolution_map_final_dark_864.gif 864w, /evolution_map_final_dark_1088.gif 1088w, /evolution_map_final_dark_1344.gif 1344w"
+								src="/opt/evolution_map_final_dark.gif"
+								srcset="/opt/evolution_map_final_dark_576.gif 576w, /opt/evolution_map_final_dark_672.gif 672w, /opt/evolution_map_final_dark_864.gif 864w, /opt/evolution_map_final_dark_1088.gif 1088w, /opt/evolution_map_final_dark_1344.gif 1344w"
 								sizes="(min-width: 1536px) 1344px, (min-width: 1280px) 1088px, (min-width: 1024px) 864px, (min-width: 768px) 672px, 576px"
 								width="1344"
 								height="644"
@@ -270,35 +270,47 @@
 
 			<div class="border-b border-gray-200 px-8 py-8 md:px-16 lg:px-24 dark:border-gray-900">
 				<video autoplay loop muted playsinline class="w-full dark:hidden">
-					<source src="/build_your_model_1184.mp4" media="(min-width: 1536px)" type="video/mp4" />
-					<source src="/build_your_model_928.mp4" media="(min-width: 1280px)" type="video/mp4" />
-					<source src="/build_your_model_672.mp4" media="(min-width: 1024px)" type="video/mp4" />
-					<source src="/build_your_model_512.mp4" media="(min-width: 768px)" type="video/mp4" />
-					<source src="/build_your_model_576.mp4" type="video/mp4" />
-					Your browser does not support the video tag
-				</video>
-				<video autoplay loop muted playsinline class="hidden w-full dark:block">
 					<source
-						src="/build_your_model_dark_1184.mp4"
+						src="/opt/build_your_model_1184.mp4"
 						media="(min-width: 1536px)"
 						type="video/mp4"
 					/>
 					<source
-						src="/build_your_model_dark_928.mp4"
+						src="/opt/build_your_model_928.mp4"
 						media="(min-width: 1280px)"
 						type="video/mp4"
 					/>
 					<source
-						src="/build_your_model_dark_672.mp4"
+						src="/opt/build_your_model_672.mp4"
+						media="(min-width: 1024px)"
+						type="video/mp4"
+					/>
+					<source src="/opt/build_your_model_512.mp4" media="(min-width: 768px)" type="video/mp4" />
+					<source src="/opt/build_your_model_576.mp4" type="video/mp4" />
+					Your browser does not support the video tag
+				</video>
+				<video autoplay loop muted playsinline class="hidden w-full dark:block">
+					<source
+						src="/opt/build_your_model_dark_1184.mp4"
+						media="(min-width: 1536px)"
+						type="video/mp4"
+					/>
+					<source
+						src="/opt/build_your_model_dark_928.mp4"
+						media="(min-width: 1280px)"
+						type="video/mp4"
+					/>
+					<source
+						src="/opt/build_your_model_dark_672.mp4"
 						media="(min-width: 1024px)"
 						type="video/mp4"
 					/>
 					<source
-						src="/build_your_model_dark_512.mp4"
+						src="/opt/build_your_model_dark_512.mp4"
 						media="(min-width: 768px)"
 						type="video/mp4"
 					/>
-					<source src="/build_your_model_dark_576.mp4" type="video/mp4" />
+					<source src="/opt/build_your_model_dark_576.mp4" type="video/mp4" />
 					Your browser does not support the video tag
 				</video>
 			</div>
@@ -727,7 +739,7 @@
 					</p>
 				</div>
 			</div>
-			<div class="px-4 py-8 md:px-8 lg:px-12">
+			<div class="px-4 pt-8 md:px-8 lg:px-12">
 				<div
 					class="terminal mx-4 mb-8 rounded-xl bg-slate-900 p-6 font-mono text-sm leading-relaxed text-slate-300 shadow-xl ring-1 ring-slate-800 md:mx-8 md:text-base lg:mx-12"
 				>
@@ -740,7 +752,7 @@
 						INFO: Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
 					</div>
 				</div>
-				<p class="mb-12 text-lg">
+				<p class="mb-8 text-lg">
 					Annual capacity, production, emission, and cost results can be investigated under
 					<a
 						href={resolve('/explorer/transition/capacity')}
@@ -763,50 +775,38 @@
 						>The Map</a
 					>.
 				</p>
-			</div>
 
-			<div
-				class="relative mx-auto grid w-full max-w-250 grid-cols-2 items-center gap-4 px-4 py-8 text-xl font-bold text-white sm:text-3xl md:px-8 lg:px-12"
-			>
-				<div
-					class="flex min-h-48 items-center justify-center rounded-tl-lg border border-gray-400 bg-[#6e7e2c] p-4 dark:border-gray-800"
-				>
-					The Transition Pathway
-				</div>
-				<div
-					class="flex min-h-48 items-center justify-center rounded-tr-lg border border-gray-400 bg-[#387e70] p-4 dark:border-gray-800"
-				>
-					The Energy Balance
-				</div>
-				<div
-					class="flex min-h-48 items-center justify-center rounded-bl-lg border border-gray-400 bg-[#4270a8] p-4 dark:border-gray-800"
-				>
-					The Energy System
-				</div>
-				<div
-					class="flex min-h-48 items-center justify-center rounded-br-lg border border-gray-400 bg-[#ae995e] p-4 dark:border-gray-800"
-				>
-					The Map
-				</div>
-
-				<div class="pointer-events-none absolute inset-0 hidden place-content-center lg:grid">
-					<div class="relative">
-						<div class="absolute inset-1 z-0 rounded-full bg-white"></div>
-						<img
-							class="relative z-1"
-							width="220"
-							height="220"
-							alt="ZEN-garden Logo"
-							src="/zen_garden_700x700.png"
+				<div class="relative mx-4 mb-8 md:mx-8 lg:mx-12">
+					<picture>
+						<source
+							srcset="/opt/explorer-front_1088.webp 1088w, /opt/explorer-front_832.webp 832w, /opt/explorer-front_576.webp 576w, /opt/explorer-front_544.webp 544w, /opt/explorer-front_448.webp 448w"
+							sizes="(min-width: 1536px) 1088w, (min-width: 1280px) 832w, (min-width: 1024px) 576w, (min-width: 768px) 448w, 544w"
+							type="image/webp"
 						/>
-					</div>
+						<img
+							srcset="/opt/explorer-front_1088.png 1088w, /opt/explorer-front_832.png 832w, /opt/explorer-front_576.png 576w, /opt/explorer-front_544.png 544w, /opt/explorer-front_448.png 448w"
+							sizes="(min-width: 1536px) 1088w, (min-width: 1280px) 832w, (min-width: 1024px) 576w, (min-width: 768px) 448w, 544w"
+							src="/opt/explorer-front_1088.png"
+							alt="ZEN-explorer's Front Page"
+							width="1343"
+							height="868"
+							class="w-full"
+						/>
+					</picture>
+					<a
+						href={resolve('/explorer')}
+						class="absolute inset-0"
+						aria-label="Go to ZEN-garden Explorer"
+					></a>
 				</div>
 
 				<a
+					class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition sm:w-auto"
 					href={resolve('/explorer')}
-					class="absolute inset-0"
-					aria-label="Go to ZEN-garden Explorer"
-				></a>
+				>
+					Visit the Visualization Platform
+					<i class="bi bi-arrow-right"></i>
+				</a>
 			</div>
 		</ContentBox>
 	</div>

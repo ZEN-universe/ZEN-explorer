@@ -33,9 +33,4 @@ vite.config.ts.timestamp-*
 /playwright/.cache/
 
 # Generated images
-static/evolution_map_final*
-!static/evolution_map_final.gif
-!static/evolution_map_final_dark.gif
-static/build_your_model*
-!static/build_your_model.mp4
-!static/build_your_model_dark.mp4
+static/opt/

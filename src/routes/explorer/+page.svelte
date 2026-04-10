@@ -1,285 +1,214 @@
 <script lang="ts">
-	import { computePosition, shift, offset, arrow, flip } from '@floating-ui/dom';
 	import { resolve } from '$app/paths';
-	import { tick } from 'svelte';
+	import type { Pathname } from '$app/types';
 
-	let transitionPathwaySection = $state<HTMLElement>();
-	let energyBalanceSection = $state<HTMLElement>();
-	let energySystemSection = $state<HTMLElement>();
-	let mapSection = $state<HTMLElement>();
-
-	let popup = $state<HTMLDivElement>();
-	let boundaryElement = $state<HTMLElement>();
-	let arrowElement = $state<SVGSVGElement>();
-
-	let popupLeft: number | null = $state(null);
-	let popupTop: number | null = $state(null);
-	let popupPlacement: 'top' | 'bottom' | 'left' | 'right' = $state('left');
-	let arrowLeft: number | null = $state(null);
-	let arrowTop: number | null = $state(null);
-
-	let isPopupVisible = $state(false);
-	let activeSectionId: string = $state('transition-pathway');
-	let activeSection: HTMLElement | undefined = $derived.by(() => {
-		const map: Record<string, HTMLElement | undefined> = {
-			'transition-pathway': transitionPathwaySection,
-			'energy-balance': energyBalanceSection,
-			'energy-system': energySystemSection,
-			map: mapSection
-		};
-		return map[activeSectionId];
-	});
-
-	async function updatePopupPosition(section?: HTMLElement) {
-		if (!section || !popup || !boundaryElement || !arrowElement) return;
-
-		const { x, y, placement, middlewareData } = await computePosition(section, popup, {
-			placement: 'left',
-			middleware: [
-				offset(8),
-				flip({ boundary: boundaryElement }),
-				shift({ padding: 8, boundary: boundaryElement }),
-				arrow({ element: arrowElement })
+	interface Blade {
+		name: string;
+		left: number;
+		bottom: number;
+		bg: string;
+		hoverBg: string;
+		classes: string;
+		href?: Pathname;
+		subpagesLeft?: boolean;
+		subpages?: { name: string; href: Pathname; left: number; bottom: number }[];
+	}
+	const blades: Blade[] = [
+		{
+			name: 'The Transition pathway',
+			left: 98,
+			bottom: 460,
+			bg: '#e4d4c8',
+			hoverBg: '#ece2d9',
+			classes: 'rotate-45 origin-top-left',
+			subpagesLeft: true,
+			subpages: [
+				{ name: 'Capacity', href: '/explorer/transition/capacity', left: -70, bottom: 458 },
+				{ name: 'Production', href: '/explorer/transition/production', left: -45, bottom: 418 },
+				{ name: 'Emissions', href: '/explorer/transition/emissions', left: 0, bottom: 378 },
+				{ name: 'Costs', href: '/explorer/transition/costs', left: 72, bottom: 338 }
 			]
-		});
+		},
+		{
+			name: 'The Energy Balance',
+			left: 253,
+			bottom: 436,
+			bg: '#c4d2b8',
+			hoverBg: '#eaf0e6',
+			classes: 'origin-top-right -rotate-45',
+			subpagesLeft: false,
+			subpages: [
+				{ name: 'Nodal', href: '/explorer/energy_balance/nodal', left: 476, bottom: 397 },
+				{ name: 'Storage', href: '/explorer/energy_balance/storage', left: 436, bottom: 357 }
+			]
+		},
+		{
+			name: 'The Energy System',
+			left: 74,
+			bottom: 41,
+			href: '/explorer/energy_system',
+			bg: '#dbd8c2',
+			hoverBg: '#d2cdad',
+			classes: 'origin-bottom-left -rotate-45'
+		},
+		{
+			name: 'The Map',
+			left: 230,
+			bottom: 18,
+			bg: '#c7d2db',
+			hoverBg: '#e0e6eb',
+			classes: 'origin-bottom-right rotate-45',
+			subpagesLeft: true,
+			subpages: [
+				{ name: 'Capacity', href: '/explorer/map/capacity', left: 239, bottom: 106 },
+				{ name: 'Production', href: '/explorer/map/production', left: 264, bottom: 66 }
+			]
+		}
+	];
 
-		popupLeft = x;
-		popupTop = y;
-		popupPlacement = placement.split('-')[0] as 'top' | 'bottom' | 'left' | 'right';
-		arrowLeft = middlewareData.arrow?.x ?? null;
-		arrowTop = middlewareData.arrow?.y ?? null;
-	}
-
-	async function showPopup(id: string) {
-		activeSectionId = id;
-		isPopupVisible = true;
-
-		await tick();
-		updatePopupPosition(activeSection);
-	}
-
-	function hidePopup() {
-		isPopupVisible = false;
-	}
-
-	function popupStyle(): string {
-		return `
-			top: ${popupTop !== null ? `${popupTop}px` : '0px'};
-			left: ${popupLeft !== null ? `${popupLeft}px` : '0px'};
-		`;
-	}
-
-	function arrowStyle(): string {
-		return `
-			${popupPlacement === 'left' ? `right: -10px; top: ${arrowTop !== null ? `${arrowTop}px` : '20px'};` : ''}
-			${popupPlacement === 'right' ? `left: -10px; top: ${arrowTop !== null ? `${arrowTop}px` : '20px'};` : ''}
-			${popupPlacement === 'top' ? `bottom: -10px; left: ${arrowLeft !== null ? `${arrowLeft}px` : '20px'};` : ''}
-			${popupPlacement === 'bottom' ? `top: -10px; left: ${arrowLeft !== null ? `${arrowLeft}px` : '20px'};` : ''}
-		`;
-	}
+	const LG_SCALE_UP = 650 / 552;
 </script>
 
-<div class="grid grow grid-cols-1 place-content-center dark:bg-gray-800">
-	<main class="relative mx-auto w-full max-w-300 px-4 py-8">
-		<div class="grid w-full gap-6 md:grid-cols-2 md:grid-rows-2" bind:this={boundaryElement}>
-			<!-- Transition -->
-			<section
-				aria-label="The Transition Pathway"
-				class="grid min-h-60 overflow-hidden border border-gray-400 bg-[#6e7e2c] md:rounded-tl-lg lg:grid-cols-4 dark:border-gray-800"
-				onmouseenter={() => showPopup('transition-pathway')}
-				onmouseleave={hidePopup}
-				onfocusin={() => showPopup('transition-pathway')}
-				onfocusout={hidePopup}
-			>
-				<h2
-					class="my-auto text-center text-3xl font-extrabold tracking-tight text-white lg:order-1 lg:col-span-2"
-					bind:this={transitionPathwaySection}
-				>
-					The Transition Pathway
-				</h2>
-				<nav
-					aria-label="Transition links"
-					class="grid grid-cols-2 bg-white/60 text-xl lg:order-0 lg:h-full lg:grid-cols-1 lg:grid-rows-4 dark:bg-gray-800/40"
-				>
-					<div
-						class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50"
-					>
-						<span class="font-medium">Capacity</span>
-						<a
-							class="absolute inset-0"
-							href={resolve('/explorer/transition/capacity/')}
-							aria-label="Capacity"
-						></a>
-					</div>
-					<div
-						class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50"
-					>
-						<span class="font-medium">Production</span>
-						<a
-							class="absolute inset-0"
-							href={resolve('/explorer/transition/production/')}
-							aria-label="Production"
-						></a>
-					</div>
-					<div
-						class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50"
-					>
-						<span class="font-medium">Emissions</span>
-						<a
-							class="absolute inset-0"
-							href={resolve('/explorer/transition/emissions/')}
-							aria-label="Emissions"
-						></a>
-					</div>
-					<div
-						class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50"
-					>
-						<span class="font-medium">Costs</span>
-						<a
-							class="absolute inset-0"
-							href={resolve('/explorer/transition/costs/')}
-							aria-label="Costs"
-						></a>
-					</div>
-				</nav>
-			</section>
+<div
+	class="relative min-h-[calc(100vh_-_57px)] text-gray-900 md:h-180 lg:h-210 lg:min-h-[calc(100vh_-_65px)]"
+>
+	<!-- Background -->
+	<div class="absolute inset-0" aria-hidden="true">
+		<img src="/windmill-bg_opt.svg" alt="Windmill Background" class="h-full w-full object-fill" />
+	</div>
 
-			<!-- Energy Balance -->
-			<section
-				aria-label="The Energy Balance"
-				class="grid min-h-60 overflow-hidden border border-gray-400 bg-[#387e70] md:grid-cols-4 md:rounded-tr-lg dark:border-gray-800"
-				onmouseenter={() => showPopup('energy-balance')}
-				onmouseleave={hidePopup}
-				onfocusin={() => showPopup('energy-balance')}
-				onfocusout={hidePopup}
-			>
-				<h2
-					class="my-auto text-center text-3xl font-extrabold tracking-tight text-white md:col-span-2 md:col-start-2"
-					bind:this={energyBalanceSection}
-				>
-					The Energy Balance
-				</h2>
-				<nav
-					aria-label="Energy balance links"
-					class="grid h-full grid-cols-2 bg-white/60 text-xl md:grid-cols-1 md:grid-rows-2 dark:bg-gray-800/40"
-				>
-					<div
-						class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50"
-					>
-						<span class="font-medium">Nodal</span>
-						<a
-							class="absolute inset-0"
-							href={resolve('/explorer/energy_balance/nodal/')}
-							aria-label="Nodal"
-						></a>
-					</div>
-					<div
-						class="relative grid place-content-center hover:bg-white/50 dark:hover:bg-gray-800/50"
-					>
-						<span class="font-medium">Storage</span>
-						<a
-							class="absolute inset-0"
-							href={resolve('/explorer/energy_balance/storage/')}
-							aria-label="Storage"
-						></a>
-					</div>
-				</nav>
-			</section>
+	<div class="relative mx-auto h-[85%] md:w-[552px] lg:w-[650px]">
+		<!-- Foreground -->
+		<img
+			class="absolute bottom-0 left-1/2 hidden w-full -translate-x-1/2 md:block"
+			src="/windmill-fg_opt.svg"
+			alt="Windmill Foreground"
+		/>
 
-			<!-- Energy System -->
-			<div
-				role="region"
-				class="group relative grid min-h-60 place-content-center overflow-hidden border border-gray-400 bg-[#4270a8] p-4 md:rounded-bl-lg dark:border-gray-800"
-				onmouseenter={() => showPopup('energy-system')}
-				onmouseleave={hidePopup}
-				onfocusin={() => showPopup('energy-system')}
-				onfocusout={hidePopup}
-			>
-				<h2 class="text-3xl font-extrabold text-white" bind:this={energySystemSection}>
-					The Energy System
-				</h2>
-				<a
-					class="absolute inset-0 focus:ring-4 focus:ring-white/80 focus:ring-offset-2 focus:outline-none dark:focus:ring-gray-700/80"
-					href={resolve('/explorer/energy_system')}
-					aria-label="The Energy System"
-				></a>
-			</div>
-
-			<!-- Map -->
-			<div
-				role="region"
-				class="group relative grid min-h-60 place-content-center overflow-hidden border border-gray-400 bg-[#ae995e] p-4 md:rounded-br-lg dark:border-gray-800"
-				onmouseenter={() => showPopup('map')}
-				onmouseleave={hidePopup}
-				onfocusin={() => showPopup('map')}
-				onfocusout={hidePopup}
-			>
-				<h2 class="text-3xl font-extrabold text-white" bind:this={mapSection}>The Map</h2>
-				<a
-					class="absolute inset-0 focus:ring-4 focus:ring-white/80 focus:ring-offset-2 focus:outline-none dark:focus:ring-gray-700/80"
-					href={resolve('/explorer/map')}
-					aria-label="The Map"
-				></a>
-			</div>
-
-			<!-- decorative centered logo for large screens -->
-			<div class="pointer-events-none absolute inset-0 hidden place-content-center lg:grid">
-				<div class="relative">
-					<div class="absolute inset-1 z-0 rounded-full bg-white"></div>
-					<img
-						class="relative z-1"
-						width="340"
-						height="340"
-						alt="ZEN-garden Logo"
-						src="/zen_garden_700x700.png"
-					/>
-				</div>
-			</div>
-		</div>
-
+		<!-- Logo -->
 		<div
-			class={[
-				'pointer-events-none absolute top-0 left-0 z-3 w-[320px] rounded-lg border border-black bg-gray-200 p-2 text-gray-800 lg:w-[500px]',
-				isPopupVisible ? 'hidden md:block' : 'hidden'
-			]}
-			style={popupStyle()}
-			bind:this={popup}
+			class="absolute bottom-[209px] left-[193px] hidden aspect-square w-[166px] md:block lg:bottom-[244px] lg:left-[226px] lg:w-[198px]"
 		>
-			{#if activeSectionId === 'transition-pathway'}
-				<p>Annual values and how they change over time</p>
-			{:else if activeSectionId === 'energy-balance'}
-				<p>Hourly time series of operational variables</p>
-			{:else if activeSectionId === 'energy-system'}
-				<p>Sankey diagram of energy flows</p>
-			{:else if activeSectionId === 'map'}
-				<p>Map of conversion, storage, and transport capacities</p>
-			{/if}
-
-			<svg
-				class="absolute z-3"
-				style={arrowStyle()}
-				width={popupPlacement === 'left' || popupPlacement === 'right' ? '10' : '20'}
-				height={popupPlacement === 'left' || popupPlacement === 'right' ? '20' : '10'}
-				viewBox={popupPlacement === 'left' || popupPlacement === 'right'
-					? '0 0 10 20'
-					: '0 0 20 10'}
-				fill="none"
-				bind:this={arrowElement}
-			>
-				{#if popupPlacement === 'left'}
-					<path d="M0 0L10 10L0 20H0Z" class="fill-gray-200" />
-					<path d="M0 0L10 10L0 20" class="fill-none stroke-black" />
-				{:else if popupPlacement === 'right'}
-					<path d="M10 20L0 10L10 0H20Z" class="fill-gray-200" />
-					<path d="M10 20L0 10L10 0" class="fill-none stroke-black" />
-				{:else if popupPlacement === 'top'}
-					<path d="M0 0L10 10L20 0H0Z" class="fill-gray-200" />
-					<path d="M0 0L10 10L20 0" class="fill-none stroke-black" />
-				{:else if popupPlacement === 'bottom'}
-					<path d="M0 10L10 0L20 10H0Z" class="fill-gray-200" />
-					<path d="M0 10L10 0L20 10" class="fill-none stroke-black" />
-				{/if}
-			</svg>
+			<div class="absolute inset-1 rounded-full bg-white"></div>
+			<img class="relative w-full" alt="ZEN-garden Logo" src="/zen_garden_700x700.png" />
 		</div>
-	</main>
+
+		<!-- Blades -->
+		<div class="hidden md:block">
+			{#each blades as blade, idx (idx)}
+				{#if blade.href}
+					<a
+						href={resolve(blade.href)}
+						class={[
+							'absolute z-1 h-[106px] w-56 lg:h-[125px] lg:w-[264px]',
+							'flex items-center justify-center',
+							'text-center text-2xl font-bold shadow-lg/30',
+							'rounded-xl px-4',
+							'bottom-(--sm-bottom) left-(--sm-left) lg:bottom-(--lg-bottom) lg:left-(--lg-left)',
+							'bg-(--bg) transition-colors duration-200 hover:bg-(--hover-bg) focus:bg-(--hover-bg)',
+							blade.classes
+						]}
+						style:--sm-bottom={`${blade.bottom}px`}
+						style:--sm-left={`${blade.left}px`}
+						style:--lg-bottom={`${blade.bottom * LG_SCALE_UP}px`}
+						style:--lg-left={`${blade.left * LG_SCALE_UP}px`}
+						style:--bg={blade.bg}
+						style:--hover-bg={blade.hoverBg!}
+					>
+						{blade.name}
+					</a>
+				{:else}
+					<div
+						class={[
+							'absolute z-1 h-[106px] w-56 lg:h-[125px] lg:w-[264px]',
+							'flex items-center justify-center',
+							'text-center text-2xl font-bold shadow-lg/30',
+							'rounded-xl px-4',
+							'bottom-(--sm-bottom) left-(--sm-left) lg:bottom-(--lg-bottom) lg:left-(--lg-left)',
+							'bg-(--bg)',
+							blade.classes
+						]}
+						style:--sm-bottom={`${blade.bottom}px`}
+						style:--sm-left={`${blade.left}px`}
+						style:--lg-bottom={`${blade.bottom * LG_SCALE_UP}px`}
+						style:--lg-left={`${blade.left * LG_SCALE_UP}px`}
+						style:--bg={blade.bg}
+					>
+						{blade.name}
+					</div>
+					{#each blade.subpages as page, idx (idx)}
+						<a
+							class={[
+								'absolute py-1.5 font-semibold transition-colors duration-200 lg:text-lg',
+								blade.subpagesLeft === false
+									? 'rounded-r-lg pr-6 pl-12'
+									: 'rounded-l-lg pr-12 pl-6',
+								'bottom-(--sm-bottom) left-(--sm-left) lg:bottom-(--lg-bottom) lg:left-(--lg-left)',
+								'bg-white hover:bg-(--hover-bg) focus:bg-(--hover-bg)'
+							]}
+							href={resolve('/explorer/transition/capacity')}
+							style:--sm-bottom={`${page.bottom}px`}
+							style:--sm-left={`${page.left}px`}
+							style:--lg-bottom={`${page.bottom * LG_SCALE_UP}px`}
+							style:--lg-left={`${page.left * LG_SCALE_UP + 6}px`}
+							style:--hover-bg={blade.hoverBg}
+						>
+							{page.name}
+						</a>
+					{/each}
+				{/if}
+			{/each}
+		</div>
+
+		<div class="container mx-auto grid px-4 py-6 md:hidden">
+			{#each blades as blade, idx (idx)}
+				{#if blade.href}
+					<a
+						href={resolve(blade.href)}
+						class={[
+							'flex items-center justify-center',
+							'text-center text-2xl font-bold shadow-lg/30',
+							'mb-8 rounded-lg px-4 py-8',
+							'bg-(--bg) hover:bg-(--hover-bg) focus:bg-(--hover-bg)'
+						]}
+						style:--bg={blade.bg}
+						style:--hover-bg={blade.hoverBg!}
+					>
+						{blade.name}
+						<i class="bi bi-arrow-right ps-2"></i>
+					</a>
+				{:else}
+					<div
+						class={[
+							'flex items-center justify-center',
+							'text-center text-2xl font-bold shadow-lg/30',
+							'mb-4 rounded-lg px-4 py-8',
+							'bg-(--bg)'
+						]}
+						style:--bg={blade.bg}
+					>
+						{blade.name}
+					</div>
+					<div class="mb-8 flex flex-col gap-x-4 gap-y-2 sm:grid-cols-2">
+						{#each blade.subpages as page, idx (idx)}
+							<a
+								class={[
+									'font-semibold transition-colors duration-200 lg:text-lg',
+									'rounded-lg px-4 py-1.5 shadow-lg',
+									'mr-(--mr) ml-(--ml) bg-white hover:bg-(--hover-bg) focus:bg-(--hover-bg)'
+								]}
+								href={resolve('/explorer/transition/capacity')}
+								style:--hover-bg={blade.hoverBg}
+								style:--ml={`${idx * 1.5}rem`}
+								style:--mr={`${(blade.subpages!.length - idx - 1) * 1.5}rem`}
+							>
+								{page.name}
+								<i class="bi bi-arrow-right ps-1"></i>
+							</a>
+						{/each}
+					</div>
+				{/if}
+			{/each}
+		</div>
+	</div>
 </div>
