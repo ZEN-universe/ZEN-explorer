@@ -65,12 +65,14 @@
 		importExport: true,
 		demandShedDemand: true
 	});
-	let selectedSubdivision: Record<VariableId, boolean> = $state({
+	let selectedByTechnology: Partial<Record<VariableId, boolean>> = $state({
 		conversion: true,
 		storage: true,
 		transport: true,
-		importExport: false,
-		demandShedDemand: false
+		importExport: false
+	});
+	let selectedByNode: Partial<Record<VariableId, boolean>> = $state({
+		transport: false
 	});
 	let selectedConversionTechnologies: string[] = $state([]);
 	let selectedStorageTechnologies: string[] = $state([]);
@@ -280,8 +282,8 @@
 			case 'importExport':
 				return data.some((solutionData) => {
 					return (
-						solutionData.flow_transport.some(({ index }) => index.carrier === selectedCarrier) ||
-						solutionData.flow_transport_loss.some(({ index }) => index.carrier === selectedCarrier)
+						solutionData.flow_import.some(({ index }) => index.carrier === selectedCarrier) ||
+						solutionData.flow_export.some(({ index }) => index.carrier === selectedCarrier)
 					);
 				});
 			case 'demandShedDemand':
@@ -405,7 +407,7 @@
 	// Process plot data
 	function processData(
 		initialEntries: Entries,
-		showSubdivision: boolean,
+		groupedByTechnology: boolean,
 		filterByTechnologies: boolean,
 		label: string,
 		suffix: string = '',
@@ -422,7 +424,7 @@
 		if (filterByTechnologies) {
 			filterCriteria['technology'] = selectedTechnologies;
 		}
-		const groupByColumns = showSubdivision ? ['technology'] : [];
+		const groupByColumns = groupedByTechnology ? ['technology'] : [];
 
 		let entries = initialEntries
 			.filterByCriteria(filterCriteria)
@@ -430,7 +432,7 @@
 			.groupBy(groupByColumns)
 			.mapIndex((index) => ({
 				...index,
-				label: showSubdivision ? index.technology + suffix : label
+				label: groupedByTechnology ? index.technology + suffix : label
 			}));
 
 		if (map_fn !== undefined) {
@@ -443,8 +445,10 @@
 	function computeTransportData(
 		flowTransport: Entries,
 		flowTransportLoss: Entries,
+		groupedByTechnology: boolean,
+		groupedByNode: boolean,
 		edges: Record<string, string>
-	): [Entries, Entries] {
+	): Entries[] {
 		const outgoingEdges = getTransportEdges(edges, selectedNodes, false);
 		const incomingEdges = getTransportEdges(edges, selectedNodes, true);
 		const inboundEdges = getInboundEdges(edges, selectedNodes);
@@ -458,30 +462,98 @@
 			technology: selectedTransportTechnologies,
 			edge: incomingEdges
 		});
-		const positiveData = transportGains.mapEntries((index, data) => {
-			// Find loss entry with the same technology and edge
-			const lossData = transportLosses.find(
-				(entry) => entry.index.technology === index.technology && entry.index.edge === index.edge
-			)?.data;
-			// If no corresponding loss data is found, return the original gain data
-			if (!lossData || lossData.length !== data.length) return { index, data };
-			// Subtract loss data from gain data
-			return { data: data.map((n, i) => n - lossData[i]), index };
-		});
+		let positiveData = transportGains
+			.mapEntries((index, data) => {
+				// Find loss entry with the same technology and edge
+				const lossData = transportLosses.find(
+					(entry) => entry.index.technology === index.technology && entry.index.edge === index.edge
+				)?.data;
+				// If no corresponding loss data is found, return the original gain data
+				if (!lossData || lossData.length !== data.length) return { index, data };
+				// Subtract loss data from gain data
+				return { data: data.map((n, i) => n - lossData[i]), index };
+			})
+			.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))));
 
 		// transport_out are all outgoing flows
-		const negativeData = flowTransport.filterByCriteria({
-			technology: selectedTransportTechnologies,
-			edge: outgoingEdges
-		});
+		let negativeData = flowTransport
+			.filterByCriteria({
+				technology: selectedTransportTechnologies,
+				edge: outgoingEdges
+			})
+			.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))));
 
 		// compute transport loss within the selected nodes
-		const internalTransportLoss = flowTransportLoss.filterByCriteria({
-			technology: selectedTransportTechnologies,
-			edge: inboundEdges
-		});
+		let internalTransportLoss = flowTransportLoss
+			.filterByCriteria({
+				technology: selectedTransportTechnologies,
+				edge: inboundEdges
+			})
+			.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))));
 
-		return [positiveData, Entries.concatenate([negativeData, internalTransportLoss])];
+		// Generate labels based on grouping options
+		if (groupedByNode) {
+			positiveData = positiveData.mapIndex((index) => {
+				const [, toNode] = index.edge.split('-');
+				const label = groupedByTechnology
+					? `${index.technology} (transport in to ${toNode})`
+					: `Transport in (to ${toNode})`;
+				return {
+					...index,
+					label
+				};
+			});
+			negativeData = negativeData.mapIndex((index) => {
+				const [fromNode] = index.edge.split('-');
+				const label = groupedByTechnology
+					? `${index.technology} (transport out from ${fromNode})`
+					: `Transport out (from ${fromNode})`;
+				return {
+					...index,
+					label
+				};
+			});
+			internalTransportLoss = internalTransportLoss.mapIndex((index) => {
+				const label = groupedByTechnology
+					? `${index.technology} (internal transport loss)`
+					: `Internal transport loss`;
+				return {
+					...index,
+					label
+				};
+			});
+		} else {
+			positiveData = positiveData.mapIndex((index) => {
+				const label = groupedByTechnology ? `${index.technology} (transport in)` : `Transport in`;
+				return {
+					...index,
+					label
+				};
+			});
+			negativeData = negativeData.mapIndex((index) => {
+				const label = groupedByTechnology ? `${index.technology} (transport out)` : `Transport out`;
+				return {
+					...index,
+					label
+				};
+			});
+			internalTransportLoss = internalTransportLoss.mapIndex((index) => {
+				const label = groupedByTechnology
+					? `${index.technology} (internal transport loss)`
+					: `Internal transport loss`;
+				return {
+					...index,
+					label
+				};
+			});
+		}
+
+		// Group by label and negate values for negative data and transport loss
+		positiveData = positiveData.groupBy(['label']);
+		negativeData = negativeData.mapData((d) => -d).groupBy(['label']);
+		internalTransportLoss = internalTransportLoss.mapData((d) => -d).groupBy(['label']);
+
+		return [positiveData, negativeData, internalTransportLoss];
 	}
 
 	let [datasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() => {
@@ -509,23 +581,25 @@
 
 				// Handle transport data
 				if (id === 'transport') {
-					[positiveData, negativeData] = computeTransportData(
+					return computeTransportData(
 						positiveData,
 						negativeData,
+						selectedByTechnology[id] ?? false,
+						selectedByNode[id] ?? false,
 						solution.detail.edges
 					);
 				}
 
 				let filteredPos: Entries = processData(
 					positiveData,
-					selectedSubdivision[id],
+					selectedByTechnology[id] ?? false,
 					variable.filterByTechnologies,
 					variable.positiveLabel,
 					variable.positiveSuffix
 				);
 				let filteredNeg: Entries = processData(
 					negativeData,
-					selectedSubdivision[id],
+					selectedByTechnology[id] ?? false,
 					variable.filterByTechnologies,
 					variable.negativeLabel,
 					variable.negativeSuffix,
@@ -611,16 +685,24 @@
 										urlParam={variable.shortId}
 									></ToggleButton>
 								</div>
-								{#if variable.showSubdivision}
-									<div>
+								<div>
+									{#if variable.showByTechnology && selectedByTechnology[id] !== undefined}
 										<ToggleButton
-											bind:value={selectedSubdivision[id]}
-											label="with Subdivision"
+											bind:value={selectedByTechnology[id]}
+											label="by technology"
 											disabled={!selectedShowVariable[id] || solutionLoading || fetching}
 											urlParam={`${variable.shortId}_sub`}
 										/>
-									</div>
-								{/if}
+									{/if}
+									{#if variable.showByNode && selectedByNode[id] !== undefined}
+										<ToggleButton
+											bind:value={selectedByNode[id]}
+											label="by node"
+											disabled={!selectedShowVariable[id] || solutionLoading || fetching}
+											urlParam={`${variable.shortId}_node`}
+										/>
+									{/if}
+								</div>
 							</div>
 						{/if}
 					{/each}

@@ -20,7 +20,8 @@ export type ProductionComponent = (typeof components)[number];
 export interface Variable {
 	shortId: string;
 	title: string;
-	showSubdivision: boolean;
+	showByTechnology: boolean;
+	showByNode: boolean;
 	filterByTechnologies: boolean;
 	positive: ProductionComponent;
 	positiveLabel: string;
@@ -41,7 +42,8 @@ export const variables: Record<VariableId, Variable> = {
 	conversion: {
 		shortId: 'conv',
 		title: 'Conversion',
-		showSubdivision: true,
+		showByTechnology: true,
+		showByNode: false,
 		filterByTechnologies: true,
 		positive: 'flow_conversion_output',
 		positiveLabel: 'Conversion output',
@@ -51,7 +53,8 @@ export const variables: Record<VariableId, Variable> = {
 	storage: {
 		shortId: 'stor',
 		title: 'Storage',
-		showSubdivision: true,
+		showByTechnology: true,
+		showByNode: false,
 		filterByTechnologies: true,
 		positive: 'flow_storage_discharge',
 		positiveLabel: 'Storage discharge',
@@ -63,19 +66,21 @@ export const variables: Record<VariableId, Variable> = {
 	transport: {
 		shortId: 'tran',
 		title: 'Transport',
-		showSubdivision: true,
-		filterByTechnologies: true,
+		showByTechnology: true,
+		showByNode: true,
+		filterByTechnologies: false,
 		positive: 'flow_transport',
 		positiveLabel: 'Transport in',
-		positiveSuffix: ' (transport in)',
+		// positiveSuffix: ' (transport in)',
 		negative: 'flow_transport_loss',
-		negativeLabel: 'Transport out',
-		negativeSuffix: ' (transport out)'
+		negativeLabel: 'Transport out'
+		// negativeSuffix: ' (transport out)'
 	},
 	importExport: {
 		shortId: 'imp_exp',
 		title: 'Import/Export',
-		showSubdivision: false,
+		showByTechnology: false,
+		showByNode: false,
 		filterByTechnologies: false,
 		positive: 'flow_import',
 		positiveLabel: 'Import',
@@ -85,7 +90,8 @@ export const variables: Record<VariableId, Variable> = {
 	demandShedDemand: {
 		shortId: 'dem_shed',
 		title: 'Demand/Shed Demand',
-		showSubdivision: false,
+		showByTechnology: false,
+		showByNode: false,
 		filterByTechnologies: false,
 		positive: 'shed_demand',
 		positiveLabel: 'Shed Demand',
