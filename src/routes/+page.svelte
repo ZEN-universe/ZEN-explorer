@@ -174,7 +174,7 @@
 
 			<div class="flex justify-center">
 				<a
-					class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition-colors sm:w-auto dark:bg-[#D48681]"
+					class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition-colors sm:w-auto"
 					href="https://zen-garden.readthedocs.io/en/latest/files/quick_start/installation.html"
 					target="_blank"
 				>
@@ -327,7 +327,7 @@
 					</p>
 
 					<a
-						class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-6 py-2 text-center font-bold text-white transition-colors sm:w-auto dark:bg-[#D48681]"
+						class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-6 py-2 text-center font-bold text-white transition-colors sm:w-auto"
 						href="https://github.com/ZEN-universe/ZEN-creator"
 						target="_blank"
 						rel="external noopener"
@@ -936,12 +936,12 @@
 			<img
 				src="/RRE-logo.svg"
 				alt="Logo Risk and Reliability Engineering Lab at ETH Zurich"
-				class="block w-32 sm:w-48 md:w-56 lg:w-96 xl:w-112 dark:hidden"
+				class="block w-32 sm:w-48 md:w-56 lg:w-96 xl:w-md dark:hidden"
 			/>
 			<img
 				src="/RRE-logo-dark.svg"
 				alt="Logo Risk and Reliability Engineering Lab at ETH Zurich"
-				class="hidden w-32 sm:w-48 md:w-56 lg:w-96 xl:w-112 dark:block"
+				class="hidden w-32 sm:w-48 md:w-56 lg:w-96 xl:w-md dark:block"
 			/>
 		</div>
 		<div class="col-span-2">

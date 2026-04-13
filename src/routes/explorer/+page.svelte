@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import type { ResolvedPathname } from '$app/types';
 	import type { Pathname } from '$app/types';
 
 	interface Blade {
@@ -73,7 +71,7 @@
 <!-- eslint-disable svelte/no-navigation-without-resolve -->
 
 <div
-	class="relative min-h-[calc(100vh_-_57px)] text-gray-900 md:h-180 lg:h-210 lg:min-h-[calc(100vh_-_65px)]"
+	class="relative min-h-[calc(100vh-57px)] text-gray-900 md:h-180 lg:h-210 lg:min-h-[calc(100vh-65px)]"
 >
 	<!-- Background -->
 	<div class="absolute inset-0" aria-hidden="true">
