@@ -51,6 +51,49 @@
 		});
 	}
 
+	const projects = [
+		{
+			href: 'https://1komma5.com/en/',
+			src: '/1KOMMA5_Logo.svg',
+			name: '1KOMMA5°'
+		},
+		{
+			href: 'https://esc.ethz.ch/',
+			src: '/esc_logo.png',
+			name: 'Energy Science Center'
+		},
+		{
+			href: 'https://sweet-pathfndr.ch/',
+			src: '/PATHFNDR.png',
+			name: 'SWEET PATHFNDR'
+		},
+		{
+			href: 'https://speed2zero.ethz.ch/en/',
+			src: '/Speed2zero.png',
+			name: 'Speed2Zero'
+		},
+		{
+			href: 'https://www.projectaccsess.eu/',
+			src: '/accsess.png',
+			name: 'Project Accsess'
+		},
+		{
+			href: 'https://www.demoupcarma.ethz.ch/',
+			src: '/demoupcarma.png',
+			name: 'Demo UpCarma'
+		},
+		{
+			href: 'https://www.coreu.eu/',
+			src: '/COREu.png',
+			name: 'COREu project'
+		},
+		{
+			href: 'https://rre.ethz.ch/research/academic-collaborations/reg4fuels.html',
+			src: '/Reg4Fuels.png',
+			name: 'Reg4Fuels'
+		}
+	];
+
 	let isDarkTheme = $derived(getTheme() === 'dark');
 </script>
 
@@ -202,7 +245,7 @@
 				<a
 					href="#build-model"
 					class="pointer-event-none absolute inset-0"
-					aria-label="Build your model"
+					aria-label="Build your Model"
 				></a>
 			</ContentBox>
 			<ContentBox
@@ -244,7 +287,7 @@
 		</div>
 	</div>
 
-	<!-- Build your model -->
+	<!-- Build your Model -->
 	<div id="build-model" class="section container mx-auto flex gap-4 px-4 pb-12 lg:gap-12 lg:pb-4">
 		<ContentBox
 			class="box min-h-screen grow bg-[#E7F4F7] dark:bg-[#00596D]"
@@ -259,7 +302,7 @@
 					<i class="bi bi-signpost-2-fill"></i>
 				</div>
 				<div>
-					<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Build your model</h2>
+					<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Build your Model</h2>
 					<p class="text-lg">
 						With ZEN-garden, you can flexibly define the temporal resolution (single/multi year,
 						number of time steps per year), the spatial resolution (nodes and edges), and the energy
@@ -486,11 +529,11 @@
 			noShadow
 			noMarginBottom
 		>
-			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Build your model</h2>
+			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Build your Model</h2>
 			<a
 				href="#build-model"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Build your model"
+				aria-label="Build your Model"
 			></a>
 		</ContentBox>
 		<ContentBox
@@ -704,11 +747,11 @@
 			noShadow
 			noMarginBottom
 		>
-			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Build your model</h2>
+			<h2 class="mb-4 text-2xl font-bold opacity-0 [writing-mode:sideways-lr]">Build your Model</h2>
 			<a
 				href="#build-model"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Build your model"
+				aria-label="Build your Model"
 			></a>
 		</ContentBox>
 		<ContentBox
@@ -854,74 +897,33 @@
 	</div>
 </div>
 
-<!-- Projects and collaborations -->
+<!-- Projects and Collaborations -->
 <div class="container mx-auto mt-20 px-4">
 	<ContentBox
 		class="mb-4 flex flex-col gap-8 px-4 py-10 sm:mb-12 sm:py-16 md:px-8 lg:mb-12 lg:px-16 xl:px-20"
 	>
 		<div class="w-full">
 			<h1 class="mb-8 text-4xl font-bold sm:text-5xl md:mb-12 lg:text-6xl">
-				Projects and collaborations
+				Projects and Collaborations
 			</h1>
 
 			<p class="mb-12 w-full text-xl leading-relaxed">
-				ZEN-garden is used in various research projects and collaborations. We are happy to share
+				ZEN-garden is used in various research Projects and Collaborations. We are happy to share
 				our research and collaborate with other researchers, practitioners, and stakeholders
 				interested in energy system transition pathways.
 			</p>
 
 			<div class="grid w-full grid-cols-4 items-center gap-4 md:gap-8 lg:gap-12">
-				<a
-					href="https://1komma5.com/en/"
-					target="_blank"
-					class="flex justify-center opacity-60 transition hover:opacity-100"
-				>
-					<img src="/1KOMMA5°_Logo.svg" alt="1KOMMA5°" class="h-auto w-full object-contain" />
-				</a>
-
-				<a
-					href="https://esc.ethz.ch/"
-					target="_blank"
-					class="flex justify-center opacity-60 transition hover:opacity-100"
-				>
-					<img
-						src="/esc_logo.png"
-						alt="Energy Science Center"
-						class="h-auto w-full object-contain"
-					/>
-				</a>
-
-				<a
-					href="https://sweet-pathfndr.ch/"
-					target="_blank"
-					class="flex justify-center opacity-60 transition hover:opacity-100"
-				>
-					<img src="/PATHFNDR.png" alt="SWEET PATHFNDR" class="h-auto w-full object-contain" />
-				</a>
-
-				<a
-					href="https://speed2zero.ethz.ch/en/"
-					target="_blank"
-					class="flex justify-center opacity-60 transition hover:opacity-100"
-				>
-					<img src="/Speed2zero.png" alt="Speed2Zero" class="h-auto w-full object-contain" />
-				</a>
-
-				<a
-					href="https://www.projectaccsess.eu/"
-					target="_blank"
-					class="col-start-2 flex justify-center opacity-60 transition hover:opacity-100"
-				>
-					<img src="/accsess.png" alt="Project Accsess" class="h-auto w-full object-contain" />
-				</a>
-
-				<a
-					href="https://www.demoupcarma.ethz.ch/"
-					target="_blank"
-					class="flex justify-center opacity-60 transition hover:opacity-100"
-				>
-					<img src="/demoupcarma.png" alt="Demo UpCarma" class="h-auto w-full object-contain" />
-				</a>
+				{#each projects as project, idx (idx)}
+					<a
+						href={project.href}
+						class="flex justify-center opacity-60 transition hover:opacity-100"
+						target="_blank"
+						rel="external noopener"
+					>
+						<img src={project.src} alt={project.name} class="h-auto w-full object-contain" />
+					</a>
+				{/each}
 			</div>
 		</div>
 	</ContentBox>

@@ -79,6 +79,7 @@ function headSectionAnimation(
 			scrub: 0.3,
 			pin: true,
 			pinSpacing: false,
+			preventOverlaps: true,
 			snap: {
 				snapTo: [0, 1],
 				directional: false,
@@ -143,6 +144,7 @@ function transitionAnimation(
 				scrub: 0.3,
 				pin: true,
 				pinSpacing: false,
+				preventOverlaps: true,
 				snap: {
 					snapTo: [0, 1],
 					directional: false,
@@ -184,7 +186,8 @@ async function terminalAnimation(sections: HTMLElement[], topOffset: number) {
 				trigger: section,
 				start: `top ${topOffset + 16.1}`,
 				end: `bottom bottom`,
-				toggleActions: 'play complete none restart'
+				toggleActions: 'play complete none restart',
+				preventOverlaps: true
 			}
 		});
 
@@ -226,6 +229,7 @@ function finalBlockAnimation(
 			trigger: sections[sections.length - 1],
 			start: `bottom bottom`,
 			end: `bottom top+=${topOffset}px`,
+			preventOverlaps: true,
 			scrub: true
 		}
 	});

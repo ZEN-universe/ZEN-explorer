@@ -14,7 +14,7 @@
 	}
 	const blades: Blade[] = [
 		{
-			name: 'The Transition pathway',
+			name: 'The Transition Pathway',
 			left: 98,
 			bottom: 460,
 			bg: '#e4d4c8',
