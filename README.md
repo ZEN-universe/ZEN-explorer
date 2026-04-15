@@ -5,6 +5,7 @@ ZEN-explorer is the frontend of the [ZEN-garden](https://github.com/ZEN-universe
 ## ⚙️ Installation
 
 Prerequisites:
+
 - 🟢 Node.js with npm (recommended: LTS version 24, April 2026)
 - 🐍 Conda (recommended: Miniconda)
 
@@ -46,6 +47,7 @@ Open [http://localhost:5173/](http://localhost:5173/) or the URL printed in the 
 ## 🧱 Project structure
 
 This project uses [Svelte](https://svelte.dev/) with [SvelteKit](https://kit.svelte.dev/) as a framework for the frontend development. Many pages have a similar structure and use the same components such as:
+
 - Filters to select the solution and some parameters
 - Plot configuration
 - Fetching data from the API
@@ -54,6 +56,7 @@ This project uses [Svelte](https://svelte.dev/) with [SvelteKit](https://kit.sve
 ZEN-temple is the backend web service that reads the outputs from the model optimization, i.e., it uses ZEN-garden's `Results` class, and preprocesses them for the frontend. Some endpoints load a large amount of data, which takes some seconds to process. Attempts have been made to optimize the loading time on ZEN-temple by using more compact data formats, but we accepted some loading time to keep the code more readable and to keep a lower memory footprint on the server.
 
 There are four kinds of diagrams:
+
 - Bar charts (The Transition Pathway) to show the total capacity, production, emissions, and costs per year.
 - Line charts (The Energy Balance) to analyze the production and consumption per time unit.
 - Sankey diagrams (The Energy System) to analyze the energy flows between the different technologies.
@@ -64,6 +67,7 @@ The first two diagrams plus some Pie charts are implemented using [Chart.js](htt
 ## 🛠️ Configuration
 
 There are some configuration options that can be edited in the `.env` file.
+
 - `PUBLIC_TEMPLE_URL`: URL of the ZEN-temple API. It must end with a trailing slash.
 - `PUBLIC_APP_NAME`: Name of the application, shown in the title. Default: "ZEN-garden Visualization"
 

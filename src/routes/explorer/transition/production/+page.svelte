@@ -442,7 +442,7 @@
 		return entries;
 	}
 
-	function computeTransportData(
+	function processTransportData(
 		flowTransport: Entries,
 		flowTransportLoss: Entries,
 		groupedByTechnology: boolean,
@@ -494,20 +494,20 @@
 		// Generate labels based on grouping options
 		if (groupedByNode) {
 			positiveData = positiveData.mapIndex((index) => {
-				const [, toNode] = index.edge.split('-');
+				const [fromNode] = index.edge.split('-');
 				const label = groupedByTechnology
-					? `${index.technology} (transport in to ${toNode})`
-					: `Transport in (to ${toNode})`;
+					? `${index.technology} (transport in from ${fromNode})`
+					: `Transport in (from ${fromNode})`;
 				return {
 					...index,
 					label
 				};
 			});
 			negativeData = negativeData.mapIndex((index) => {
-				const [fromNode] = index.edge.split('-');
+				const [, toNode] = index.edge.split('-');
 				const label = groupedByTechnology
-					? `${index.technology} (transport out from ${fromNode})`
-					: `Transport out (from ${fromNode})`;
+					? `${index.technology} (transport out to ${toNode})`
+					: `Transport out (to ${toNode})`;
 				return {
 					...index,
 					label
@@ -581,7 +581,7 @@
 
 				// Handle transport data
 				if (id === 'transport') {
-					return computeTransportData(
+					return processTransportData(
 						positiveData,
 						negativeData,
 						selectedByTechnology[id] ?? false,

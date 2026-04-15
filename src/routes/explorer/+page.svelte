@@ -57,10 +57,10 @@
 			bg: '#c7d2db',
 			hoverBg: '#e0e6eb',
 			classes: 'origin-bottom-right rotate-45',
-			subpagesLeft: true,
+			subpagesLeft: false,
 			subpages: [
-				{ name: 'Capacity', href: '/explorer/map/capacity', left: 239, bottom: 106 },
-				{ name: 'Production', href: '/explorer/map/production', left: 264, bottom: 66 }
+				{ name: 'Capacity', href: '/explorer/map/capacity', left: 397, bottom: 176 },
+				{ name: 'Production', href: '/explorer/map/production', left: 437, bottom: 136 }
 			]
 		}
 	];
