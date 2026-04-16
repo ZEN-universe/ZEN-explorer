@@ -21,6 +21,7 @@
 	import ContentBox from '$components/ContentBox.svelte';
 	import HelpTooltip from '$components/HelpTooltip.svelte';
 	import Radio from '$components/forms/Radio.svelte';
+	import ToggleButton from '$components/forms/ToggleButton.svelte';
 
 	useURLParams();
 
@@ -44,6 +45,7 @@
 	let selectedCarrier: string | null = $state(null);
 	let selectedYear: string | null = $state(null);
 	let selectedWindowSize = $state('Hourly');
+	let selectedTransportByNode: boolean = $state(false);
 
 	//#region Plot configuration
 
@@ -284,6 +286,13 @@
 		updateDatasets();
 	}
 
+	$effect(() => {
+		selectedTransportByNode;
+		untrack(() => {
+			updateDatasets();
+		});
+	});
+
 	//#endregion
 
 	//#region Compute datasets
@@ -297,7 +306,7 @@
 	let datasetsLength: number = $state(0);
 	let dualsDatasetsLength: number = $state(0);
 	let numberOfTimeSteps: number = $state(0);
-	const dualsKey = 'constraint_nodal_energy_balance';
+	const dualsComponent = 'constraint_nodal_energy_balance';
 
 	function computeDatasets(): ChartDataset<'bar' | 'line'>[] {
 		if (
@@ -312,33 +321,49 @@
 
 		const version = selectedSolution!.version;
 		const labelMap: Record<string, (label: string) => string> = {
-			[getVariableName('flow_storage_discharge', version)]: (l) => l + ' (discharge)',
-			[getVariableName('flow_transport_in', version)]: (l) => l + ' (transport in)',
-			[getVariableName('flow_import', version)]: () => 'Import',
-			[getVariableName('shed_demand', version)]: () => 'Shed Demand',
 			[getVariableName('flow_storage_charge', version)]: (l) => l + ' (charge)',
-			[getVariableName('flow_transport_out', version)]: (l) => l + ' (transport out)',
-			[getVariableName('flow_export', version)]: () => 'Export'
+			[getVariableName('flow_storage_discharge', version)]: (l) => l + ' (discharge)',
+			[getVariableName('flow_import', version)]: () => 'Import',
+			[getVariableName('flow_export', version)]: () => 'Export',
+			[getVariableName('shed_demand', version)]: () => 'Shed Demand',
+			[getVariableName('flow_transport_in', version)]: (l) =>
+				l + (selectedTransportByNode ? '' : ' (transport in)'),
+			[getVariableName('flow_transport_out', version)]: (l) =>
+				l + (selectedTransportByNode ? '' : ' (transport out)')
 		};
 
-		return Object.entries(energyBalanceData).flatMap(([key, entries]: [string, Entries]) => {
-			if (!entries || entries.length === 0 || key === dualsKey) {
+		return Object.entries(energyBalanceData).flatMap(([component, entries]: [string, Entries]) => {
+			if (!entries || entries.length === 0 || component === dualsComponent) {
 				return [];
 			}
 
-			// Filter and group rows by label (technology/node/label)
-			entries = entries
-				.filterByCriteria({
-					node: [selectedNode!]
-				})
-				.groupBy(['technology', 'node', 'label']);
+			if (
+				selectedTransportByNode &&
+				(component === 'flow_transport_in' || component === 'flow_transport_out')
+			) {
+				// For transport flows, filter by selected node in either 'from_node' or 'to_node'
+				entries = entries
+					.mapIndex((index) => {
+						const [from, to] = index.edge.split('-');
+						const fromOrTo = component === 'flow_transport_in' ? 'from' : 'to';
+						const inOrOut = component === 'flow_transport_in' ? 'in' : 'out';
+						const node = component === 'flow_transport_in' ? from : to;
+						return {
+							label: `${index.technology} (transport ${inOrOut} ${fromOrTo} ${node})`
+						};
+					})
+					.groupBy(['label']);
+			} else {
+				// For other components group by technology, node, and label
+				entries = entries.groupBy(['technology', 'node', 'label']);
+			}
 
 			return entries.toArray().map(({ data, index }) => {
 				const label = index.technology || index.node || index.label || '';
 				const color = nextColor();
 				const datasetData = Object.values(data).map((value, i) => ({ x: i, y: value }));
 
-				if (key == 'demand') {
+				if (component == 'demand') {
 					return {
 						data: datasetData,
 						label: 'Demand',
@@ -354,7 +379,7 @@
 				} else {
 					return {
 						data: datasetData,
-						label: labelMap[key]?.(label) || label,
+						label: labelMap[component]?.(label) || label,
 						fill: 'origin',
 						borderColor: color,
 						backgroundColor: color,
@@ -374,12 +399,12 @@
 			!selectedCarrier ||
 			!selectedYear ||
 			!energyBalanceData ||
-			!energyBalanceData[dualsKey]?.length
+			!energyBalanceData[dualsComponent]?.length
 		) {
 			return [];
 		}
 
-		return energyBalanceData[dualsKey]
+		return energyBalanceData[dualsComponent]
 			.toArray()
 			.map((entry) => {
 				if (entry.data.length == 0) {
@@ -486,6 +511,20 @@
 					</Radio>
 				{/if}
 			</FilterSection>
+			{#if !solutionLoading && selectedSolution != null}
+				<FilterSection title="Display Options">
+					<ToggleButton
+						bind:value={selectedTransportByNode}
+						label="Separate transport flows by node"
+						disabled={fetching || solutionLoading}
+					>
+						{#snippet helpText()}
+							Choose whether to display transport flows separately for each node or aggregated into
+							a single flow.
+						{/snippet}
+					</ToggleButton>
+				</FilterSection>
+			{/if}
 		{/if}
 	{/snippet}
 
