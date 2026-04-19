@@ -99,8 +99,8 @@
 			return;
 		}
 		const solutionParam = getURLParam(urlParamSolution)?.split('.') || ['', ''];
-		activeFirstLevel = solutionParam[0];
-		activeSecondLevel = solutionParam[1];
+		activeFirstLevel = solutionParam[0] ?? '';
+		activeSecondLevel = solutionParam[1] ?? '';
 		activeScenario = getURLParam(urlParamScenario) || '';
 	});
 

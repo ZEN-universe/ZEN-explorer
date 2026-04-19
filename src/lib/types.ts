@@ -50,26 +50,18 @@ export interface System {
 	coords: { [node: string]: { lon: number; lat: number } };
 }
 
-export interface ReferenceCarrier {
-	[key: string]: string;
-}
-
 export interface ScenarioDetail {
 	system: System;
-	reference_carrier: ReferenceCarrier;
+	reference_carrier: Record<string, string>;
 	carriers_input: Record<string, string[]>;
 	carriers_output: Record<string, string[]>;
 	edges: Record<string, string>;
 }
 
-export interface Scenarios {
-	[key: string]: ScenarioDetail;
-}
-
 export interface SolutionDetail {
 	folder_name: string;
 	name: string;
-	scenarios: Scenarios;
+	scenarios: Record<string, ScenarioDetail>;
 	version: string;
 	objective: string;
 }
@@ -98,10 +90,6 @@ export interface Entry {
 	data: number[];
 }
 
-export interface DatasetSelectors {
-	[key: string]: string[];
-}
-
 export interface EnergyBalanceDataframes {
 	demand: Entries;
 	flow_conversion_input: Entries;
@@ -118,12 +106,8 @@ export interface EnergyBalanceDataframes {
 
 export interface Dataset {
 	label: string;
-	data: YearValue;
+	data: Record<string, number>;
 	type: string;
-}
-
-export interface YearValue {
-	[key: string]: number;
 }
 
 export interface UnitData {
@@ -136,10 +120,6 @@ export type ComponentTotal<T extends string = string> = Record<T, ParseResult<Ro
 export interface ComponentTimeSeries<T extends string = string> {
 	unit: ParseResult<Row> | null;
 	components: Record<T, Entries>;
-}
-
-export interface DatasetContainer {
-	[key: string]: YearValue;
 }
 
 export interface SankeyNode {

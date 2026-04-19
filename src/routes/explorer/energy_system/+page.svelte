@@ -14,18 +14,11 @@
 
 	import Entries from '$lib/entries';
 	import { fetchTotal } from '$lib/temple';
-	import type {
-		ActivatedSolution,
-		Row,
-		Entry,
-		SankeyNode,
-		PartialSankeyLink,
-		RawSankeyNode
-	} from '$lib/types';
+	import type { Row, SankeyNode, PartialSankeyLink, RawSankeyNode } from '$lib/types';
 	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
-	import { nextColor, resetColorState } from '$lib/colors';
-	import { getTransportEdges } from '$lib/utils';
 	import { generateSolutionSuffix } from '@/lib/compareSolutions.svelte';
+	import ToggleButton from '$components/forms/ToggleButton.svelte';
+	import { computeSankeyData, type Component, type Selection } from './processData';
 
 	useURLParams();
 
@@ -34,23 +27,28 @@
 	let fetching: boolean = $state(false);
 
 	// Selections
-	let selectedSolution: ActivatedSolution | null = $state(null);
-	let selectedCarriers: string[] = $state([]);
-	let selectedNodes: string[] = $state([]);
-	let selectedYear: number = $state(0);
+	let selection: Selection = $state({
+		solution: null,
+		carriers: [],
+		nodes: [],
+		year: 0,
+		transportByNode: false
+	});
 
-	let dataConversionInput: Entries | null = $state.raw(null);
-	let dataConversionOutput: Entries | null = $state(null);
-	let dataStorageCharge: Entries | null = $state(null);
-	let dataStorageDischarge: Entries | null = $state(null);
-	let dataImport: Entries | null = $state(null);
-	let dataExport: Entries | null = $state(null);
-	let dataDemand: Entries | null = $state(null);
-	let dataShedDemand: Entries | null = $state(null);
-	let dataStorageInflow: Entries | null = $state(null);
-	let dataStorageSpillage: Entries | null = $state(null);
-	let dataTransport: Entries | null = $state(null);
-	let dataTransportLoss: Entries | null = $state(null);
+	let data: Record<Component, Entries | null> = $state.raw({
+		conversionInput: null,
+		conversionOutput: null,
+		storageCharge: null,
+		storageDischarge: null,
+		import: null,
+		export: null,
+		demand: null,
+		shedDemand: null,
+		storageInflow: null,
+		storageSpillage: null,
+		transport: null,
+		transportLoss: null
+	});
 	let units: Row[] = $state([]);
 
 	let sankeyNodes: Partial<SankeyNode>[] = $state([]);
@@ -64,25 +62,24 @@
 	let diagram = $state<SankeyDiagram>();
 
 	$effect(() => {
-		selectedCarriers;
-		selectedNodes;
-		selectedYear;
-		untrack(() => {
-			computeSankeyData();
-		});
+		selection.carriers;
+		selection.nodes;
+		selection.year;
+		selection.transportByNode;
+		untrack(updateSankeyData);
 	});
 
 	function getContextMenuItems(node: RawSankeyNode) {
-		if (!selectedSolution || !selectedYear || !carriers.includes(node.label)) return [];
+		if (!selection.solution || !selection.year || !carriers.includes(node.label)) return [];
 		return [
 			{
-				label: `Go to The Transition Pathway - Production (year: ${selectedYear}, carrier: ${node.label})`,
+				label: `Go to The Transition Pathway - Production (year: ${selection.year}, carrier: ${node.label})`,
 				href: addParametersToPath('/explorer/transition/production', {
-					[QUERY_PARAM_KEYS.solutions]: selectedSolution.solution_name,
-					[QUERY_PARAM_KEYS.scenarios]: selectedSolution.scenario_name,
+					[QUERY_PARAM_KEYS.solutions]: selection.solution.solution_name,
+					[QUERY_PARAM_KEYS.scenarios]: selection.solution.scenario_name,
 					[QUERY_PARAM_KEYS.carrier]: node.label,
-					[QUERY_PARAM_KEYS.activeSolution]: generateSolutionSuffix(selectedSolution),
-					[QUERY_PARAM_KEYS.activeYear]: selectedYear.toString()
+					[QUERY_PARAM_KEYS.activeSolution]: generateSolutionSuffix(selection.solution),
+					[QUERY_PARAM_KEYS.activeYear]: selection.year.toString()
 				})
 			}
 		];
@@ -95,14 +92,14 @@
 	//#region Data fetching and processing
 
 	async function fetchData() {
-		if (!selectedSolution) {
+		if (!selection.solution) {
 			return;
 		}
 
 		fetching = true;
 
-		let response = await fetchTotal(
-			selectedSolution.solution_name,
+		let { unit, ...response } = await fetchTotal(
+			selection.solution.solution_name,
 			[
 				'flow_conversion_input',
 				'flow_conversion_output',
@@ -117,337 +114,43 @@
 				'flow_transport',
 				'flow_transport_loss'
 			],
-			selectedSolution.scenario_name,
+			selection.solution.scenario_name,
 			'',
 			'demand'
 		);
 
-		dataConversionInput = Entries.fromRows(response['flow_conversion_input']?.data ?? []);
-		dataConversionOutput = Entries.fromRows(response['flow_conversion_output']?.data ?? []);
-		dataStorageCharge = Entries.fromRows(response['flow_storage_charge']?.data ?? []);
-		dataStorageDischarge = Entries.fromRows(response['flow_storage_discharge']?.data ?? []);
-		dataImport = Entries.fromRows(response['flow_import']?.data ?? []);
-		dataExport = Entries.fromRows(response['flow_export']?.data ?? []);
-		dataDemand = Entries.fromRows(response['demand']?.data ?? []);
-		dataShedDemand = Entries.fromRows(response['shed_demand']?.data ?? []);
-		dataStorageInflow = Entries.fromRows(response['flow_storage_inflow']?.data ?? []);
-		dataStorageSpillage = Entries.fromRows(response['flow_storage_spillage']?.data ?? []);
-		dataTransport = Entries.fromRows(response['flow_transport']?.data ?? []);
-		dataTransportLoss = Entries.fromRows(response['flow_transport_loss']?.data ?? []);
-
-		units = response.unit?.data || [];
+		data = Object.fromEntries(
+			[
+				['flow_conversion_input', 'conversionInput'],
+				['flow_conversion_output', 'conversionOutput'],
+				['flow_storage_charge', 'storageCharge'],
+				['flow_storage_discharge', 'storageDischarge'],
+				['flow_import', 'import'],
+				['flow_export', 'export'],
+				['demand', 'demand'],
+				['shed_demand', 'shedDemand'],
+				['flow_storage_inflow', 'storageInflow'],
+				['flow_storage_spillage', 'storageSpillage'],
+				['flow_transport', 'transport'],
+				['flow_transport_loss', 'transportLoss']
+			].map(([key, stateKey]) => {
+				return [
+					stateKey,
+					Entries.fromRows(response[key as keyof typeof response]?.data ?? [])
+				] as const;
+			})
+		) as Record<Component, Entries>;
+		units = unit?.data || [];
 
 		fetching = false;
-
-		computeSankeyData();
+		updateSankeyData();
 	}
 
-	function getUnit(carrier: string): string {
-		let unitRow = units.find((row) => row['carrier'] === carrier) || {};
-		return unitRow[0] || unitRow.units || '';
-	}
-
-	function getReferenceCarrier(technology: string): string {
-		if (!selectedSolution) return '';
-		return selectedSolution.detail.reference_carrier[technology] || '';
-	}
-
-	function getTechnologiesRelatedToCarriers(selectedCarriers: string[]): string[] {
-		if (!selectedSolution) return [];
-		return selectedSolution.detail.system.set_technologies.filter((technology) => {
-			const inputCarriers = selectedSolution?.detail.carriers_input[technology] || [];
-			const outputCarriers = selectedSolution?.detail.carriers_output[technology] || [];
-			const referenceCarrier = selectedSolution?.detail.reference_carrier[technology];
-			return (
-				[...inputCarriers, ...outputCarriers].some((c) => selectedCarriers.includes(c)) ||
-				(referenceCarrier && selectedCarriers.includes(referenceCarrier))
-			);
-		});
-	}
-
-	function computeSankeyData() {
-		if (
-			!selectedSolution ||
-			!dataConversionInput ||
-			!dataConversionOutput ||
-			!dataStorageCharge ||
-			!dataStorageDischarge ||
-			!dataImport ||
-			!dataExport ||
-			!dataDemand ||
-			!dataShedDemand ||
-			!dataStorageInflow ||
-			!dataStorageSpillage ||
-			!dataTransport ||
-			!dataTransportLoss
-		) {
-			return [];
-		}
-
-		// Stage 1: Define nodes
-		const grey = 'rgb(180,180,180)';
-		const storageTechs = selectedSolution?.detail.system.set_storage_technologies || [];
-		const conversionTechs = selectedSolution?.detail.system.set_conversion_technologies || [];
-		const transportTechs = selectedSolution?.detail.system.set_transport_technologies || [];
-
-		function newNode(
-			id: string,
-			label: string,
-			color: string,
-			unit: string,
-			unitSuffix: boolean = false,
-			stickTo: 'left' | 'right' | null = null,
-			showTotal: boolean = true,
-			distinctRow: boolean = false
-		): Partial<SankeyNode> {
-			return {
-				id,
-				label,
-				color,
-				unit,
-				unitSuffix,
-				stickTo,
-				showTotal,
-				distinctRow
-			};
-		}
-
-		resetColorState();
-		const colors: LegendItem[] = [];
-
-		const carrierNodes = carriers
-			.map((carrier) => {
-				if (!selectedCarriers.includes(carrier)) return null;
-				const color = nextColor(carrier);
-				colors.push({ color, carrier });
-				return newNode(carrier, carrier, color, getUnit(carrier), true, null, true, true);
-			})
-			.filter((node) => node !== null);
-		const conversionTechNodes = conversionTechs.map((tech) =>
-			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)), false, null, false)
-		);
-		const storageTechNodes = storageTechs.map((tech) =>
-			newNode(tech, tech, grey, getUnit(getReferenceCarrier(tech)), false, null, false)
-		);
-		const inflowNodes = storageTechs.map((tech) =>
-			newNode(tech, tech + '_inflow', grey, getUnit(getReferenceCarrier(tech)))
-		);
-		const spillageNodes = storageTechs.map((tech) =>
-			newNode(
-				tech,
-				tech + '_spillage',
-				grey,
-				getUnit(getReferenceCarrier(tech)),
-				false,
-				null,
-				false
-			)
-		);
-		let currentColor = nextColor();
-		const importNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + ' import', currentColor, getUnit(carrier), true, 'left')
-		);
-		currentColor = nextColor();
-		const exportNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + ' export', currentColor, getUnit(carrier), true, 'right')
-		);
-		currentColor = nextColor();
-		const shedDemandNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + ' shed demand', currentColor, getUnit(carrier))
-		);
-		currentColor = nextColor();
-		const demandNodes = carriers.map((carrier) =>
-			newNode(carrier, carrier + ' demand', currentColor, getUnit(carrier), true, 'right')
-		);
-		currentColor = nextColor();
-		const transportInNodes = transportTechs.map((tech) =>
-			newNode(
-				tech,
-				tech + ' transport in',
-				currentColor,
-				getUnit(getReferenceCarrier(tech)),
-				false,
-				null,
-				false
-			)
-		);
-		const transportOutNodes = transportTechs.map((tech) =>
-			newNode(
-				tech,
-				tech + ' transport out',
-				currentColor,
-				getUnit(getReferenceCarrier(tech)),
-				false,
-				null,
-				false
-			)
-		);
-
-		// Stage 2: Define links
-		const filterCriteria = {
-			carrier: selectedCarriers,
-			node: selectedNodes,
-			technology: getTechnologiesRelatedToCarriers(selectedCarriers)
-		};
-		const indexOfYear = years.indexOf(selectedYear);
-		if (indexOfYear === -1) return;
-		const links: PartialSankeyLink[] = [];
-
-		function addLink(
-			sourceNodes: Partial<SankeyNode>[],
-			sourceId: string,
-			targetNodes: Partial<SankeyNode>[],
-			targetId: string,
-			subtract = 0
-		): (entry: Entry) => void {
-			return (entry: Entry) => {
-				let value = entry.data[indexOfYear] - subtract;
-				if (Math.abs(value) < 5e-4) {
-					value = 0;
-				}
-
-				const sourceNode = sourceNodes.find((node) => node.id === entry.index[sourceId]);
-				const targetNode = targetNodes.find((node) => node.id === entry.index[targetId]);
-				if (!sourceNode || !targetNode) {
-					console.warn(
-						'Missing source or target node',
-						{ sourceNode, targetNode },
-						{ sourceId, targetId }
-					);
-					return;
-				}
-
-				let color = grey;
-				const carrierNode = carrierNodes.find((node) => node.id === entry.index.carrier);
-				if (carrierNode) {
-					color = carrierNode.color || grey;
-				}
-
-				links.push({
-					source: sourceNode,
-					target: targetNode,
-					value,
-					color,
-					unit: getUnit(entry.index.carrier)
-				});
-			};
-		}
-
-		function addCarrierToEntry(entry: Entry): void {
-			const referenceCarrier = getReferenceCarrier(entry.index.technology);
-			if (!referenceCarrier) return;
-			entry.index.carrier = referenceCarrier;
-		}
-
-		// conversion input: carrier -> conversion tech
-		dataConversionInput
-			.filterByCriteria(filterCriteria)
-			.groupBy(['technology', 'carrier'])
-			.forEach(addLink(carrierNodes, 'carrier', conversionTechNodes, 'technology'));
-		// conversion output: conversion tech -> carrier
-		dataConversionOutput
-			.filterByCriteria(filterCriteria)
-			.groupBy(['technology', 'carrier'])
-			.forEach(addLink(conversionTechNodes, 'technology', carrierNodes, 'carrier'));
-		// storage charge: carrier -> storage tech
-		dataStorageCharge
-			.filterByCriteria(filterCriteria)
-			.groupBy(['technology'])
-			.forEach((entry) => {
-				const referenceCarrier = getReferenceCarrier(entry.index.technology);
-				if (!referenceCarrier) return;
-				entry.index.carrier = referenceCarrier;
-			})
-			.forEach(addLink(carrierNodes, 'carrier', storageTechNodes, 'technology'));
-		// storage discharge: storage tech -> carrier
-		dataStorageDischarge
-			.filterByCriteria(filterCriteria)
-			.groupBy(['technology'])
-			.forEach(addCarrierToEntry)
-			.forEach(addLink(storageTechNodes, 'technology', carrierNodes, 'carrier'));
-		// storage inflow: inflow -> storage tech
-		dataStorageInflow
-			.filterByCriteria(filterCriteria)
-			.groupBy(['technology'])
-			.forEach(addCarrierToEntry)
-			.forEach(addLink(inflowNodes, 'technology', storageTechNodes, 'technology'));
-		// storage spillage: storage tech -> spillage
-		dataStorageSpillage
-			.filterByCriteria(filterCriteria)
-			.groupBy(['technology'])
-			.forEach(addCarrierToEntry)
-			.forEach(addLink(storageTechNodes, 'technology', spillageNodes, 'technology'));
-		// import: import -> carrier
-		dataImport
-			.filterByCriteria(filterCriteria)
-			.groupBy(['carrier'])
-			.forEach(addLink(importNodes, 'carrier', carrierNodes, 'carrier'));
-		// export: carrier -> export
-		dataExport
-			.filterByCriteria(filterCriteria)
-			.groupBy(['carrier'])
-			.forEach(addLink(carrierNodes, 'carrier', exportNodes, 'carrier'));
-		// shed demand: shed demand -> demand
-		const aggregatedShedDemand = dataShedDemand
-			.filterByCriteria(filterCriteria)
-			.groupBy(['carrier']);
-		aggregatedShedDemand.forEach(addLink(shedDemandNodes, 'carrier', demandNodes, 'carrier'));
-		// demand minus shed demand: carrier -> demand
-		dataDemand
-			.filterByCriteria(filterCriteria)
-			.groupBy(['carrier'])
-			.forEach((entry) => {
-				const shedEntry = aggregatedShedDemand.find((e) => e.index.carrier === entry.index.carrier);
-				const shedValue = shedEntry ? shedEntry.data[indexOfYear] : 0;
-				addLink(carrierNodes, 'carrier', demandNodes, 'carrier', shedValue)(entry);
-			});
-		// transport in = transport - transport loss: transport in -> carrier:
-		const transportInEdges = getTransportEdges(selectedSolution.detail.edges, selectedNodes, true);
-		const aggregatedTransportIn = dataTransportLoss
-			.filterByCriteria({
-				...filterCriteria,
-				edge: transportInEdges
-			})
-			.groupBy(['technology']);
-		dataTransport
-			.filterByCriteria({
-				...filterCriteria,
-				edge: transportInEdges
-			})
-			.groupBy(['technology'])
-			.forEach(addCarrierToEntry)
-			.forEach((entry) => {
-				const lossEntry = aggregatedTransportIn.find(
-					(e) => e.index.technology === entry.index.technology
-				);
-				const lossValue = lossEntry ? lossEntry.data[indexOfYear] : 0;
-				addLink(transportInNodes, 'technology', carrierNodes, 'carrier', lossValue)(entry);
-			});
-		// transport out = transport: carrier -> transport out
-		dataTransport
-			.filterByCriteria({
-				...filterCriteria,
-				edge: getTransportEdges(selectedSolution.detail.edges, selectedNodes, false)
-			})
-			.groupBy(['technology'])
-			.forEach(addCarrierToEntry)
-			.forEach(addLink(carrierNodes, 'carrier', transportOutNodes, 'technology'));
-
-		sankeyNodes = [
-			...carrierNodes,
-			...conversionTechNodes,
-			...storageTechNodes,
-			...inflowNodes,
-			...spillageNodes,
-			...importNodes,
-			...exportNodes,
-			...shedDemandNodes,
-			...demandNodes,
-			...transportInNodes,
-			...transportOutNodes
-		];
+	function updateSankeyData() {
+		const { nodes, links, legend } = computeSankeyData(selection, data, units, carriers, years);
+		sankeyNodes = nodes;
 		sankeyLinks = links;
-		legendItems = colors;
+		legendItems = legend;
 	}
 
 	//#endregion
@@ -458,7 +161,7 @@
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
 				bind:years
-				bind:selected_solution={selectedSolution}
+				bind:selected_solution={selection.solution}
 				bind:carriers
 				bind:nodes
 				bind:loading={solutionLoading}
@@ -466,10 +169,10 @@
 				disabled={fetching || solutionLoading}
 			/>
 		</FilterSection>
-		{#if selectedSolution != null}
+		{#if selection.solution != null}
 			<FilterSection title="Carrier Selection">
 				<MultiSelect
-					bind:value={selectedCarriers}
+					bind:value={selection.carriers}
 					options={carriers}
 					label="Carriers"
 					urlParam={QUERY_PARAM_KEYS.carriers}
@@ -477,19 +180,29 @@
 			</FilterSection>
 			<FilterSection title="Data Selection">
 				<Slider
-					bind:value={selectedYear}
+					bind:value={selection.year}
 					min={years[0]}
 					max={years[years.length - 1]}
-					step={selectedSolution.detail.system.interval_between_years}
+					step={selection.solution.detail.system.interval_between_years}
 					label="Year"
 					urlParam={QUERY_PARAM_KEYS.year}
 				></Slider>
 				<MultiSelect
-					bind:value={selectedNodes}
+					bind:value={selection.nodes}
 					options={nodes}
 					label="Nodes"
 					urlParam={QUERY_PARAM_KEYS.nodes}
 				></MultiSelect>
+				<ToggleButton
+					bind:value={selection.transportByNode}
+					label="Separate transport flows by node"
+					disabled={fetching || solutionLoading}
+				>
+					{#snippet helpText()}
+						Choose whether to display transport flows separately for each node or aggregated into a
+						single flow.
+					{/snippet}
+				</ToggleButton>
 			</FilterSection>
 		{/if}
 	{/snippet}
@@ -516,11 +229,11 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if !selectedSolution}
+		{:else if !selection.solution}
 			<WarningMessage message="Please select a solution"></WarningMessage>
-		{:else if selectedCarriers.length === 0}
+		{:else if selection.carriers.length === 0}
 			<WarningMessage message="Please select at least one carrier"></WarningMessage>
-		{:else if selectedNodes.length === 0}
+		{:else if selection.nodes.length === 0}
 			<WarningMessage message="Please select at least one node"></WarningMessage>
 		{:else if sankeyNodes.length === 0}
 			<ErrorMessage message="No data available for the selected filters"></ErrorMessage>
