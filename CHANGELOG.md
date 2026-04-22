@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.9.6 (2026-04-22)
+
+- Create a new front page for zen-garden.ethz.ch.
+- Add new front page for ZEN-explorer with windmill.
+- [Production, Costs] Fix legend's click-toggle feature for pie plots.
+- [Capacity] Rename Nodes to Edges when transport is selected.
+- [Production, Nodal, Sankey] Disaggregate transport flows.
+- [Capacity] Show retired capacities.
+
 ## 0.9.5 (2026-03-30)
 
 - [Production] Bugfix: Subtract losses from transport flows within the selected nodes.
