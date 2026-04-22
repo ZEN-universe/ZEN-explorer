@@ -241,10 +241,10 @@ export default class Entries {
 	 * @param callback Function to apply to each entry.
 	 * @returns New Entries instance with mapped entries.
 	 */
-	mapEntries(callback: (index: Index, data: number[]) => Entry): Entries {
-		const mappedEntries = this.entries.map((entry) => {
-			return callback(entry.index, entry.data);
-		});
+	mapEntries(callback: (index: Index, data: number[]) => Entry | null): Entries {
+		const mappedEntries = this.entries
+			.map((entry) => callback(entry.index, entry.data))
+			.filter((entry) => entry !== null);
 		return new Entries(mappedEntries);
 	}
 

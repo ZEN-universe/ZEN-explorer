@@ -30,7 +30,14 @@
 	import Entries from '@/lib/entries';
 	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
 
-	import type { Variable, TechnologyType, StorageType, AggregationOption } from './processData';
+	import type {
+		Variable,
+		TechnologyType,
+		StorageType,
+		AggregationOption,
+		Data,
+		Selection
+	} from './processData';
 	import { computeDatasets } from './processData';
 
 	useURLParams();
@@ -39,12 +46,19 @@
 	// State variables
 	// ======================================
 
-	let fetchedEntries: Entries[] = $state([]);
+	let data: Data = $state({
+		capacity: [],
+		capacity_addition: [],
+		capacity_previous: []
+	});
 
-	const variables: Variable[] = ['capacity', 'capacity_addition'];
+	const variables: { value: Variable; label: string }[] = [
+		{ value: 'capacity', label: 'Capacity' },
+		{ value: 'capacity_addition', label: 'Capacity addition and retirement' }
+	];
 	const variableLabels: Record<Variable, string> = {
 		capacity: 'Capacity',
-		capacity_addition: 'Capacity Addition'
+		capacity_addition: 'Capacity addition and retirement'
 	};
 	const technologyTypes: TechnologyType[] = ['conversion', 'storage', 'transport'];
 	const storageTypeOptions: StorageType[] = ['energy', 'power'];
@@ -54,25 +68,27 @@
 	];
 	let years: number[] = $state([]);
 
-	let selectedSolutions: (ActivatedSolution | null)[] = $state([null]);
-	let selectedVariable: Variable = $state('capacity');
-	let selectedTechnologyType: TechnologyType = $state('conversion');
-	let selectedStorageType: StorageType = $state('energy');
-	let selectedCarrier: string | null = $state(null);
-	let selectedAggregation: AggregationOption = $state('technology');
-	let selectedNormalization: boolean = $state(false);
-	let selectedLocations: string[] = $state([]);
-	let selectedTechnologies: string[] = $state([]);
-	let selectedYears: string[] = $state([]);
+	let selection: Selection = $state({
+		solutions: [null],
+		variable: 'capacity',
+		technologyType: 'conversion',
+		storageType: 'energy',
+		carrier: null,
+		aggregation: 'technology',
+		normalization: false,
+		locations: [],
+		technologies: [],
+		years: []
+	});
 
 	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 
-	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
+	let hasSomeUnsetSolutions: boolean = $derived(selection.solutions.some((s) => s === null));
 
 	let units: { [carrier: string]: string } = $state({});
 	let unit: string = $derived.by(() => {
-		const capacity_type = selectedTechnologyType == 'storage' ? selectedStorageType : 'power';
+		const capacity_type = selection.technologyType == 'storage' ? selection.storageType : 'power';
 		return units[technologies[0] + '_' + capacity_type] || '';
 	});
 
@@ -82,7 +98,7 @@
 	// Plot configuration
 	// ======================================
 
-	let labels: string[] = $derived(selectedYears.map((year) => year.toString()));
+	let labels: string[] = $derived(selection.years.map((year) => year.toString()));
 	function getPlotOptions(): ChartOptions<'bar'> {
 		return {
 			maintainAspectRatio: false,
@@ -99,10 +115,11 @@
 					title: {
 						display: true,
 						text:
-							`${variableLabels[selectedVariable]}` + (selectedNormalization ? '' : ` [${unit}]`)
+							`${variableLabels[selection.variable]}` +
+							(selection.normalization ? '' : ` [${unit}]`)
 					},
-					min: selectedNormalization ? 0 : undefined,
-					max: selectedNormalization ? 1 : undefined
+					min: selection.normalization ? (selection.variable === 'capacity' ? 0 : -1) : undefined,
+					max: selection.normalization ? 1 : undefined
 				}
 			},
 			interaction: {
@@ -118,7 +135,7 @@
 			callbacks: {
 				label: (item: TooltipItem<keyof ChartTypeRegistry>) =>
 					`${item.dataset.label}: ${item.formattedValue}` +
-					(selectedNormalization ? '' : ` ${unit}`),
+					(selection.normalization ? '' : ` ${unit}`),
 				title: (items: TooltipItem<keyof ChartTypeRegistry>[]) => {
 					if (items.length > 0) {
 						return `${items[0].label} - ${items[0].dataset.stack}`;
@@ -129,15 +146,15 @@
 	};
 
 	let plotName: string = $derived.by(() => {
-		if (selectedSolutions[0] == null) {
+		if (selection.solutions[0] == null) {
 			return '';
 		}
 		return [
-			selectedSolutions[0].solution_name.split('.').pop(),
-			selectedSolutions[0].scenario_name,
-			selectedVariable,
-			selectedTechnologyType,
-			selectedCarrier
+			selection.solutions[0].solution_name.split('.').pop(),
+			selection.solutions[0].scenario_name,
+			selection.variable,
+			selection.technologyType,
+			selection.carrier
 		].join('_');
 	});
 
@@ -146,7 +163,7 @@
 	// ======================================
 
 	let technologiesPerSolution = $derived.by(() => {
-		if (hasSomeUnsetSolutions || selectedTechnologyType === null) {
+		if (hasSomeUnsetSolutions || selection.technologyType === null) {
 			return [];
 		}
 
@@ -154,12 +171,12 @@
 			conversion: 'set_conversion_technologies',
 			storage: 'set_storage_technologies',
 			transport: 'set_transport_technologies'
-		}[selectedTechnologyType] as
+		}[selection.technologyType] as
 			| 'set_conversion_technologies'
 			| 'set_storage_technologies'
 			| 'set_transport_technologies';
 
-		return (selectedSolutions as ActivatedSolution[]).map((solution) => {
+		return (selection.solutions as ActivatedSolution[]).map((solution) => {
 			return solution.detail.system[key] || [];
 		});
 	});
@@ -170,20 +187,20 @@
 		}
 
 		return removeDuplicates(
-			selectedSolutions.flatMap((solution) => Object.values(solution!.detail.reference_carrier))
+			selection.solutions.flatMap((solution) => Object.values(solution!.detail.reference_carrier))
 		).sort();
 	});
 
 	let technologies: string[] = $derived.by(() => {
-		if (selectedTechnologyType === null || selectedCarrier === null || hasSomeUnsetSolutions) {
+		if (selection.technologyType === null || selection.carrier === null || hasSomeUnsetSolutions) {
 			return [];
 		}
 
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const setTechnologies: Set<string> = new Set();
-		(selectedSolutions as ActivatedSolution[]).forEach((solution, solutionIndex) => {
+		(selection.solutions as ActivatedSolution[]).forEach((solution, solutionIndex) => {
 			(technologiesPerSolution[solutionIndex] ?? []).forEach((tech) => {
-				if (solution.detail.reference_carrier[tech] === selectedCarrier) {
+				if (solution.detail.reference_carrier[tech] === selection.carrier) {
 					setTechnologies.add(tech);
 				}
 			});
@@ -198,7 +215,7 @@
 
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity
 		const setLocations: Set<string> = new Set();
-		fetchedEntries.forEach((items) => {
+		data.capacity.forEach((items) => {
 			items.forEach(({ index: { technology, location } }) => {
 				if (technologies.includes(technology)) {
 					setLocations.add(location);
@@ -214,27 +231,27 @@
 
 	$effect(() => {
 		// Update the selected technologies whenever the technologies array changes
-		selectedTechnologies = technologies;
+		selection.technologies = technologies;
 	});
 
 	$effect(() => {
 		// Update the selected locations whenever the locations array changes
-		selectedLocations = locations;
+		selection.locations = locations;
 	});
 
 	$effect(() => {
 		// Whenever the selected solutions, variable, or technology type changes, reset the data selection and fetch new data
-		selectedSolutions;
-		selectedVariable;
-		selectedTechnologyType;
-		selectedStorageType;
-		selectedCarrier;
+		selection.solutions;
+		selection.variable;
+		selection.technologyType;
+		selection.storageType;
+		selection.carrier;
 		untrack(() => {
-			selectedAggregation = 'node';
-			selectedNormalization = false;
-			selectedLocations = locations;
-			selectedTechnologies = technologies;
-			selectedYears = years.map((y) => y.toString());
+			selection.aggregation = 'node';
+			selection.normalization = false;
+			selection.locations = locations;
+			selection.technologies = technologies;
+			selection.years = years.map((y) => y.toString());
 			fetchData();
 		});
 	});
@@ -244,18 +261,18 @@
 	// ======================================
 
 	function getContextMenuItems(year: string, datasetIndex: number): ContextMenuItem[] {
-		const solution = findSolutionBySuffix(selectedSolutions, datasets[datasetIndex].stack);
-		if (!solution || !selectedCarrier) return [];
+		const solution = findSolutionBySuffix(selection.solutions, datasets[datasetIndex].stack);
+		if (!solution || !selection.carrier) return [];
 
 		return [
 			{
 				label: `Go to The Transition Pathway - Production`,
 				href: addParametersToPath('/explorer/transition/production', {
 					[QUERY_PARAM_KEYS.solutions]:
-						selectedSolutions.map((s) => s?.solution_name).join('~') || null,
+						selection.solutions.map((s) => s?.solution_name).join('~') || null,
 					[QUERY_PARAM_KEYS.scenarios]:
-						selectedSolutions.map((s) => s?.scenario_name).join('~') || null,
-					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+						selection.solutions.map((s) => s?.scenario_name).join('~') || null,
+					[QUERY_PARAM_KEYS.carrier]: selection.carrier,
 					[QUERY_PARAM_KEYS.activeYear]: year,
 					[QUERY_PARAM_KEYS.activeSolution]: generateSolutionSuffix(solution)
 				})
@@ -265,7 +282,7 @@
 				href: addParametersToPath(`/explorer/map/capacity`, {
 					[QUERY_PARAM_KEYS.solution]: solution.solution_name ?? null,
 					[QUERY_PARAM_KEYS.scenario]: solution.scenario_name ?? null,
-					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+					[QUERY_PARAM_KEYS.carrier]: selection.carrier,
 					[QUERY_PARAM_KEYS.year]: year
 				})
 			},
@@ -274,7 +291,7 @@
 				href: addParametersToPath(`/explorer/map/production`, {
 					[QUERY_PARAM_KEYS.solution]: solution.solution_name ?? null,
 					[QUERY_PARAM_KEYS.scenario]: solution.scenario_name ?? null,
-					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+					[QUERY_PARAM_KEYS.carrier]: selection.carrier,
 					[QUERY_PARAM_KEYS.year]: year
 				})
 			}
@@ -289,25 +306,31 @@
 	 * Fetch data from the API of the selected values in the form
 	 */
 	async function fetchData() {
-		if (selectedCarrier === null || hasSomeUnsetSolutions) {
+		if (selection.carrier === null || hasSomeUnsetSolutions) {
 			return;
 		}
 
 		fetching = true;
 
-		const solutions = selectedSolutions as ActivatedSolution[];
+		const solutions = selection.solutions as ActivatedSolution[];
+		const components: ('capacity' | 'capacity_addition' | 'capacity_previous')[] =
+			selection.variable === 'capacity'
+				? ['capacity']
+				: ['capacity', 'capacity_addition', 'capacity_previous'];
 		const response = await Promise.all(
 			solutions.map((solution) => {
 				return fetchTotal(
 					solution.solution_name,
-					[selectedVariable],
+					components,
 					solution.scenario_name,
-					selectedCarrier!
+					selection.carrier!
 				);
 			})
 		);
 
-		fetchedEntries = response.map((res) => Entries.fromRows(res[selectedVariable]?.data ?? []));
+		components.forEach((component) => {
+			data[component] = response.map((res) => Entries.fromRows(res[component]?.data ?? []));
+		});
 
 		if (response[0]?.unit?.data) {
 			units = Object.fromEntries(
@@ -321,22 +344,8 @@
 	// ======================================
 	// Data processing
 	// ======================================
-
 	let [datasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() =>
-		computeDatasets(
-			fetchedEntries,
-			locations,
-			technologies,
-			years,
-			selectedSolutions,
-			selectedYears,
-			selectedTechnologies,
-			selectedLocations,
-			selectedTechnologyType,
-			selectedStorageType,
-			selectedAggregation,
-			selectedNormalization
-		)
+		computeDatasets(data, locations, technologies, years, selection)
 	);
 </script>
 
@@ -348,7 +357,7 @@
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<MultiSolutionFilter
-				bind:solutions={selectedSolutions}
+				bind:solutions={selection.solutions}
 				bind:years
 				bind:loading={solutionLoading}
 				disabled={fetching || solutionLoading}
@@ -359,7 +368,7 @@
 				<Dropdown
 					label="Carrier"
 					options={carriers}
-					bind:value={selectedCarrier}
+					bind:value={selection.carrier}
 					disabled={fetching || solutionLoading}
 					urlParam={QUERY_PARAM_KEYS.carrier}
 					unsetIfInvalid
@@ -370,12 +379,12 @@
 					{/snippet}
 				</Dropdown>
 			</FilterSection>
-			{#if selectedCarrier !== null}
+			{#if selection.carrier !== null}
 				<FilterSection title="Variable Selection">
 					<Radio
 						label="Variable"
 						options={variables}
-						bind:value={selectedVariable}
+						bind:value={selection.variable}
 						disabled={fetching || solutionLoading}
 						urlParam={QUERY_PARAM_KEYS.capacityVariable}
 						unsetIfInvalid
@@ -385,13 +394,13 @@
 								Select the variable which to shown on the plot:
 								<ul class="ml-4 list-outside list-disc">
 									<li>
-										The variable "capacity" shows the total capacity in a given year and consists of
+										The variable "Capacity" shows the total capacity in a given year and consists of
 										the sum of existing capacities, previously installed capacities, and new
 										capacity additions.
 									</li>
 									<li>
-										The variable "capacity_addition" shows only the capacity which is newly
-										installed in the system in the given year.
+										The variable "Capacity addition and retirement" shows only the capacity which is
+										newly installed or retired in the system in the given year.
 									</li>
 								</ul>
 							</div>
@@ -400,7 +409,7 @@
 					<Radio
 						label="Technology Type"
 						options={technologyTypes}
-						bind:value={selectedTechnologyType}
+						bind:value={selection.technologyType}
 						disabled={fetching || solutionLoading}
 						urlParam={QUERY_PARAM_KEYS.technologyType}
 						unsetIfInvalid
@@ -409,11 +418,11 @@
 							Select whether to show capacities for conversion, storage, or transport technologies.
 						{/snippet}
 					</Radio>
-					{#if selectedTechnologyType == 'storage'}
+					{#if selection.technologyType == 'storage'}
 						<Radio
 							label="Storage Type"
 							options={storageTypeOptions}
-							bind:value={selectedStorageType}
+							bind:value={selection.storageType}
 							disabled={fetching || solutionLoading}
 							urlParam={QUERY_PARAM_KEYS.storageType}
 							unsetIfInvalid
@@ -421,9 +430,13 @@
 					{/if}
 				</FilterSection>
 			{/if}
-			{#if selectedCarrier !== null}
+			{#if selection.carrier !== null}
 				<FilterSection title="Data Selection">
-					<Radio label="Aggregation" options={aggregationOptions} bind:value={selectedAggregation}>
+					<Radio
+						label="Aggregation"
+						options={aggregationOptions}
+						bind:value={selection.aggregation}
+					>
 						{#snippet helpText()}
 							Aggregate capacities belonging to the same node or technology.
 							<ul class="ml-4 list-outside list-disc">
@@ -438,27 +451,27 @@
 							</ul>
 						{/snippet}
 					</Radio>
-					<ToggleButton label="Normalization" bind:value={selectedNormalization}>
+					<ToggleButton label="Normalization" bind:value={selection.normalization}>
 						{#snippet helpText()}
 							Normalize the bars to have a height of one.
 						{/snippet}
 					</ToggleButton>
-					{#if selectedAggregation == 'technology'}
+					{#if selection.aggregation == 'technology'}
 						<MultiSelect
 							label="Technologies"
-							bind:value={selectedTechnologies}
+							bind:value={selection.technologies}
 							options={technologies}
 						></MultiSelect>
 					{:else}
 						<MultiSelect
-							label={selectedTechnologyType !== 'transport' ? 'Nodes' : 'Edges'}
-							bind:value={selectedLocations}
+							label={selection.technologyType !== 'transport' ? 'Nodes' : 'Edges'}
+							bind:value={selection.locations}
 							options={locations}
 						></MultiSelect>
 					{/if}
 					<MultiSelect
 						label="Years"
-						bind:value={selectedYears}
+						bind:value={selection.years}
 						options={years.map((y) => y.toString())}
 					></MultiSelect>
 				</FilterSection>
@@ -477,7 +490,7 @@
 			<WarningMessage message="Please select a solution"></WarningMessage>
 		{:else if carriers.length == 0}
 			<ErrorMessage message="No carriers for this solution found"></ErrorMessage>
-		{:else if selectedCarrier === null}
+		{:else if selection.carrier === null}
 			<WarningMessage message="Please select a carrier"></WarningMessage>
 		{:else if technologies.length == 0}
 			<ErrorMessage message="No technologies for this selection found"></ErrorMessage>

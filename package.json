@@ -7,16 +7,16 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"check": "npm run check:format && npm run check:types && npm run check:lint",
+		"check:format": "prettier --list-different .",
+		"check:lint": "eslint .",
+		"check:types": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"format": "prettier --write .",
-		"format:check": "prettier --check .",
-		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
+		"test": "npm run test:e2e",
 		"test:e2e": "playwright test --project=chromium",
 		"test:staging": "NO_WEB_SERVER=1 playwright test --project=staging",
-		"test:production": "NO_WEB_SERVER=1 playwright test --project=production",
-		"test": "npm run test:e2e"
+		"test:production": "NO_WEB_SERVER=1 playwright test --project=production"
 	},
 	"dependencies": {
 		"@floating-ui/dom": "^1.7.4",
