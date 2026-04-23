@@ -160,7 +160,7 @@ function transitionAnimation(
 		tl.to(sections[i], { y: () => vh(-0.4), ease: 'none', duration: 2 }, 0);
 
 		// hide content of current section and show shape boxes (1 timestep)
-		tl.to(shapes[i], { autoAlpha: 1, duration: 1, ease: 'none' }, 1);
+		tl.to(shapes, { autoAlpha: 1, duration: 1, ease: 'none' }, 1);
 
 		// animate the shapes to the next section's box sizes and positions (3 timesteps)
 		tl.set(section, { autoAlpha: 0 }, '<1');

@@ -46,7 +46,9 @@ function convertImage(inputImage: string, width: number): void {
 		{ stdio: 'inherit' }
 	);
 	if (convertResult.status !== 0) {
-		throw new Error(`Failed to convert ${inputPath} to GIF at width ${width}px`);
+		throw new Error(
+			`Failed to convert ${inputPath} to GIF at width ${width}px.\nStatus: ${convertResult.status}\n${convertResult.stderr.toString()}`
+		);
 	}
 
 	// Convert to WebP
@@ -56,7 +58,9 @@ function convertImage(inputImage: string, width: number): void {
 		{ stdio: 'inherit' }
 	);
 	if (webpResult.status !== 0) {
-		throw new Error(`Failed to convert ${inputPath} to WebP at width ${width}px`);
+		throw new Error(
+			`Failed to convert ${inputPath} to WebP at width ${width}px.\nStatus: ${convertResult.status}\n${convertResult.stderr.toString()}`
+		);
 	}
 }
 
@@ -104,7 +108,9 @@ function convertVideo(inputVideo: string, width: number): void {
 	);
 
 	if (ffmpegResult.status !== 0) {
-		throw new Error(`Failed to convert ${inputVideo} to MP4 at width ${width}px`);
+		throw new Error(
+			`Failed to convert ${inputVideo} to MP4 at width ${width}px.\nStatus: ${ffmpegResult.status}\n${ffmpegResult.stderr.toString()}`
+		);
 	}
 }
 

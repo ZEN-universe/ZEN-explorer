@@ -178,7 +178,7 @@
 			</h1>
 			<!-- add /?solution=technology_optimism_pessimism.Crystal_Ball&tech=conversion&car=electricity to the URL -->
 			<div class="flex items-center justify-center">
-				<a href={resolve('/explorer/map')} target="_blank" class="mt-8 flex justify-center py-12">
+				<a href={resolve('/explorer/map/capacity')} class="mt-8 flex justify-center py-12">
 					{#if !isDarkTheme}
 						<picture>
 							<source
@@ -431,9 +431,8 @@
 				<h3 class="mb-4 text-3xl font-bold">List of Publications</h3>
 
 				<p class="mb-8 text-lg">
-					Far far away, behind the word mountains, far from the countries Vokalia and Consonantia,
-					there live the blind texts. Separated they live in Bookmarksgrove right at the coast of
-					the Semantics, a large language ocean.
+					These publications present the ZEN-garden software and its application to analyze
+					multi-year transition pathways of sector-coupled energy systems.
 				</p>
 
 				<!-- Note: Publications are located at the top of the file -->
@@ -821,29 +820,17 @@
 						>The Energy System</a
 					>. Finally, the spatial distribution of capacities can be analyzed under
 					<a
-						href={resolve('/explorer/map')}
+						href={resolve('/explorer/map/capacity')}
 						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
 						>The Map</a
 					>.
 				</p>
 
 				<div class="relative mx-4 mb-8 md:mx-8 lg:mx-12">
-					<picture>
-						<source
-							srcset="/opt/explorer-front_1088.webp 1088w, /opt/explorer-front_832.webp 832w, /opt/explorer-front_576.webp 576w, /opt/explorer-front_544.webp 544w, /opt/explorer-front_448.webp 448w"
-							sizes="(min-width: 1536px) 1088w, (min-width: 1280px) 832w, (min-width: 1024px) 576w, (min-width: 768px) 448w, 544w"
-							type="image/webp"
-						/>
-						<img
-							srcset="/opt/explorer-front_1088.png 1088w, /opt/explorer-front_832.png 832w, /opt/explorer-front_576.png 576w, /opt/explorer-front_544.png 544w, /opt/explorer-front_448.png 448w"
-							sizes="(min-width: 1536px) 1088w, (min-width: 1280px) 832w, (min-width: 1024px) 576w, (min-width: 768px) 448w, 544w"
-							src="/opt/explorer-front_1088.png"
-							alt="ZEN-explorer's Front Page"
-							width="1343"
-							height="868"
-							class="w-full"
-						/>
-					</picture>
+					<img
+						src="/windmill_opt.svg"
+						alt="Illustration showing the front page of the ZEN-garden Explorer with its four sectors: The Transition Pathway, The Energy Balance, The Energy System, and The Map"
+					/>
 					<a
 						href={resolve('/explorer')}
 						class="absolute inset-0"
