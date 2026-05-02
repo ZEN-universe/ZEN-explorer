@@ -6,20 +6,20 @@
 	import ToggleThemeButton from './ToggleThemeButton.svelte';
 
 	const transition_urls: Record<string, Pathname> = {
-		Capacity: '/explorer/transition/capacity',
-		Production: '/explorer/transition/production',
-		Emissions: '/explorer/transition/emissions',
-		Costs: '/explorer/transition/costs'
+		Capacity: '/explorer/transition/capacity/',
+		Production: '/explorer/transition/production/',
+		Emissions: '/explorer/transition/emissions/',
+		Costs: '/explorer/transition/costs/'
 	};
 
 	const energy_balance_urls: Record<string, Pathname> = {
-		Nodal: '/explorer/energy_balance/nodal',
-		Storage: '/explorer/energy_balance/storage'
+		Nodal: '/explorer/energy_balance/nodal/',
+		Storage: '/explorer/energy_balance/storage/'
 	};
 
 	const map_urls: Record<string, Pathname> = {
-		Capacity: '/explorer/map/capacity',
-		Production: '/explorer/map/production'
+		Capacity: '/explorer/map/capacity/',
+		Production: '/explorer/map/production/'
 	};
 
 	let currentPage = $derived(page.url.pathname.slice(0, -1));
@@ -81,7 +81,7 @@
 						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
 						currentPage == '/explorer/energy_system' && 'border-b-2 pb-1'
 					]}
-					href={addCurrentSolutionToURL('/explorer/energy_system', false)}>The Energy System</a
+					href={addCurrentSolutionToURL('/explorer/energy_system/', false)}>The Energy System</a
 				>
 			</li>
 			<li>

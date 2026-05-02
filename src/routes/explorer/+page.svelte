@@ -22,10 +22,10 @@
 			classes: 'rotate-45 origin-top-left',
 			subpagesLeft: true,
 			subpages: [
-				{ name: 'Capacity', href: '/explorer/transition/capacity', left: -70, bottom: 458 },
-				{ name: 'Production', href: '/explorer/transition/production', left: -45, bottom: 418 },
-				{ name: 'Emissions', href: '/explorer/transition/emissions', left: 0, bottom: 378 },
-				{ name: 'Costs', href: '/explorer/transition/costs', left: 72, bottom: 338 }
+				{ name: 'Capacity', href: '/explorer/transition/capacity/', left: -70, bottom: 458 },
+				{ name: 'Production', href: '/explorer/transition/production/', left: -45, bottom: 418 },
+				{ name: 'Emissions', href: '/explorer/transition/emissions/', left: 0, bottom: 378 },
+				{ name: 'Costs', href: '/explorer/transition/costs/', left: 72, bottom: 338 }
 			]
 		},
 		{
@@ -37,15 +37,15 @@
 			classes: 'origin-top-right -rotate-45',
 			subpagesLeft: false,
 			subpages: [
-				{ name: 'Nodal', href: '/explorer/energy_balance/nodal', left: 476, bottom: 397 },
-				{ name: 'Storage', href: '/explorer/energy_balance/storage', left: 436, bottom: 357 }
+				{ name: 'Nodal', href: '/explorer/energy_balance/nodal/', left: 476, bottom: 397 },
+				{ name: 'Storage', href: '/explorer/energy_balance/storage/', left: 436, bottom: 357 }
 			]
 		},
 		{
 			name: 'The Energy System',
 			left: 74,
 			bottom: 41,
-			href: '/explorer/energy_system',
+			href: '/explorer/energy_system/',
 			bg: '#dbd8c2',
 			hoverBg: '#d2cdad',
 			classes: 'origin-bottom-left -rotate-45'
@@ -59,8 +59,8 @@
 			classes: 'origin-bottom-right rotate-45',
 			subpagesLeft: false,
 			subpages: [
-				{ name: 'Capacity', href: '/explorer/map/capacity', left: 397, bottom: 176 },
-				{ name: 'Production', href: '/explorer/map/production', left: 437, bottom: 136 }
+				{ name: 'Capacity', href: '/explorer/map/capacity/', left: 397, bottom: 176 },
+				{ name: 'Production', href: '/explorer/map/production/', left: 437, bottom: 136 }
 			]
 		}
 	];

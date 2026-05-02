@@ -267,7 +267,7 @@
 		return [
 			{
 				label: `Go to The Transition Pathway - Production`,
-				href: addParametersToPath('/explorer/transition/production', {
+				href: addParametersToPath('/explorer/transition/production/', {
 					[QUERY_PARAM_KEYS.solutions]:
 						selection.solutions.map((s) => s?.solution_name).join('~') || null,
 					[QUERY_PARAM_KEYS.scenarios]:
@@ -279,7 +279,7 @@
 			},
 			{
 				label: `Go to The Map - Capacity`,
-				href: addParametersToPath(`/explorer/map/capacity`, {
+				href: addParametersToPath(`/explorer/map/capacity/`, {
 					[QUERY_PARAM_KEYS.solution]: solution.solution_name ?? null,
 					[QUERY_PARAM_KEYS.scenario]: solution.scenario_name ?? null,
 					[QUERY_PARAM_KEYS.carrier]: selection.carrier,
@@ -288,7 +288,7 @@
 			},
 			{
 				label: `Go to The Map - Production`,
-				href: addParametersToPath(`/explorer/map/production`, {
+				href: addParametersToPath(`/explorer/map/production/`, {
 					[QUERY_PARAM_KEYS.solution]: solution.solution_name ?? null,
 					[QUERY_PARAM_KEYS.scenario]: solution.scenario_name ?? null,
 					[QUERY_PARAM_KEYS.carrier]: selection.carrier,

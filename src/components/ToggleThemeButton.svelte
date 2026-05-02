@@ -12,6 +12,7 @@
 	class="h-10 w-10 rounded-lg p-2 text-center text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700"
 	onclick={toggleTheme}
 	aria-label="Toggle theme"
+	title="Toggle theme"
 >
 	{#if theme === 'light'}
 		<i class="bi bi-sun-fill" id="theme-toggle-light-icon"></i>
