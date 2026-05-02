@@ -185,7 +185,7 @@
 			{/each}
 		</div>
 		<a
-			href={addCurrentSolutionToURL('/explorer/energy_system', false)}
+			href={addCurrentSolutionToURL('/explorer/energy_system/', false)}
 			class="mb-4 block rounded-md px-3 py-2 text-base font-medium hover:bg-gray-200 dark:hover:bg-gray-700"
 			>The Energy System</a
 		>

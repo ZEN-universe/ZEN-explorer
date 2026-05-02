@@ -109,6 +109,7 @@
 		onpointerup={onPointerUp}
 		onpointercancel={onPointerUp}
 		bind:this={tooltipDiv}
+		role="tooltip"
 	>
 		{@render children()}
 	</div>

@@ -13,7 +13,7 @@ test(`capacity: variable`, async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'heat');
-	await selectRadioOption(page, 'Variable', 'capacity_addition');
+	await selectRadioOption(page, 'Variable', 'Capacity addition and retirement');
 	await selectRadioOption(page, 'Technology Type', 'conversion');
 	await expectScreenshot(
 		page,
@@ -26,7 +26,7 @@ test('capacity: technology_type', async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'natural_gas');
-	await selectRadioOption(page, 'Variable', 'capacity');
+	await selectRadioOption(page, 'Variable', 'Capacity');
 	await selectRadioOption(page, 'Technology Type', 'transport');
 	await expectScreenshot(
 		page,
@@ -39,7 +39,7 @@ test('capacity: storage_type', async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
-	await selectRadioOption(page, 'Variable', 'capacity');
+	await selectRadioOption(page, 'Variable', 'Capacity');
 	await selectRadioOption(page, 'Technology Type', 'storage');
 	await page.getByRole('radio', { name: 'power' }).click();
 	await expectScreenshot(
@@ -53,7 +53,7 @@ test('capacity: carrier', async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
-	await selectRadioOption(page, 'Variable', 'capacity');
+	await selectRadioOption(page, 'Variable', 'Capacity');
 	await selectRadioOption(page, 'Technology Type', 'conversion');
 	await expectScreenshot(
 		page,
@@ -66,7 +66,7 @@ test(`capacity: aggregation`, async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'heat');
-	await selectRadioOption(page, 'Variable', 'capacity');
+	await selectRadioOption(page, 'Variable', 'Capacity');
 	await selectRadioOption(page, 'Technology Type', 'conversion');
 	await selectRadioOption(page, 'Aggregation', 'Technology');
 	await expectScreenshot(
@@ -80,7 +80,7 @@ test(`capacity: normalization`, async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'heat');
-	await selectRadioOption(page, 'Variable', 'capacity');
+	await selectRadioOption(page, 'Variable', 'Capacity');
 	await selectRadioOption(page, 'Technology Type', 'conversion');
 	await page.getByRole('switch', { name: 'Normalization off' }).click();
 	await expectScreenshot(
@@ -94,7 +94,7 @@ test('capacity: node selection', async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'heat');
-	await selectRadioOption(page, 'Variable', 'capacity');
+	await selectRadioOption(page, 'Variable', 'Capacity');
 	await selectRadioOption(page, 'Technology Type', 'conversion');
 	await selectFromMultiSelect(page, 'Nodes', ['DE']);
 	await expectScreenshot(
@@ -108,7 +108,7 @@ test('capacity: year selection', async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'heat');
-	await selectRadioOption(page, 'Variable', 'capacity');
+	await selectRadioOption(page, 'Variable', 'Capacity');
 	await selectRadioOption(page, 'Technology Type', 'conversion');
 	await selectFromMultiSelect(page, 'Years', ['2024']);
 	await expectScreenshot(
