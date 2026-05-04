@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.7 (2026-05-04)
+
+- [Front page] Replace GSAP animation with a simpler design.
+
 ## 0.9.6 (2026-04-22)
 
 - Create a new front page for zen-garden.ethz.ch.
