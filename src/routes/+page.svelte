@@ -183,9 +183,9 @@
 </nav>
 
 <!-- Header -->
-<div class="container mx-auto mt-20 px-4">
+<div class="container mx-auto mt-20 px-4 xl:max-w-7xl">
 	<ContentBox
-		class="mx-auto mb-4 flex w-full flex-col px-4 py-10 sm:mb-12 md:px-8 md:py-16 lg:mb-24 lg:px-12 xl:max-w-7xl xl:px-16 "
+		class="mx-auto mb-4 flex w-full flex-col px-4 py-10 sm:mb-12 md:px-8 md:py-16 lg:mb-24 lg:px-12 xl:px-16 "
 		noPadding
 	>
 		<div
@@ -267,7 +267,7 @@
 </div>
 
 <!-- 3 headline boxes -->
-<div id="head-section" class="container mx-auto mb-12 px-4 lg:mb-24">
+<div id="head-section" class="container mx-auto mb-12 px-4 lg:mb-24 2xl:max-w-7xl">
 	<div class="grid gap-6 sm:grid-cols-3 xl:gap-12">
 		<ContentBox
 			class="box relative flex flex-col bg-[#E7F4F7] py-6 text-center lg:py-12 dark:bg-[#00596D]"
@@ -276,7 +276,7 @@
 		>
 			<h2 class="mb-4 grow text-2xl font-bold lg:text-3xl xl:text-4xl">Build your Model</h2>
 			<div
-				class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[170px] xl:text-[200px]"
+				class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[170px] xl:text-[180px]"
 			>
 				<i class="bi bi-signpost-2-fill"></i>
 			</div>
@@ -293,7 +293,7 @@
 		>
 			<h2 class="mb-4 grow text-2xl font-bold lg:text-3xl xl:text-4xl">Optimize your System</h2>
 			<div
-				class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[170px] xl:text-[200px]"
+				class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[170px] xl:text-[180px]"
 			>
 				<i class="bi bi-diagram-3-fill"></i>
 			</div>
@@ -310,7 +310,7 @@
 		>
 			<h2 class="mb-4 grow text-2xl font-bold lg:text-3xl xl:text-4xl">Visualize your Results</h2>
 			<div
-				class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[170px] xl:text-[200px]"
+				class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[170px] xl:text-[180px]"
 			>
 				<i class="bi bi-eye-fill"></i>
 			</div>
@@ -324,14 +324,9 @@
 </div>
 
 <!-- Build your Model -->
-<a href="#build-model" id="build-model" class="relative -top-16" aria-hidden="true"></a>
+<a href="#build-model" id="build-model" class="relative -top-16" inert></a>
 <div class="section container mx-auto mb-12 px-4 lg:mb-24 lg:gap-12 xl:max-w-7xl">
-	<ContentBox
-		class="box min-h-screen grow bg-[#E7F4F7] dark:bg-[#00596D]"
-		noColor
-		noPadding
-		noMarginBottom
-	>
+	<ContentBox class="box grow bg-[#E7F4F7] dark:bg-[#00596D]" noColor noPadding noMarginBottom>
 		<div
 			class="flex flex-col items-center gap-8 border-b border-gray-400 px-4 pt-8 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
 		>
@@ -555,14 +550,9 @@
 </div>
 
 <!-- Optimize your System -->
-<a href="#optimize-system" id="optimize-system" class="relative -top-16" aria-hidden="true"></a>
+<a href="#optimize-system" id="optimize-system" class="relative -top-16" inert></a>
 <div class="section container mx-auto mb-12 px-4 lg:mb-24 lg:gap-12 xl:max-w-7xl">
-	<ContentBox
-		class="box min-h-screen grow bg-[#CCE4EA] py-8 dark:bg-[#007894]"
-		noColor
-		noMarginBottom
-		noPadding
-	>
+	<ContentBox class="box grow bg-[#CCE4EA] py-8 dark:bg-[#007894]" noColor noMarginBottom noPadding>
 		<div
 			class="flex flex-col items-center gap-8 border-b border-gray-400 px-4 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
 		>
@@ -794,14 +784,9 @@
 </div>
 
 <!-- Visualize your Results -->
-<a href="#visualize-results" id="visualize-results" class="relative -top-16" aria-hidden="true"></a>
+<a href="#visualize-results" id="visualize-results" class="relative -top-16" inert></a>
 <div class="section container mx-auto mb-12 px-4 lg:mb-24 lg:gap-12 xl:max-w-7xl">
-	<ContentBox
-		class="box min-h-screen grow bg-[#99CAD5] py-8 dark:bg-[#3395AB]"
-		noColor
-		noMarginBottom
-		noPadding
-	>
+	<ContentBox class="box grow bg-[#99CAD5] py-8 dark:bg-[#3395AB]" noColor noMarginBottom noPadding>
 		<div
 			class="flex flex-col items-center gap-8 border-b border-gray-400 px-4 pb-8 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
 		>
@@ -856,7 +841,7 @@
 			</div>
 			<div class="relative mb-8 xl:col-span-2">
 				<img
-					src="/windmill_opt.svg"
+					src="/windmill.svg"
 					alt="Illustration showing the front page of the ZEN-garden Explorer with its four sectors: The Transition Pathway, The Energy Balance, The Energy System, and The Map"
 				/>
 			</div>
