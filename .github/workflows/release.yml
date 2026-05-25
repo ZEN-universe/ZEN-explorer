@@ -191,7 +191,7 @@ jobs:
         run: |
           title="${{ github.event.pull_request.title }}"
           tag="${title#Release }"
-          release_name="ZEN-explorer@${title#Release v}"
+          release_name="${{ github.event.repository.name }}@${title#Release v}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "release_name=$release_name" >> "$GITHUB_OUTPUT"
 
