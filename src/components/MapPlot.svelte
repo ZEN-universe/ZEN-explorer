@@ -22,9 +22,16 @@
 	$effect(() => {
 		if (!map) return;
 
-		import(`../topojson/${map}.json`)
+		// Request JSON files from the public path /topojson/, which is served by Vite from /static/topojson/
+		fetch(`/topojson/${map}.json`)
 			.then((response) => {
-				topology = response.default;
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+				return response.json();
+			})
+			.then((data) => {
+				topology = data;
 			})
 			.catch((err) => {
 				console.error(`Error loading topology for ${map}:`, err);

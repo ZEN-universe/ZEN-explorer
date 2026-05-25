@@ -7,8 +7,8 @@
 # Commands to recreate the world and NUTS files
 default: all clean
 all: world nuts
-world: src/topojson/world-3.json
-nuts: src/topojson/nuts-1.json src/topojson/nuts-2.json src/topojson/nuts-3.json
+world: static/topojson/world-3.json
+nuts: static/topojson/nuts-1.json static/topojson/nuts-2.json static/topojson/nuts-3.json
 clean:
 	rm -f world-*.zip world-*.shp world-*.ndjson world-*.json nuts-*.json combined-*.json
 .PHONY: default all world nuts clean
@@ -54,7 +54,7 @@ combined-world-2.json: world-50m.json
 combined-world-3.json: world-10m.json
 	mv $< $@
 
-src/topojson/%.json: combined-%.json
+static/topojson/%.json: combined-%.json
 	@mkdir -p `dirname $@`
 	toposimplify -s 0.000003 -F -o $@ $<
 
