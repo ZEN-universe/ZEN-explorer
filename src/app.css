@@ -3,54 +3,6 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-	--color-pacifika-50: #f8f9ec;
-	--color-pacifika-100: #eef1d6;
-	--color-pacifika-200: #dee5b1;
-	--color-pacifika-300: #c7d383;
-	--color-pacifika-400: #b0c05b;
-	--color-pacifika-500: #93a53d;
-	--color-pacifika-600: #6e7e2c;
-	--color-pacifika-700: #576427;
-	--color-pacifika-800: #475123;
-	--color-pacifika-900: #3d4522;
-	--color-pacifika-950: #1f250e;
-
-	--color-viridian-50: #f4f9f7;
-	--color-viridian-100: #d9eee8;
-	--color-viridian-200: #b2ddd0;
-	--color-viridian-300: #84c4b3;
-	--color-viridian-400: #5aa794;
-	--color-viridian-500: #408c7b;
-	--color-viridian-600: #387e70;
-	--color-viridian-700: #2b5a51;
-	--color-viridian-800: #264943;
-	--color-viridian-900: #233e39;
-	--color-viridian-950: #102321;
-
-	--color-san-marino-50: #f4f6fb;
-	--color-san-marino-100: #e8edf6;
-	--color-san-marino-200: #cbd9ec;
-	--color-san-marino-300: #9db9dc;
-	--color-san-marino-400: #6994c7;
-	--color-san-marino-500: #4270a8;
-	--color-san-marino-600: #345d95;
-	--color-san-marino-700: #2b4a79;
-	--color-san-marino-800: #274065;
-	--color-san-marino-900: #253855;
-	--color-san-marino-950: #192538;
-
-	--color-teak-50: #f7f6ef;
-	--color-teak-100: #ebe8d6;
-	--color-teak-200: #d8d1b0;
-	--color-teak-300: #c1b383;
-	--color-teak-400: #ae995e;
-	--color-teak-500: #a08852;
-	--color-teak-600: #896f45;
-	--color-teak-700: #6f5639;
-	--color-teak-800: #5e4835;
-	--color-teak-900: #523f31;
-	--color-teak-950: #2e221a;
-
 	--color-tall-poppy-50: #fdf4f3;
 	--color-tall-poppy-100: #fbe6e5;
 	--color-tall-poppy-200: #f9d1cf;
@@ -62,6 +14,54 @@
 	--color-tall-poppy-800: #8e2c26;
 	--color-tall-poppy-900: #762b26;
 	--color-tall-poppy-950: #40120f;
+
+	--color-zen-red-50: #f9f6f3;
+	--color-zen-red-100: #f1eae3;
+	--color-zen-red-200: #e4d4c8;
+	--color-zen-red-300: #d0b4a1;
+	--color-zen-red-400: #bd917a;
+	--color-zen-red-500: #af7860;
+	--color-zen-red-600: #a26654;
+	--color-zen-red-700: #875347;
+	--color-zen-red-800: #6e453e;
+	--color-zen-red-900: #5a3a34;
+	--color-zen-red-950: #2f1d1b;
+
+	--color-zen-green-50: #f7f8f5;
+	--color-zen-green-100: #ecf1e7;
+	--color-zen-green-200: #d9e2d0;
+	--color-zen-green-300: #c4d2b8;
+	--color-zen-green-400: #92aa7e;
+	--color-zen-green-500: #718b5c;
+	--color-zen-green-600: #5b7148;
+	--color-zen-green-700: #495a3b;
+	--color-zen-green-800: #3c4932;
+	--color-zen-green-900: #323d2a;
+	--color-zen-green-950: #181f14;
+
+	--color-zen-blue-50: #f4f7fa;
+	--color-zen-blue-100: #e6ecf3;
+	--color-zen-blue-200: #d3dfeb;
+	--color-zen-blue-300: #b3c9dd;
+	--color-zen-blue-400: #8fadcb;
+	--color-zen-blue-500: #7494bd;
+	--color-zen-blue-600: #627eae;
+	--color-zen-blue-700: #566d9f;
+	--color-zen-blue-800: #4a5b83;
+	--color-zen-blue-900: #3f4c69;
+	--color-zen-blue-950: #2a3141;
+
+	--color-zen-bronze-50: #f6f5f0;
+	--color-zen-bronze-100: #e8e7d9;
+	--color-zen-bronze-200: #dbd8c2;
+	--color-zen-bronze-300: #bab28a;
+	--color-zen-bronze-400: #a69a69;
+	--color-zen-bronze-500: #97885b;
+	--color-zen-bronze-600: #81704d;
+	--color-zen-bronze-700: #685840;
+	--color-zen-bronze-800: #594a3a;
+	--color-zen-bronze-900: #4e4135;
+	--color-zen-bronze-950: #2c231c;
 }
 
 @layer base {

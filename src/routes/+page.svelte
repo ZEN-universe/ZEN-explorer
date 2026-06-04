@@ -107,6 +107,24 @@
 	</a>
 {/snippet}
 
+{#snippet linkButton(href: string, label: string, color: string)}
+	<a
+		{href}
+		class={[
+			color == 'green' &&
+				'hover:bg-zen-green-600 dark:hover:bg-zen-green-700 border-zen-green-600 dark:border-zen-green-700',
+			color == 'red' &&
+				'hover:bg-zen-red-600 dark:hover:bg-zen-red-700 border-zen-red-600 dark:border-zen-red-700',
+			'hover:text-white dark:hover:text-black',
+			'mb-2 rounded-lg border-2 px-4 py-2 font-semibold transition-colors'
+		]}
+		target="_blank"
+		rel="external noopener"
+	>
+		{label} <i class="bi bi-arrow-up-right"></i>
+	</a>
+{/snippet}
+
 <!-- Navbar -->
 <nav
 	class="fixed inset-x-0 top-0 z-5 border-b border-gray-200 bg-white py-2 text-gray-800 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
@@ -122,32 +140,32 @@
 		<div class="hidden items-center gap-4 font-semibold md:flex">
 			<a
 				href="#build-model"
-				class="rounded-full bg-[#E7F4F7] px-4 py-2 shadow-lg dark:bg-[#00596D]"
-				title="Build your Model"
+				class="bg-zen-red-200 hover:bg-zen-red-300 dark:bg-zen-red-800 dark:hover:bg-zen-red-700 rounded-full px-4 py-2 shadow transition-colors"
+				title="Build your model"
 			>
 				<i class="bi bi-signpost-2-fill xl:pe-2"></i>
 				<span class="hidden lg:inline">
-					Build <span class="hidden xl:inline">your</span> Model
+					Build <span class="hidden xl:inline">your</span> model
 				</span>
 			</a>
 			<a
 				href="#optimize-system"
-				class="rounded-full bg-[#CCE4EA] px-4 py-2 shadow dark:bg-[#007894]"
-				title="Optimize your System"
+				class="bg-zen-green-200 hover:bg-zen-green-300 dark:bg-zen-green-800 dark:hover:bg-zen-green-700 rounded-full px-4 py-2 shadow transition-colors"
+				title="Optimize your system"
 			>
 				<i class="bi bi-diagram-3-fill xl:pe-2"></i>
 				<span class="hidden lg:inline">
-					Optimize <span class="hidden xl:inline">your</span> System
+					Optimize <span class="hidden xl:inline">your</span> system
 				</span>
 			</a>
 			<a
 				href="#visualize-results"
-				class="rounded-full bg-[#99CAD5] px-4 py-2 shadow dark:bg-[#3395AB]"
-				title="Visualize your Results"
+				class="bg-zen-blue-200 hover:bg-zen-blue-300 dark:bg-zen-blue-900 dark:hover:bg-zen-blue-800 rounded-full px-4 py-2 shadow transition-colors"
+				title="Visualize your results"
 			>
 				<i class="bi bi-eye-fill xl:pe-2"></i>
 				<span class="hidden lg:inline">
-					Visualize <span class="hidden xl:inline">your</span> Results
+					Visualize <span class="hidden xl:inline">your</span> results
 				</span>
 			</a>
 		</div>
@@ -185,8 +203,9 @@
 <!-- Header -->
 <div class="container mx-auto mt-20 px-4 xl:max-w-7xl">
 	<ContentBox
-		class="mx-auto mb-4 flex w-full flex-col px-4 py-10 sm:mb-12 md:px-8 md:py-16 lg:mb-24 lg:px-12 xl:px-16 "
+		class="mx-auto mb-4 flex w-full flex-col px-4 py-10 shadow-md/30 sm:mb-12 md:px-8 md:py-16 lg:mb-24 lg:px-12 xl:px-16"
 		noPadding
+		noShadow
 	>
 		<div
 			class="gap- mb-4 grid gap-x-8 gap-y-4 lg:grid-cols-[180px_1fr] xl:grid-cols-[220px_1fr] xl:gap-x-16"
@@ -255,7 +274,7 @@
 
 		<div class="flex justify-center">
 			<a
-				class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition-colors sm:w-auto"
+				class="bg-zen-bronze-600 hover:bg-zen-bronze-700 dark:bg-zen-bronze-700 dark:hover:bg-zen-bronze-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition-colors sm:w-auto"
 				href="https://zen-garden.readthedocs.io/en/latest/files/quick_start/installation.html"
 				target="_blank"
 			>
@@ -270,11 +289,12 @@
 <div id="head-section" class="container mx-auto mb-12 px-4 lg:mb-24 2xl:max-w-7xl">
 	<div class="grid gap-6 sm:grid-cols-3 xl:gap-12">
 		<ContentBox
-			class="box relative flex flex-col bg-[#E7F4F7] py-6 text-center lg:py-12 dark:bg-[#00596D]"
+			class="box bg-zen-red-200 dark:bg-zen-red-800 relative flex flex-col py-6 text-center shadow-md/30 lg:py-12"
 			noMarginBottom
 			noColor
+			noShadow
 		>
-			<h2 class="mb-4 grow text-2xl font-bold lg:text-3xl xl:text-4xl">Build your Model</h2>
+			<h2 class="mb-4 grow text-2xl font-bold lg:text-3xl xl:text-4xl">Build your model</h2>
 			<div
 				class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[170px] xl:text-[180px]"
 			>
@@ -283,15 +303,16 @@
 			<a
 				href="#build-model"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Build your Model"
+				aria-label="Build your model"
 			></a>
 		</ContentBox>
 		<ContentBox
-			class="box relative flex flex-col bg-[#CCE4EA] py-6 text-center lg:py-12 dark:bg-[#007894]"
+			class="box bg-zen-green-200 dark:bg-zen-green-800 relative flex flex-col py-6 text-center shadow-md/30 lg:py-12"
 			noMarginBottom
 			noColor
+			noShadow
 		>
-			<h2 class="mb-4 grow text-2xl font-bold lg:text-3xl xl:text-4xl">Optimize your System</h2>
+			<h2 class="mb-4 grow text-2xl font-bold lg:text-3xl xl:text-4xl">Optimize your system</h2>
 			<div
 				class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[170px] xl:text-[180px]"
 			>
@@ -300,15 +321,16 @@
 			<a
 				href="#optimize-system"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Optimize your System"
+				aria-label="Optimize your system"
 			></a>
 		</ContentBox>
 		<ContentBox
-			class="box relative flex flex-col bg-[#99CAD5] py-6 text-center lg:py-12 dark:bg-[#3395AB]"
+			class="box bg-zen-blue-200 dark:bg-zen-blue-900 relative flex flex-col py-6 text-center shadow-md/30 lg:py-12"
 			noMarginBottom
 			noColor
+			noShadow
 		>
-			<h2 class="mb-4 grow text-2xl font-bold lg:text-3xl xl:text-4xl">Visualize your Results</h2>
+			<h2 class="mb-4 grow text-2xl font-bold lg:text-3xl xl:text-4xl">Visualize your results</h2>
 			<div
 				class="text-[80px] leading-none sm:leading-normal md:text-[130px] lg:text-[170px] xl:text-[180px]"
 			>
@@ -317,16 +339,22 @@
 			<a
 				href="#visualize-results"
 				class="pointer-event-none absolute inset-0"
-				aria-label="Visualize your Results"
+				aria-label="Visualize your results"
 			></a>
 		</ContentBox>
 	</div>
 </div>
 
-<!-- Build your Model -->
+<!-- Build your model -->
 <a href="#build-model" id="build-model" class="relative -top-16" inert></a>
 <div class="section container mx-auto mb-12 px-4 lg:mb-24 lg:gap-12 xl:max-w-7xl">
-	<ContentBox class="box grow bg-[#E7F4F7] dark:bg-[#00596D]" noColor noPadding noMarginBottom>
+	<ContentBox
+		class="box bg-zen-red-200 dark:bg-zen-red-800 grow shadow-md/30"
+		noColor
+		noPadding
+		noMarginBottom
+		noShadow
+	>
 		<div
 			class="flex flex-col items-center gap-8 border-b border-gray-400 px-4 pt-8 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
 		>
@@ -334,7 +362,7 @@
 				<i class="bi bi-signpost-2-fill"></i>
 			</div>
 			<div>
-				<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Build your Model</h2>
+				<h2 class="mb-8 text-4xl font-bold sm:text-5xl lg:text-6xl">Build your model</h2>
 				<p class="mb-8 text-lg">
 					With ZEN-garden, you can flexibly define the temporal resolution (single/multi year,
 					number of time steps per year), the spatial resolution (nodes and edges), and the energy
@@ -419,8 +447,8 @@
 				</p>
 
 				<a
-					class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800
-					    inline-block w-full rounded px-8 py-4 text-center text-xl font-bold text-white transition-colors sm:w-auto"
+					class="bg-zen-red-600 hover:bg-zen-red-800 dark:bg-zen-red-900 dark:hover:bg-zen-red-500
+					    inline-block w-full rounded px-8 py-4 text-center text-xl font-bold text-white transition-colors sm:w-auto dark:hover:text-black"
 					href="https://github.com/ZEN-universe/ZEN-creator"
 					target="_blank"
 					rel="external noopener"
@@ -435,54 +463,42 @@
 				<p class="mb-4 text-lg">Explore our existing models:</p>
 
 				<div class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-					<div class="flex flex-col rounded-lg bg-slate-300 px-4 py-4 shadow-lg dark:bg-slate-900">
+					<div
+						class="bg-zen-red-300 dark:bg-zen-red-900 flex flex-col rounded-lg px-4 py-4 shadow-md/30"
+					>
 						<h3 class="mb-4 grow text-xl font-bold">Carbon capture and storage</h3>
 						<div>
-							<a
-								class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-              						border-tall-poppy-600 dark:border-tall-poppy-700
-              						mb-2 rounded-lg border px-2 py-2 font-semibold hover:text-white dark:hover:text-black"
-								href="https://github.com/ZEN-universe/ZEN-models"
-								target="_blank"
-								rel="external noopener"
-							>
-								Go to Model
-								<i class="bi bi-arrow-up-right"></i>
-							</a>
+							{@render linkButton(
+								'https://github.com/ZEN-universe/ZEN-models',
+								'Go to model',
+								'red'
+							)}
 						</div>
 					</div>
-					<div class="flex flex-col rounded-lg bg-slate-300 px-4 py-4 shadow-lg dark:bg-slate-900">
+					<div
+						class="bg-zen-red-300 dark:bg-zen-red-900 flex flex-col rounded-lg px-4 py-4 shadow-md/30"
+					>
 						<h3 class="mb-4 grow text-xl font-bold">
 							Electricity, heating, industry, and transport
 						</h3>
 						<div>
-							<a
-								class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-              						border-tall-poppy-600 dark:border-tall-poppy-700
-              						mb-2 rounded-lg border px-2 py-2 font-semibold hover:text-white dark:hover:text-black"
-								href="https://github.com/ZEN-universe/ZEN-models"
-								target="_blank"
-								rel="external noopener"
-							>
-								Go to Model
-								<i class="bi bi-arrow-up-right"></i>
-							</a>
+							{@render linkButton(
+								'https://github.com/ZEN-universe/ZEN-models',
+								'Go to model',
+								'red'
+							)}
 						</div>
 					</div>
-					<div class="flex flex-col rounded-lg bg-slate-300 px-4 py-4 shadow-lg dark:bg-slate-900">
+					<div
+						class="bg-zen-red-300 dark:bg-zen-red-900 flex flex-col rounded-lg px-4 py-4 shadow-md/30"
+					>
 						<h3 class="mb-4 grow text-xl font-bold">Supply-chain of batteries</h3>
 						<div>
-							<a
-								class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-    								border-tall-poppy-600 dark:border-tall-poppy-700
-    								mb-2 rounded-lg border px-2 py-2 font-semibold hover:text-white dark:hover:text-black"
-								href="https://github.com/ZEN-universe/ZEN-models"
-								target="_blank"
-								rel="external noopener"
-							>
-								Go to Model
-								<i class="bi bi-arrow-up-right"></i>
-							</a>
+							{@render linkButton(
+								'https://github.com/ZEN-universe/ZEN-models',
+								'Go to Model',
+								'red'
+							)}
 						</div>
 					</div>
 				</div>
@@ -515,7 +531,7 @@
 						</div>
 						<div class="flex flex-wrap gap-4">
 							<a
-								class="hover:text-gray-600 dark:hover:text-gray-400"
+								class="text-zen-red-700 hover:text-zen-red-900 dark:text-zen-red-300 dark:hover:text-zen-red-100"
 								href={`https://doi.org/${publication.doi}`}
 								target="_blank"
 							>
@@ -523,7 +539,7 @@
 								<i class="bi bi-arrow-up-right"></i>
 							</a>
 							<a
-								class="hover:text-gray-600 dark:hover:text-gray-400"
+								class="text-zen-red-700 hover:text-zen-red-900 dark:text-zen-red-300 dark:hover:text-zen-red-100"
 								href={publication.researchCollection}
 								target="_blank"
 								rel="external noopener"
@@ -538,7 +554,7 @@
 			{#if hasMorePublications}
 				<div class="mt-4 border-t border-gray-300 pt-4 dark:border-gray-500">
 					<button
-						class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 rounded px-4 py-2 text-white"
+						class="bg-zen-bronze-600 hover:bg-zen-bronze-700 dark:bg-zen-bronze-700 dark:hover:bg-zen-bronze-800 rounded px-4 py-2 text-white"
 						onclick={showMorePublications}
 					>
 						Show more publications
@@ -549,10 +565,16 @@
 	</ContentBox>
 </div>
 
-<!-- Optimize your System -->
+<!-- Optimize your system -->
 <a href="#optimize-system" id="optimize-system" class="relative -top-16" inert></a>
 <div class="section container mx-auto mb-12 px-4 lg:mb-24 lg:gap-12 xl:max-w-7xl">
-	<ContentBox class="box grow bg-[#CCE4EA] py-8 dark:bg-[#007894]" noColor noMarginBottom noPadding>
+	<ContentBox
+		class="box bg-zen-green-200 dark:bg-zen-green-800 grow py-8 shadow-md/30"
+		noColor
+		noMarginBottom
+		noPadding
+		noShadow
+	>
 		<div
 			class="flex flex-col items-center gap-8 border-b border-gray-400 px-4 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
 		>
@@ -560,7 +582,7 @@
 				<i class="bi bi-diagram-3-fill"></i>
 			</div>
 			<div>
-				<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Optimize your System</h2>
+				<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Optimize your system</h2>
 				<p class="mb-8 text-lg">
 					ZEN-garden optimizes the transition pathways of spatially resolved and sector-coupled
 					energy systems. All functionalities can be enabled through input data and configurations,
@@ -618,77 +640,57 @@
 			<h3 class="mb-8 text-3xl font-bold">Key Features</h3>
 
 			<div class="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-8">
-				<div class="rounded-lg bg-slate-300 px-4 py-6 shadow-lg dark:bg-slate-900">
+				<div class="bg-zen-green-300 dark:bg-zen-green-900 rounded-lg px-4 py-6 shadow-md/30">
 					<h4 class="mb-4 text-xl font-bold">Transition pathways</h4>
 					<p class="mb-4">
 						ZEN-garden is specifically designed to optimize multi-year transition pathways. The
 						definition of the optimized years is flexible to balance the trade-off between model
 						complexity and pathway resolution.
 					</p>
-					<a
-						href="https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/dataset_examples.html#multi-year-optimization"
-						class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-          						border-tall-poppy-600 dark:border-tall-poppy-700
-          						mb-2 rounded-lg border px-4 py-2 font-semibold hover:text-white dark:hover:text-black"
-						target="_blank"
-						rel="external noopener"
-					>
-						Go to tutorial <i class="bi bi-arrow-up-right"></i>
-					</a>
+					{@render linkButton(
+						'https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/dataset_examples.html#multi-year-optimization',
+						'Go to tutorial',
+						'green'
+					)}
 				</div>
-				<div class="rounded-lg bg-slate-300 px-4 py-6 shadow-lg dark:bg-slate-900">
+				<div class="bg-zen-green-300 dark:bg-zen-green-900 rounded-lg px-4 py-6 shadow-md/30">
 					<h4 class="mb-4 text-xl font-bold">Flexible foresight</h4>
 					<p class="mb-4">
 						The foresight and decision horizons can be flexibly defined from fully myopic foresight,
 						i.e., a foresight of one optimization step, to perfect foresight, i.e., the combined
 						optimization of all optimization steps.
 					</p>
-					<a
-						href="https://zen-garden.readthedocs.io/en/latest/files/tutorial/05_time_series_aggregation.html#the-time-parameters-in-zen-garden"
-						class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-          						border-tall-poppy-600 dark:border-tall-poppy-700
-          						mb-2 rounded-lg border px-4 py-2 font-semibold hover:text-white dark:hover:text-black"
-						target="_blank"
-						rel="external noopener"
-					>
-						Go to tutorial <i class="bi bi-arrow-up-right"></i>
-					</a>
+					{@render linkButton(
+						'https://zen-garden.readthedocs.io/en/latest/files/tutorial/05_time_series_aggregation.html#the-time-parameters-in-zen-garden',
+						'Go to tutorial',
+						'green'
+					)}
 				</div>
-				<div class="rounded-lg bg-slate-300 px-4 py-6 shadow-lg dark:bg-slate-900">
+				<div class="bg-zen-green-300 dark:bg-zen-green-900 rounded-lg px-4 py-6 shadow-md/30">
 					<h4 class="mb-4 text-xl font-bold">Objective functions</h4>
 					<p class="mb-4">
 						ZEN-garden allows for minimizing total net present cost or cumulative emissions.
 					</p>
-					<a
-						href="https://zen-garden.readthedocs.io/en/latest/files/welcome/features.html#multiple-pre-defined-objective-functions"
-						class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-          						border-tall-poppy-600 dark:border-tall-poppy-700
-          						mb-2 rounded-lg border px-4 py-2 font-semibold hover:text-white dark:hover:text-black"
-						target="_blank"
-						rel="external noopener"
-					>
-						Go to tutorial <i class="bi bi-arrow-up-right"></i>
-					</a>
+					{@render linkButton(
+						'https://zen-garden.readthedocs.io/en/latest/files/welcome/features.html#multiple-pre-defined-objective-functions',
+						'Go to tutorial',
+						'green'
+					)}
 				</div>
-				<div class="rounded-lg bg-slate-300 px-4 py-6 shadow-lg dark:bg-slate-900">
+				<div class="bg-zen-green-300 dark:bg-zen-green-900 rounded-lg px-4 py-6 shadow-md/30">
 					<h4 class="mb-4 text-xl font-bold">Brownfield optimization</h4>
 					<p class="mb-4">
 						Existing capacities can be easily specified in the input data to optimize brownfield
 						transition pathways. This allows to analyze the impact of existing capacities on optimal
 						transition pathways.
 					</p>
-					<a
-						href="https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/dataset_examples.html#brown-field"
-						class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-          						border-tall-poppy-600 dark:border-tall-poppy-700
-          						mb-2 rounded-lg border px-4 py-2 font-semibold hover:text-white dark:hover:text-black"
-						target="_blank"
-						rel="external noopener"
-					>
-						Go to tutorial <i class="bi bi-arrow-up-right"></i>
-					</a>
+					{@render linkButton(
+						'https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/dataset_examples.html#brown-field',
+						'Go to tutorial',
+						'green'
+					)}
 				</div>
-				<div class="rounded-lg bg-slate-300 px-4 py-6 shadow-lg dark:bg-slate-900">
+				<div class="bg-zen-green-300 dark:bg-zen-green-900 rounded-lg px-4 py-6 shadow-md/30">
 					<h4 class="mb-4 text-xl font-bold">Capacity expansion constraints</h4>
 					<p class="mb-4">
 						The capacity expansion can be further constrained to consider endogenous technology
@@ -696,70 +698,50 @@
 						capacity and a technology-specific expansion factor. Spatial spillovers, introduction in
 						niche markets, and lead times can be considered as well.
 					</p>
-					<a
-						href="https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/additional_features.html#technology-diffusion"
-						class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-          						border-tall-poppy-600 dark:border-tall-poppy-700
-          						mb-2 rounded-lg border px-4 py-2 font-semibold hover:text-white dark:hover:text-black"
-						target="_blank"
-						rel="external noopener"
-					>
-						Go to tutorial <i class="bi bi-arrow-up-right"></i>
-					</a>
+					{@render linkButton(
+						'https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/additional_features.html#technology-diffusion',
+						'Go to tutorial',
+						'green'
+					)}
 				</div>
-				<div class="rounded-lg bg-slate-300 px-4 py-6 shadow-lg dark:bg-slate-900">
+				<div class="bg-zen-green-300 dark:bg-zen-green-900 rounded-lg px-4 py-6 shadow-md/30">
 					<h4 class="mb-4 text-xl font-bold">Emission constraints</h4>
 					<p class="mb-4">
 						The transition pathway is guided by emissions constraints. ZEN-garden allows for annual
 						emission constraints, cumulative emission budgets, and carbon pricing.
 					</p>
-					<a
-						href="https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/additional_features.html#carbon-emission-modeling"
-						class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-          						border-tall-poppy-600 dark:border-tall-poppy-700
-          						mb-2 rounded-lg border px-4 py-2 font-semibold hover:text-white dark:hover:text-black"
-						target="_blank"
-						rel="external noopener"
-					>
-						Go to tutorial <i class="bi bi-arrow-up-right"></i>
-					</a>
+					{@render linkButton(
+						'https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/additional_features.html#carbon-emission-modeling',
+						'Go to tutorial',
+						'green'
+					)}
 				</div>
-				<div class="rounded-lg bg-slate-300 px-4 py-6 shadow-lg dark:bg-slate-900">
+				<div class="bg-zen-green-300 dark:bg-zen-green-900 rounded-lg px-4 py-6 shadow-md/30">
 					<h4 class="mb-4 text-xl font-bold">Retrofitting technologies</h4>
 					<p class="mb-4">
 						Technologies can be coupled to model retrofitting options, e.g., to add carbon capture
 						and storage or fuel switching.
 					</p>
-					<a
-						href="https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/additional_features.html#retrofitting-technologies"
-						class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-          						border-tall-poppy-600 dark:border-tall-poppy-700
-          						mb-2 rounded-lg border px-4 py-2 font-semibold hover:text-white dark:hover:text-black"
-						target="_blank"
-						rel="external noopener"
-					>
-						Go to tutorial <i class="bi bi-arrow-up-right"></i>
-					</a>
+					{@render linkButton(
+						'https://zen-garden.readthedocs.io/en/latest/files/zen_garden_in_detail/additional_features.html#retrofitting-technologies',
+						'Go to tutorial',
+						'green'
+					)}
 				</div>
-				<div class="rounded-lg bg-slate-300 px-4 py-6 shadow-lg dark:bg-slate-900">
+				<div class="bg-zen-green-300 dark:bg-zen-green-900 rounded-lg px-4 py-6 shadow-md/30">
 					<h4 class="mb-4 text-xl font-bold">Scenario analysis</h4>
 					<p class="mb-4">
 						ZEN-garden simplifies the analysis of multiple scenarios by overwriting specific input
 						data and configurations of a base model. This avoids the need to duplicate the input
 						data and configurations for each scenario.
 					</p>
-					<a
-						href="https://zen-garden.readthedocs.io/en/latest/files/tutorial/04_scenario_analysis.html"
-						class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-          						border-tall-poppy-600 dark:border-tall-poppy-700
-          						mb-2 rounded-lg border px-4 py-2 font-semibold hover:text-white dark:hover:text-black"
-						target="_blank"
-						rel="external noopener"
-					>
-						Go to tutorial <i class="bi bi-arrow-up-right"></i>
-					</a>
+					{@render linkButton(
+						'https://zen-garden.readthedocs.io/en/latest/files/tutorial/04_scenario_analysis.html',
+						'Go to tutorial',
+						'green'
+					)}
 				</div>
-				<div class="rounded-lg bg-slate-300 px-4 py-6 shadow-lg dark:bg-slate-900">
+				<div class="bg-zen-green-300 dark:bg-zen-green-900 rounded-lg px-4 py-6 shadow-md/30">
 					<h4 class="mb-4 text-xl font-bold">Timeseries aggregation</h4>
 					<p class="mb-4">
 						ZEN-garden allows for the aggregation of timeseries data to reduce computational
@@ -767,26 +749,27 @@
 						storage level representation method allows for the efficient consideration of short- and
 						long-term storage technologies.
 					</p>
-					<a
-						href="https://zen-garden.readthedocs.io/en/latest/files/tutorial/05_time_series_aggregation.html"
-						class="hover:bg-tall-poppy-600 dark:hover:bg-tall-poppy-700
-          						border-tall-poppy-600 dark:border-tall-poppy-700
-          						mb-2 rounded-lg border px-4 py-2 font-semibold hover:text-white dark:hover:text-black"
-						target="_blank"
-						rel="external noopener"
-					>
-						Go to tutorial <i class="bi bi-arrow-up-right"></i>
-					</a>
+					{@render linkButton(
+						'https://zen-garden.readthedocs.io/en/latest/files/tutorial/05_time_series_aggregation.html',
+						'Go to tutorial',
+						'green'
+					)}
 				</div>
 			</div>
 		</div>
 	</ContentBox>
 </div>
 
-<!-- Visualize your Results -->
+<!-- Visualize your results -->
 <a href="#visualize-results" id="visualize-results" class="relative -top-16" inert></a>
 <div class="section container mx-auto mb-12 px-4 lg:mb-24 lg:gap-12 xl:max-w-7xl">
-	<ContentBox class="box grow bg-[#99CAD5] py-8 dark:bg-[#3395AB]" noColor noMarginBottom noPadding>
+	<ContentBox
+		class="box bg-zen-blue-200 dark:bg-zen-blue-900 grow py-8 shadow-md/30"
+		noColor
+		noMarginBottom
+		noPadding
+		noShadow
+	>
 		<div
 			class="flex flex-col items-center gap-8 border-b border-gray-400 px-4 pb-8 md:flex-row md:px-8 lg:gap-16 lg:px-12 dark:border-gray-900"
 		>
@@ -794,7 +777,7 @@
 				<i class="bi bi-eye-fill"></i>
 			</div>
 			<div>
-				<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Visualize your Results</h2>
+				<h2 class="mb-8 text-4xl font-bold sm:text-5xl">Visualize your results</h2>
 				<p class="text-lg">
 					ZEN-garden provides a wide range of visualization options to analyze the optimized
 					transition pathways and the underlying optimization results. The visualization is
@@ -810,28 +793,28 @@
 					Annual capacity, production, emission, and cost results can be investigated under
 					<a
 						href={resolve('/explorer/transition/capacity')}
-						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
+						class="text-zen-blue-700 hover:text-zen-blue-500 dark:text-zen-blue-400 dark:hover:text-zen-blue-100 font-bold transition-colors"
 						>The Transition Pathway</a
 					>. Energy and storage balances in a specific year can be analyzed under
 					<a
 						href={resolve('/explorer/energy_balance/nodal')}
-						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
+						class="text-zen-blue-700 hover:text-zen-blue-500 dark:text-zen-blue-400 dark:hover:text-zen-blue-100 font-bold transition-colors"
 						>The Energy Balance</a
 					>. The flows of energy carriers between technologies can be investigated under
 					<a
 						href={resolve('/explorer/energy_system')}
-						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
+						class="text-zen-blue-700 hover:text-zen-blue-500 dark:text-zen-blue-400 dark:hover:text-zen-blue-100 font-bold transition-colors"
 						>The Energy System</a
 					>. Finally, the spatial distribution of capacities can be analyzed under
 					<a
 						href={resolve('/explorer/map/capacity')}
-						class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:tall-poppy-800 font-bold transition-colors"
+						class="text-zen-blue-700 hover:text-zen-blue-500 dark:text-zen-blue-400 dark:hover:text-zen-blue-100 font-bold transition-colors"
 						>The Map</a
 					>.
 				</p>
 
 				<a
-					class="bg-tall-poppy-600 hover:bg-tall-poppy-800 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-900
+					class="bg-zen-blue-600 hover:bg-zen-blue-800 dark:bg-zen-blue-700 dark:hover:bg-zen-blue-500
 					    inline-block w-full rounded px-8 py-4 text-center text-xl font-bold text-white transition-colors sm:w-auto"
 					href={resolve('/explorer')}
 				>
@@ -852,7 +835,8 @@
 <!-- Projects and Collaborations -->
 <div class="container mx-auto mt-20 px-4 xl:max-w-7xl">
 	<ContentBox
-		class="mb-4 flex flex-col gap-8 px-4 py-10 sm:mb-12 sm:py-16 md:px-8 lg:mb-12 lg:px-16 xl:px-20"
+		class="mb-4 flex flex-col gap-8 px-4 py-10 shadow-md/30 sm:mb-12 sm:py-16 md:px-8 lg:mb-12 lg:px-16 xl:px-20"
+		noShadow
 	>
 		<div class="w-full">
 			<h1 class="mb-8 text-4xl font-bold sm:text-5xl md:mb-12 lg:text-6xl">
@@ -870,7 +854,7 @@
 					<a
 						href={project.href}
 						class={[
-							'flex justify-center opacity-60 transition hover:opacity-100',
+							'flex justify-center opacity-60 transition hover:opacity-100 dark:opacity-50',
 							project.darkBg && 'dark:bg-gray-500 dark:p-4'
 						]}
 						target="_blank"
@@ -887,7 +871,8 @@
 <!-- Contact -->
 <div class="container mx-auto mt-20 px-4 xl:max-w-7xl">
 	<ContentBox
-		class="mb-4 flex flex-col gap-8 px-4 py-10 sm:mb-12 sm:py-16 md:px-8 lg:mb-12 lg:flex-row lg:gap-20 lg:px-16 xl:px-20 2xl:gap-24"
+		class="mb-4 flex flex-col gap-8 px-4 py-10 shadow-md/30 sm:mb-12 sm:py-16 md:px-8 lg:mb-12 lg:flex-row lg:gap-20 lg:px-16 xl:px-20 2xl:gap-24"
+		noShadow
 	>
 		<div class="flex items-center justify-center">
 			{#if !isDarkTheme}
@@ -911,19 +896,19 @@
 				ZEN-garden is developed by the
 				<a
 					href="https://rre.ethz.ch"
-					class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:text-tall-poppy-800 font-bold transition"
+					class="text-zen-bronze-600 hover:text-zen-bronze-700 dark:text-zen-bronze-500 dark:hover:text-zen-bronze-300 font-bold transition"
 					>Risk and Reliability Engineering Lab at ETH Zurich</a
 				>
 				and accessible to everyone as an open-source software via
 				<a
 					href="https://github.com/zen-garden"
-					class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:text-tall-poppy-800 font-bold transition"
+					class="text-zen-bronze-600 hover:text-zen-bronze-700 dark:text-zen-bronze-500 dark:hover:text-zen-bronze-300 font-bold transition"
 					>GitHub</a
 				>
 				and
 				<a
 					href="https://pypi.org/project/zen-garden/"
-					class="text-tall-poppy-600 hover:text-tall-poppy-700 dark:text-tall-poppy-700 dark:hover:text-tall-poppy-800 font-bold transition"
+					class="text-zen-bronze-600 hover:text-zen-bronze-700 dark:text-zen-bronze-500 dark:hover:text-zen-bronze-300 font-bold transition"
 					>PyPI</a
 				>. We are happy to receive feedback, suggestions, and contributions to ZEN-garden. Please do
 				not hesitate to contact us through email or our Google Group.
@@ -931,7 +916,7 @@
 
 			<div class="flex flex-col gap-4 md:flex-row md:flex-wrap">
 				<a
-					class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition sm:w-auto"
+					class="bg-zen-bronze-600 hover:bg-zen-bronze-700 dark:bg-zen-bronze-700 dark:hover:bg-zen-bronze-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition sm:w-auto"
 					href="mailto:zen-garden@ethz.ch"
 					target="_blank"
 				>
@@ -939,7 +924,7 @@
 					<i class="bi bi-arrow-up-right"></i>
 				</a>
 				<a
-					class="bg-tall-poppy-600 hover:bg-tall-poppy-700 dark:bg-tall-poppy-700 dark:hover:bg-tall-poppy-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition sm:w-auto"
+					class="bg-zen-bronze-600 hover:bg-zen-bronze-700 dark:bg-zen-bronze-700 dark:hover:bg-zen-bronze-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition sm:w-auto"
 					href="https://groups.google.com/g/zen_garden"
 					target="_blank"
 					rel="external noopener"
