@@ -181,8 +181,8 @@
 				'bi-book-half'
 			)}
 			{@render navButton(
-				'https://groups.google.com/g/zen_garden',
-				'ZEN-garden on Google Groups',
+				'https://github.com/orgs/ZEN-universe/discussions',
+				'GitHub Discussions for ZEN-garden',
 				'bi-people-fill'
 			)}
 			{@render navButton('mailto:zen-garden@ethz.ch', 'Mail to ZEN-garden', 'bi-envelope-fill')}
@@ -911,7 +911,7 @@
 					class="text-zen-bronze-600 hover:text-zen-bronze-700 dark:text-zen-bronze-500 dark:hover:text-zen-bronze-300 font-bold transition"
 					>PyPI</a
 				>. We are happy to receive feedback, suggestions, and contributions to ZEN-garden. Please do
-				not hesitate to contact us through email or our Google Group.
+				not hesitate to contact us through email or GitHub discussions.
 			</p>
 
 			<div class="flex flex-col gap-4 md:flex-row md:flex-wrap">
@@ -920,16 +920,16 @@
 					href="mailto:zen-garden@ethz.ch"
 					target="_blank"
 				>
-					Send us an Email
+					Send us an email
 					<i class="bi bi-arrow-up-right"></i>
 				</a>
 				<a
 					class="bg-zen-bronze-600 hover:bg-zen-bronze-700 dark:bg-zen-bronze-700 dark:hover:bg-zen-bronze-800 inline-block w-full rounded px-8 py-4 text-center text-2xl font-bold text-white transition sm:w-auto"
-					href="https://groups.google.com/g/zen_garden"
+					href="https://github.com/orgs/ZEN-universe/discussions"
 					target="_blank"
 					rel="external noopener"
 				>
-					Discover our Google Group
+					Join the discussion
 					<i class="bi bi-arrow-up-right"></i>
 				</a>
 			</div>
