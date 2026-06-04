@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.9.8 (2026-06-04)
+
+- [Front page] Design changes.
+- Load topojson from static folder to make bundle size smaller.
+- Add new release workflow via GitHub Actions and PRs.
+- [Front page] Fix ZEN-explorer dashboard screenshot.
+
 ## 0.9.7 (2026-05-04)
 
 - [Front page] Replace GSAP animation with a simpler design.
