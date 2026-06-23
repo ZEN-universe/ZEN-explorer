@@ -41,14 +41,16 @@ test('production: transport by node on', async ({ page }) => {
 	await page.goto(PAGE_URL);
 	await selectSolution(page, 'european_electricity_heating_transition', 'perfect_foresight');
 	await selectFromDropdown(page, 'Carrier', 'electricity');
-	await page.getByRole('switch', {name: 'by technology on'}).first().click();
-	await page.getByRole('switch', {name: 'by technology on'}).first().click();
-	await page.getByRole('switch', {name: 'by node off'}).click();
+	await page.getByRole('switch', { name: 'by technology on' }).first().click();
+	await page.getByRole('switch', { name: 'by technology on' }).first().click();
+	await page.getByRole('switch', { name: 'by node off' }).click();
 	await selectFromMultiSelect(page, 'Nodes', ['DE', 'CH']);
-	await expectScreenshot(page, '#chart-container', `eeht_pf/electricity/transport-subdivision-nodes-DE-CH.png`);
+	await expectScreenshot(
+		page,
+		'#chart-container',
+		`eeht_pf/electricity/transport-subdivision-nodes-DE-CH.png`
+	);
 });
-
-
 
 test('production: normalization', async ({ page }) => {
 	await page.goto(PAGE_URL);

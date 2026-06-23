@@ -138,6 +138,20 @@ export default class Entries {
 		);
 	}
 
+	sortBy(fieldNames: string[]): Entries {
+		const sortedEntries = [...this.entries].sort((a, b) => {
+			for (const field of fieldNames) {
+				const aValue = a.index[field];
+				const bValue = b.index[field];
+
+				if (aValue < bValue) return -1;
+				if (aValue > bValue) return 1;
+			}
+			return 0; // If all fields are equal, maintain original order
+		});
+		return new Entries(sortedEntries);
+	}
+
 	/**
 	 * Normalizes the data arrays of each entry so that the sum of positive values for each index is 1.
 	 * If a year has no positive values, it normalizes by the absolute sum of negative values.

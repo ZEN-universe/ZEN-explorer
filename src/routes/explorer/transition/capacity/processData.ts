@@ -269,7 +269,9 @@ function generateCapacityAdditionAndRetirementDatasets(
 			// Compute the retirement data
 			const dataAddition = capacityAddition;
 			const dataRetirement = computeRetirementData(capacity, capacityPrevious);
-			const dataCombined = Entries.concatenate([dataAddition, dataRetirement]);
+			const dataCombined = Entries.concatenate([dataAddition, dataRetirement]).sortBy([
+				'technology'
+			]);
 
 			// Normalize and convert to datasets
 			return entriesToDatasets(dataCombined, selection, solutionName, pattern, '');
