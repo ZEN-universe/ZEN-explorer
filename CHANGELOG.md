@@ -2,6 +2,13 @@
 
 ## v0.9.9 (2026-06-23)
 
+- Update package.json version and CHANGELOG.md for v0.9.9
+- Release v0.9.9
+- [Capacity] Sort added and retired capacities alphabetically.
+- Replace Google Group through GitHub Discussions.
+
+## v0.9.9 (2026-06-23)
+
 - [Capacity] Sort added and retired capacities alphabetically.
 - [Front page] Replace Google Group through GitHub Discussions.
 
