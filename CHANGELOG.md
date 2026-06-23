@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.9.9 (2026-06-23)
+
+- [Capacity] Sort added and retired capacities alphabetically.
+- Replace Google Group through GitHub Discussions.
+
 ## v0.9.8 (2026-06-04)
 
 - [Front page] Design changes.
