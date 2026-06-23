@@ -101,7 +101,6 @@
 				})
 			});
 		}
-		console.log('Generate context menu items', pie?.label);
 		return items;
 	}
 

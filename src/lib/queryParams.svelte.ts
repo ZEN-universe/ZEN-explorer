@@ -25,7 +25,9 @@ export const QUERY_PARAM_KEYS = {
 	nodes: 'nodes',
 	smoothing_window_size: 'window',
 	activeYear: 'active_year',
-	activeSolution: 'active_solution'
+	activeSolution: 'active_solution',
+	subdivision: 'subdivision',
+	cumulation: 'cumulation'
 };
 
 let urlParams: URLParams = $state({});

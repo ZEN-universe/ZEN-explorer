@@ -1,8 +1,5 @@
 <script lang="ts">
-	import { onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
-	import { draw as drawPattern } from 'patternomaly';
-	import { SvelteSet } from 'svelte/reactivity';
 
 	import MultiSelect from '$components/forms/MultiSelect.svelte';
 	import Radio from '$components/forms/Radio.svelte';
@@ -10,7 +7,6 @@
 	import FilterSection from '$components/FilterSection.svelte';
 	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
-	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
@@ -18,32 +14,27 @@
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	import { fetchTotal, fetchUnit } from '$lib/temple';
-	import { getVariableName } from '$lib/variables';
-	import type { ActivatedSolution, Row } from '$lib/types';
-	import {
-		getURLParam,
-		getURLParamAsBoolean,
-		updateURLParams,
-		useURLParams
-	} from '$lib/queryParams.svelte';
-	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
-	import Entries, { type FilterCriteria } from '$lib/entries';
+	import type { ActivatedSolution } from '$lib/types';
+	import { QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
+	import Entries from '$lib/entries';
 	import {
 		generateLabelsForSolutionComparison,
-		generateSolutionSuffix,
 		onClickLegendForSolutionComparison,
 		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
-	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
+
+	import {
+		components,
+		generateBarDatasetsAndPatterns,
+		generateLineDatasets,
+		type Data,
+		type EmissionComponent,
+		type Selection
+	} from './processData';
 
 	useURLParams();
 
-	let technologyData: Row[][] = $state([]);
-	let carrierData: Row[][] = $state([]);
-	let annualData: Row[][] = $state([]);
-	let cumulativeData: Row[][] = $state([]);
-	let annualLimitData: Row[][] = $state([]);
-	let cumulativeLimitData: Row[][] = $state([]);
+	let data: Data[] = $state([]);
 	let subdivisionUnits: { [carrier: string]: string } = $state({});
 	let cumulationUnits: { [carrier: string]: string } = $state({});
 
@@ -57,41 +48,45 @@
 	];
 	const cumulationOptions: string[] = ['Annual', 'Cumulative'];
 
-	let selectedSolutions: (ActivatedSolution | null)[] = $state([null]);
-	let selectedSubdivision: boolean = $state(true);
-	let selectedCumulation: string = $state('Annual');
-	let selectedCarriers: string[] = $state([]);
-	let selectedTechnologies: string[] = $state([]);
-	let selectedAggregation: 'location' | 'technology_carrier' = $state('location');
-	let selectedNormalization: boolean = $state(false);
-	let selectedLocations: string[] = $state([]);
-	let selectedYears: string[] = $state([]);
+	let selection: Selection = $state({
+		solutions: [null],
+		subdivision: true,
+		cumulation: 'Annual',
+		aggregation: 'location',
+		normalization: false,
+		technologies: [],
+		carriers: [],
+		locations: [],
+		years: []
+	});
 
 	let chart = $state<Chart>();
 
-	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
-	let isNormalized: boolean = $derived(selectedNormalization && selectedSubdivision);
+	let hasSomeUnsetSolutions: boolean = $derived(selection.solutions.some((s) => s === null));
+	let isNormalized: boolean = $derived(selection.normalization && selection.subdivision);
 
 	//#region Plot options
 
 	let plotName = $derived.by(() => {
-		if (!selectedSolutions[0]?.solution_name) {
+		if (!selection.solutions[0]?.solution_name) {
 			return '';
 		}
-		let solutionNames = selectedSolutions[0].solution_name.split('.');
+		let solutionNames = selection.solutions[0].solution_name.split('.');
 		return [
 			solutionNames[solutionNames.length - 1],
-			selectedSolutions[0].scenario_name,
+			selection.solutions[0].scenario_name,
 			divisionVariable
 		].join('_');
 	});
+
 	let unit: string = $derived.by(() => {
-		if (selectedSubdivision) {
+		if (selection.subdivision) {
 			return Object.values(subdivisionUnits)[0] || '';
 		} else {
 			return Object.values(cumulationUnits)[0] || '';
 		}
 	});
+
 	function getPlotOptions(): ChartOptions {
 		return {
 			maintainAspectRatio: false,
@@ -139,13 +134,13 @@
 
 	//#region Derived options for filters
 
-	let divisionVariable = $derived.by(() => {
-		if (selectedSubdivision) {
-			return getVariableName('carbon_emissions_carrier', selectedSolutions[0]?.version);
-		} else if (selectedCumulation == 'Annual') {
-			return getVariableName('carbon_emissions_annual', selectedSolutions[0]?.version);
+	let divisionVariable: EmissionComponent = $derived.by(() => {
+		if (selection.subdivision) {
+			return 'carbon_emissions_carrier';
+		} else if (selection.cumulation == 'Annual') {
+			return 'carbon_emissions_annual';
 		} else {
-			return getVariableName('carbon_emissions_cumulative', selectedSolutions[0]?.version);
+			return 'carbon_emissions_cumulative';
 		}
 	});
 
@@ -153,9 +148,10 @@
 		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		const setTechnologies: Set<string> = new SvelteSet();
-		technologyData.forEach((data) => {
-			data.forEach((d) => setTechnologies.add(d.technology));
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
+		const setTechnologies: Set<string> = new Set();
+		data.forEach((d) => {
+			d.carbon_emissions_technology.forEach((d) => setTechnologies.add(d.index.technology));
 		});
 		return Array.from(setTechnologies).sort();
 	});
@@ -164,9 +160,10 @@
 		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		const setCarriers: Set<string> = new SvelteSet();
-		carrierData.forEach((data) => {
-			data.forEach((d) => setCarriers.add(d.carrier));
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
+		const setCarriers: Set<string> = new Set();
+		data.forEach((d) => {
+			d.carbon_emissions_carrier.forEach(({ index }) => setCarriers.add(index.carrier));
 		});
 		return Array.from(setCarriers).sort();
 	});
@@ -175,108 +172,65 @@
 		if (hasSomeUnsetSolutions) {
 			return [];
 		}
-		const setLocations: Set<string> = new SvelteSet();
-		technologyData.forEach((data) => {
-			data.forEach((d) => setLocations.add(d.location));
-		});
-		carrierData.forEach((data) => {
-			data.forEach((d) => setLocations.add(d.node));
-		});
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
+		const setLocations: Set<string> = new Set();
+		data.forEach((d) =>
+			d.carbon_emissions_technology.forEach(({ index }) => setLocations.add(index.location))
+		);
+		data.forEach((d) =>
+			d.carbon_emissions_carrier.forEach(({ index }) => setLocations.add(index.node))
+		);
 		return Array.from(setLocations).sort();
 	});
 
-	$effect(() => {
-		selectedTechnologies = technologies;
-	});
-	$effect(() => {
-		selectedCarriers = carriers;
-	});
-	$effect(() => {
-		selectedLocations = locations;
-	});
-	$effect(() => {
-		selectedYears = years.map((year) => year.toString());
-	});
-
 	//#endregion
 
-	//#region Store selections in URL
-
-	// Store parts of the selected variables in the URL
-	onMount(() => {
-		selectedSubdivision = getURLParamAsBoolean('subdiv', selectedSubdivision);
-		selectedCumulation = getURLParam('cumul') || selectedCumulation;
-	});
-
-	$effect(() => {
-		// Triggers
-		selectedSubdivision;
-		selectedCumulation;
-
-		// Wait for router to be initialized
-		tick().then(() => {
-			updateURLParams({
-				subdiv: selectedSubdivision ? '1' : '0',
-				cumul: selectedCumulation
-			});
-		});
-	});
-
-	//#endregion
+	//#region Fetch and process data
 
 	function onSolutionSelected() {
 		fetchData();
 	}
 
-	//#region Fetch and process data
-
 	async function fetchData() {
-		if (selectedSolutions.length === 0 || selectedSolutions.some((s) => s == null)) {
+		if (selection.solutions.length === 0 || selection.solutions.some((s) => s == null)) {
 			return;
 		}
 
 		fetching = true;
 
-		const solutions = selectedSolutions as ActivatedSolution[];
-		const components = {
-			technology: getVariableName('carbon_emissions_technology', solutions[0].version),
-			carrier: getVariableName('carbon_emissions_carrier', solutions[0].version),
-			annual_limit: getVariableName('carbon_emissions_annual_limit', solutions[0].version),
-			budget: getVariableName('carbon_emissions_budget', solutions[0].version),
-			annual: getVariableName('carbon_emissions_annual', solutions[0].version),
-			cumulative: getVariableName('carbon_emissions_cumulative', solutions[0].version)
-		};
-		let [annual_unit_data, ...responses] = await Promise.all([
-			fetchUnit(solutions[0].solution_name, components.annual),
-			...solutions.flatMap((solution) => [
+		const solutions = selection.solutions as ActivatedSolution[];
+		let [unitResponse, ...responses] = await Promise.all([
+			fetchUnit(solutions[0].solution_name, 'carbon_emissions_annual'),
+			...solutions.map((solution) =>
 				fetchTotal(
 					solution.solution_name,
-					Object.values(components),
+					[...components],
 					solution.scenario_name,
 					'',
-					components.carrier
+					'carbon_emissions_carrier'
 				)
-			])
+			)
 		]);
 
-		technologyData = responses.map((r) => r[components.technology]?.data || []);
-		carrierData = responses.map((r) => r[components.carrier]?.data || []);
-		annualLimitData = responses.map((r) => r[components.annual_limit]?.data || []);
-		cumulativeLimitData = responses.map((r) => r[components.budget]?.data || []);
-		annualData = responses.map((r) => r[components.annual]?.data || []);
-		cumulativeData = responses.map((r) => r[components.cumulative]?.data || []);
+		data = responses.map(
+			(response) =>
+				Object.fromEntries(
+					components.map((component) => [
+						component,
+						Entries.fromRows(response[component]?.data || [])
+					])
+				) as Data
+		);
 
 		if (responses[0].unit?.data) {
 			subdivisionUnits = Object.fromEntries(
-				responses[0].unit.data.map((unit) => {
-					return [unit.carrier, unit[0] || unit.units];
-				})
+				responses[0].unit.data.map((unit) => [unit.carrier, unit[0] || unit.units])
 			);
 		}
 
-		if (annual_unit_data.data) {
+		if (unitResponse.data) {
 			cumulationUnits = Object.fromEntries(
-				annual_unit_data.data.map((unit: Record<string, string>) => {
+				unitResponse.data.map((unit: Record<string, string>) => {
 					return [unit.carrier, unit[0] || unit.units];
 				})
 			);
@@ -285,153 +239,11 @@
 		fetching = false;
 	}
 
-	let [barDatasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() => {
-		if (
-			selectedSolutions.length === 0 ||
-			hasSomeUnsetSolutions ||
-			!annualData.length ||
-			!cumulativeData.length ||
-			!carrierData.length ||
-			!technologyData.length
-		) {
-			return [[], []];
-		}
+	let [barDatasets, patterns] = $derived(
+		generateBarDatasetsAndPatterns(data, selection, isNormalized, divisionVariable, years)
+	);
 
-		let filterCriteria: FilterCriteria;
-		let groupByColumns: string[];
-		if (!selectedSubdivision) {
-			filterCriteria = {};
-			groupByColumns = [];
-		} else if (selectedAggregation == 'location') {
-			filterCriteria = {
-				technology_carrier: selectedTechnologies.concat(selectedCarriers),
-				location: selectedLocations
-			};
-			groupByColumns = ['technology_carrier'];
-		} else {
-			filterCriteria = {
-				technology_carrier: selectedTechnologies.concat(selectedCarriers),
-				location: selectedLocations
-			};
-			groupByColumns = ['location'];
-		}
-
-		resetColorState();
-		resetPatternState();
-		const patterns: ColorBoxItem[] = [];
-		const datasets = selectedSolutions.flatMap((solution, solutionIndex) => {
-			if (!solution) {
-				return [];
-			}
-
-			let entries: Entries;
-			if (selectedSubdivision) {
-				entries = Entries.concatenate([
-					Entries.fromRows(carrierData[solutionIndex]).mapIndex((d) => ({
-						...d,
-						technology_carrier: d.carrier,
-						location: d.node
-					})),
-					Entries.fromRows(technologyData[solutionIndex]).mapIndex((d) => ({
-						...d,
-						technology_carrier: d.technology
-					}))
-				]);
-			} else if (selectedCumulation == 'Annual') {
-				entries = Entries.fromRows(annualData[solutionIndex]);
-			} else {
-				entries = Entries.fromRows(cumulativeData[solutionIndex]);
-			}
-
-			entries = entries
-				.filterByCriteria(filterCriteria)
-				.groupBy(groupByColumns)
-				.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))));
-
-			if (isNormalized) {
-				entries = entries.normalize();
-			}
-
-			const suffix = generateSolutionSuffix(solution);
-			const pattern = solutionIndex > 0 ? nextPattern() : undefined;
-			patterns.push(createColorBoxItem(suffix, pattern));
-
-			return entries.toArray().map((entry) => {
-				const label =
-					entries.length === 1
-						? divisionVariable
-						: selectedAggregation === 'location'
-							? entry.index.technology_carrier
-							: entry.index.location;
-				const color = nextColor(label);
-				return {
-					label,
-					data: entry.data,
-					borderColor: color,
-					backgroundColor:
-						pattern !== undefined
-							? drawPattern(pattern, addTransparency(color))
-							: addTransparency(color),
-					stack: suffix
-				} as ChartDataset<'bar'>;
-			});
-		});
-
-		return [datasets, patterns];
-	});
-
-	let lineDatasets: ChartDataset<'line'>[] = $derived.by(() => {
-		if (
-			selectedSolutions.length === 0 ||
-			hasSomeUnsetSolutions ||
-			isNormalized ||
-			(selectedAggregation === 'location' && selectedLocations.length !== locations.length) ||
-			(selectedAggregation === 'technology_carrier' &&
-				(selectedCarriers.length !== carriers.length ||
-					selectedTechnologies.length !== technologies.length))
-		) {
-			return [];
-		}
-
-		return selectedSolutions.flatMap((solution, solutionIndex) => {
-			if (!solution) {
-				return [];
-			}
-
-			let entry: number[];
-			if (selectedSubdivision || selectedCumulation == 'Annual') {
-				if ((annualLimitData[solutionIndex] ?? []).length === 0) {
-					return [];
-				}
-				entry = Object.entries(annualLimitData[solutionIndex][0]).map(([, i]) =>
-					i === 'inf' ? Infinity : Number(i)
-				);
-			} else {
-				if ((cumulativeLimitData[solutionIndex] ?? []).length === 0) {
-					return [];
-				}
-				const value = Number(Object.values(cumulativeLimitData[solutionIndex][0])[0]);
-				entry = selectedYears.map(() => value);
-			}
-
-			const suffix = generateSolutionSuffix(solution);
-			const label =
-				(selectedSubdivision || selectedCumulation == 'Annual'
-					? 'Annual Emissions Limit'
-					: 'Carbon Emissions Budget') + (selectedSolutions.length > 1 ? ` (${suffix})` : '');
-			const color = nextColor(label);
-
-			return [
-				{
-					label,
-					data: entry,
-					borderColor: color,
-					backgroundColor: addTransparency(color),
-					type: 'line' as const
-				}
-			];
-		});
-	});
+	let lineDatasets = $derived(generateLineDatasets(data, selection, isNormalized));
 
 	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
 		return (barDatasets as ChartDataset<'bar' | 'line'>[]).concat(
@@ -450,7 +262,7 @@
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<MultiSolutionFilter
-				bind:solutions={selectedSolutions}
+				bind:solutions={selection.solutions}
 				bind:years
 				bind:loading={solutionLoading}
 				disabled={fetching || solutionLoading}
@@ -460,37 +272,39 @@
 		{#if !solutionLoading && !hasSomeUnsetSolutions}
 			<FilterSection title="Variable Selection">
 				<ToggleButton
-					bind:value={selectedSubdivision}
+					bind:value={selection.subdivision}
 					label="Subdivision"
 					disabled={fetching || solutionLoading}
+					urlParam={QUERY_PARAM_KEYS.subdivision}
 				></ToggleButton>
-				{#if !selectedSubdivision}
+				{#if !selection.subdivision}
 					<Radio
 						options={cumulationOptions}
-						bind:value={selectedCumulation}
+						bind:value={selection.cumulation}
 						label="Cumulation"
 						disabled={fetching || solutionLoading}
+						urlParam={QUERY_PARAM_KEYS.cumulation}
 					></Radio>
 				{/if}
 			</FilterSection>
 		{/if}
 		{#if !solutionLoading && !hasSomeUnsetSolutions}
 			<FilterSection title="Data Selection">
-				{#if selectedSubdivision}
+				{#if selection.subdivision}
 					<Radio
 						options={aggregationOptions}
-						bind:value={selectedAggregation}
+						bind:value={selection.aggregation}
 						label="Aggregation"
 						disabled={fetching || solutionLoading}
 					></Radio>
 					<ToggleButton
-						bind:value={selectedNormalization}
+						bind:value={selection.normalization}
 						label="Normalization"
 						disabled={fetching || solutionLoading}
 					></ToggleButton>
-					{#if selectedAggregation == 'location'}
+					{#if selection.aggregation == 'location'}
 						<MultiSelect
-							bind:value={selectedLocations}
+							bind:value={selection.locations}
 							options={locations}
 							label="Locations"
 							disabled={fetching || solutionLoading}
@@ -498,7 +312,7 @@
 					{:else}
 						{#if technologies.length > 0}
 							<MultiSelect
-								bind:value={selectedTechnologies}
+								bind:value={selection.technologies}
 								options={technologies}
 								label="Technologies"
 								disabled={fetching || solutionLoading}
@@ -506,7 +320,7 @@
 						{/if}
 						{#if carriers.length > 0}
 							<MultiSelect
-								bind:value={selectedCarriers}
+								bind:value={selection.carriers}
 								options={carriers}
 								label="Carriers"
 								disabled={fetching || solutionLoading}
@@ -515,7 +329,7 @@
 					{/if}
 				{/if}
 				<MultiSelect
-					bind:value={selectedYears}
+					bind:value={selection.years}
 					options={years.map((year) => year.toString())}
 					label="Years"
 					disabled={fetching || solutionLoading}
@@ -531,18 +345,18 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if selectedSolutions.length == 0 || hasSomeUnsetSolutions}
+		{:else if selection.solutions.length == 0 || hasSomeUnsetSolutions}
 			<WarningMessage message="Please select a solution"></WarningMessage>
-		{:else if selectedLocations.length == 0}
+		{:else if selection.locations.length == 0}
 			<WarningMessage message="Please select at least one location"></WarningMessage>
-		{:else if selectedYears.length == 0}
+		{:else if selection.years.length == 0}
 			<WarningMessage message="Please select at least one year"></WarningMessage>
 		{:else if datasets.length == 0}
-			<ErrorMessage message="No data available for the selected filters"></ErrorMessage>
+			<ErrorMessage message="No data available for the selection. filters"></ErrorMessage>
 		{:else}
 			<Chart
 				type="bar"
-				labels={selectedYears.map((year) => year.toString())}
+				labels={selection.years.map((year) => year.toString())}
 				getDatasets={() => datasets}
 				getOptions={getPlotOptions}
 				pluginOptions={plotPluginOptions}
