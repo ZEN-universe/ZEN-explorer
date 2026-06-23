@@ -3,7 +3,7 @@
 ## v0.9.9 (2026-06-23)
 
 - [Capacity] Sort added and retired capacities alphabetically.
-- Replace Google Group through GitHub Discussions.
+- [Front page] Replace Google Group through GitHub Discussions.
 
 ## v0.9.8 (2026-06-04)
 
