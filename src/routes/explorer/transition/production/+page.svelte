@@ -7,7 +7,6 @@
 		type ChartTypeRegistry,
 		type TooltipItem
 	} from 'chart.js';
-	import { draw as drawPattern } from 'patternomaly';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
@@ -28,63 +27,52 @@
 	import {
 		findSolutionBySuffix,
 		generateLabelsForSolutionComparison,
-		generateSolutionSuffix,
 		onClickLegendForSolutionComparison,
 		resetLegendStateForSolutionComparison
 	} from '$lib/compareSolutions.svelte';
 	import { useURLParams, QUERY_PARAM_KEYS, addParametersToPath } from '$lib/queryParams.svelte';
-	import type { ActivatedSolution, Row } from '$lib/types';
-	import { addTransparency, nextColor, resetColorState } from '$lib/colors';
+	import type { ActivatedSolution, Entry, Row } from '$lib/types';
 	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
-	import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
-	import Entries, { type FilterCriteria } from '$lib/entries';
-	import {
-		fetchProductionData,
-		variables,
-		type ProductionComponent,
-		type VariableId
-	} from '$lib/productionData';
-	import { getInboundEdges, getTransportEdges, typedEntries } from '@/lib/utils';
+	import { fetchProductionData, variables, type VariableId } from '$lib/productionData';
+	import { typedEntries } from '$lib/utils';
 
 	import PiePlots from './PiePlots.svelte';
+	import { generateDatasetsAndPatterns, type Data, type Selection } from './processData';
 
 	useURLParams();
 
 	// Data
-	let data: Record<ProductionComponent, Entries>[] = $state([]);
+	let data: Data[] = $state([]);
 	let years: number[] = $state([]);
 	let nodes: string[] = $state([]);
 
 	// Selected values
-	let selectedSolutions: (ActivatedSolution | null)[] = $state([null]);
-	let selectedCarrier: string | null = $state(null);
-	let selectedShowVariable: Record<VariableId, boolean> = $state({
-		conversion: true,
-		storage: true,
-		transport: true,
-		importExport: true,
-		demandShedDemand: true
+	let selection: Selection = $state({
+		solutions: [null],
+		carrier: null,
+		showVariable: {
+			conversion: true,
+			storage: true,
+			transport: true,
+			importExport: true,
+			demandShedDemand: true
+		},
+		byTechnology: {
+			conversion: true,
+			storage: true,
+			transport: true,
+			importExport: false
+		},
+		byNode: {
+			transport: false
+		},
+		conversionTechnologies: [],
+		storageTechnologies: [],
+		transportTechnologies: [],
+		nodes: [],
+		years: [],
+		normalization: false
 	});
-	let selectedByTechnology: Partial<Record<VariableId, boolean>> = $state({
-		conversion: true,
-		storage: true,
-		transport: true,
-		importExport: false
-	});
-	let selectedByNode: Partial<Record<VariableId, boolean>> = $state({
-		transport: false
-	});
-	let selectedConversionTechnologies: string[] = $state([]);
-	let selectedStorageTechnologies: string[] = $state([]);
-	let selectedTransportTechnologies: string[] = $state([]);
-	let selectedTechnologies = $derived([
-		...selectedConversionTechnologies,
-		...selectedStorageTechnologies,
-		...selectedTransportTechnologies
-	]);
-	let selectedNormalization: boolean = $state(false);
-	let selectedNodes: string[] = $state([]);
-	let selectedYears: string[] = $state([]);
 
 	let activeYear: string | null = $state(null);
 	let activeSolution: string | null = $state(null);
@@ -97,24 +85,24 @@
 	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
 	let plotName: string = $derived.by(() => {
-		if (!selectedSolutions[0]?.solution_name || !selectedCarrier) return '';
+		if (!selection.solutions[0]?.solution_name || !selection.carrier) return '';
 		// Define filename of the plot when downloading.
-		let solution_names = selectedSolutions[0].solution_name.split('.');
+		let solution_names = selection.solutions[0].solution_name.split('.');
 		return [
 			solution_names[solution_names?.length - 1],
-			selectedSolutions[0].scenario_name,
-			selectedCarrier
+			selection.solutions[0].scenario_name,
+			selection.carrier
 		].join('_');
 	});
 
-	let hasSomeUnsetSolutions: boolean = $derived(selectedSolutions.some((s) => s === null));
+	let hasSomeUnsetSolutions: boolean = $derived(selection.solutions.some((s) => s === null));
 
 	// Units
 	let units: Row[] = $state([]);
 	let unit = $derived.by(() => {
 		let row = null;
-		if (!row && selectedCarrier) {
-			row = units.find((u) => u.carrier == selectedCarrier);
+		if (!row && selection.carrier) {
+			row = units.find((u) => u.carrier == selection.carrier);
 		}
 		if (!row) return '';
 		return row[0] || row.units || '';
@@ -124,8 +112,8 @@
 
 	//#region Plot config
 
-	let labels: string[] = $derived(selectedYears);
-	let labelSuffix = $derived(selectedNormalization ? '' : ` ${unit}`);
+	let labels: string[] = $derived(selection.years);
+	let labelSuffix = $derived(selection.normalization ? '' : ` ${unit}`);
 	function getPlotOptions(): ChartOptions<'bar'> {
 		return {
 			datasets: {
@@ -162,10 +150,10 @@
 					stacked: true,
 					title: {
 						display: true,
-						text: `Production` + (selectedNormalization ? '' : ` [${unit}]`)
+						text: `Production` + (selection.normalization ? '' : ` [${unit}]`)
 					},
-					max: selectedNormalization ? 1 : undefined,
-					suggestedMin: selectedNormalization ? -1 : undefined
+					max: selection.normalization ? 1 : undefined,
+					suggestedMin: selection.normalization ? -1 : undefined
 				}
 			},
 			interaction: {
@@ -211,12 +199,11 @@
 
 	//#region Carriers and technologies
 
-	// Carriers and technologies
 	let carriers: string[] = $derived.by(() => {
 		if (hasSomeUnsetSolutions) return [];
 
 		const setCarriers: Set<string> = new SvelteSet();
-		const solutions = selectedSolutions as ActivatedSolution[];
+		const solutions = selection.solutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
 			solution.detail.system.set_carriers.forEach((carrier) => setCarriers.add(carrier));
@@ -225,29 +212,29 @@
 	});
 
 	let conversionTechnologies = $derived.by(() => {
-		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
+		if (hasSomeUnsetSolutions || selection.carrier === null) return [];
 
 		const setTechnologies: Set<string> = new SvelteSet();
-		const solutions = selectedSolutions as ActivatedSolution[];
+		const solutions = selection.solutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
 			Object.entries(solution.detail.carriers_input)
 				.concat(Object.entries(solution.detail.carriers_output))
-				.filter((t) => selectedCarrier && t[1].includes(selectedCarrier))
+				.filter((t) => selection.carrier && t[1].includes(selection.carrier))
 				.forEach((t) => setTechnologies.add(t[0]));
 		});
 		return Array.from(setTechnologies).sort();
 	});
 
 	let storageTechnologies = $derived.by(() => {
-		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
+		if (hasSomeUnsetSolutions || selection.carrier === null) return [];
 
 		const setStorageTechnologies: Set<string> = new SvelteSet();
-		const solutions = selectedSolutions as ActivatedSolution[];
+		const solutions = selection.solutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
 			solution.detail.system.set_storage_technologies.forEach((tech) => {
-				if (solution.detail.reference_carrier[tech] !== selectedCarrier) {
+				if (solution.detail.reference_carrier[tech] !== selection.carrier) {
 					return;
 				}
 				setStorageTechnologies.add(tech);
@@ -257,14 +244,14 @@
 	});
 
 	let transportTechnologies = $derived.by(() => {
-		if (hasSomeUnsetSolutions || selectedCarrier === null) return [];
+		if (hasSomeUnsetSolutions || selection.carrier === null) return [];
 
 		const setTransportTechnologies: Set<string> = new SvelteSet();
-		const solutions = selectedSolutions as ActivatedSolution[];
+		const solutions = selection.solutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
 			solution.detail.system.set_transport_technologies.forEach((tech) => {
-				if (solution.detail.reference_carrier[tech] !== selectedCarrier) return;
+				if (solution.detail.reference_carrier[tech] !== selection.carrier) return;
 				setTransportTechnologies.add(tech);
 			});
 		});
@@ -282,15 +269,18 @@
 			case 'importExport':
 				return data.some((solutionData) => {
 					return (
-						solutionData.flow_import.some(({ index }) => index.carrier === selectedCarrier) ||
-						solutionData.flow_export.some(({ index }) => index.carrier === selectedCarrier)
+						solutionData.flow_import.some(
+							({ index }: Entry) => index.carrier === selection.carrier
+						) ||
+						solutionData.flow_export.some(({ index }: Entry) => index.carrier === selection.carrier)
 					);
 				});
 			case 'demandShedDemand':
 				return data.some((solutionData) => {
 					return (
-						solutionData.shed_demand.some(({ index }) => index.carrier === selectedCarrier) ||
-						solutionData.demand.some(({ index }) => index.carrier === selectedCarrier)
+						solutionData.shed_demand.some(
+							({ index }: Entry) => index.carrier === selection.carrier
+						) || solutionData.demand.some(({ index }: Entry) => index.carrier === selection.carrier)
 					);
 				});
 		}
@@ -303,10 +293,10 @@
 	$effect(() => {
 		carriers;
 		untrack(() => {
-			if (!selectedSolutions) return;
+			if (!selection.solutions) return;
 			// Keep the selected carrier if it is still available, otherwise select the first one.
-			if (selectedCarrier !== null && !carriers.includes(selectedCarrier)) {
-				selectedCarrier = null;
+			if (selection.carrier !== null && !carriers.includes(selection.carrier)) {
+				selection.carrier = null;
 			}
 		});
 	});
@@ -315,19 +305,19 @@
 
 	updateSelectionOnStateChanges(
 		() => nodes,
-		() => !!selectedSolutions,
+		() => !!selection.solutions,
 		() => previousNodes,
 		() => null,
-		(value) => (selectedNodes = value),
+		(value) => (selection.nodes = value),
 		(value) => (previousNodes = value),
 		() => {}
 	);
 	updateSelectionOnStateChanges(
 		() => years.map((y) => y.toString()),
-		() => !!selectedSolutions,
+		() => !!selection.solutions,
 		() => previousYears,
 		() => null,
-		(value) => (selectedYears = value),
+		(value) => (selection.years = value),
 		(value) => (previousYears = value),
 		() => {}
 	);
@@ -349,15 +339,15 @@
 	}
 
 	function getContextMenuItems(year: string, datasetIndex: number): ContextMenuItem[] {
-		const solution = findSolutionBySuffix(selectedSolutions, datasets[datasetIndex].stack);
-		if (!selectedCarrier || !solution) return [];
+		const solution = findSolutionBySuffix(selection.solutions, datasets[datasetIndex].stack);
+		if (!selection.carrier || !solution) return [];
 		return [
 			{
 				label: `Go to The Energy Balance - Nodal`,
 				href: addParametersToPath('/explorer/energy_balance/nodal/', {
 					[QUERY_PARAM_KEYS.solution]: solution.solution_name || '',
 					[QUERY_PARAM_KEYS.scenario]: solution.scenario_name || '',
-					[QUERY_PARAM_KEYS.carrier]: selectedCarrier,
+					[QUERY_PARAM_KEYS.carrier]: selection.carrier,
 					[QUERY_PARAM_KEYS.year]: year
 				})
 			},
@@ -368,16 +358,16 @@
 						[QUERY_PARAM_KEYS.solution]: solution.solution_name || '',
 						[QUERY_PARAM_KEYS.scenario]: solution.scenario_name || '',
 						[QUERY_PARAM_KEYS.year]: year
-					}) + `#${selectedCarrier}`
+					}) + `#${selection.carrier}`
 			}
 		];
 	}
 
-	//#region Fetch and process data
+	//#region Fetch data
 
 	$effect(() => {
-		selectedSolutions;
-		selectedCarrier;
+		selection.solutions;
+		selection.carrier;
 		untrack(() => {
 			fetchData();
 		});
@@ -385,257 +375,27 @@
 
 	// Fetch data from the API server for the current selection.
 	async function fetchData() {
-		if (hasSomeUnsetSolutions || selectedCarrier === null) {
+		if (hasSomeUnsetSolutions || selection.carrier === null) {
 			return;
 		}
 
 		fetching = true;
 
 		const response = await Promise.all(
-			selectedSolutions.map((solution) =>
-				fetchProductionData(solution!, selectedCarrier!, 'demand')
+			selection.solutions.map((solution) =>
+				fetchProductionData(solution!, selection.carrier!, 'demand')
 			)
 		);
 		// Remove UnitData from the responses
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
-		data = response.map(({ unit, ...res }) => res as Record<ProductionComponent, Entries>);
+		data = response.map(({ unit, ...res }) => res as Data);
 		units = response[0].unit?.data || [];
 
 		fetching = false;
 	}
 
-	// Process plot data
-	function processData(
-		initialEntries: Entries,
-		groupedByTechnology: boolean,
-		filterByTechnologies: boolean,
-		label: string,
-		suffix: string = '',
-		map_fn: (d: number) => number = (d) => d
-	): Entries {
-		if (!selectedCarrier) {
-			return Entries.empty;
-		}
-
-		const filterCriteria: FilterCriteria = {
-			carrier: [selectedCarrier],
-			node: selectedNodes
-		};
-		if (filterByTechnologies) {
-			filterCriteria['technology'] = selectedTechnologies;
-		}
-		const groupByColumns = groupedByTechnology ? ['technology'] : [];
-
-		let entries = initialEntries
-			.filterByCriteria(filterCriteria)
-			.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))))
-			.groupBy(groupByColumns)
-			.mapIndex((index) => ({
-				...index,
-				label: groupedByTechnology ? index.technology + suffix : label
-			}));
-
-		if (map_fn !== undefined) {
-			entries = entries.mapData(map_fn);
-		}
-
-		return entries;
-	}
-
-	function processTransportData(
-		flowTransport: Entries,
-		flowTransportLoss: Entries,
-		groupedByTechnology: boolean,
-		groupedByNode: boolean,
-		edges: Record<string, string>
-	): Entries[] {
-		const outgoingEdges = getTransportEdges(edges, selectedNodes, false);
-		const incomingEdges = getTransportEdges(edges, selectedNodes, true);
-		const inboundEdges = getInboundEdges(edges, selectedNodes);
-
-		// transport_in are all incoming flows, calculated as transport gain - transport loss
-		const transportGains = flowTransport.filterByCriteria({
-			technology: selectedTransportTechnologies,
-			edge: incomingEdges
-		});
-		const transportLosses = flowTransportLoss.filterByCriteria({
-			technology: selectedTransportTechnologies,
-			edge: incomingEdges
-		});
-		let positiveData = transportGains
-			.mapEntries((index, data) => {
-				// Find loss entry with the same technology and edge
-				const lossData = transportLosses.find(
-					(entry) => entry.index.technology === index.technology && entry.index.edge === index.edge
-				)?.data;
-				// If no corresponding loss data is found, return the original gain data
-				if (!lossData || lossData.length !== data.length) return { index, data };
-				// Subtract loss data from gain data
-				return { data: data.map((n, i) => n - lossData[i]), index };
-			})
-			.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))));
-
-		// transport_out are all outgoing flows
-		let negativeData = flowTransport
-			.filterByCriteria({
-				technology: selectedTransportTechnologies,
-				edge: outgoingEdges
-			})
-			.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))));
-
-		// compute transport loss within the selected nodes
-		let internalTransportLoss = flowTransportLoss
-			.filterByCriteria({
-				technology: selectedTransportTechnologies,
-				edge: inboundEdges
-			})
-			.filterDataByIndex(selectedYears.map((year) => years.indexOf(Number(year))));
-
-		// Generate labels based on grouping options
-		if (groupedByNode) {
-			positiveData = positiveData.mapIndex((index) => {
-				const [fromNode] = index.edge.split('-');
-				const label = groupedByTechnology
-					? `${index.technology} (transport in from ${fromNode})`
-					: `Transport in (from ${fromNode})`;
-				return {
-					...index,
-					label
-				};
-			});
-			negativeData = negativeData.mapIndex((index) => {
-				const [, toNode] = index.edge.split('-');
-				const label = groupedByTechnology
-					? `${index.technology} (transport out to ${toNode})`
-					: `Transport out (to ${toNode})`;
-				return {
-					...index,
-					label
-				};
-			});
-			internalTransportLoss = internalTransportLoss.mapIndex((index) => {
-				const label = groupedByTechnology
-					? `${index.technology} (internal transport loss)`
-					: `Internal transport loss`;
-				return {
-					...index,
-					label
-				};
-			});
-		} else {
-			positiveData = positiveData.mapIndex((index) => {
-				const label = groupedByTechnology ? `${index.technology} (transport in)` : `Transport in`;
-				return {
-					...index,
-					label
-				};
-			});
-			negativeData = negativeData.mapIndex((index) => {
-				const label = groupedByTechnology ? `${index.technology} (transport out)` : `Transport out`;
-				return {
-					...index,
-					label
-				};
-			});
-			internalTransportLoss = internalTransportLoss.mapIndex((index) => {
-				const label = groupedByTechnology
-					? `${index.technology} (internal transport loss)`
-					: `Internal transport loss`;
-				return {
-					...index,
-					label
-				};
-			});
-		}
-
-		// Group by label and negate values for negative data and transport loss
-		positiveData = positiveData.groupBy(['label']);
-		negativeData = negativeData.mapData((d) => -d).groupBy(['label']);
-		internalTransportLoss = internalTransportLoss.mapData((d) => -d).groupBy(['label']);
-
-		return [positiveData, negativeData, internalTransportLoss];
-	}
-
 	let [datasets, patterns]: [ChartDataset<'bar'>[], ColorBoxItem[]] = $derived.by(() => {
-		if (selectedNodes.length == 0 || selectedYears.length == 0 || data.length == 0) {
-			return [[], []];
-		}
-
-		resetColorState();
-		resetPatternState();
-		const patterns: ColorBoxItem[] = [];
-		let datasets: ChartDataset<'bar'>[] = selectedSolutions.flatMap((solution, i) => {
-			const rows = data[i];
-			if (!solution || !Object.keys(rows).length) {
-				return [];
-			}
-
-			// Process data for each variable and concatenate the resulting entries.
-			let entriesList: Entries[] = typedEntries(variables).flatMap(([id, variable]) => {
-				if (!selectedShowVariable[id]) {
-					return [];
-				}
-
-				let positiveData = rows[variable.positive];
-				let negativeData = rows[variable.negative];
-
-				// Handle transport data
-				if (id === 'transport') {
-					return processTransportData(
-						positiveData,
-						negativeData,
-						selectedByTechnology[id] ?? false,
-						selectedByNode[id] ?? false,
-						solution.detail.edges
-					);
-				}
-
-				let filteredPos: Entries = processData(
-					positiveData,
-					selectedByTechnology[id] ?? false,
-					variable.filterByTechnologies,
-					variable.positiveLabel,
-					variable.positiveSuffix
-				);
-				let filteredNeg: Entries = processData(
-					negativeData,
-					selectedByTechnology[id] ?? false,
-					variable.filterByTechnologies,
-					variable.negativeLabel,
-					variable.negativeSuffix,
-					(d) => -d
-				);
-
-				return [filteredPos, filteredNeg];
-			});
-			let entries = Entries.concatenate(entriesList);
-
-			// Normalize if selected
-			if (selectedNormalization) {
-				entries = entries.normalize();
-			}
-
-			// Convert to dataset format
-			let suffix = generateSolutionSuffix(solution);
-			let pattern = i > 0 ? nextPattern() : undefined;
-			patterns.push(createColorBoxItem(suffix, pattern));
-			return entries.toArray().map((entry) => {
-				const label = entry.index.label;
-				const color = nextColor(label);
-				return {
-					label,
-					data: entry.data,
-					borderColor: color,
-					backgroundColor:
-						pattern !== undefined
-							? drawPattern(pattern, addTransparency(color))
-							: addTransparency(color),
-					stack: suffix
-				} as ChartDataset<'bar'>;
-			});
-		});
-
-		return [datasets, patterns];
+		return generateDatasetsAndPatterns(data, selection, years);
 	});
 
 	//#endregion
@@ -649,7 +409,7 @@
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<MultiSolutionFilter
-				bind:solutions={selectedSolutions}
+				bind:solutions={selection.solutions}
 				bind:years
 				bind:nodes
 				bind:loading={solutionLoading}
@@ -661,13 +421,13 @@
 				<Dropdown
 					label="Carrier"
 					options={carriers}
-					bind:value={selectedCarrier}
+					bind:value={selection.carrier}
 					disabled={solutionLoading || fetching}
 					urlParam={QUERY_PARAM_KEYS.carrier}
 					unsetIfInvalid
 				></Dropdown>
 			</FilterSection>
-			{#if selectedCarrier !== null}
+			{#if selection.carrier !== null}
 				<FilterSection title="Production Component Selection">
 					{#each typedEntries(variables) as [id, variable] (id)}
 						{#if !hasDataForVariable(id)}
@@ -679,26 +439,26 @@
 							<div class="grid grid-cols-2">
 								<div>
 									<ToggleButton
-										bind:value={selectedShowVariable[id]}
+										bind:value={selection.showVariable[id]}
 										label={variable.title}
 										disabled={solutionLoading || fetching}
 										urlParam={variable.shortId}
 									></ToggleButton>
 								</div>
 								<div>
-									{#if variable.showByTechnology && selectedByTechnology[id] !== undefined}
+									{#if variable.showByTechnology && selection.byTechnology[id] !== undefined}
 										<ToggleButton
-											bind:value={selectedByTechnology[id]}
+											bind:value={selection.byTechnology[id]}
 											label="by technology"
-											disabled={!selectedShowVariable[id] || solutionLoading || fetching}
+											disabled={!selection.showVariable[id] || solutionLoading || fetching}
 											urlParam={`${variable.shortId}_sub`}
 										/>
 									{/if}
-									{#if variable.showByNode && selectedByNode[id] !== undefined}
+									{#if variable.showByNode && selection.byNode[id] !== undefined}
 										<ToggleButton
-											bind:value={selectedByNode[id]}
+											bind:value={selection.byNode[id]}
 											label="by node"
-											disabled={!selectedShowVariable[id] || solutionLoading || fetching}
+											disabled={!selection.showVariable[id] || solutionLoading || fetching}
 											urlParam={`${variable.shortId}_node`}
 										/>
 									{/if}
@@ -709,7 +469,7 @@
 				</FilterSection>
 				<FilterSection title="Technology Selection">
 					<MultiSelect
-						bind:value={selectedConversionTechnologies}
+						bind:value={selection.conversionTechnologies}
 						options={conversionTechnologies}
 						label="Conversion Technologies"
 						emptyText="No conversion technologies available."
@@ -717,7 +477,7 @@
 						urlParam={QUERY_PARAM_KEYS.conversionTechnologies}
 					></MultiSelect>
 					<MultiSelect
-						bind:value={selectedStorageTechnologies}
+						bind:value={selection.storageTechnologies}
 						options={storageTechnologies}
 						label="Storage Technologies"
 						emptyText="No storage technologies available."
@@ -725,7 +485,7 @@
 						urlParam={QUERY_PARAM_KEYS.storageTechnologies}
 					></MultiSelect>
 					<MultiSelect
-						bind:value={selectedTransportTechnologies}
+						bind:value={selection.transportTechnologies}
 						options={transportTechnologies}
 						label="Transport Technologies"
 						emptyText="No transport technologies available."
@@ -733,21 +493,21 @@
 						urlParam={QUERY_PARAM_KEYS.transportTechnologies}
 					></MultiSelect>
 				</FilterSection>
-				{#if selectedCarrier !== null}
+				{#if selection.carrier !== null}
 					<FilterSection title="Data Selection">
 						<ToggleButton
 							label="Normalization"
-							bind:value={selectedNormalization}
+							bind:value={selection.normalization}
 							disabled={solutionLoading || fetching}
 						></ToggleButton>
 						<MultiSelect
-							bind:value={selectedNodes}
+							bind:value={selection.nodes}
 							options={nodes}
 							label="Nodes"
 							disabled={solutionLoading || fetching}
 						></MultiSelect>
 						<MultiSelect
-							bind:value={selectedYears}
+							bind:value={selection.years}
 							options={years.map((y) => y.toString())}
 							label="Years"
 							disabled={solutionLoading || fetching}
@@ -767,7 +527,7 @@
 			<Spinner></Spinner>
 		{:else if hasSomeUnsetSolutions}
 			<WarningMessage message="Please select all solutions"></WarningMessage>
-		{:else if selectedCarrier == null}
+		{:else if selection.carrier == null}
 			<WarningMessage message="Please select a carrier"></WarningMessage>
 		{:else if datasets.length == 0}
 			<ErrorMessage message="No data with this selection"></ErrorMessage>

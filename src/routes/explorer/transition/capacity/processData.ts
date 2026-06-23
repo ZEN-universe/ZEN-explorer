@@ -46,7 +46,7 @@ export interface Selection {
  *  The callback should return an array of ChartDataset objects for that solution, which will be combined and returned by this function.
  * @returns an array of ChartDataset objects for all valid solutions, combined from the results of the callback function for each solution.
  */
-export function forEachValidSolution(
+export function flatMapValidSolutions(
 	data: Data,
 	selection: Selection,
 	patterns: ColorBoxItem[],
@@ -208,7 +208,7 @@ function generateCapacityDatasets(
 	selection: Selection,
 	patterns: ColorBoxItem[]
 ): ChartDataset<'bar'>[] {
-	return forEachValidSolution(
+	return flatMapValidSolutions(
 		data,
 		selection,
 		patterns,
@@ -237,7 +237,7 @@ function generateCapacityAdditionAndRetirementDatasets(
 	selection: Selection,
 	patterns: ColorBoxItem[]
 ): ChartDataset<'bar'>[] {
-	return forEachValidSolution(
+	return flatMapValidSolutions(
 		data,
 		selection,
 		patterns,
