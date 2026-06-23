@@ -22,7 +22,7 @@
 		Production: '/explorer/map/production/'
 	};
 
-	let currentPage = $derived(page.url.pathname.slice(0, -1));
+	let currentPage = $derived(page.url.pathname);
 
 	let showSidebarNav: boolean = $state(false);
 
@@ -79,7 +79,7 @@
 				<a
 					class={[
 						'text-lg font-semibold hover:text-gray-600 dark:hover:text-gray-400',
-						currentPage == '/explorer/energy_system' && 'border-b-2 pb-1'
+						currentPage == '/explorer/energy_system/' && 'border-b-2 pb-1'
 					]}
 					href={addCurrentSolutionToURL('/explorer/energy_system/', false)}>The Energy System</a
 				>
