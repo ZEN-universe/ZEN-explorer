@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ChartDataset, ChartOptions, ChartTypeRegistry, TooltipItem } from 'chart.js';
-	import { onMount, tick, untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
 
 	import ToggleButton from '$components/forms/ToggleButton.svelte';
@@ -14,36 +14,40 @@
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
+	import Radio from '$components/forms/Radio.svelte';
 
+	import { useURLParams } from '$lib/queryParams.svelte';
 	import { fetchFullTs } from '$lib/temple';
 	import { removeDuplicates } from '$lib/utils';
-	import { getURLParam, updateURLParams, useURLParams } from '$lib/queryParams.svelte';
-	import type { ActivatedSolution } from '$lib/types';
-	import { nextColor, resetColorState } from '$lib/colors';
-	import Entries from '$lib/entries';
-	import Radio from '$components/forms/Radio.svelte';
+	import { resetColorState } from '$lib/colors';
+
+	import {
+		computeDatasets,
+		WINDOW_SIZES,
+		type Data,
+		type DataComponents,
+		type Selection,
+		type WindowSize
+	} from './processData';
 
 	useURLParams();
 
-	// All but one data variable are non-reactive because of their size
-	let levelResponse: Entries | null = null;
-	let chargeResponse: Entries | null = null;
-	let dischargeResponse: Entries | null = null;
-	let spillageResponse: Entries | null = null;
-	let inflowResponse: Entries | null = null;
+	// State variables
+	let data: Data | null = null;
 	let responseUpdateTrigger: number = $state(0);
 	let units: { [carrier: string]: string } = $state({});
 
 	let years: number[] = $state([]);
-	const windowSizes: string[] = ['Hourly', 'Daily', 'Weekly', 'Monthly'];
 
-	let selectedSolution: ActivatedSolution | null = $state(null);
-	let selectedCarrier: string | null = $state(null);
-	let selectedYear: string | null = $state(null);
-	let selectedWindowSize: string = $state('Hourly');
-	let selectedSubdivision: boolean = $state(true);
-	let selectedTechnologies: string[] = $state([]);
-	let selectedLocations: string[] = $state([]);
+	let selection: Selection = $state({
+		solution: null,
+		carrier: null,
+		year: null,
+		windowSize: 'Hourly',
+		subdivision: true,
+		technologies: [],
+		nodes: []
+	});
 
 	let solutionLoading: boolean = $state(false);
 	let fetching: boolean = $state(false);
@@ -56,15 +60,15 @@
 	//#region Plot configuration
 
 	let plotName: string = $derived.by(() => {
-		if (!selectedSolution || !selectedSolution.solution_name) {
+		if (!selection.solution || !selection.solution.solution_name) {
 			return '';
 		}
-		let solutionNames = selectedSolution.solution_name.split('.');
+		let solutionNames = selection.solution.solution_name.split('.');
 		return [
 			solutionNames[solutionNames.length - 1],
-			selectedSolution.scenario_name,
+			selection.solution.scenario_name,
 			'storage_level',
-			selectedCarrier
+			selection.carrier
 		].join('_');
 	});
 	let plotNameFlows: string = $derived(plotName + '_flows');
@@ -77,8 +81,8 @@
 	// Time steps per year (for x-axis scaling)
 	let timeStepsPerYear: number = $state(0);
 	$effect(() => {
-		if (selectedSolution?.detail?.system.unaggregated_time_steps_per_year !== undefined) {
-			timeStepsPerYear = selectedSolution.detail.system.unaggregated_time_steps_per_year;
+		if (selection.solution?.detail?.system.unaggregated_time_steps_per_year !== undefined) {
+			timeStepsPerYear = selection.solution.detail.system.unaggregated_time_steps_per_year;
 		}
 	});
 
@@ -118,7 +122,7 @@
 						callback: (value) => Number(value).toFixed(0)
 					},
 					min: 0,
-					max: (selectedSolution?.detail?.system.unaggregated_time_steps_per_year || 0) - 1
+					max: (selection.solution?.detail?.system.unaggregated_time_steps_per_year || 0) - 1
 				},
 				y: {
 					stacked: true,
@@ -167,24 +171,24 @@
 
 	//#endregion
 
-	//#region Options for filters
+	//#region Nodes, carriers, and technologies
 
-	let locations: string[] = $derived.by(() => {
+	let nodes: string[] = $derived.by(() => {
 		responseUpdateTrigger;
-		if (!levelResponse) {
+		if (!data) {
 			return [];
 		}
-		return removeDuplicates(levelResponse.entries.map((a) => a.index.node)).sort();
+		return removeDuplicates(data.storage_level.entries.map((a) => a.index.node)).sort();
 	});
 
 	let carriers: string[] = $derived.by(() => {
-		if (!selectedSolution) {
+		if (!selection.solution) {
 			return [];
 		}
 
 		const set: Set<string> = new SvelteSet();
-		selectedSolution.detail.system.set_storage_technologies.forEach((tech) => {
-			const carrier = selectedSolution!.detail.reference_carrier[tech];
+		selection.solution.detail.system.set_storage_technologies.forEach((tech) => {
+			const carrier = selection.solution!.detail.reference_carrier[tech];
 			if (carrier) set.add(carrier);
 		});
 		return Array.from(set).sort();
@@ -192,127 +196,64 @@
 
 	let technologies: string[] = $derived.by(() => {
 		responseUpdateTrigger;
-		if (!levelResponse || !selectedSolution || carriers.length === 0) {
+		if (!data || !selection.solution || carriers.length === 0) {
 			return [];
 		}
-		let allTechnologies = removeDuplicates(levelResponse.entries.map((a) => a.index.technology));
+		let allTechnologies = removeDuplicates(
+			data.storage_level.entries.map((a) => a.index.technology)
+		);
 		return allTechnologies.filter(
-			(technology) => selectedSolution!.detail.reference_carrier[technology] == selectedCarrier
+			(technology) => selection.solution!.detail.reference_carrier[technology] == selection.carrier
 		);
 	});
 
-	$effect(() => {
-		technologies;
-		untrack(() => {
-			selectedTechnologies = technologies;
-		});
-	});
-
-	$effect(() => {
-		locations;
-		untrack(() => {
-			selectedLocations = locations;
-		});
-	});
-
-	$effect(() => {
-		carriers;
-		untrack(() => {
-			if (selectedSolution === null || selectedCarrier === null) return;
-			else if (!carriers.includes(selectedCarrier)) {
-				selectedCarrier = null;
-			}
-		});
-	});
-
-	$effect(() => {
-		years;
-		untrack(() => {
-			if (selectedSolution === null || selectedYear === null) return;
-			else if (!years.includes(Number(selectedYear))) {
-				selectedYear = null;
-			}
-		});
-	});
-
-	$effect(() => {
-		// Triggers
-		selectedCarrier;
-		selectedSubdivision;
-		selectedTechnologies;
-		selectedLocations;
-		untrack(updateDatasets);
-	});
-
 	//#endregion
 
-	//#region Synchronize URL Parameters
-
-	// Set URL parameters
-	onMount(() => {
-		selectedCarrier = getURLParam('car') || selectedCarrier;
-		selectedYear = getURLParam('year') || selectedYear;
-		selectedWindowSize = getURLParam('window') || selectedWindowSize;
-	});
+	//#region Fetch data
 
 	$effect(() => {
-		// Triggers
-		selectedYear;
-		selectedCarrier;
-		selectedWindowSize;
-
-		tick().then(() => {
-			updateURLParams({
-				year: selectedYear,
-				car: selectedCarrier,
-				window: selectedWindowSize
-			});
-		});
+		selection.solution;
+		selection.year;
+		selection.carrier;
+		selection.windowSize;
+		tick().then(fetchData);
 	});
 
-	//#endregion
-
-	$effect(() => {
-		fetchData();
-	});
-
-	//#region Data fetching and processing
+	const WINDOW_SIZE_TO_HOURS_MAP: Record<WindowSize, number> = {
+		Hourly: 1,
+		Daily: 24,
+		Weekly: 168,
+		Monthly: 720
+	};
 
 	async function fetchData() {
-		if (selectedSolution === null || selectedYear === null || selectedCarrier === null) {
+		if (selection.solution === null || selection.year === null || selection.carrier === null) {
 			return;
 		}
 
 		fetching = true;
 
-		let windowSize =
-			{
-				Daily: 24,
-				Weekly: 168,
-				Monthly: 720
-			}[selectedWindowSize] || 1; // Default to hourly (1 hour)
+		const components: DataComponents[] = [
+			'storage_level',
+			'flow_storage_charge',
+			'flow_storage_discharge',
+			'flow_storage_spillage',
+			'flow_storage_inflow'
+		];
 
 		const response = await fetchFullTs(
-			selectedSolution.solution_name,
-			[
-				'storage_level',
-				'flow_storage_charge',
-				'flow_storage_discharge',
-				'flow_storage_spillage',
-				'flow_storage_inflow'
-			],
-			selectedSolution.scenario_name,
+			selection.solution.solution_name,
+			components,
+			selection.solution.scenario_name,
 			'storage_level',
-			Number(selectedYear),
-			windowSize,
-			selectedCarrier
+			Number(selection.year),
+			WINDOW_SIZE_TO_HOURS_MAP[selection.windowSize],
+			selection.carrier
 		);
 
-		levelResponse = response.components.storage_level || null;
-		chargeResponse = response.components.flow_storage_charge || null;
-		dischargeResponse = response.components.flow_storage_discharge || null;
-		spillageResponse = response.components.flow_storage_spillage || null;
-		inflowResponse = response.components.flow_storage_inflow || null;
+		data = Object.fromEntries(
+			components.map((component) => [component, response.components[component]])
+		) as Data;
 		responseUpdateTrigger++;
 
 		if (response.unit?.data) {
@@ -323,6 +264,18 @@
 		updateDatasets();
 	}
 
+	//#endregion
+
+	//#region Data processing
+
+	$effect(() => {
+		// Triggers
+		selection.subdivision;
+		selection.technologies;
+		selection.nodes;
+		tick().then(updateDatasets);
+	});
+
 	let labels: string[] = $derived.by(() => {
 		return Array.from({ length: numberOfTimeSteps }, (_, i) => i.toString());
 	});
@@ -332,111 +285,6 @@
 	let levelDatasetsLength: number = $state(0);
 	let numberOfTimeSteps: number = $state(0);
 
-	function computeDatasets(): [ChartDataset[], ChartDataset[]] {
-		if (
-			selectedSolution === null ||
-			fetching ||
-			selectedLocations.length == 0 ||
-			selectedTechnologies.length == 0 ||
-			!levelResponse ||
-			!chargeResponse ||
-			!dischargeResponse ||
-			!inflowResponse ||
-			!spillageResponse
-		) {
-			return [[], []];
-		}
-
-		const components = [
-			{
-				data: chargeResponse,
-				labelSuffix: '_charge',
-				labelAggregated: 'Flow Storage Charge',
-				negate: false,
-				aggregatedColor: 'rgb(54, 162, 235)',
-				aggregatedBackgroundColor: undefined
-			},
-			{
-				data: dischargeResponse,
-				labelSuffix: '_discharge',
-				labelAggregated: 'Flow Storage Discharge',
-				negate: true,
-				aggregatedColor: 'rgb(255, 99, 132)',
-				aggregatedBackgroundColor: undefined
-			},
-			{
-				data: inflowResponse,
-				labelSuffix: '_inflow',
-				labelAggregated: 'Flow Storage Inflow',
-				negate: false,
-				aggregatedColor: 'rgb(75, 192, 192)',
-				aggregatedBackgroundColor: undefined
-			},
-			{
-				data: spillageResponse,
-				labelSuffix: '_spillage',
-				labelAggregated: 'Flow Storage Spillage',
-				negate: true,
-				aggregatedColor: 'rgb(255, 99, 132)',
-				aggregatedBackgroundColor: undefined
-			}
-		];
-
-		return [
-			convertToDatasets({
-				data: levelResponse,
-				labelSuffix: '',
-				labelAggregated: 'Storage Level',
-				negate: false,
-				aggregatedColor: 'rgb(0, 0, 0)',
-				aggregatedBackgroundColor: 'rgba(0, 0, 0, 0.2)'
-			}),
-			components.flatMap(convertToDatasets)
-		];
-	}
-
-	function convertToDatasets({
-		data,
-		labelSuffix,
-		labelAggregated,
-		negate,
-		aggregatedColor,
-		aggregatedBackgroundColor
-	}: {
-		data: Entries;
-		labelSuffix: string;
-		labelAggregated: string;
-		negate: boolean;
-		aggregatedColor: string;
-		aggregatedBackgroundColor?: string;
-	}) {
-		let entries = data
-			.filterByCriteria({
-				technology: selectedTechnologies,
-				node: selectedLocations
-			})
-			.groupBy(selectedSubdivision ? ['technology'] : []);
-
-		if (negate) {
-			entries = entries.mapData((value) => -value);
-		}
-
-		return entries.toArray().map((entry) => {
-			const color = selectedSubdivision ? nextColor() : aggregatedColor;
-
-			return {
-				data: entry.data.map((value, i) => ({ x: i, y: value })),
-				label: selectedSubdivision ? entry.index.technology + labelSuffix : labelAggregated,
-				type: 'line',
-				fill: 'origin',
-				stepped: true,
-				borderColor: color,
-				backgroundColor:
-					selectedSubdivision || !aggregatedBackgroundColor ? color : aggregatedBackgroundColor
-			} as ChartDataset<'bar' | 'line'>;
-		});
-	}
-
 	/**
 	 * Update the datasets for the charts.
 	 * This function is called when any data or filters change.
@@ -444,18 +292,14 @@
 	 */
 	async function updateDatasets() {
 		resetColorState();
-		[levelDatasets, flowDatasets] = computeDatasets();
+		[levelDatasets, flowDatasets] = computeDatasets(data, selection);
 		levelDatasetsLength = levelDatasets.length;
 		numberOfTimeSteps = levelDatasetsLength > 0 ? levelDatasets[0].data.length : 0;
 
 		await tick();
 
-		if (levelPlot) {
-			levelPlot.updateChart();
-		}
-		if (flowPlot) {
-			flowPlot.updateChart();
-		}
+		levelPlot?.updateChart();
+		flowPlot?.updateChart();
 	}
 
 	//#endregion
@@ -469,34 +313,37 @@
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
-				bind:selectedSolution
+				bind:selectedSolution={selection.solution}
 				bind:loading={solutionLoading}
 				bind:years
 				disabled={fetching || solutionLoading}
 			/>
 		</FilterSection>
-		{#if selectedSolution !== null}
+		{#if selection.solution !== null}
 			<FilterSection title="Variable Selection">
 				<Dropdown
 					options={carriers}
-					bind:value={selectedCarrier}
+					bind:value={selection.carrier}
 					label="Carrier"
 					disabled={fetching || solutionLoading}
+					urlParam="car"
 				></Dropdown>
-				{#if selectedCarrier !== null}
+				{#if selection.carrier !== null}
 					<Dropdown
 						options={years.map((year) => year.toString())}
-						bind:value={selectedYear}
+						bind:value={selection.year}
 						label="Year"
 						disabled={fetching || solutionLoading}
+						urlParam="year"
 					></Dropdown>
 				{/if}
-				{#if selectedCarrier !== null && selectedYear !== null}
+				{#if selection.carrier !== null && selection.year !== null}
 					<Radio
-						options={windowSizes}
-						bind:value={selectedWindowSize}
+						options={WINDOW_SIZES}
+						bind:value={selection.windowSize}
 						label="Smoothing Window Size"
 						disabled={fetching || solutionLoading}
+						urlParam="window"
 					>
 						{#snippet helpText()}
 							Visualize the rolling average of hourly values over a longer time period.
@@ -504,10 +351,10 @@
 					</Radio>
 				{/if}
 			</FilterSection>
-			{#if selectedSolution !== null && selectedCarrier !== null && selectedYear !== null}
+			{#if selection.solution !== null && selection.carrier !== null && selection.year !== null}
 				<FilterSection title="Data Selection">
 					<ToggleButton
-						bind:value={selectedSubdivision}
+						bind:value={selection.subdivision}
 						label="Technology Subdivision"
 						disabled={fetching || solutionLoading}
 					>
@@ -517,13 +364,13 @@
 					</ToggleButton>
 					<MultiSelect
 						options={technologies}
-						bind:value={selectedTechnologies}
+						bind:value={selection.technologies}
 						label="Technologies"
 						disabled={fetching || solutionLoading}
 					></MultiSelect>
 					<MultiSelect
-						options={locations}
-						bind:value={selectedLocations}
+						options={nodes}
+						bind:value={selection.nodes}
 						label="Nodes"
 						disabled={fetching || solutionLoading}
 					></MultiSelect>
@@ -540,18 +387,18 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if selectedSolution == null}
+		{:else if selection.solution == null}
 			<WarningMessage message="Please select a solution"></WarningMessage>
 		{:else if carriers.length == 0}
 			<ErrorMessage message="No carriers with this selection"></ErrorMessage>
-		{:else if selectedCarrier == null}
+		{:else if selection.carrier == null}
 			<WarningMessage message="Please select a carrier"></WarningMessage>
-		{:else if selectedYear == null}
+		{:else if selection.year == null}
 			<WarningMessage message="Please select a year"></WarningMessage>
 		{:else if technologies.length == 0}
 			<ErrorMessage message="No technologies with this selection"></ErrorMessage>
-		{:else if locations.length == 0}
-			<ErrorMessage message="No locations with this selection"></ErrorMessage>
+		{:else if nodes.length == 0}
+			<ErrorMessage message="No nodes with this selection"></ErrorMessage>
 		{:else if levelDatasetsLength == 0}
 			<ErrorMessage message="No data available for this selection"></ErrorMessage>
 		{:else}
