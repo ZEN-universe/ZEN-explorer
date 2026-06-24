@@ -5,7 +5,7 @@
 		getDataForActiveYear,
 		getPlotOptions,
 		hasMultipleSolutions as hasMultipleSolutionsFn
-	} from '@/lib/piePlots';
+	} from '$lib/piePlots';
 	import type { ChartDataset } from 'chart.js';
 
 	interface Props {

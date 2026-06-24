@@ -1,6 +1,6 @@
 <script lang="ts">
 	import FilterLabel from '$components/FilterLabel.svelte';
-	import { getURLParam, updateURLParam } from '@/lib/queryParams.svelte';
+	import { getURLParam, updateURLParam } from '$lib/queryParams.svelte';
 	import { onMount, tick, type Snippet } from 'svelte';
 
 	interface Props {

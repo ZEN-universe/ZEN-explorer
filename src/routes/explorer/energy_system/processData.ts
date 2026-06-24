@@ -1,8 +1,8 @@
 import type { LegendItem } from '$components/SankeyDiagram.svelte';
-import { nextColor, resetColorState } from '@/lib/colors';
-import type Entries from '@/lib/entries';
-import type { ActivatedSolution, Entry, PartialSankeyLink, Row, SankeyNode } from '@/lib/types';
-import { getTransportEdges } from '@/lib/utils';
+import { nextColor, resetColorState } from '$lib/colors';
+import type Entries from '$lib/entries';
+import type { ActivatedSolution, Entry, PartialSankeyLink, Row, SankeyNode } from '$lib/types';
+import { getTransportEdges } from '$lib/utils';
 
 export type Component =
 	| 'conversionInput'

@@ -2,7 +2,7 @@
 	import FilterLabel from '$components/FilterLabel.svelte';
 	import { onMount, tick, type Snippet } from 'svelte';
 	import Select from './Select.svelte';
-	import { getURLParam, updateURLParam } from '@/lib/queryParams.svelte';
+	import { getURLParam, updateURLParam } from '$lib/queryParams.svelte';
 
 	interface Props {
 		options: ({ label: string; value: string } | string)[];

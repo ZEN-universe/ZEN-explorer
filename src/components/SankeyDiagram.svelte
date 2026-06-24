@@ -26,8 +26,8 @@
 	} from '$lib/sankeyDiagram';
 	import { exportAsSVG } from '$lib/export';
 	import { debounce } from '$lib/debounce';
-	import { EPS } from '@/lib/constants';
-	import { getURLHash, removeURLHash, updateURLHash } from '@/lib/queryParams.svelte';
+	import { EPS } from '$lib/constants';
+	import { getURLHash, removeURLHash, updateURLHash } from '$lib/queryParams.svelte';
 
 	import Tooltip from './Tooltip.svelte';
 	import ContentBox from './ContentBox.svelte';

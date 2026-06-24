@@ -2,10 +2,10 @@
 	import type { ActivatedSolution } from '$lib/types';
 	import { AVAILABLE_MAPS } from '$lib/constants';
 	import { removeDuplicates } from '$lib/utils';
-	import { fetchProductionData, type ProductionComponent } from '@/lib/productionData';
-	import Entries from '@/lib/entries';
-	import { onValueChange } from '@/lib/onValueChange.svelte';
-	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
+	import { fetchProductionData, type ProductionComponent } from '$lib/productionData';
+	import Entries from '$lib/entries';
+	import { onValueChange } from '$lib/onValueChange.svelte';
+	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
 
 	import Dropdown from '$components/forms/Dropdown.svelte';
 	import SolutionFilter from '$components/solutions/SolutionFilter.svelte';

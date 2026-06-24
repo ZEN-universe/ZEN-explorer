@@ -16,7 +16,7 @@
 	import { fetchTotal } from '$lib/temple';
 	import type { Row, SankeyNode, PartialSankeyLink, RawSankeyNode } from '$lib/types';
 	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
-	import { generateSolutionSuffix } from '@/lib/compareSolutions.svelte';
+	import { generateSolutionSuffix } from '$lib/compareSolutions.svelte';
 	import ToggleButton from '$components/forms/ToggleButton.svelte';
 	import { computeSankeyData, type Component, type Selection } from './processData';
 

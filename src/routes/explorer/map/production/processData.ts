@@ -1,10 +1,10 @@
 import type { MapPlotData } from '$components/MapPlot.svelte';
-import { EPS } from '@/lib/constants';
-import Entries from '@/lib/entries';
-import type { FilterCriteria } from '@/lib/entries';
-import { variables, type ProductionComponent } from '@/lib/productionData';
-import type { ActivatedSolution } from '@/lib/types';
-import { getTransportEdges, typedEntries } from '@/lib/utils';
+import { EPS } from '$lib/constants';
+import Entries from '$lib/entries';
+import type { FilterCriteria } from '$lib/entries';
+import { variables, type ProductionComponent } from '$lib/productionData';
+import type { ActivatedSolution } from '$lib/types';
+import { getTransportEdges, typedEntries } from '$lib/utils';
 
 export type EnergyType = 'production' | 'consumption';
 

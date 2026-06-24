@@ -1,14 +1,14 @@
 import { draw as drawPattern } from 'patternomaly';
 import type { ChartDataset } from 'chart.js';
 
+import { nextColor, addTransparency, resetColorState } from '$lib/colors';
+import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
+import Entries from '$lib/entries';
+import { generateSolutionSuffix } from '$lib/compareSolutions.svelte';
+import type { FilterCriteria } from '$lib/entries';
+import type { ShapeType } from '$lib/patterns';
+import type { ActivatedSolution, Index } from '$lib/types';
 import type { ColorBoxItem } from '$components/ColorBox.svelte';
-import { nextColor, addTransparency, resetColorState } from '@/lib/colors';
-import { createColorBoxItem, nextPattern, resetPatternState } from '@/lib/patterns';
-import type { FilterCriteria } from '@/lib/entries';
-import Entries from '@/lib/entries';
-import type { ShapeType } from '@/lib/patterns';
-import type { ActivatedSolution, Index } from '@/lib/types';
-import { generateSolutionSuffix } from '@/lib/compareSolutions.svelte';
 
 export type Variable = 'capacity' | 'capacity_addition';
 export type TechnologyType = 'conversion' | 'storage' | 'transport';

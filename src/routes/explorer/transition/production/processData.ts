@@ -1,13 +1,13 @@
 import { draw as drawPattern } from 'patternomaly';
-import Entries, { type FilterCriteria } from '@/lib/entries';
+import Entries, { type FilterCriteria } from '$lib/entries';
 import type { ColorBoxItem } from '$components/ColorBox.svelte';
-import { variables, type ProductionComponent, type VariableId } from '@/lib/productionData';
-import type { ActivatedSolution } from '@/lib/types';
+import { variables, type ProductionComponent, type VariableId } from '$lib/productionData';
+import type { ActivatedSolution } from '$lib/types';
 import type { ChartDataset } from 'chart.js';
-import { getInboundEdges, getTransportEdges, typedEntries } from '@/lib/utils';
-import { addTransparency, nextColor, resetColorState } from '@/lib/colors';
-import { createColorBoxItem, nextPattern, resetPatternState } from '@/lib/patterns';
-import { generateSolutionSuffix } from '@/lib/compareSolutions.svelte';
+import { getInboundEdges, getTransportEdges, typedEntries } from '$lib/utils';
+import { addTransparency, nextColor, resetColorState } from '$lib/colors';
+import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
+import { generateSolutionSuffix } from '$lib/compareSolutions.svelte';
 
 export type Data = Record<ProductionComponent, Entries>;
 

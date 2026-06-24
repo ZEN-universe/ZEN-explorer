@@ -5,8 +5,8 @@
 		getDataForActiveYear,
 		getPlotOptions,
 		hasMultipleSolutions as hasMultipleSolutionsFn
-	} from '@/lib/piePlots';
-	import { getURLParam, QUERY_PARAM_KEYS, updateURLParam } from '@/lib/queryParams.svelte';
+	} from '$lib/piePlots';
+	import { getURLParam, QUERY_PARAM_KEYS, updateURLParam } from '$lib/queryParams.svelte';
 	import type { ChartDataset } from 'chart.js';
 	import { onMount } from 'svelte';
 

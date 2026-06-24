@@ -27,8 +27,8 @@
 	} from '$lib/compareSolutions.svelte';
 	import type { ActivatedSolution } from '$lib/types';
 	import { removeDuplicates } from '$lib/utils';
-	import Entries from '@/lib/entries';
-	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
+	import Entries from '$lib/entries';
+	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
 
 	import type {
 		Variable,

@@ -1,7 +1,7 @@
 import type { MapPlotData } from '$components/MapPlot.svelte';
-import { EPS } from '@/lib/constants';
-import Entries, { type FilterCriteria } from '@/lib/entries';
-import type { ActivatedSolution } from '@/lib/types';
+import { EPS } from '$lib/constants';
+import Entries, { type FilterCriteria } from '$lib/entries';
+import type { ActivatedSolution } from '$lib/types';
 
 export type TechnologyType = 'conversion' | 'storage';
 export type StorageType = 'energy' | 'power';

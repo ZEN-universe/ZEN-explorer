@@ -1,17 +1,18 @@
 <script lang="ts" generics="Type extends ChartType = ChartType">
 	import BaseChart from 'chart.js/auto';
 	import zoomPlugin from 'chartjs-plugin-zoom';
-	import type { Action } from 'svelte/action';
+	import ChartDataLabelsPlugin from 'chartjs-plugin-datalabels';
 	import { onDestroy, onMount, tick } from 'svelte';
 	import type { ChartDataset, ChartOptions, ChartType, LegendItem, Plugin } from 'chart.js/auto';
-	import ChartDataLabelsPlugin from 'chartjs-plugin-datalabels';
+	import type { Action } from 'svelte/action';
+
+	import { getTheme } from '$lib/theme.svelte';
+	import { getHiddenPatterns, onClickPattern } from '$lib/compareSolutions.svelte';
 
 	import ColorBox, { type ColorBoxItem } from '$components/ColorBox.svelte';
-	import HelpTooltip from './HelpTooltip.svelte';
-	import ContentBox from './ContentBox.svelte';
-	import { getTheme } from '@/lib/theme.svelte';
-	import { getHiddenPatterns, onClickPattern } from '@/lib/compareSolutions.svelte';
-	import ContextMenu, { type ContextMenuItem } from './ContextMenu.svelte';
+	import HelpTooltip from '$components/HelpTooltip.svelte';
+	import ContentBox from '$components/ContentBox.svelte';
+	import ContextMenu, { type ContextMenuItem } from '$components/ContextMenu.svelte';
 
 	BaseChart.register(zoomPlugin);
 

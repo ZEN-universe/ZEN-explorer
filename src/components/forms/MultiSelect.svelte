@@ -5,7 +5,7 @@
 		encodeValueForURL,
 		getURLParam,
 		updateURLParam
-	} from '@/lib/queryParams.svelte';
+	} from '$lib/queryParams.svelte';
 	import Select from './Select.svelte';
 	import { onMount, tick, untrack } from 'svelte';
 
@@ -16,7 +16,6 @@
 		emptyText?: string;
 		disabled?: boolean;
 		urlParam?: string;
-		default?: string[] | null;
 		onUpdate?: (value: string[]) => void;
 	}
 
@@ -87,9 +86,7 @@
 	$effect(() => {
 		options;
 		untrack(() => {
-			if (!urlParam) return;
-
-			if (urlParams !== null) {
+			if (urlParam && urlParams !== null) {
 				// First check if we've already used our URL params.
 				value = urlParams;
 				onUpdate(value);

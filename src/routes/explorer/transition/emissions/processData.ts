@@ -6,9 +6,9 @@ import type { ActivatedSolution } from '$lib/types';
 
 import type { ColorBoxItem } from '$components/ColorBox.svelte';
 import type { FilterCriteria } from '$lib/entries';
-import { addTransparency, nextColor, resetColorState } from '@/lib/colors';
-import { createColorBoxItem, nextPattern, resetPatternState } from '@/lib/patterns';
-import { generateSolutionSuffix } from '@/lib/compareSolutions.svelte';
+import { addTransparency, nextColor, resetColorState } from '$lib/colors';
+import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
+import { generateSolutionSuffix } from '$lib/compareSolutions.svelte';
 
 export const components = [
 	'carbon_emissions_technology',

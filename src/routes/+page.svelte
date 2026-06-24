@@ -6,7 +6,7 @@
 	import ToggleThemeButton from '$components/ToggleThemeButton.svelte';
 	import ContentBox from '$components/ContentBox.svelte';
 	import RRELogo from '$components/RRELogo.svelte';
-	import { getTheme } from '@/lib/theme.svelte';
+	import { getTheme } from '$lib/theme.svelte';
 	import { fade } from 'svelte/transition';
 
 	let nav: HTMLElement;

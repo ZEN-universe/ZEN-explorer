@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount, tick, type Snippet } from 'svelte';
 
-	import { getURLParam, updateURLParam } from '@/lib/queryParams.svelte';
+	import { getURLParam, updateURLParam } from '$lib/queryParams.svelte';
 
 	import FilterLabel from '$components/FilterLabel.svelte';
 

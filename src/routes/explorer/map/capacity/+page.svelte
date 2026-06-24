@@ -16,9 +16,9 @@
 	import { fetchTotal } from '$lib/temple';
 	import { AVAILABLE_MAPS } from '$lib/constants';
 	import { removeDuplicates } from '$lib/utils';
-	import Entries from '@/lib/entries';
-	import { onValueChange } from '@/lib/onValueChange.svelte';
-	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '@/lib/queryParams.svelte';
+	import Entries from '$lib/entries';
+	import { onValueChange } from '$lib/onValueChange.svelte';
+	import { addParametersToPath, QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
 
 	import {
 		computePieData,
