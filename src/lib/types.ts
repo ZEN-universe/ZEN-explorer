@@ -90,20 +90,6 @@ export interface Entry {
 	data: number[];
 }
 
-export interface EnergyBalanceDataframes {
-	demand: Entries;
-	flow_conversion_input: Entries;
-	flow_export: Entries;
-	flow_import: Entries;
-	flow_storage_charge: Entries;
-	flow_storage_discharge: Entries;
-	flow_transport_in: Entries;
-	flow_transport_out: Entries;
-	flow_conversion_output: Entries;
-	shed_demand: Entries;
-	constraint_nodal_energy_balance: Entries;
-}
-
 export interface Dataset {
 	label: string;
 	data: Record<string, number>;
@@ -121,6 +107,21 @@ export interface ComponentTimeSeries<T extends string = string> {
 	unit: ParseResult<Row> | null;
 	components: Record<T, Entries>;
 }
+
+export type NodalComponent =
+	| 'demand'
+	| 'flow_conversion_input'
+	| 'flow_export'
+	| 'flow_import'
+	| 'flow_storage_charge'
+	| 'flow_storage_discharge'
+	| 'flow_transport_in'
+	| 'flow_transport_out'
+	| 'flow_conversion_output'
+	| 'shed_demand'
+	| 'constraint_nodal_energy_balance';
+
+export type NodalData = Record<NodalComponent, Entries>;
 
 export interface SankeyNode {
 	/** Identifier for the node */

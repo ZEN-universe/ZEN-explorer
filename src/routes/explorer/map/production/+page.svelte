@@ -158,7 +158,7 @@
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
 				bind:years
-				bind:selected_solution={selectedSolution}
+				bind:selectedSolution
 				bind:loading={solutionLoading}
 				solutionSelected={refreshData}
 				disabled={fetching || solutionLoading}

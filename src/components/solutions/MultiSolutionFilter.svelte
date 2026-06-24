@@ -170,7 +170,7 @@
 				>
 					<SolutionFilter
 						bind:this={solutionFilters[idx]}
-						bind:selected_solution={solutions[idx]}
+						bind:selectedSolution={solutions[idx]}
 						bind:activeFirstLevel
 						bind:activeSecondLevel={activeSecondLevels[idx]}
 						bind:activeScenario={activeScenarios[idx]}

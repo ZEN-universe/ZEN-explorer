@@ -20,7 +20,7 @@
 		carriers?: string[];
 		nodes?: string[];
 		years?: number[];
-		selected_solution: ActivatedSolution | null;
+		selectedSolution: ActivatedSolution | null;
 		activeFirstLevel?: string;
 		activeSecondLevel?: string;
 		activeScenario?: string;
@@ -37,7 +37,7 @@
 		carriers = $bindable([]),
 		nodes = $bindable([]),
 		years = $bindable([]),
-		selected_solution: selectedSolution = $bindable(),
+		selectedSolution = $bindable(),
 		activeFirstLevel = $bindable(''),
 		activeSecondLevel = $bindable(''),
 		activeScenario = $bindable(''),

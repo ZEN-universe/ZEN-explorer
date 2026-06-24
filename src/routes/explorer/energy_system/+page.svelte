@@ -161,7 +161,7 @@
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
 				bind:years
-				bind:selected_solution={selection.solution}
+				bind:selectedSolution={selection.solution}
 				bind:carriers
 				bind:nodes
 				bind:loading={solutionLoading}

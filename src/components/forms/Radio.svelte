@@ -4,7 +4,7 @@
 	import { onMount, tick, type Snippet } from 'svelte';
 
 	interface Props {
-		options: ({ value: string; label: string } | string)[];
+		options: readonly ({ value: string; label: string } | string)[];
 		value: string;
 		label: string;
 		helpText?: Snippet;

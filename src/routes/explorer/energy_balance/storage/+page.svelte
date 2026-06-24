@@ -469,7 +469,7 @@
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
-				bind:selected_solution={selectedSolution}
+				bind:selectedSolution
 				bind:loading={solutionLoading}
 				bind:years
 				disabled={fetching || solutionLoading}

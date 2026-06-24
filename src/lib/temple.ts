@@ -1,15 +1,17 @@
 import { env } from '$env/dynamic/public';
-import Papa, { type ParseResult } from 'papaparse';
+import Entries from './entries';
+import { typedEntries } from './utils';
+import { parseCSV, parseTimeseriesData, parseUnitData } from './parser';
+
 import type {
 	Solution,
 	ComponentTotal,
 	SolutionDetail,
-	EnergyBalanceDataframes,
-	Row,
+	NodalComponent,
+	NodalData,
 	TimeSeriesResponseEntry,
 	ComponentTimeSeries
 } from '$lib/types';
-import Entries from './entries';
 
 /**
  * Helper function to fetch the solutions/list endpoint of the temple
@@ -110,7 +112,7 @@ export async function fetchTotal<T extends string>(
 			continue;
 		}
 
-		component_data[key] = filterOutZeroRows(parseCSV(component_data[key]));
+		component_data[key] = parseCSV(component_data[key]);
 	}
 	component_data.unit = parseUnitData(component_data.unit || '');
 
@@ -183,15 +185,15 @@ export async function fetchEnergyBalance(
 	scenario: string,
 	year: number,
 	window_size: number
-): Promise<EnergyBalanceDataframes> {
-	const urlobj = new URL(env.PUBLIC_TEMPLE_URL + `solutions/energy_balance`);
-	urlobj.searchParams.set('solution_name', solution);
-	urlobj.searchParams.set('node', node);
-	urlobj.searchParams.set('carrier', carrier);
-	urlobj.searchParams.set('scenario_name', scenario);
-	urlobj.searchParams.set('year', year.toString());
-	urlobj.searchParams.set('rolling_average_window_size', window_size.toString());
-	const url = urlobj.toString();
+): Promise<NodalData> {
+	const urlObj = new URL(env.PUBLIC_TEMPLE_URL + `solutions/energy_balance`);
+	urlObj.searchParams.set('solution_name', solution);
+	urlObj.searchParams.set('node', node);
+	urlObj.searchParams.set('carrier', carrier);
+	urlObj.searchParams.set('scenario_name', scenario);
+	urlObj.searchParams.set('year', year.toString());
+	urlObj.searchParams.set('rolling_average_window_size', window_size.toString());
+	const url = urlObj.toString();
 
 	const response = await fetch(url, { cache: 'no-store' });
 
@@ -200,118 +202,11 @@ export async function fetchEnergyBalance(
 		throw new Error('Could not fetch ' + url);
 	}
 
-	const data = await response.json();
+	const data = (await response.json()) as Record<NodalComponent, TimeSeriesResponseEntry[] | null>;
 
-	const components = [
-		'shed_demand',
-		'demand',
-		'flow_conversion_input',
-		'flow_export',
-		'flow_import',
-		'flow_storage_charge',
-		'flow_storage_discharge',
-		'flow_transport_in',
-		'flow_transport_out',
-		'cost_shed_demand',
-		'flow_conversion_output',
-		'constraint_nodal_energy_balance'
-	] as (keyof EnergyBalanceDataframes)[];
-
-	const ans: Partial<EnergyBalanceDataframes> = {};
-	for (const component of components) {
-		if (data[component] !== undefined) {
-			ans[component] = parseTimeseriesData(data[component]);
-		}
-	}
-
-	return ans as EnergyBalanceDataframes;
-}
-
-/**
- * Helper function that parses the CSV data as returned by the API.
- * It parses the CSV using Papaparse but first normalizes the CSV string returned by the API:
- * If the dataset only consists of one column, we transpose it s.t. the header consists of the years and it only has one more line containing the data.
- * This is done because ZEN Garden sometimes returns a pd.Series and sometimes a pd.Dataframe. In case a pd.Dataframe only consists of one column it is reformated to a Series-CSV Format.
- * Furthermore the function transforms the years: In the CSV data from the API it is 0 based normally indexed and this function translates it to actual years.
- * @param data_csv CSV string
- * @param start_year Start year (corresponds to the 0-index)
- * @param step_year Years between each index
- * @returns Papaparsed CSV
- */
-function parseCSV(data_csv: string) {
-	// Get first line of the csv data
-	const first_line = data_csv.slice(0, data_csv.indexOf('\n'));
-
-	// Get column names
-	const headers = first_line.split(',');
-
-	// If there are only two columns, we transpose the csv
-	if (headers.length == 2) {
-		const lines = data_csv.split('\n');
-		let years = '';
-		let data = '';
-
-		for (const line of lines.slice(1, lines.length)) {
-			if (line == '') {
-				continue;
-			}
-
-			const line_split = line.split(',');
-			years += line_split[0] + ',';
-			data += line_split[1] + ',';
-		}
-
-		data_csv = years.substring(0, years.length - 1) + '\n' + data.substring(0, data.length - 1);
-	}
-
-	// Remove trailing new line if necessary
-	if (data_csv.slice(-1) == '\n') {
-		data_csv = data_csv.slice(0, -1);
-	}
-
-	// Parse CSV
-	const data: ParseResult<Row> = Papa.parse(data_csv, {
-		delimiter: ',',
-		header: true,
-		newline: '\n'
-	});
-
-	return data;
-}
-
-function parseTimeseriesData(entries: TimeSeriesResponseEntry[]): Entries {
-	return new Entries(
-		entries.map((entry) => {
-			// eslint-disable-next-line prefer-const
-			let { d: data, t, ...rest } = entry;
-			const [translation, scale] = t;
-
-			// Compute cumulative sum
-			let sum: number = 0;
-			data = data.map((value) => (sum += value));
-
-			// Apply scaling and translation
-			data = data.map((value) => value * scale + translation);
-
-			return { index: rest as Record<string, string>, data };
+	return Object.fromEntries(
+		typedEntries(data).map(([key, values]) => {
+			return [key, values !== null ? parseTimeseriesData(values) : Entries.empty];
 		})
-	);
-}
-
-function parseUnitData(unit_csv: string): ParseResult<Row> {
-	if (unit_csv.slice(-1) == '\n') {
-		unit_csv = unit_csv.slice(0, unit_csv.length - 1);
-	}
-
-	return Papa.parse(unit_csv, { delimiter: ',', header: true, newline: '\n' });
-}
-
-function filterOutZeroRows(data: ParseResult<Row>): ParseResult<Row> {
-	// Filter out rows that only contain zeros
-	data.data = data.data.filter((row: Row) => {
-		return Object.keys(row).some((key: string) => {
-			return !Number.isNaN(Number(key)) && !Number.isNaN(row[key]) && Math.abs(row[key]) > 0;
-		});
-	});
-	return data;
+	) as NodalData;
 }
