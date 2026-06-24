@@ -12,11 +12,14 @@
 	import Spinner from '$components/Spinner.svelte';
 	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
+	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 
 	import { fetchTotal, fetchUnit } from '$lib/temple';
 	import type { ActivatedSolution } from '$lib/types';
 	import { QUERY_PARAM_KEYS, useURLParams } from '$lib/queryParams.svelte';
 	import Entries from '$lib/entries';
+	import { resetColorState } from '$lib/colors';
+	import { resetPatternState } from '$lib/patterns';
 	import {
 		generateLabelsForSolutionComparison,
 		onClickLegendForSolutionComparison,
@@ -239,16 +242,24 @@
 		fetching = false;
 	}
 
-	let [barDatasets, patterns] = $derived(
-		generateBarDatasetsAndPatterns(data, selection, isNormalized, divisionVariable, years)
-	);
-
-	let lineDatasets = $derived(generateLineDatasets(data, selection, isNormalized));
-
-	let datasets: ChartDataset<'bar' | 'line'>[] = $derived.by(() => {
-		return (barDatasets as ChartDataset<'bar' | 'line'>[]).concat(
+	let [datasets, patterns]: [ChartDataset<'bar' | 'line'>[], ColorBoxItem[]] = $derived.by(() => {
+		resetColorState();
+		resetPatternState();
+		const [barDatasets, patterns] = generateBarDatasetsAndPatterns(
+			data,
+			selection,
+			isNormalized,
+			divisionVariable,
+			years,
+			technologies,
+			carriers,
+			locations
+		);
+		const lineDatasets = generateLineDatasets(data, selection, isNormalized, technologies, carriers, locations);
+		const datasets = (barDatasets as ChartDataset<'bar' | 'line'>[]).concat(
 			lineDatasets as ChartDataset<'bar' | 'line'>[]
 		);
+		return [datasets, patterns];
 	});
 
 	//#endregion

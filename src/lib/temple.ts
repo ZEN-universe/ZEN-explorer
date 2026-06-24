@@ -204,9 +204,24 @@ export async function fetchEnergyBalance(
 
 	const data = (await response.json()) as Record<NodalComponent, TimeSeriesResponseEntry[] | null>;
 
-	return Object.fromEntries(
-		typedEntries(data).map(([key, values]) => {
-			return [key, values !== null ? parseTimeseriesData(values) : Entries.empty];
-		})
-	) as NodalData;
+	const COMPONENTS: NodalComponent[] = [
+		'shed_demand',
+		'demand',
+		'flow_conversion_input',
+		'flow_export',
+		'flow_import',
+		'flow_storage_charge',
+		'flow_storage_discharge',
+		'flow_transport_in',
+		'flow_transport_out',
+		'flow_conversion_output',
+		'constraint_nodal_energy_balance'
+	];
+
+	const res: Partial<NodalData> = {};
+	for (const component of COMPONENTS) {
+		res[component] = data[component] ? parseTimeseriesData(data[component]) : Entries.empty;
+	}
+
+	return res as NodalData;
 }

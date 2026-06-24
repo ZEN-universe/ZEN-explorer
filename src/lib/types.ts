@@ -109,7 +109,9 @@ export interface ComponentTimeSeries<T extends string = string> {
 }
 
 export type NodalComponent =
+	| 'shed_demand'
 	| 'demand'
+	| 'flow_conversion_output'
 	| 'flow_conversion_input'
 	| 'flow_export'
 	| 'flow_import'
@@ -117,8 +119,6 @@ export type NodalComponent =
 	| 'flow_storage_discharge'
 	| 'flow_transport_in'
 	| 'flow_transport_out'
-	| 'flow_conversion_output'
-	| 'shed_demand'
 	| 'constraint_nodal_energy_balance';
 
 export type NodalData = Record<NodalComponent, Entries>;

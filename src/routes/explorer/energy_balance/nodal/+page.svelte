@@ -204,12 +204,10 @@
 	//#region Fetch data
 
 	$effect(() => {
-		selection.solution;
-		selection.year;
-		selection.node;
-		selection.carrier;
 		selection.windowSize;
-		tick().then(fetchData);
+		if (selection.solution && selection.carrier && selection.year && selection.node) {
+			tick().then(fetchData);
+		}
 	});
 
 	const WINDOW_SIZE_TO_HOURS_MAP: Record<WindowSize, number> = {
@@ -220,7 +218,7 @@
 	};
 
 	async function fetchData() {
-		if (!selection.node || !selection.carrier || !selection.year || !selection.solution) {
+		if (!selection.solution || !selection.carrier || !selection.year || !selection.node) {
 			return;
 		}
 

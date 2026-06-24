@@ -6,8 +6,8 @@ import type { ActivatedSolution } from '$lib/types';
 
 import type { ColorBoxItem } from '$components/ColorBox.svelte';
 import type { FilterCriteria } from '$lib/entries';
-import { addTransparency, nextColor, resetColorState } from '$lib/colors';
-import { createColorBoxItem, nextPattern, resetPatternState } from '$lib/patterns';
+import { addTransparency, nextColor } from '$lib/colors';
+import { createColorBoxItem, nextPattern } from '$lib/patterns';
 import { generateSolutionSuffix } from '$lib/compareSolutions.svelte';
 
 export const components = [
@@ -40,7 +40,10 @@ export function generateBarDatasetsAndPatterns(
 	selection: Selection,
 	isNormalized: boolean,
 	divisionVariable: EmissionComponent,
-	years: number[]
+	years: number[],
+	technologies: string[],
+	carriers: string[],
+	locations: string[]
 ): [ChartDataset<'bar'>[], ColorBoxItem[]] {
 	if (!selection.solutions.length || !data.length) {
 		return [[], []];
@@ -53,20 +56,18 @@ export function generateBarDatasetsAndPatterns(
 		groupByColumns = [];
 	} else if (selection.aggregation == 'location') {
 		filterCriteria = {
-			technology_carrier: selection.technologies.concat(selection.carriers),
+			technology_carrier: technologies.concat(carriers),
 			location: selection.locations
 		};
 		groupByColumns = ['technology_carrier'];
 	} else {
 		filterCriteria = {
 			technology_carrier: selection.technologies.concat(selection.carriers),
-			location: selection.locations
+			location: locations
 		};
 		groupByColumns = ['location'];
 	}
 
-	resetColorState();
-	resetPatternState();
 	const patterns: ColorBoxItem[] = [];
 	const datasets = selection.solutions.flatMap((solution, solutionIndex) => {
 		if (!solution) {
@@ -132,9 +133,20 @@ export function generateBarDatasetsAndPatterns(
 export function generateLineDatasets(
 	data: Data[],
 	selection: Selection,
-	isNormalized: boolean
+	isNormalized: boolean,
+	technologies: string[],
+	carriers: string[],
+	locations: string[]
 ): ChartDataset<'line'>[] {
-	if (selection.solutions.length === 0 || isNormalized) {
+	if (
+		selection.solutions.length === 0 ||
+		isNormalized ||
+		// Hide line if not all locations or technologies/carriers are selected, because the line represents the total over all locations or technologies/carriers.
+		(selection.aggregation === 'location' && selection.locations.length !== locations.length) ||
+		(selection.aggregation === 'technology_carrier' &&
+			(selection.carriers.length !== carriers.length ||
+				selection.technologies.length !== technologies.length))
+	) {
 		return [];
 	}
 
