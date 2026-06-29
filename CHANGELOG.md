@@ -3,14 +3,8 @@
 ## v0.9.10 (2026-06-29)
 
 - [Capacity, Production] Fix issues when comparing solutions.
-- Fix e2e tests.
-- [Storage] Refactor data processing into its own file.
-- [Nodal] Refactor data processing into its own file.
-- [Costs] Refactor data processing into its own file.
-- [Emissions] Refactor data processing into its own file.
-- [Production] Move processing of datasets to its own file.
-- [Navigation] Fix highlighting current page.
-- Update E2E tests.
+- [Production, Emissions, Costs, Nopdal, Storage] Refactor data processing into its own file.
+- [Navigation] Fix highlighting of current page.
 - Do not create a new release upon merging a release PR.
 
 ## v0.9.9 (2026-06-23)
