@@ -199,7 +199,7 @@ export function generateDatasetsAndPatterns(
 	const patterns: ColorBoxItem[] = [];
 	const datasets: ChartDataset<'bar'>[] = selection.solutions.flatMap((solution, i) => {
 		const rows = data[i];
-		if (!solution || !Object.keys(rows).length) {
+		if (!solution || !rows || !Object.keys(rows).length) {
 			return [];
 		}
 

@@ -169,9 +169,6 @@
 	});
 
 	async function updateSolutionDetails() {
-		// Wait for all effects to finish, e.g. to reset activeSecondLevel, activeScenario
-		await tick();
-
 		if (activeSolutionName === null) {
 			selectedSolution = null;
 			allScenarios = [];
@@ -191,13 +188,11 @@
 		const solutionDetail = await getSolutionDetail(activeSolutionName);
 		allScenarios = Object.keys(solutionDetail.scenarios);
 
-		// Update the selected solution object
-		if (scenarios.length == 1) {
-			activeScenario = scenarios[0];
-		}
-
 		// Abort if the active scenario is invalid
-		if (activeScenario == '' || !(activeScenario in solutionDetail.scenarios)) {
+		if (
+			scenarios.length > 1 &&
+			(activeScenario == '' || !(activeScenario in solutionDetail.scenarios))
+		) {
 			activeScenario = '';
 			selectedSolution = null;
 			loading = false;
@@ -205,7 +200,8 @@
 		}
 
 		// Update the selected solution
-		selectedSolution = getActivatedSolution(activeSolutionName, activeScenario, solutionDetail);
+		const scenario = scenarios.length === 1 ? scenarios[0] : activeScenario;
+		selectedSolution = getActivatedSolution(activeSolutionName, scenario, solutionDetail);
 
 		// Notify parent component of selected solution change
 		solutionSelected?.(selectedSolution);

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ChartOptions, ChartDataset, TooltipItem, ChartTypeRegistry } from 'chart.js';
-	import { untrack } from 'svelte';
+	import { tick, untrack } from 'svelte';
 
 	import MultiSolutionFilter from '$components/solutions/MultiSolutionFilter.svelte';
 	import MultiSelect from '$components/forms/MultiSelect.svelte';
@@ -239,23 +239,6 @@
 		selection.locations = locations;
 	});
 
-	$effect(() => {
-		// Whenever the selected solutions, variable, or technology type changes, reset the data selection and fetch new data
-		selection.solutions;
-		selection.variable;
-		selection.technologyType;
-		selection.storageType;
-		selection.carrier;
-		untrack(() => {
-			selection.aggregation = 'node';
-			selection.normalization = false;
-			selection.locations = locations;
-			selection.technologies = technologies;
-			selection.years = years.map((y) => y.toString());
-			fetchData();
-		});
-	});
-
 	// ======================================
 	// Context menu
 	// ======================================
@@ -301,6 +284,31 @@
 	// ======================================
 	// Data fetching
 	// ======================================
+
+	$effect(() => {
+		// Whenever the selected solutions, variable, or technology type changes, reset the data selection and fetch new data
+		selection.variable;
+		selection.technologyType;
+		selection.storageType;
+		selection.carrier;
+		untrack(resetDataSelection);
+		tick().then(() => {
+			if (selection.carrier && selection.solutions.every((solution) => !!solution)) fetchData();
+		});
+	});
+
+	function onSolutionSelected() {
+		resetDataSelection();
+		if (selection.carrier && selection.solutions.every((solution) => !!solution)) fetchData();
+	}
+
+	function resetDataSelection() {
+		selection.aggregation = 'node';
+		selection.normalization = false;
+		selection.locations = locations;
+		selection.technologies = technologies;
+		selection.years = years.map((y) => y.toString());
+	}
 
 	/**
 	 * Fetch data from the API of the selected values in the form
@@ -361,6 +369,7 @@
 				bind:years
 				bind:loading={solutionLoading}
 				disabled={fetching || solutionLoading}
+				onSelected={onSolutionSelected}
 			></MultiSolutionFilter>
 		</FilterSection>
 		{#if !solutionLoading && !hasSomeUnsetSolutions}

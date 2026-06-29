@@ -32,7 +32,6 @@
 	} from '$lib/compareSolutions.svelte';
 	import { useURLParams, QUERY_PARAM_KEYS, addParametersToPath } from '$lib/queryParams.svelte';
 	import type { ActivatedSolution, Entry, Row } from '$lib/types';
-	import { updateSelectionOnStateChanges } from '$lib/filterSelection.svelte';
 	import { fetchProductionData, variables, type VariableId } from '$lib/productionData';
 	import { typedEntries } from '$lib/utils';
 
@@ -76,10 +75,6 @@
 
 	let activeYear: string | null = $state(null);
 	let activeSolution: string | null = $state(null);
-
-	// Temporary objects to store previous values and URL values
-	let previousNodes: string = '';
-	let previousYears: string = '';
 
 	// States
 	let solutionLoading: boolean = $state(false);
@@ -301,28 +296,7 @@
 		});
 	});
 
-	//#region Update selection based on URL and previous selections
-
-	updateSelectionOnStateChanges(
-		() => nodes,
-		() => !!selection.solutions,
-		() => previousNodes,
-		() => null,
-		(value) => (selection.nodes = value),
-		(value) => (previousNodes = value),
-		() => {}
-	);
-	updateSelectionOnStateChanges(
-		() => years.map((y) => y.toString()),
-		() => !!selection.solutions,
-		() => previousYears,
-		() => null,
-		(value) => (selection.years = value),
-		(value) => (previousYears = value),
-		() => {}
-	);
-
-	//#endregion
+	//#region Chart interactions
 
 	function onClickBar(year: string, datasetIndex: number) {
 		if (!year) {
@@ -363,14 +337,14 @@
 		];
 	}
 
+	//#endregion
+
 	//#region Fetch data
 
 	$effect(() => {
 		selection.solutions;
 		selection.carrier;
-		untrack(() => {
-			fetchData();
-		});
+		untrack(fetchData);
 	});
 
 	// Fetch data from the API server for the current selection.
