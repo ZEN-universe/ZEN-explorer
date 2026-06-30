@@ -1,6 +1,5 @@
 import { env } from '$env/dynamic/public';
 import Entries from './entries';
-import { typedEntries } from './utils';
 import { parseCSV, parseTimeseriesData, parseUnitData } from './parser';
 
 import type {

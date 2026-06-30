@@ -71,6 +71,7 @@
 				i === 0 && 'rounded-t',
 				i === items.length - 1 && 'rounded-b'
 			]}
+			target="_blank"
 		>
 			{item.label}
 		</a>

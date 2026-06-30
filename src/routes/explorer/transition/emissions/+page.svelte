@@ -255,7 +255,14 @@
 			carriers,
 			locations
 		);
-		const lineDatasets = generateLineDatasets(data, selection, isNormalized, technologies, carriers, locations);
+		const lineDatasets = generateLineDatasets(
+			data,
+			selection,
+			isNormalized,
+			technologies,
+			carriers,
+			locations
+		);
 		const datasets = (barDatasets as ChartDataset<'bar' | 'line'>[]).concat(
 			lineDatasets as ChartDataset<'bar' | 'line'>[]
 		);
