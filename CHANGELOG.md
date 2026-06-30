@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.9.12 (2026-06-30)
+
+
+
 ## v0.9.11 (2026-06-30)
 
 - Open context menu links automatically in a new tab.
