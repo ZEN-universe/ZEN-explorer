@@ -2,6 +2,8 @@
 
 ZEN-explorer is the frontend of the [ZEN-garden](https://github.com/ZEN-universe/ZEN-garden) visualization platform. It uses the endpoints provided by its web service [ZEN-temple](https://github.com/ZEN-universe/ZEN-temple) to fetch data of the provided solutions and visualize them.
 
+[![Linter](https://github.com/ZEN-universe/ZEN-explorer/actions/workflows/linter.yml/badge.svg)](https://github.com/ZEN-universe/ZEN-explorer/actions/workflows/linter.yml)
+
 ## ⚙️ Installation
 
 Prerequisites:
