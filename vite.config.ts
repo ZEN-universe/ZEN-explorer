@@ -3,7 +3,6 @@ import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import { existsSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import type { ResolvedConfig } from 'vite';
 
 const FOLDER = 'static';
 const BUILD_FOLDER = 'static/opt';
