@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import { existsSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import type { ResolvedConfig } from 'vite';
 
 const FOLDER = 'static';
 const BUILD_FOLDER = 'static/opt';
@@ -29,6 +30,13 @@ const videos: Record<string, { widths: number[] }> = {
 };
 
 function convertImage(inputImage: string, width: number): void {
+	const convertCheck = spawnSync('convert', ['-version'], { stdio: 'ignore' });
+	if (convertCheck.status !== 0) {
+		throw new Error(
+			'ImageMagick is not installed or not found in PATH. Please install it to use this plugin.'
+		);
+	}
+
 	const inputPath = `${FOLDER}/${inputImage}`;
 	const extension = inputImage.split('.').pop()?.toLowerCase();
 	const outputPath = `${BUILD_FOLDER}/${inputImage.replace(/\.[^.]+$/, '')}_${width}.${extension}`;
@@ -65,6 +73,13 @@ function convertImage(inputImage: string, width: number): void {
 }
 
 function convertVideo(inputVideo: string, width: number): void {
+	const ffmpegCheck = spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' });
+	if (ffmpegCheck.status !== 0) {
+		throw new Error(
+			'FFmpeg is not installed or not found in PATH. Please install it to use this plugin.'
+		);
+	}
+
 	const videoPath = `${FOLDER}/${inputVideo}`;
 	const mp4Path = `${BUILD_FOLDER}/${inputVideo.replace(/\.[^.]+$/, '')}_${width}.mp4`;
 
@@ -117,11 +132,15 @@ function convertVideo(inputVideo: string, width: number): void {
 function responsiveImagePlugin() {
 	return {
 		name: 'responsive-image-plugin',
-		configResolved() {
+		buildStart() {
+			console.log('Generating responsive images...');
+
 			mkdirSync(BUILD_FOLDER, { recursive: true });
+
 			Object.entries(images).forEach(([image, { widths }]) =>
 				widths.forEach((w) => convertImage(image, w))
 			);
+
 			Object.entries(videos).forEach(([video, { widths }]) =>
 				widths.forEach((w) => convertVideo(video, w))
 			);
