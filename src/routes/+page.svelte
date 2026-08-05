@@ -25,7 +25,8 @@
 			title:
 				'Beyond pipelines: Multi-modal CO<sub>2</sub> transport enables timely CO<sub>2</sub> capture, transport, and storage deployment',
 			authors: 'Johannes Burger, David Y. Shu, André Bardow and Giovanni Sansavini',
-			journal: 'International Journal of Greenhouse Gas Control, vol. 154, pp. 104698, Elsevier, 2026.',
+			journal:
+				'International Journal of Greenhouse Gas Control, vol. 154, pp. 104698, Elsevier, 2026.',
 			doi: '10.1016/j.ijggc.2026.104698',
 			researchCollection: 'https://hdl.handle.net/20.500.11850/801184'
 		},

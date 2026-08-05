@@ -8,7 +8,6 @@
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import Button from '$components/Button.svelte';
 	import Spinner from '$components/Spinner.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import Slider from '$components/forms/Slider.svelte';
 
@@ -156,7 +155,13 @@
 	//#endregion
 </script>
 
-<DiagramPage pageTitle="The Energy System" subtitle="Sankey diagram of energy flows">
+<DiagramPage
+	pageTitle="The Energy System"
+	subtitle="Sankey diagram of energy flows"
+	sidebarOnly={!selection.solution ||
+		selection.carriers.length === 0 ||
+		selection.nodes.length === 0}
+>
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
 			<SolutionFilter
@@ -175,6 +180,8 @@
 					bind:value={selection.carriers}
 					options={carriers}
 					label="Carriers"
+					placeholder="Select carriers"
+					error={selection.carriers.length === 0 ? 'Please select at least one carrier' : undefined}
 					urlParam={QUERY_PARAM_KEYS.carriers}
 				></MultiSelect>
 			</FilterSection>
@@ -191,6 +198,8 @@
 					bind:value={selection.nodes}
 					options={nodes}
 					label="Nodes"
+					placeholder="Select nodes"
+					error={selection.nodes.length === 0 ? 'Please select at least one node' : undefined}
 					urlParam={QUERY_PARAM_KEYS.nodes}
 				></MultiSelect>
 				<ToggleButton
@@ -229,12 +238,8 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if !selection.solution}
-			<WarningMessage message="Please select a solution"></WarningMessage>
-		{:else if selection.carriers.length === 0}
-			<WarningMessage message="Please select at least one carrier"></WarningMessage>
-		{:else if selection.nodes.length === 0}
-			<WarningMessage message="Please select at least one node"></WarningMessage>
+		{:else if !selection.solution || selection.carriers.length === 0 || selection.nodes.length === 0}
+			<!-- Main content is hidden -->
 		{:else if sankeyNodes.length === 0}
 			<ErrorMessage message="No data available for the selected filters"></ErrorMessage>
 		{:else}

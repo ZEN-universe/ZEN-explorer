@@ -14,7 +14,6 @@
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
 	import type { ContextMenuItem } from '$components/ContextMenu.svelte';
 
 	import { fetchTotal } from '$lib/temple';
@@ -361,6 +360,7 @@
 	parentTitle="The Transition Pathway"
 	pageTitle="Capacity"
 	subtitle="Annual capacity and capacity addition"
+	sidebarOnly={hasSomeUnsetSolutions || !selection.carrier}
 >
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
@@ -378,6 +378,8 @@
 					label="Carrier"
 					options={carriers}
 					bind:value={selection.carrier}
+					placeholder="Select a carrier"
+					error={!selection.carrier ? 'Please select a carrier' : ''}
 					disabled={fetching || solutionLoading}
 					urlParam={QUERY_PARAM_KEYS.carrier}
 					unsetIfInvalid
@@ -495,12 +497,10 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if hasSomeUnsetSolutions}
-			<WarningMessage message="Please select a solution"></WarningMessage>
+		{:else if hasSomeUnsetSolutions || selection.carrier === null}
+			<!-- Main content is hidden -->
 		{:else if carriers.length == 0}
 			<ErrorMessage message="No carriers for this solution found"></ErrorMessage>
-		{:else if selection.carrier === null}
-			<WarningMessage message="Please select a carrier"></WarningMessage>
 		{:else if technologies.length == 0}
 			<ErrorMessage message="No technologies for this selection found"></ErrorMessage>
 		{:else if locations.length == 0}

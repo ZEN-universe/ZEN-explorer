@@ -20,7 +20,6 @@
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 	import FilterLabel from '$components/FilterLabel.svelte';
 	import Spinner from '$components/Spinner.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import type { ContextMenuItem } from '$components/ContextMenu.svelte';
 
@@ -379,6 +378,7 @@
 	parentTitle="The Transition Pathway"
 	pageTitle="Production"
 	subtitle="Annual production and consumption of a carrier"
+	sidebarOnly={hasSomeUnsetSolutions || !selection.carrier}
 >
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
@@ -396,6 +396,8 @@
 					label="Carrier"
 					options={carriers}
 					bind:value={selection.carrier}
+					placeholder="Select a carrier"
+					error={!selection.carrier ? 'Please select a carrier' : ''}
 					disabled={solutionLoading || fetching}
 					urlParam={QUERY_PARAM_KEYS.carrier}
 					unsetIfInvalid
@@ -499,10 +501,8 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if hasSomeUnsetSolutions}
-			<WarningMessage message="Please select all solutions"></WarningMessage>
-		{:else if selection.carrier == null}
-			<WarningMessage message="Please select a carrier"></WarningMessage>
+		{:else if hasSomeUnsetSolutions || selection.carrier == null}
+			<!-- Main content is hidden -->
 		{:else if datasets.length == 0}
 			<ErrorMessage message="No data with this selection"></ErrorMessage>
 		{:else}

@@ -16,7 +16,6 @@
 	import Button from '$components/Button.svelte';
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
 	import type { ContextMenuItem } from '$components/ContextMenu.svelte';
 	import Radio from '$components/forms/Radio.svelte';
 	import Slider from '$components/forms/Slider.svelte';
@@ -153,6 +152,7 @@
 	parentTitle="The Map"
 	pageTitle="Production"
 	subtitle="Map of conversion, storage, and transport capacities"
+	sidebarOnly={!selectedSolution || !selectedCarrier}
 >
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
@@ -170,6 +170,8 @@
 					options={carriers}
 					bind:value={selectedCarrier}
 					label="Carrier"
+					placeholder="Select a carrier"
+					error={!selectedCarrier ? 'Please select a carrier' : undefined}
 					onUpdate={refreshData}
 					disabled={fetching || solutionLoading}
 					urlParam={QUERY_PARAM_KEYS.carrier}
@@ -219,10 +221,8 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if !selectedSolution}
-			<WarningMessage message="Please select a solution"></WarningMessage>
-		{:else if !selectedCarrier}
-			<WarningMessage message="Please select a carrier"></WarningMessage>
+		{:else if !selectedSolution || !selectedCarrier}
+			<!-- Main content is hidden -->
 		{:else if !pieData || !lineData || (Object.keys(pieData).length === 0 && Object.keys(lineData).length === 0)}
 			<ErrorMessage message="No data to display for the selected options"></ErrorMessage>
 		{:else}

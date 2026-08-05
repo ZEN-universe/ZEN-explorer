@@ -37,14 +37,14 @@
 	<div>
 		<a class="inline-flex h-full items-center text-xl font-semibold" href={resolve('/explorer/')}>
 			<img src="/logo.png" alt="ZEN-garden Logo" class="mr-2 inline h-8" />
-			ZEN&#8209;garden
+			<span class="hidden xl:inline">ZEN&#8209;garden</span>
 		</a>
 	</div>
-	<div class="col-span-3 flex flex-1 items-center justify-end px-2 lg:justify-between">
-		<ul class="hidden items-end gap-6 lg:flex xl:gap-12">
+	<div class="col-span-3 flex flex-1 items-center justify-end lg:justify-between xl:pl-2">
+		<ul class="hidden items-end gap-6 lg:flex 2xl:gap-12">
 			<li>
 				<div class="text-sm tracking-wide text-gray-400 uppercase">The Transition Pathway</div>
-				<ul class="flex gap-4 text-lg font-semibold 2xl:gap-6">
+				<ul class="flex gap-3 text-lg font-semibold 2xl:gap-6">
 					{#each Object.entries(transition_urls) as [title, url] (title)}
 						<li>
 							<!-- eslint-disable svelte/no-navigation-without-resolve -->
@@ -61,7 +61,7 @@
 			</li>
 			<li>
 				<div class="text-sm tracking-wide text-gray-400 uppercase">The Energy Balance</div>
-				<ul class="flex gap-4 text-lg font-semibold">
+				<ul class="flex gap-3 text-lg font-semibold 2xl:gap-6">
 					{#each Object.entries(energy_balance_urls) as [title, url] (title)}
 						<li>
 							<a
@@ -86,7 +86,7 @@
 			</li>
 			<li>
 				<div class="text-sm tracking-wide text-gray-400 uppercase">The Map</div>
-				<ul class="flex gap-4 text-lg font-semibold">
+				<ul class="flex gap-3 text-lg font-semibold 2xl:gap-6">
 					{#each Object.entries(map_urls) as [title, url] (title)}
 						<li>
 							<a

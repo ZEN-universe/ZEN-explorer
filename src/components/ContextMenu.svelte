@@ -56,7 +56,7 @@
 <!-- eslint-disable svelte/no-navigation-without-resolve -->
 
 <div
-	class="absolute z-6 flex flex-col rounded border border-gray-400 bg-gray-200 text-nowrap shadow-xl/20 dark:border-gray-700 dark:bg-gray-800 dark:bg-gray-900"
+	class="absolute z-6 flex flex-col rounded border border-gray-400 bg-gray-200 text-nowrap shadow-xl/20 dark:border-gray-700 dark:bg-gray-900"
 	style:top={`${y}px`}
 	style:left={`${x}px`}
 	transition:fade={{ duration: 100 }}

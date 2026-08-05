@@ -15,7 +15,6 @@
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
 	import ContentBox from '$components/ContentBox.svelte';
 	import HelpTooltip from '$components/HelpTooltip.svelte';
 	import Radio from '$components/forms/Radio.svelte';
@@ -298,6 +297,7 @@
 	parentTitle="The Energy Balance"
 	pageTitle="Nodal"
 	subtitle="Hourly production and consumption of a carrier"
+	sidebarOnly={selection.carrier == null || selection.year == null || selection.node == null}
 >
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
@@ -316,6 +316,8 @@
 					options={carriers}
 					bind:value={selection.carrier}
 					label="Carrier"
+					placeholder="Select a carrier"
+					error={selection.carrier === null ? 'Please select a carrier' : undefined}
 					disabled={fetching || solutionLoading}
 					urlParam={QUERY_PARAM_KEYS.carrier}
 					unsetIfInvalid
@@ -326,6 +328,8 @@
 						options={years.map((year) => year.toString())}
 						bind:value={selection.year}
 						label="Year"
+						placeholder="Select a year"
+						error={selection.year === null ? 'Please select a year' : undefined}
 						disabled={fetching || solutionLoading}
 						urlParam={QUERY_PARAM_KEYS.year}
 						unsetIfInvalid
@@ -337,6 +341,8 @@
 						options={nodes}
 						bind:value={selection.node}
 						label="Node"
+						placeholder="Select a node"
+						error={selection.node === null ? 'Please select a node' : undefined}
 						disabled={fetching || solutionLoading}
 						urlParam={QUERY_PARAM_KEYS.node}
 						unsetIfInvalid
@@ -385,12 +391,8 @@
 			<Spinner></Spinner>
 		{:else if carriers.length == 0}
 			<ErrorMessage message="No carriers available for the selection solution"></ErrorMessage>
-		{:else if selection.carrier == null}
-			<WarningMessage message="Please select a carrier"></WarningMessage>
-		{:else if selection.year == null}
-			<WarningMessage message="Please select a year"></WarningMessage>
-		{:else if selection.node == null}
-			<WarningMessage message="Please select a node"></WarningMessage>
+		{:else if selection.carrier == null || selection.year == null || selection.node == null}
+			<!-- Main content is hidden -->
 		{:else if datasetsLength == 0 || selection.solution == null}
 			<ErrorMessage message="No data with this selection"></ErrorMessage>
 		{:else}

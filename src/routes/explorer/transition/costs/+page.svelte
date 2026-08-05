@@ -11,7 +11,6 @@
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 
 	import { fetchTotal } from '$lib/temple';
@@ -378,6 +377,7 @@
 	parentTitle="The Transition Pathway"
 	pageTitle="Costs"
 	subtitle="Total annualized system costs by capex, opex, carrier cost, and carbon cost"
+	sidebarOnly={hasSomeUnsetSolutions || selection.years.length == 0}
 >
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
@@ -422,6 +422,7 @@
 						bind:value={selection.transportTechnologies}
 						options={transportTechnologies}
 						label="Transport"
+						placeholder="Select transport technologies"
 						disabled={fetching || solutionLoading}
 						urlParam="tran"
 					></MultiSelect>
@@ -431,6 +432,7 @@
 						bind:value={selection.storageTechnologies}
 						options={storageTechnologies}
 						label="Storage"
+						placeholder="Select storage technologies"
 						disabled={fetching || solutionLoading}
 						urlParam="stor"
 					></MultiSelect>
@@ -440,6 +442,7 @@
 						bind:value={selection.conversionTechnologies}
 						options={conversionTechnologies}
 						label="Conversion"
+						placeholder="Select conversion technologies"
 						disabled={fetching || solutionLoading}
 						urlParam="conv"
 					></MultiSelect>
@@ -449,6 +452,7 @@
 						bind:value={selection.costCarriers}
 						options={costCarriers}
 						label="Cost of Carrier"
+						placeholder="Select cost of carriers"
 						disabled={fetching || solutionLoading}
 						urlParam="cost"
 					></MultiSelect>
@@ -458,6 +462,7 @@
 						bind:value={selection.demandCarriers}
 						options={demandCarriers}
 						label="Shed Demand"
+						placeholder="Select shed demand"
 						disabled={fetching || solutionLoading}
 						urlParam="demand"
 					></MultiSelect>
@@ -475,6 +480,7 @@
 						bind:value={selection.locations}
 						options={locations}
 						label="Locations"
+						placeholder="Select locations"
 						disabled={fetching || solutionLoading}
 					></MultiSelect>
 				{/if}
@@ -482,6 +488,8 @@
 					bind:value={selection.years}
 					options={years.map((year) => year.toString())}
 					label="Years"
+					placeholder="Select one or more years"
+					error={selection.years.length == 0 ? 'Please select at least one year' : undefined}
 					disabled={fetching || solutionLoading}
 				></MultiSelect>
 			</FilterSection>
@@ -495,10 +503,8 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if hasSomeUnsetSolutions}
-			<WarningMessage message="Please select a solution"></WarningMessage>
-		{:else if selection.years.length == 0}
-			<WarningMessage message="Please select at least one year"></WarningMessage>
+		{:else if hasSomeUnsetSolutions || selection.years.length == 0}
+			<!-- Main content is hidden -->
 		{:else if datasets.length == 0}
 			<ErrorMessage message="No data available for the selected filters"></ErrorMessage>
 		{:else}

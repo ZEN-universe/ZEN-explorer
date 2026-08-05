@@ -8,7 +8,9 @@
 		options: ({ label: string; value: string } | string)[];
 		value: string | null;
 		label: string;
+		error?: string;
 		helpText?: Snippet;
+		placeholder?: string;
 		disabled?: boolean;
 		urlParam?: string;
 		unsetIfInvalid?: boolean;
@@ -20,7 +22,9 @@
 		options: initialOptions,
 		value = $bindable(),
 		label,
+		error,
 		helpText,
+		placeholder,
 		disabled = false,
 		urlParam,
 		unsetIfInvalid = false,
@@ -70,5 +74,18 @@
 {#if options.length == 0}
 	<div class="text-gray-500 italic dark:text-gray-400">No options available</div>
 {:else}
-	<Select id={formId} {label} bind:value {options} {disabled} {onUpdate}></Select>
+	<Select
+		id={formId}
+		{label}
+		bind:value
+		{options}
+		{placeholder}
+		{disabled}
+		hasError={!!error}
+		{onUpdate}
+	></Select>
+{/if}
+
+{#if error}
+	<div class="mb-2 text-red-500 dark:text-red-400">{error}</div>
 {/if}

@@ -10,7 +10,6 @@
 	import DiagramPage from '$components/DiagramPage.svelte';
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
 	import type { ColorBoxItem } from '$components/ColorBox.svelte';
 
@@ -276,6 +275,9 @@
 	parentTitle="The Transition Pathway"
 	pageTitle="Emissions"
 	subtitle="Annual or cumulative emissions"
+	sidebarOnly={hasSomeUnsetSolutions ||
+		selection.locations.length == 0 ||
+		selection.years.length == 0}
 >
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
@@ -325,6 +327,8 @@
 							bind:value={selection.locations}
 							options={locations}
 							label="Locations"
+							placeholder="Select one or multiple locations"
+							error={!selection.locations.length ? 'Please select at least one location' : ''}
 							disabled={fetching || solutionLoading}
 						></MultiSelect>
 					{:else}
@@ -333,6 +337,7 @@
 								bind:value={selection.technologies}
 								options={technologies}
 								label="Technologies"
+								placeholder="Select one or multiple technology"
 								disabled={fetching || solutionLoading}
 							></MultiSelect>
 						{/if}
@@ -341,6 +346,7 @@
 								bind:value={selection.carriers}
 								options={carriers}
 								label="Carriers"
+								placeholder="Select one or multiple carriers"
 								disabled={fetching || solutionLoading}
 							></MultiSelect>
 						{/if}
@@ -350,6 +356,8 @@
 					bind:value={selection.years}
 					options={years.map((year) => year.toString())}
 					label="Years"
+					placeholder="Select one or multiple years"
+					error={!selection.years.length ? 'Please select at least one year' : ''}
 					disabled={fetching || solutionLoading}
 				></MultiSelect>
 			</FilterSection>
@@ -363,12 +371,8 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if selection.solutions.length == 0 || hasSomeUnsetSolutions}
-			<WarningMessage message="Please select a solution"></WarningMessage>
-		{:else if selection.locations.length == 0}
-			<WarningMessage message="Please select at least one location"></WarningMessage>
-		{:else if selection.years.length == 0}
-			<WarningMessage message="Please select at least one year"></WarningMessage>
+		{:else if hasSomeUnsetSolutions || selection.locations.length == 0 || selection.years.length == 0}
+			<!-- Main content is hidden -->
 		{:else if datasets.length == 0}
 			<ErrorMessage message="No data available for the selection. filters"></ErrorMessage>
 		{:else}

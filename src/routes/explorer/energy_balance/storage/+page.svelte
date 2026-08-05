@@ -13,7 +13,6 @@
 	import ChartButtons from '$components/ChartButtons.svelte';
 	import Spinner from '$components/Spinner.svelte';
 	import ErrorMessage from '$components/ErrorMessage.svelte';
-	import WarningMessage from '$components/WarningMessage.svelte';
 	import Radio from '$components/forms/Radio.svelte';
 
 	import { useURLParams } from '$lib/queryParams.svelte';
@@ -309,6 +308,7 @@
 	parentTitle="The Energy Balance"
 	pageTitle="Storage"
 	subtitle="Charging and discharging flows and storage levels"
+	sidebarOnly={selection.solution == null || selection.carrier == null || selection.year == null}
 >
 	{#snippet filters()}
 		<FilterSection title="Solution Selection">
@@ -325,6 +325,8 @@
 					options={carriers}
 					bind:value={selection.carrier}
 					label="Carrier"
+					placeholder="Select a carrier"
+					error={selection.carrier === null ? 'Please select a carrier' : undefined}
 					disabled={fetching || solutionLoading}
 					urlParam="car"
 				></Dropdown>
@@ -333,6 +335,8 @@
 						options={years.map((year) => year.toString())}
 						bind:value={selection.year}
 						label="Year"
+						placeholder="Select a year"
+						error={selection.year === null ? 'Please select a year' : undefined}
 						disabled={fetching || solutionLoading}
 						urlParam="year"
 					></Dropdown>
@@ -366,12 +370,14 @@
 						options={technologies}
 						bind:value={selection.technologies}
 						label="Technologies"
+						placeholder="Select technologies"
 						disabled={fetching || solutionLoading}
 					></MultiSelect>
 					<MultiSelect
 						options={nodes}
 						bind:value={selection.nodes}
 						label="Nodes"
+						placeholder="Select nodes"
 						disabled={fetching || solutionLoading}
 					></MultiSelect>
 				</FilterSection>
@@ -387,14 +393,10 @@
 	{#snippet mainContent()}
 		{#if solutionLoading || fetching}
 			<Spinner></Spinner>
-		{:else if selection.solution == null}
-			<WarningMessage message="Please select a solution"></WarningMessage>
+		{:else if selection.solution == null || selection.carrier == null || selection.year == null}
+			<!-- Main content is hidden -->
 		{:else if carriers.length == 0}
 			<ErrorMessage message="No carriers with this selection"></ErrorMessage>
-		{:else if selection.carrier == null}
-			<WarningMessage message="Please select a carrier"></WarningMessage>
-		{:else if selection.year == null}
-			<WarningMessage message="Please select a year"></WarningMessage>
 		{:else if technologies.length == 0}
 			<ErrorMessage message="No technologies with this selection"></ErrorMessage>
 		{:else if nodes.length == 0}

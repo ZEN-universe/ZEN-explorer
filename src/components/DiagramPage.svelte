@@ -6,13 +6,17 @@
 		parentTitle?: string;
 		pageTitle: string;
 		subtitle?: string;
+		sidebarOnly?: boolean;
 		filters: Snippet;
 		buttons?: Snippet;
 		mainContent: Snippet;
 	}
-	let { parentTitle, pageTitle, subtitle, filters, buttons, mainContent }: Props = $props();
+	let { parentTitle, pageTitle, subtitle, sidebarOnly, filters, buttons, mainContent }: Props =
+		$props();
 
 	let sidebarCollapsed: boolean = $state(false);
+
+	let isCollapsed: boolean = $derived.by(() => sidebarCollapsed && !sidebarOnly);
 
 	function toggleSidebarCollapse() {
 		sidebarCollapsed = !sidebarCollapsed;
@@ -39,53 +43,54 @@
 </div>
 <div
 	class={[
-		'grid grid-cols-1',
+		'grid lg:grid-cols-4',
 		'grow gap-x-4 p-4',
-		sidebarCollapsed
-			? 'lg:grid-cols-[min-content_1fr]'
-			: 'lg:grid-cols-[calc(25%-0.5rem)_calc(75%-0.5rem)]'
+		!sidebarOnly
+			? sidebarCollapsed
+				? 'lg:grid-cols-[min-content_1fr]'
+				: 'lg:grid-cols-[calc(25%-0.5rem)_calc(75%-0.5rem)]'
+			: ''
 	]}
 >
-	<div class="order-2 col-span-1 pb-4 lg:order-3">
-		<ContentBox
-			noPadding
-			class={'flex flex-col items-center' + (sidebarCollapsed ? ' h-full' : '')}
-		>
+	<div class={[!sidebarOnly ? 'pb-4' : 'col-span-4 lg:col-span-2 lg:col-start-2']}>
+		<ContentBox noPadding class={'flex flex-col items-center' + (isCollapsed ? ' h-full' : '')}>
 			<div class="flex w-full justify-between">
-				<h2
-					class={['px-4 pt-4 pb-2 text-lg font-bold text-ellipsis', sidebarCollapsed && 'sr-only']}
-				>
+				<h2 class={['px-4 pt-4 pb-2 text-lg font-bold text-ellipsis', isCollapsed && 'sr-only']}>
 					Selection
 				</h2>
-				<button
-					class={[
-						'hidden lg:block',
-						'rounded-lg text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700',
-						'mx-2 mt-2 p-2'
-					]}
-					onclick={toggleSidebarCollapse}
-				>
-					{#if sidebarCollapsed}
-						<i class="bi bi-chevron-right"></i>
-					{:else}
-						<i class="bi bi-chevron-left"></i>
-					{/if}
-					<span class="sr-only">Toggle selection sidebar</span>
-				</button>
+				{#if !sidebarOnly}
+					<button
+						class={[
+							'hidden lg:block',
+							'rounded-lg text-gray-700 hover:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700',
+							'mx-2 mt-2 p-2'
+						]}
+						onclick={toggleSidebarCollapse}
+					>
+						{#if sidebarCollapsed}
+							<i class="bi bi-chevron-right"></i>
+						{:else}
+							<i class="bi bi-chevron-left"></i>
+						{/if}
+						<span class="sr-only">Toggle selection sidebar</span>
+					</button>
+				{/if}
 			</div>
-			{#if sidebarCollapsed}
+			{#if isCollapsed}
 				<div
 					class="text-md mt-2 font-bold text-gray-600 [writing-mode:sideways-lr] dark:text-gray-400"
 				>
 					Selection
 				</div>
 			{/if}
-			<div class={['w-full', sidebarCollapsed && 'sr-only']}>
+			<div class={['w-full', isCollapsed && 'sr-only']}>
 				{@render filters()}
 			</div>
 		</ContentBox>
 	</div>
-	<main class="order-4 col-span-1">
-		{@render mainContent()}
-	</main>
+	{#if !sidebarOnly}
+		<main>
+			{@render mainContent()}
+		</main>
+	{/if}
 </div>

@@ -9,21 +9,23 @@
 	interface Props {
 		id: string;
 		label: string;
-		placeholderText?: string;
+		placeholder?: string;
 		multiple?: boolean;
 		disabled?: boolean;
 		options: Option[];
 		value: T | null;
+		hasError?: boolean;
 		onUpdate: (value: T) => void;
 	}
 	let {
 		id,
 		label,
-		placeholderText = 'Select an option',
+		placeholder = 'Select an option',
 		multiple = false,
 		disabled = false,
 		options,
 		value = $bindable(multiple ? ([] as string[]) : null) as T | null,
+		hasError = false,
 		onUpdate
 	}: Props = $props();
 
@@ -127,9 +129,10 @@
 	<div
 		class={[
 			'relative w-full cursor-pointer rounded-md py-2 pr-6 pl-2',
-			'border border-gray-400 bg-white dark:border-gray-600 dark:bg-gray-800'
+			'border border-gray-400 bg-white dark:border-gray-600 dark:bg-gray-800',
+			disabled && 'opacity-50',
+			hasError && 'border-2 border-red-500 dark:border-red-400'
 		]}
-		class:opacity-50={disabled}
 		onclick={openDropdown}
 		onkeypress={(e) => {
 			if (e.key === 'Enter' || e.key === ' ') {
@@ -168,14 +171,15 @@
 			</div>
 		{:else}
 			<div class="truncate text-gray-500 dark:text-gray-400">
-				{placeholderText}
+				{placeholder}
 			</div>
 		{/if}
 		<div
 			class={[
 				'handle absolute inset-y-0 right-0 flex items-center pr-2',
 				'transition-transform duration-300',
-				open && '-scale-y-100'
+				open && '-scale-y-100',
+				hasError && 'text-red-500 dark:text-red-400'
 			]}
 		>
 			<i class={['bi bi-chevron-down']}></i>
