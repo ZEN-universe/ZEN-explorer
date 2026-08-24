@@ -163,10 +163,13 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }} # Checkout the PR branch
 
       - name: Update package.json version and CHANGELOG.md
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           # Get the PR title and body
-          pr_title="${{ github.event.pull_request.title }}"
-          pr_body="${{ github.event.pull_request.body }}"
+          pr_title="$PR_TITLE"
+          pr_body="$PR_BODY"
 
           # Extract the version number from the PR title
           # The PR title is in the format "Release vX.Y.Z"
@@ -183,8 +186,7 @@ jobs:
           npm install
 
           # Update CHANGELOG.md with the new version and description (possibly multi-line)
-          changelog_message="${{ github.event.pull_request.body }}"
-          changelog_message=$(echo "$changelog_message" | sed 's/\r$//')
+          changelog_message=$(echo "$pr_body" | sed 's/\r$//')
           git checkout origin/main -- CHANGELOG.md
           tmp=$(mktemp)
           awk -v version="$version" -v message="$changelog_message" 'NR==3{
@@ -211,8 +213,10 @@ jobs:
 
       - name: Derive release metadata
         id: release_meta
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          title="${{ github.event.pull_request.title }}"
+          title="$PR_TITLE"
           tag="${title#Release }"
           release_name="${{ github.event.repository.name }}@${title#Release v}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
