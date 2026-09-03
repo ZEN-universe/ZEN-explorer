@@ -2,6 +2,37 @@
 
 ## v0.9.12 (2026-08-24)
 
+- Update package.json version and CHANGELOG.md for v0.9.12
+- Release v0.9.12
+- Read PR title and body from env variables to prevent script injections.
+- Add status badge to README.
+- Fix linter error.
+- Fix Vite config to only run when building files.
+- Update GitHub actions.
+- Guide users when there are empty input forms.
+- Add GitHub workflow to run 
+> check
+> npm run check:format && npm run check:types && npm run check:lint
+
+
+> check:format
+> prettier --list-different .
+
+
+> check:types
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: /home/runner/work/ZEN-explorer/ZEN-explorer
+Getting Svelte diagnostics...
+
+[32msvelte-check found 0 errors and 0 warnings
+[39m
+> check:lint
+> eslint ..
+- Add new paper to website
+
+## v0.9.12 (2026-08-24)
+
 - Guide users when there are empty input forms.
 - Fix Vite config to only run when building files and not during `svelte-check`.
 - Read PR title and body from env variables to prevent script injections.
