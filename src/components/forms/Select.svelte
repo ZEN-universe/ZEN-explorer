@@ -161,6 +161,7 @@
 						</div>
 						<button
 							class="border-l border-black px-0.5 py-0 text-lg/1 dark:border-white"
+							onpointerdown={(event) => event.preventDefault()}
 							onclick={(event) => deselectOption(event, val)}
 							aria-label="Deselect option"
 						>
@@ -205,6 +206,7 @@
 							? 'bg-blue-200 hover:bg-blue-300 dark:bg-blue-800 dark:hover:bg-blue-700'
 							: 'hover:bg-gray-100 dark:hover:bg-gray-700'
 					]}
+					onpointerdown={(event) => event.preventDefault()}
 					onclick={() => selectOption(option.value)}
 					onblur={loseFocus}
 					role="option"
