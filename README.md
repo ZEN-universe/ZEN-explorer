@@ -11,11 +11,16 @@ Prerequisites:
 - 🟢 Node.js with npm (recommended: LTS version 24, April 2026)
 - 🐍 Conda (recommended: Miniconda)
 
-Go to the ZEN-explorer directory and install the dependencies with:
+Go to the ZEN-explorer directory and install the dependencies in a console/command prompt with:
 
 ```bash
 npm install
+
+(in Linux)
 cp .env.example .env
+
+(in Command Prompt)
+copy .env.example .env
 ```
 
 In a second terminal, create a conda environment and install the dependencies for ZEN-temple with:
@@ -96,6 +101,18 @@ For type checking we use [TypeScript](https://www.typescriptlang.org/) and for l
 ```bash
 npm run lint
 npm run check
+```
+
+If lint is not available and `npm install` returned a warning about `1 package has install scripts not yet covered by allowScripts: esbuild`, run:
+
+```bash
+npm install-scripts approve esbuild
+npm install
+```
+and then
+
+```
+npm run check:lint
 ```
 
 ## 🗺️ Map Data
