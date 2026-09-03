@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.9.13 (2026-09-03)
+
+- bump version
+- try fix for safari
+- Update README with installation and linting instructions
+- Release v0.9.12
+
 ## 0.9.13 (2026-09-03)
 
 - Merge branch 'main' of https://github.com/ZEN-universe/ZEN-explorer
