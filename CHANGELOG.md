@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.9.14 (2026-09-04)
+
+- add safari to the playwright tests
+
 ## 0.9.13 (2026-09-03)
 
 - Merge branch 'main' of https://github.com/ZEN-universe/ZEN-explorer
