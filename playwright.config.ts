@@ -7,6 +7,17 @@ export default defineConfig({
 			use: { ...devices['Desktop Chrome'] }
 		},
 		{
+			name: 'webkit',
+			use: { ...devices['Desktop Safari'] }
+		},
+		{
+			name: 'webkit-production',
+			use: {
+				...devices['Desktop Safari'],
+				baseURL: 'https://zen-garden.ethz.ch'
+			}
+		},
+		{
 			name: 'staging',
 			use: {
 				...devices['Desktop Chrome'],
