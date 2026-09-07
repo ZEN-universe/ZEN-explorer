@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.15 (2026-09-07)
+
+
+
 ## 0.9.14 (2026-09-04)
 
 - add safari to the playwright tests
@@ -21,14 +25,12 @@
 - Fix Vite config to only run when building files.
 - Update GitHub actions.
 - Guide users when there are empty input forms.
-- Add GitHub workflow to run 
-> check
-> npm run check:format && npm run check:types && npm run check:lint
-
+- Add GitHub workflow to run
+  > check
+  > npm run check:format && npm run check:types && npm run check:lint
 
 > check:format
 > prettier --list-different .
-
 
 > check:types
 > svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
@@ -38,8 +40,10 @@ Getting Svelte diagnostics...
 
 [32msvelte-check found 0 errors and 0 warnings
 [39m
+
 > check:lint
 > eslint ..
+
 - Add new paper to website
 
 ## v0.9.12 (2026-08-24)
