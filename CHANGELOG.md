@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.16 (2026-09-07)
+
+- add Changelog to prettierignore
+
 ## 0.9.15 (2026-09-07)
 
 

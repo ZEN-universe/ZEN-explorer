@@ -134,7 +134,7 @@
 			return;
 		}
 
-		carriers = selectedSolution.detail.system.set_carriers.slice().sort();
+		carriers = selectedSolution.detail.carriers.slice();
 		nodes = selectedSolution.detail.system.set_nodes.slice().sort();
 		years = generateScenarioYears(selectedSolution.detail);
 	});

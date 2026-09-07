@@ -200,7 +200,7 @@
 		const solutions = selection.solutions as ActivatedSolution[];
 
 		solutions.forEach((solution) => {
-			solution.detail.system.set_carriers.forEach((carrier) => setCarriers.add(carrier));
+			solution.detail.carriers.forEach((carrier) => setCarriers.add(carrier));
 		});
 		return Array.from(setCarriers).sort();
 	});

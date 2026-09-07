@@ -53,6 +53,7 @@ export interface System {
 export interface ScenarioDetail {
 	system: System;
 	reference_carrier: Record<string, string>;
+	carriers: string[];
 	carriers_input: Record<string, string[]>;
 	carriers_output: Record<string, string[]>;
 	edges: Record<string, string>;

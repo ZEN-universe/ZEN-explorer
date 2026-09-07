@@ -4,52 +4,104 @@ ZEN-explorer is the frontend of the [ZEN-garden](https://github.com/ZEN-universe
 
 [![Linter](https://github.com/ZEN-universe/ZEN-explorer/actions/workflows/linter.yml/badge.svg)](https://github.com/ZEN-universe/ZEN-explorer/actions/workflows/linter.yml)
 
-## ⚙️ Installation
+## 🧭 Which setup do I need?
 
-Prerequisites:
+ZEN-explorer is the **frontend**. It always needs a running **ZEN-temple** API
+(the backend) to fetch data from.
+
+| Your goal                                          | Follow                                                                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Just visualize solutions** (no coding)          | [ZEN-temple → Quick start](https://github.com/ZEN-universe/ZEN-temple#-quick-start). ZEN-explorer ships inside the released `zen-temple` package. |
+| **Develop ZEN-explorer** (this repo)              | [Development](#-development) below – run this repo's dev server plus a ZEN-temple API.                    |
+| **Develop only ZEN-temple** (the backend)         | [ZEN-temple → Backend development](https://github.com/ZEN-universe/ZEN-temple#-backend-development).       |
+
+### Which shell / terminal?
+
+Every command block below runs the same in **PowerShell**, **Windows Command
+Prompt (`cmd`)** and **macOS/Linux `bash`/`zsh`**. `npm`, `conda`, `pip` and
+`git` behave identically in all of them. Steps that genuinely differ between
+shells (copying `.env`) show each variant and are labelled. The
+environment-variable prefixes in the [Testing](#-testing) section
+(`NO_WEB_SERVER=1 …`) are `bash`/`zsh` syntax.
+
+## ⚙️ Prerequisites
 
 - 🟢 Node.js with npm (recommended: LTS version 24, April 2026)
-- 🐍 Conda (recommended: Miniconda)
+- 🐍 Conda (recommended: Miniconda) – for the ZEN-temple backend
 
-Go to the ZEN-explorer directory and install the dependencies in a console/command prompt with:
+## 💻 Development
 
-```bash
+You need **two terminals**: one for this frontend and one for the ZEN-temple
+backend.
+
+### 1. Frontend (this repository)
+
+From the `ZEN-explorer` folder, install the dependencies:
+
+```
 npm install
+```
 
-(in Linux)
-cp .env.example .env
+Create the `.env` file from the example:
 
-(in Command Prompt)
+PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Command Prompt (`cmd`):
+
+```bat
 copy .env.example .env
 ```
 
-In a second terminal, create a conda environment and install the dependencies for ZEN-temple with:
-
-```
-conda create --name zen python==3.13
-conda activate zen
-pip install -e .[mypy]
-```
-
-If you update the endpoint of the ZEN-temple API, make sure to update the `PUBLIC_TEMPLE_URL` variable in the `.env` file of ZEN-explorer as well.
-
-## 🚀 Usage
-
-To develop ZEN-explorer you must run ZEN-temple in the background. Make sure you have some solutions, i.e., outputs of the optimization, located at `zen-temple/outputs`. Then, start ZEN-temple's web server with the following command:
+bash / zsh:
 
 ```bash
-conda run -n <your-conda-env> --no-capture-output python -m zen_temple.main --no-open-browser --reload
+cp .env.example .env
 ```
 
-Optionally, you can define a path to another `outputs` folder using the `-o <path-to-folder>` flag.
+`.env` holds `PUBLIC_TEMPLE_URL` (the ZEN-temple API URL, must end with a
+trailing slash) and `PUBLIC_APP_NAME`. The default
+`http://localhost:8000/api/` matches the backend command in step 3.
 
-Next, in a second terminal start ZEN-explorer's dev server using:
+### 2. Backend (ZEN-temple)
 
-```bash
+Clone ZEN-temple next to this repository and install it in editable mode:
+
+```
+git clone https://github.com/ZEN-universe/ZEN-temple.git
+cd ZEN-temple
+conda create --name <name of zen-temple env> python==3.13
+conda activate <name of zen-temple env>
+pip install -e ".[mypy]"
+```
+
+You do **not** need to run `zen-temple-fetch-explorer` here – during frontend
+development the UI is served by this repository's dev server, not by ZEN-temple.
+
+### 3. Run both
+
+Make sure you have some solutions, i.e. outputs of the optimization. ZEN-temple
+looks for them in `./outputs` by default; use `-o <path-to-folder>` for another
+location.
+
+**Backend terminal** – start ZEN-temple in API-only mode:
+
+```
+conda run -n <name of zen-temple env> --no-capture-output zen-visualization --api-only --no-open-browser --reload
+```
+
+**Frontend terminal** – start the ZEN-explorer dev server:
+
+```
 npm run dev
 ```
 
-Open [http://localhost:5173/](http://localhost:5173/) or the URL printed in the console to see ZEN-explorer in action. You can now start developing the visualization platform and see your changes in real time in the browser.
+Open [http://localhost:5173/](http://localhost:5173/) or the URL printed in the
+console. Changes in `src/` reload live in the browser. If you change
+`PUBLIC_TEMPLE_URL`, restart `npm run dev`.
 
 ## 🧱 Project structure
 
@@ -127,7 +179,7 @@ make all
 
 ## 📦 Releases
 
-ZEN-explorer is shipped as part of ZEN-temple. Upon every release a GitHub Actions script builds the current version of ZEN-explorer and adds the static files to the build files of the next ZEN-temple release, which is then published on PyPI. On [our website](https://zen-garden.ethz.ch/) we run this version of ZEN-temple with some of our latest solutions. Users can also install ZEN-temple on their local machines to use ZEN-explorer with their own solutions.
+ZEN-explorer is shipped as part of ZEN-temple. Upon every release a GitHub Actions script builds the current version of ZEN-explorer and adds the static files to the build files of the next ZEN-temple release, which is then published on PyPI. On [our website](https://zen-garden.ethz.ch/) we run this version of ZEN-temple with some of our latest solutions. Users can also install ZEN-temple on their local machines to use ZEN-explorer with their own solutions (see [ZEN-temple → Quick start](https://github.com/ZEN-universe/ZEN-temple#-quick-start)).
 
 ```bash
 conda create --name zen python==3.13
@@ -136,6 +188,10 @@ pip install zen-garden zen-temple
 zen-garden --dataset=my_model
 zen-visualization
 ```
+
+The release procedure that keeps the ZEN-explorer and ZEN-temple version numbers
+in sync is documented in
+[ZEN-temple → Release workflow](https://github.com/ZEN-universe/ZEN-temple#-release-workflow).
 
 ## 📄 License
 

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { ActivatedSolution } from '$lib/types';
 	import { AVAILABLE_MAPS } from '$lib/constants';
-	import { removeDuplicates } from '$lib/utils';
 	import { fetchProductionData, type ProductionComponent } from '$lib/productionData';
 	import Entries from '$lib/entries';
 	import { onValueChange } from '$lib/onValueChange.svelte';
@@ -50,9 +49,7 @@
 		return entry?.units || entry?.[0] || '';
 	});
 
-	let carriers: string[] = $derived.by(() =>
-		removeDuplicates(Object.values(selectedSolution?.detail.reference_carrier || {})).sort()
-	);
+	let carriers: string[] = $derived.by(() => selectedSolution?.detail.carriers ?? []);
 
 	// ======================================
 	// Effects and functions

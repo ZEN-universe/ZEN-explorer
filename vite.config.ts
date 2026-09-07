@@ -7,6 +7,8 @@ import { spawnSync } from 'node:child_process';
 const FOLDER = 'static';
 const BUILD_FOLDER = 'static/opt';
 
+type MissingToolHandler = (message: string) => void;
+
 const images: Record<string, { widths: number[] }> = {
 	'evolution_map_final.gif': {
 		widths: [1344, 1088, 864, 672, 576]
@@ -28,21 +30,22 @@ const videos: Record<string, { widths: number[] }> = {
 	}
 };
 
-function convertImage(inputImage: string, width: number): void {
-	const convertCheck = spawnSync('convert', ['-version'], { stdio: 'ignore' });
-	if (convertCheck.status !== 0) {
-		throw new Error(
-			'ImageMagick is not installed or not found in PATH. Please install it to use this plugin.'
-		);
-	}
-
+function convertImage(inputImage: string, width: number, onMissingTool: MissingToolHandler): void {
 	const inputPath = `${FOLDER}/${inputImage}`;
 	const extension = inputImage.split('.').pop()?.toLowerCase();
 	const outputPath = `${BUILD_FOLDER}/${inputImage.replace(/\.[^.]+$/, '')}_${width}.${extension}`;
 	const webpPath = `${BUILD_FOLDER}/${inputImage.replace(/\.[^.]+$/, '')}_${width}.webp`;
 
-	// If the optimized files already exist, skip conversion
+	// If the optimized files already exist, skip conversion (no ImageMagick needed).
 	if (existsSync(outputPath) && existsSync(webpPath)) {
+		return;
+	}
+
+	const convertCheck = spawnSync('convert', ['-version'], { stdio: 'ignore' });
+	if (convertCheck.status !== 0) {
+		onMissingTool(
+			'ImageMagick is not installed or not found in PATH. Please install it to use this plugin.'
+		);
 		return;
 	}
 
@@ -71,18 +74,20 @@ function convertImage(inputImage: string, width: number): void {
 	}
 }
 
-function convertVideo(inputVideo: string, width: number): void {
-	const ffmpegCheck = spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' });
-	if (ffmpegCheck.status !== 0) {
-		throw new Error(
-			'FFmpeg is not installed or not found in PATH. Please install it to use this plugin.'
-		);
-	}
-
+function convertVideo(inputVideo: string, width: number, onMissingTool: MissingToolHandler): void {
 	const videoPath = `${FOLDER}/${inputVideo}`;
 	const mp4Path = `${BUILD_FOLDER}/${inputVideo.replace(/\.[^.]+$/, '')}_${width}.mp4`;
 
+	// If the optimized file already exists, skip conversion (no FFmpeg needed).
 	if (existsSync(mp4Path)) {
+		return;
+	}
+
+	const ffmpegCheck = spawnSync('ffmpeg', ['-version'], { stdio: 'ignore' });
+	if (ffmpegCheck.status !== 0) {
+		onMissingTool(
+			'FFmpeg is not installed or not found in PATH. Please install it to use this plugin.'
+		);
 		return;
 	}
 
@@ -129,19 +134,40 @@ function convertVideo(inputVideo: string, width: number): void {
 }
 
 function responsiveImagePlugin() {
+	// During `vite dev` a missing ImageMagick/FFmpeg only means we cannot
+	// regenerate already-built assets, so warn and carry on. For `vite build`
+	// the optimized assets are required, so keep failing hard.
+	let isBuild = false;
 	return {
 		name: 'responsive-image-plugin',
+		configResolved(config: { command: string }) {
+			isBuild = config.command === 'build';
+		},
 		buildStart() {
 			console.log('Generating responsive images...');
 
 			mkdirSync(BUILD_FOLDER, { recursive: true });
 
+			const warned = new Set<string>();
+			const onMissingTool: MissingToolHandler = (message) => {
+				if (isBuild) {
+					throw new Error(message);
+				}
+				if (!warned.has(message)) {
+					warned.add(message);
+					console.warn(
+						`[responsive-image-plugin] ${message}\n` +
+							`Skipping image/video optimization; existing files in ${BUILD_FOLDER} are used as-is.`
+					);
+				}
+			};
+
 			Object.entries(images).forEach(([image, { widths }]) =>
-				widths.forEach((w) => convertImage(image, w))
+				widths.forEach((w) => convertImage(image, w, onMissingTool))
 			);
 
 			Object.entries(videos).forEach(([video, { widths }]) =>
-				widths.forEach((w) => convertVideo(video, w))
+				widths.forEach((w) => convertVideo(video, w, onMissingTool))
 			);
 		}
 	};
