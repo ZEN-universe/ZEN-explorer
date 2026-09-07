@@ -1,0 +1,14 @@
+# Normalize line endings: LF in the repo and on checkout, on every platform.
+# Keeps Prettier (endOfLine: "lf") happy for Windows contributors.
+* text=auto eol=lf
+
+# Explicit binary types (never touch these).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.mp4 binary
+*.woff binary
+*.woff2 binary
