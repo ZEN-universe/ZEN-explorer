@@ -5,3 +5,6 @@ yarn.lock
 
 # GeoJSON files
 static/topojson/*.json
+
+# CHANGELOG
+CHANGELOG.md
