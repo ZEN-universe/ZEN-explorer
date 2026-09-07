@@ -2,6 +2,15 @@
 
 ## v0.9.14 (2026-09-07)
 
+- Release v0.9.14
+- add Changelog to prettierignore
+- fix linter and bump version
+- fix linter and bump version
+- bump version
+- add safari to the playwright tests
+
+## v0.9.14 (2026-09-07)
+
 - add Changelog to prettierignore
 - fix linter and bump version
 - fix linter and bump version
