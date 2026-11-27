@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.9.16 (2026-11-27)
+
+- add code-workspace to the gitignore
+
 ## v0.9.15 (2026-09-07)
 
 - fix carrier selection, improve readme
