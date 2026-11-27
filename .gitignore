@@ -26,6 +26,7 @@ vite.config.ts.timestamp-*
 # IDE
 /.idea
 /.vscode
+*.code-workspace
 
 # Playwright
 /playwright-report/
